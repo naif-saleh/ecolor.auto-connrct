@@ -1,0 +1,131 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "",
+        "description": "Fusion Center Documentation",
+        "version": "1.0.0"
+    },
+    "servers": [
+        {
+            "url": "http://127.0.0.1:8000/api",
+            "description": "local server"
+        },
+        {
+            "url": "http://staging.example.com",
+            "description": "staging server"
+        },
+        {
+            "url": "http://example.com",
+            "description": "production server"
+        }
+    ],
+    "paths": {
+        "/auto-dailer": {
+            "get": {
+                "tags": [
+                    "AutoDailer"
+                ],
+                "summary": "Get all AutoDailers",
+                "description": "Get list of all AutoDailers",
+                "operationId": "898ac39d91fba8a57f31bd5ee3d50b62",
+                "responses": {
+                    "200": {
+                        "description": "AutoDailers retrieved successfully"
+                    }
+                }
+            }
+        },
+        "/auto-distributer": {
+            "get": {
+                "tags": [
+                    "AutoDistribuetr"
+                ],
+                "summary": "Get all AutoDistribuetr",
+                "description": "Get list of all AutoDistribuetr",
+                "operationId": "f3046a736e3c113d61cebbe3b17a6822",
+                "responses": {
+                    "200": {
+                        "description": "AutoDistribuetr retrieved successfully"
+                    }
+                }
+            }
+        },
+        "/provider": {
+            "get": {
+                "tags": [
+                    "Provider"
+                ],
+                "summary": "Get all Provider",
+                "description": "Get list of all Provider",
+                "operationId": "7deebca70ac6f57baf871a2404340b66",
+                "responses": {
+                    "200": {
+                        "description": "Provider retrieved successfully"
+                    }
+                }
+            }
+        },
+        "/settings": {
+            "get": {
+                "tags": [
+                    "Settings"
+                ],
+                "summary": "Get all Settings",
+                "description": "Get list of all Settings",
+                "operationId": "076def74b6dd41e773e3ec814d2871ce",
+                "responses": {
+                    "200": {
+                        "description": "Settings retrieved successfully"
+                    }
+                }
+            }
+        },
+        "/users": {
+            "get": {
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Get all Users",
+                "description": "Get list of all Users",
+                "operationId": "7e2f5799553ec93c9c43e2a58490d447",
+                "responses": {
+                    "200": {
+                        "description": "Users retrieved successfully"
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "securitySchemes": {
+            "bearerAuth": {
+                "type": "http",
+                "name": "Authorization",
+                "in": "header",
+                "scheme": "bearer"
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "AutoDailer",
+            "description": "AutoDailer"
+        },
+        {
+            "name": "AutoDistribuetr",
+            "description": "AutoDistribuetr"
+        },
+        {
+            "name": "Provider",
+            "description": "Provider"
+        },
+        {
+            "name": "Settings",
+            "description": "Settings"
+        },
+        {
+            "name": "Users",
+            "description": "Users"
+        }
+    ]
+}
