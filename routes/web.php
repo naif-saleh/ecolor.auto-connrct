@@ -9,7 +9,7 @@ use App\Http\Controllers\ProviderController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ApiController;
-
+use App\Http\Controllers\ReportController;
 
 
 Route::get('/', function () {
@@ -20,7 +20,6 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 
 // API Endpoints Sanctum Provider...........................................................................................................
-
 Route::middleware('auth:sanctum')->group(function () {
     // Settings......................................................................................................
     Route::get('api/settings', [SettingController::class, 'getCfdApi'])->name('settings.getCfdApi');
@@ -47,6 +46,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
     Route::get('users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('users', [UserController::class, 'store'])->name('users.store');
+    // Acitvity Log Report....................................................................................................................
+    Route::get('report/user-activity-report', [ReportController::class, 'activityReport'])->name('users.activity.report');
 });
 
 

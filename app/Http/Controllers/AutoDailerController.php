@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\AutoDailer;
 use App\Models\AutoDailerData;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
@@ -12,15 +13,15 @@ use Illuminate\Support\Str;
 class AutoDailerController extends Controller
 {
 
-/**
- *  @OA\Get(
- *       path="/auto-dailer",
- *       tags={"AutoDailer"},
- *       summary="Get all AutoDailers",
- *       description="Get list of all AutoDailers",
- *       @OA\Response(response=200, description="AutoDailers retrieved successfully")
- *   )
- */
+    /**
+     *  @OA\Get(
+     *       path="/auto-dailer",
+     *       tags={"AutoDailer"},
+     *       summary="Get all AutoDailers",
+     *       description="Get list of all AutoDailers",
+     *       @OA\Response(response=200, description="AutoDailers retrieved successfully")
+     *   )
+     */
 
 
 
@@ -76,6 +77,15 @@ class AutoDailerController extends Controller
                 'provider_name' => $data[1],
                 'extension' => $data[2],
             ]);
+
+            // Active Log Report...............................
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'operation' => 'create',
+                'file_type' => 'AutoDailer',
+                'file_name' => $request->input('file_name'),
+                'operation_time' => now(),
+            ]);
         }
 
         if (!$isValidStructure) {
@@ -104,6 +114,15 @@ class AutoDailerController extends Controller
         $file = AutoDailer::findOrFail($id);
         $file->update(['file_name' => $request->file_name]);
 
+        // Active Log Report...............................
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => 'update',
+            'file_type' => 'AutoDailer',
+            'file_name' => $request->input('file_name'),
+            'operation_time' => now(),
+        ]);
+
         return redirect()->route('autodailers.index')->with('success', 'File name updated successfully.');
     }
 
@@ -118,7 +137,22 @@ class AutoDailerController extends Controller
     // Delete a file................................................................................................................................
     public function destroy($id)
     {
-        AutoDailer::destroy($id);
+        $autoDailer = AutoDailer::find($id);
+        if (!$autoDailer) {
+            return back()->with('error', 'File not found.');
+        }
+
+        $fileName = $autoDailer->file_name;
+        $autoDailer->delete();
+
+        // Log the operation in the ActivityLog
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => 'delete',
+            'file_type' => 'AutoDailer',
+            'file_name' => $fileName,
+            'operation_time' => now(),
+        ]);
         return back()->with('success', 'File deleted.');
     }
     // Download File.................................................................................................................................
@@ -126,10 +160,20 @@ class AutoDailerController extends Controller
     {
         $file = AutoDailer::findOrFail($id);
         $filePath = $file->file_path;
-
         if (!Storage::disk('public')->exists($filePath)) {
             return redirect()->route('autodailers.index')->with('error', 'File not found.');
         }
+
+        // Active Log Report...............................
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => 'download',
+            'file_type' => 'AutoDailer',
+            'file_name' => $file->file_name,
+            'operation_time' => now(),
+        ]);
         return Storage::disk('public')->download($filePath);
     }
+
+    
 }

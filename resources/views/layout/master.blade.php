@@ -10,9 +10,9 @@
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
         <div class="container-fluid">
-            <a class="navbar-brand" href="#">Navbar</a>
+            <a class="navbar-brand fw-bold" href="#">Auto Connect</a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -34,25 +34,35 @@
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('providers.index') }}">Providers</a>
                     </li>
-                    @if (Auth::check() && Auth::user()->role == 'admin')
+                    @if (Auth::check() && Auth::user()->isSuperUser())
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('users.index') }}">Users</a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                Reports
+                            </a>
+                            <ul class="dropdown-menu" aria-labelledby="activityDropdown">
+                                <li><a class="dropdown-item" href="{{ route('users.activity.report') }}">User Activity</a></li>
+                                <li><a class="dropdown-item" href="#">Calls</a></li>
+                            </ul>
                         </li>
                     @endif
                 </ul>
 
-                <ul class="navbar-nav"> <!-- Right-aligned login/logout links -->
+                <ul class="navbar-nav ms-auto"> <!-- Right-aligned login/logout links -->
                     @if (Auth::check())
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('logout') }}"
-                                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">Logout</a>
+                            <a class="nav-link" href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                                <i class="bi bi-box-arrow-right"></i> Logout
+                            </a>
                         </li>
                         <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                             @csrf
                         </form>
                     @else
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('login') }}">Login</a>
+                            <a class="nav-link" href="{{ route('login') }}"><i class="bi bi-box-arrow-in-right"></i> Login</a>
                         </li>
                     @endif
                 </ul>

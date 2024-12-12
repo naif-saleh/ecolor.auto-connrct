@@ -40,6 +40,7 @@
             <select class="form-control" id="role" name="role">
                 <option value="user">User</option>
                 <option value="admin">Admin</option>
+                <option value="superuser">Super Admin</option>
             </select>
         </div>
 

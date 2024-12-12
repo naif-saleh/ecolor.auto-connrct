@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Provider;
+use App\Models\ActivityLog;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -44,6 +45,16 @@ class ProviderController extends Controller
             'user_id' => Auth::id(),
         ]);
 
+
+        // Active Log Report...............................
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => 'create',
+            'file_type' => 'Provider',
+            'file_name' => $request->input('name'),
+            'operation_time' => now(),
+        ]);
+
         return redirect()->route('providers.index')->with('success', 'Provider created successfully.');
     }
 
@@ -67,12 +78,33 @@ class ProviderController extends Controller
             'extension' => $request->extension,
         ]);
 
+
+        // Active Log Report...............................
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => 'update',
+            'file_type' => 'Provider',
+            'file_name' => $request->input('name'),
+            'operation_time' => now(),
+        ]);
+
         return redirect()->route('providers.index')->with('success', 'Provider updated successfully.');
     }
 
     public function destroy($id)
     {
-        Provider::destroy($id);
+        $provider = Provider::find($id);
+        $provider->delete();
+        // Active Log Report...............................
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => 'delete',
+            'file_type' => 'Provider',
+            'file_name' => $provider->name,
+            'operation_time' => now(),
+        ]);
         return back()->with('success', 'Provider deleted.');
     }
+
+    
 }

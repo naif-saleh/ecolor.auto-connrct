@@ -14,7 +14,19 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register your custom route middleware here
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
-            'api' =>  \App\Http\Middleware\VerifyCsrfToken::class,
+            'api' => [
+                \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class, // Sanctum middleware for API
+                'throttle:api',
+                \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            ],
+            'web' => [
+                // \App\Http\Middleware\EncryptCookies::class,
+                \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+                \Illuminate\Session\Middleware\StartSession::class,
+                \Illuminate\View\Middleware\ShareErrorsFromSession::class,
+                \App\Http\Middleware\VerifyCsrfToken::class, // CSRF protection for web routes
+                \Illuminate\Routing\Middleware\SubstituteBindings::class,
+            ],
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

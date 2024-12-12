@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Setting;
+use App\Models\ActivityLog;
+use Illuminate\Support\Facades\Auth;
 
 class SettingController extends Controller
 {
@@ -61,6 +63,14 @@ class SettingController extends Controller
         $settings->cfd_allow_saturday = $validated['cfd_allow_saturday'] ?? false;
         $settings->save();
 
+        // Active Log Report...............................
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => 'update',
+            'file_type' => 'settings',
+            'file_name' => 'settings',
+            'operation_time' => now(),
+        ]);
 
         $isWeekend = in_array($currentDay, [5, 6]);
 
