@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Run the migrations.
+     * Run the migrati
      */
     public function up(): void
     {
@@ -17,7 +17,7 @@ return new class extends Migration
             $table->string('operation');
             $table->string('file_type');
             $table->string('file_name')->nullable();
-            $table->timestamp('operation_time')->useCurrent();  
+            $table->timestamp('operation_time')->useCurrent();
             $table->timestamps();
         });
     }

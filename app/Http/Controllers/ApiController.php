@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Auth;
 
 class ApiController extends Controller
 {
-    // Get all providers..........................................................................................................................
+    // Get all providers........................................................................................................................
     public function index()
     {
         if (!Auth::check()) {
