@@ -95,6 +95,9 @@ class SettingController extends Controller
     public function getCfdApi(Request $request)
     {
 
+        if (!Auth::check()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
 
         $settings = Setting::firstOrNew();
 

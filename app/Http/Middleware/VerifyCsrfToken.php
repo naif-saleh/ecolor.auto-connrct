@@ -12,7 +12,8 @@ class VerifyCsrfToken extends Middleware
      * @var array<int, string>
      */
     protected $except = [
-        'api/*',
-        '/auto-dailer', // Exclude all API routes from CSRF protection
+        '/api/*',
     ];
+    protected $addHttpCookie = true;
+
 }
