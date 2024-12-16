@@ -67,7 +67,7 @@
                 <button type="submit" class="btn btn-primary mb-2">Save Settings</button>
 
                 <!-- Save Settings (Warning) Button -->
-                {{-- <a href="{{route('settings.getCfdApi')}}" type="submit" class="btn btn-warning mb-2">View Json Response</a> --}}
+                <a href="{{route('settings.getCfdApi')}}" type="submit" class="btn btn-warning mb-2">View Json Response</a>
             </div>
 
 
