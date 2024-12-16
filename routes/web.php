@@ -22,7 +22,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 // API Endpoints Sanctum Provider...........................................................................................................
 // Route::middleware('auth:sanctum')->group(function () {
 //     // Settings......................................................................................................
-//     Route::get('api/settings', [SettingController::class, 'getCfdApi'])->name('settings.getCfdApi');
+
 //     // Providers routes..............................................................................................
 //     Route::get('api/providers', [ApiController::class, 'getProviders']);
 //     Route::get('api/providers/{name}', [ApiController::class, 'getByName']);
@@ -42,7 +42,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 // });
 
 // Route::get('api/auto-dailer/{id}', [ApiController::class, 'autoDailerShowState']);
-
+Route::get('settings/json', [SettingController::class, 'getCfdApi'])->name('settings.getCfdApi')->middleware(['auth']);
 // User Management..........................................................................................................................
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('users', [UserController::class, 'index'])->name('users.index');
