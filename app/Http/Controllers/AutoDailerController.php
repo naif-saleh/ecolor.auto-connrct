@@ -59,6 +59,15 @@ class AutoDailerController extends Controller
             'uploaded_by' => Auth::id(),
         ]);
 
+         // Active Log Report...............................
+         ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => 'create',
+            'file_type' => 'AutoDailer',
+            'file_name' => $request->input('file_name'),
+            'operation_time' => now(),
+        ]);
+
         $filePath = $file->storeAs('csv_files', $randomFileName, 'public');
         $autoDailer->update(['file_path' => $filePath]);
         $fileContent = file($file->getRealPath());
@@ -78,14 +87,7 @@ class AutoDailerController extends Controller
                 'extension' => $data[2],
             ]);
 
-            // Active Log Report...............................
-            ActivityLog::create([
-                'user_id' => Auth::id(),
-                'operation' => 'create',
-                'file_type' => 'AutoDailer',
-                'file_name' => $request->input('file_name'),
-                'operation_time' => now(),
-            ]);
+
         }
 
         if (!$isValidStructure) {
@@ -130,9 +132,12 @@ class AutoDailerController extends Controller
     // Show details of a specific uploaded file.....................................................................................................
     public function show($id)
     {
-        $file = AutoDailer::with('autodailerData')->findOrFail($id);
-        return view('autodailers.show', compact('file'));
+        $file = AutoDailer::findOrFail($id);
+        $autodailerData = $file->autodailerData()->paginate(1000);
+
+        return view('autodailers.show', compact('file', 'autodailerData'));
     }
+
 
     // Delete a file................................................................................................................................
     public function destroy($id)
@@ -175,5 +180,5 @@ class AutoDailerController extends Controller
         return Storage::disk('public')->download($filePath);
     }
 
-    
+
 }

@@ -25,7 +25,7 @@
             </tr>
         </thead>
         <tbody>
-            @foreach($file->autodistributerData as $data)
+            @foreach($autodistributerData as $data)
             <tr>
                 <td>{{ $data->mobile }}</td>
                 <td>{{ $data->provider_name }}</td>
@@ -37,5 +37,9 @@
     </table>
 
     <a href="{{ route('autodistributers.index') }}" class="btn btn-secondary btn-sm">Back to Files</a>
+
+    <div class="d-flex justify-content-center mt-4">
+        {{ $autodistributerData->links('pagination::bootstrap-5') }}
+    </div>
 </div>
 @endsection

@@ -58,6 +58,15 @@ class AutoDirtibuterController extends Controller
             'uploaded_by' => Auth::id(),
         ]);
 
+         // Active Log Report...............................
+         ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => 'create',
+            'file_type' => 'Auto Distributer',
+            'file_name' => $request->input('file_name'),
+            'operation_time' => now(),
+        ]);
+
         $filePath = $file->storeAs('csv_files', $randomFileName, 'public');
         $autoDailer->update(['file_path' => $filePath]);
         $fileContent = file($file->getRealPath());
@@ -77,14 +86,7 @@ class AutoDirtibuterController extends Controller
                 'extension' => $data[2],
             ]);
 
-            // Active Log Report...............................
-            ActivityLog::create([
-                'user_id' => Auth::id(),
-                'operation' => 'create',
-                'file_type' => 'Auto Distributer',
-                'file_name' => $request->input('file_name'),
-                'operation_time' => now(),
-            ]);
+
         }
 
         if (!$isValidStructure) {
@@ -125,10 +127,17 @@ class AutoDirtibuterController extends Controller
     }
 
     // Show details of a specific uploaded file......................................................................................................
+    // public function show($id)
+    // {
+    //     $file = AutoDirtibuter::with('autodistributerData')->findOrFail($id);
+    //     return view('autodisributers.show', compact('file'));
+    // }
     public function show($id)
     {
-        $file = AutoDirtibuter::with('autodistributerData')->findOrFail($id);
-        return view('autodisributers.show', compact('file'));
+        $file = AutoDirtibuter::findOrFail($id);
+        $autodistributerData = $file->autodistributerData()->paginate(1000);
+
+        return view('autodisributers.show', compact('file', 'autodistributerData'));
     }
 
     // Delete a file.................................................................................................................................
@@ -169,5 +178,5 @@ class AutoDirtibuterController extends Controller
     }
 
 
-    
+
 }
