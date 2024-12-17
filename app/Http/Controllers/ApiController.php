@@ -67,7 +67,7 @@ class ApiController extends Controller
         if (!Auth::check()) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
-        $count = 50;
+
         // Fetch only records where state is not 'answered'
         $autoDailer = AutoDailerData::where('state', '=', 'new')
             ->select('mobile', 'id', 'provider_name', 'extension')
@@ -76,7 +76,7 @@ class ApiController extends Controller
 
             return response()->json([
                 'data' => $autoDailer,
-                'count' => $count
+                 
             ]);
     }
 
