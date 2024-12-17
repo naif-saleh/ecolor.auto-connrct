@@ -69,7 +69,7 @@ class ApiController extends Controller
         }
         $count = 50;
         // Fetch only records where state is not 'answered'
-        $autoDailer = AutoDailerData::where('state', '==', 'new')
+        $autoDailer = AutoDailerData::where('state', '=', 'new')
             ->select('mobile', 'id', 'provider_name', 'extension')
             ->get();
 
