@@ -74,10 +74,10 @@ class ApiController extends Controller
             ->get();
 
 
-            return response()->json([
-                'data' => $autoDailer,
-                 
-            ]);
+            return response()->json(
+                 $autoDailer,
+
+            );
     }
 
 
