@@ -52,8 +52,13 @@ class ApiController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $providers = AutoDirtibuterData::select('mobile', 'id', 'provider_name', 'extension')->get();
-        return response()->json($providers);
+        // Fetch only records where state is not 'answered'
+        $autoDistributer = AutoDirtibuterData::where('state', '!=', 'answered')
+            ->select('mobile', 'id', 'provider_name', 'extension')
+            ->get();
+
+        return response()->json($autoDistributer);
+        
     }
 
     // Get all Auto Dailer..........................................................................................................................
@@ -63,12 +68,18 @@ class ApiController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $providers = AutoDailerData::select('mobile', 'id', 'provider_name', 'extension')->get();
-        return response()->json($providers);
+        // Fetch only records where state is not 'answered'
+        $autoDailer = AutoDailerData::where('state', '!=', 'answered')
+            ->select('mobile', 'id', 'provider_name', 'extension')
+            ->get();
+
+        return response()->json($autoDailer);
     }
 
 
-    public function autoDailerShowState($id){
+
+    public function autoDailerShowState($id)
+    {
         $providers = AutoDailerData::where('id', $id)->first();
         return response()->json($providers);
     }
@@ -77,51 +88,49 @@ class ApiController extends Controller
 
     // Update the state of an AutoDailer.............................................................................................................
     public function updateState(Request $request)
-{
-    $request->validate([
-        'id' => 'required|integer',
-        'state' => 'required',
-    ]);
+    {
+        $request->validate([
+            'id' => 'required|integer',
+            'state' => 'required',
+        ]);
 
-    $id = $request->input('id');
+        $id = $request->input('id');
 
-    $autoDailerData = AutoDailerData::find($id);
+        $autoDailerData = AutoDailerData::find($id);
 
-    if (!$autoDailerData) {
+        if (!$autoDailerData) {
+            return response()->json([
+                'message' => 'AutoDailerData not found.'
+            ], Response::HTTP_NOT_FOUND);
+        }
+
+        $autoDailerData->state = $request->input('state') ? 'answered' : 'no answer';
+        $autoDailerData->save();
+
+        $report = AutoDailerReport::create(
+
+            [
+                'mobile' => $autoDailerData->mobile,
+                'provider' => $autoDailerData->provider_name,
+                'extension' => $autoDailerData->extension,
+                'state' => $autoDailerData->state,
+                'called_at' => now(),
+            ]
+        );
+
         return response()->json([
-            'message' => 'AutoDailerData not found.'
-        ], Response::HTTP_NOT_FOUND);
+            'message' => 'State and report updated successfully.',
+            'data' => $report
+        ], Response::HTTP_OK);
     }
 
-    $autoDailerData->state = $request->input('state') ? 'answered' : 'no answer';
-    $autoDailerData->save();
-
-    $report = AutoDailerReport::create(
-
-        [
-            'mobile' => $autoDailerData->mobile,
-            'provider' => $autoDailerData->provider_name,
-            'extension' => $autoDailerData->extension,
-            'state' => $autoDailerData->state,
-            'called_at' => now(),
-        ]
-    );
-
-    return response()->json([
-        'message' => 'State and report updated successfully.',
-        'data' => $report
-    ], Response::HTTP_OK);
-
-
-}
 
 
 
 
-
-     // Update the state of an AutoDistributer.............................................................................................................
-     public function autoDistributerUpdateState(Request $request)
-     {
+    // Update the state of an AutoDistributer.............................................................................................................
+    public function autoDistributerUpdateState(Request $request)
+    {
 
         $request->validate([
             'id' => 'required|integer',
@@ -156,22 +165,18 @@ class ApiController extends Controller
             'message' => 'State and report updated successfully.',
             'data' => $report
         ], Response::HTTP_OK);
+    }
 
 
-     }
+    // Get All Users.............................................................................................................
+    public function getUsers(Request $request)
+    {
 
+        if (!Auth::check()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
 
-     // Get All Users.............................................................................................................
-     public function getUsers(Request $request)
-     {
-
-         if (!Auth::check()) {
-             return response()->json(['error' => 'Unauthorized'], 401);
-         }
-
-         $user = User::select('name', 'email', 'role')->get();
-         return response()->json($user);
-     }
-
-
+        $user = User::select('name', 'email', 'role')->get();
+        return response()->json($user);
+    }
 }
