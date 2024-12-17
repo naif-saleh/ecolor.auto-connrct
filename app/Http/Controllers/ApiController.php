@@ -74,28 +74,31 @@ class ApiController extends Controller
 
 
     // Update the state of an AutoDailer.............................................................................................................
-    public function updateState(Request $request, $id)
-    {
-        $request->validate([
-            'state' => 'required|string|in:new,answered,no_answer', // Allowed states
-        ]);
+        public function updateState(Request $request, $id)
+        {
 
-        $autoDailerData = AutoDailerData::find($id);
+            $request->validate([
+                'state' => 'required|boolean',
+            ]);
 
-        if (!$autoDailerData) {
+            $autoDailerData = AutoDailerData::find($id);
+
+            if (!$autoDailerData) {
+                return response()->json([
+                    'message' => 'AutoDailerData not found.'
+                ], Response::HTTP_NOT_FOUND);
+            }
+
+            $autoDailerData->state = $request->input('state') ? 'answered' : 'no answer';
+            $autoDailerData->save();
+
             return response()->json([
-                'message' => 'AutoDailerData not found.'
-            ], Response::HTTP_NOT_FOUND);
+                'message' => 'State updated successfully.',
+                'data' => $autoDailerData
+            ], Response::HTTP_OK);
         }
 
-        $autoDailerData->state = $request->input('state');
-        $autoDailerData->save();
-
-        return response()->json([
-            'message' => 'State updated successfully.',
-            'data' => $autoDailerData
-        ], Response::HTTP_OK);
-    }
+    
 
      // Update the state of an AutoDistributer.............................................................................................................
      public function autoDistributerUpdateState(Request $request, $id)
