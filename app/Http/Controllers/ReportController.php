@@ -15,7 +15,7 @@ class ReportController extends Controller
     {
         $logs = ActivityLog::with('user:id,name')
             ->orderBy('operation_time', 'desc')
-            ->paginate(1);
+            ->paginate(100);
 
         return view('reports.user_activity_report', compact('logs'));
     }
