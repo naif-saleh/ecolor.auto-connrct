@@ -35,7 +35,7 @@ Route::get('/', [HomeController::class, 'index'])->name('home');
 
 // });
 
- // AutoDailer routes..............................................................................................
+// AutoDailer routes..............................................................................................
 // Route::get('api/auto-dailer', [ApiController::class, 'autoDailer']);
 // Route::middleware(['api', 'auth:sanctum'])->group(function () {
 //     Route::put('/api/auto-dailer-data/{id}/state', [ApiController::class, 'updateState']);
@@ -54,6 +54,14 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // Acitvity Log Report....................................................................................................................
     Route::get('report/user-activity-report', [ReportController::class, 'activityReport'])->name('users.activity.report');
+    // Auto Dailer Reports....................................................................................................................
+    Route::get('auto-dailer-report', [ReportController::class, 'AutoDailerReports'])->name('auto_dailer.report');
+    // Export Auto Dailer...........................................................................................................
+    Route::get('auto-dailer-report/export', [ReportController::class, 'exportAutoDailerReport'])->name('auto_dailer.report.export');
+    // Auto Distributer Reports....................................................................................................................
+    Route::get('auto-distributer-report', [ReportController::class, 'AutoDistributerReports'])->name('auto_distributer.report');
+    // Export Auto Distributer...........................................................................................................
+    Route::get('auto-distributer-report/export', [ReportController::class, 'exportAutoDistributerReport'])->name('auto_distributer.report.export');
 });
 
 

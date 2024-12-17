@@ -6,6 +6,8 @@ use App\Models\Provider;
 use App\Models\AutoDirtibuterData;
 use App\Models\AutoDailerData;
 use App\Models\User;
+use App\Models\AutoDailerReport;
+use App\Models\AutoDistributerReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Response;
@@ -74,55 +76,88 @@ class ApiController extends Controller
 
 
     // Update the state of an AutoDailer.............................................................................................................
-        public function updateState(Request $request, $id)
-        {
+    public function updateState(Request $request)
+{
+    $request->validate([
+        'id' => 'required|integer',
+        'state' => 'required',
+    ]);
 
-            $request->validate([
-                'state' => 'required|boolean',
-            ]);
+    $id = $request->input('id');
 
-            $autoDailerData = AutoDailerData::find($id);
+    $autoDailerData = AutoDailerData::find($id);
 
-            if (!$autoDailerData) {
-                return response()->json([
-                    'message' => 'AutoDailerData not found.'
-                ], Response::HTTP_NOT_FOUND);
-            }
+    if (!$autoDailerData) {
+        return response()->json([
+            'message' => 'AutoDailerData not found.'
+        ], Response::HTTP_NOT_FOUND);
+    }
 
-            $autoDailerData->state = $request->input('state') ? 'answered' : 'no answer';
-            $autoDailerData->save();
+    $autoDailerData->state = $request->input('state') ? 'answered' : 'no answer';
+    $autoDailerData->save();
 
-            return response()->json([
-                'message' => 'State updated successfully.',
-                'data' => $autoDailerData
-            ], Response::HTTP_OK);
-        }
+    $report = AutoDailerReport::create(
 
-    
+        [
+            'mobile' => $autoDailerData->mobile,
+            'provider' => $autoDailerData->provider_name,
+            'extension' => $autoDailerData->extension,
+            'state' => $autoDailerData->state,
+            'called_at' => now(),
+        ]
+    );
+
+    return response()->json([
+        'message' => 'State and report updated successfully.',
+        'data' => $report
+    ], Response::HTTP_OK);
+
+
+}
+
+
+
+
 
      // Update the state of an AutoDistributer.............................................................................................................
-     public function autoDistributerUpdateState(Request $request, $id)
+     public function autoDistributerUpdateState(Request $request)
      {
 
         $request->validate([
-            'state' => 'required|string|in:new,answered,no_answer', // Allowed states
+            'id' => 'required|integer',
+            'state' => 'required',
         ]);
+
+        $id = $request->input('id');
 
         $autoDailerData = AutoDirtibuterData::find($id);
 
         if (!$autoDailerData) {
             return response()->json([
-                'message' => 'AutoDirtibuterData not found.'
+                'message' => 'AutoDistributerReport not found.'
             ], Response::HTTP_NOT_FOUND);
         }
 
-        $autoDailerData->state = $request->input('state');
+        $autoDailerData->state = $request->input('state') ? 'answered' : 'no answer';
         $autoDailerData->save();
 
+        $report = AutoDistributerReport::create(
+
+            [
+                'mobile' => $autoDailerData->mobile,
+                'provider' => $autoDailerData->provider_name,
+                'extension' => $autoDailerData->extension,
+                'state' => $autoDailerData->state,
+                'called_at' => now(),
+            ]
+        );
+
         return response()->json([
-            'message' => 'State updated successfully.',
-            'data' => $autoDailerData
+            'message' => 'State and report updated successfully.',
+            'data' => $report
         ], Response::HTTP_OK);
+
+
      }
 
 
