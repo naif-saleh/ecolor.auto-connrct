@@ -87,9 +87,9 @@
                                             <td>{{ $report->extension }}</td>
                                             <td>
                                                 @if ($report->state === 'True')
-                                                    <span class="badge bg-success">{{ $report->state }}</span>
+                                                    <span class="badge bg-success">answred</span>
                                                 @else
-                                                    <span class="badge bg-danger">{{ $report->state }}</span>
+                                                    <span class="badge bg-danger">no answer</span>
                                                 @endif
                                             </td>
                                             <td>{{ $report->called_at }}</td>
