@@ -86,7 +86,7 @@
                                             <td>{{ $report->provider }}</td>
                                             <td>{{ $report->extension }}</td>
                                             <td>
-                                                @if ($report->state === 'True')
+                                                @if ($report->state === 'called')
                                                     <span class="badge bg-info">Called</span>
                                                 @elseif ($report->state === 'False')
                                                     <span class="badge bg-success">Answered</span>
