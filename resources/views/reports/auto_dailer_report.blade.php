@@ -27,6 +27,10 @@
                                    class="btn btn-outline-danger {{ $filter === 'no answer' ? 'active' : '' }}">
                                     No Answer
                                 </a>
+                                <a href="{{ url('auto-dailer-report?filter=called') }}"
+                                   class="btn btn-outline-info {{ $filter === 'called' ? 'active' : '' }}">
+                                    Called
+                                </a>
                             </div>
 
                             <!-- Export Button -->
@@ -40,16 +44,22 @@
 
                         <!-- Stats Section -->
                         <div class="row stats-container mb-4">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="alert alert-success text-center">
                                     <h5>Answered</h5>
                                     <p class="fw-bold fs-3">{{ $answeredCount }}</p>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="alert alert-danger text-center">
                                     <h5>No Answer</h5>
                                     <p class="fw-bold fs-3">{{ $noAnswerCount }}</p>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="alert alert-info text-center">
+                                    <h5>Called</h5>
+                                    <p class="fw-bold fs-3">{{ $calledCount }}</p> <!-- Display "called" count -->
                                 </div>
                             </div>
                         </div>
@@ -87,7 +97,7 @@
                                         </tr>
                                     @empty
                                         <tr>
-                                            <td colspan="6" class="text-center text-muted">No records found</td>
+                                            <td colspan="7" class="text-center text-muted">No records found</td>
                                         </tr>
                                     @endforelse
                                 </tbody>
@@ -104,3 +114,4 @@
         </div>
     </div>
 @endsection
+

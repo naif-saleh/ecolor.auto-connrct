@@ -23,26 +23,29 @@ class ReportController extends Controller
 
     // display Auto Dailer Report...........................................................................................................
     public function AutoDailerReports(Request $request)
-    {
+{
+    $filter = $request->query('filter');
+    $query = AutoDailerReport::query();
 
-        $filter = $request->query('filter');
-        $query = AutoDailerReport::query();
-
-        if ($filter === 'answered' || $filter === 'no answer') {
-            $query->where('state', $filter);
-        }
-        $reports = $query->paginate(1000);
-
-        $answeredCount = AutoDailerReport::where('state', 'answered')->count();
-        $noAnswerCount = AutoDailerReport::where('state', 'no answer')->count();
-
-        return view('reports.auto_dailer_report', [
-            'reports' => $reports,
-            'answeredCount' => $answeredCount,
-            'noAnswerCount' => $noAnswerCount,
-            'filter' => $filter,
-        ]);
+    if (in_array($filter, ['answered', 'no answer', 'called'])) {
+        $query->where('state', $filter);
     }
+
+    $reports = $query->paginate(1000);
+
+    $answeredCount = AutoDailerReport::where('state', 'answered')->count();
+    $noAnswerCount = AutoDailerReport::where('state', 'no answer')->count();
+    $calledCount = AutoDailerReport::where('state', 'called')->count(); // Added "called" count
+
+    return view('reports.auto_dailer_report', [
+        'reports' => $reports,
+        'answeredCount' => $answeredCount,
+        'noAnswerCount' => $noAnswerCount,
+        'calledCount' => $calledCount, // Pass "called" count to view
+        'filter' => $filter,
+    ]);
+}
+
 
     // Export Auto Dailer AS CSV File...........................................................................................................
     public function exportAutoDailerReport(Request $request)
