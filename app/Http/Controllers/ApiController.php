@@ -92,8 +92,8 @@ class ApiController extends Controller
 
         foreach ($autoDailer as $callData) {
             $response = Http::withBasicAuth(
-                username: config('services.threecx.username'),
-                password: config('services.threecx.password')
+              config('services.threecx.username'),
+               config('services.threecx.password')
             )->post(config('services.threecx.url') . '/makecall', [
                 'from' => $callData->extension,
                 'to' => $callData->mobile,
