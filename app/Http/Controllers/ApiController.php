@@ -154,7 +154,7 @@ public function autoDailer()
         }
     }
 
-    return response()->json(['message' => 'Auto dialer processed successfully']);
+    return response()->json(['message' => 'Auto dialer processed successfully',$response->json()]);
 }
 
 
