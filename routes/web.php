@@ -17,6 +17,7 @@ Route::get('/', function () {
 });
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::middleware('auth:sanctum')->get('auto-dailer-call', [ApiController::class, 'autoDailer']);
 
 
 // API Endpoints Sanctum Provider...........................................................................................................
