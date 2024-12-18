@@ -134,12 +134,16 @@ public function autoDailer()
             'to' => $to,
         ]);
 
+
         // Log the response for debugging
         if ($response->failed()) {
             Log::error("3CX Call Failed", [
                 'response' => $response->body(),
                 'from' => $from,
-                'to' => $to
+                'to' => $to,
+                'responses' => $response->json()
+
+
             ]);
         } else {
             Log::info("3CX Call Success", [
