@@ -62,20 +62,19 @@ class ApiController extends Controller
 
     // Get all Auto Dailer..........................................................................................................................
     public function autoDailer()
-    {
-        if (!Auth::check()) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        // Fetch distinct records where state is 'new' to avoid duplicate numbers
-        $autoDailer = AutoDailerData::where('state', 'new')
-            ->select('mobile', 'id', 'provider_name', 'extension')
-            ->distinct('mobile') // Ensure unique mobile numbers
-            ->get();
-
-        return response()->json($autoDailer);
+{
+    if (!Auth::check()) {
+        return response()->json(['error' => 'Unauthorized'], 401);
     }
 
+    // Fetch only unique mobile numbers using groupBy
+    $autoDailer = AutoDailerData::where('state', 'new')
+        ->select('mobile', 'id', 'provider_name', 'extension')
+        ->groupBy('mobile') // Group records by the 'mobile' column
+        ->get();
+
+    return response()->json($autoDailer);
+}
 
 
 
