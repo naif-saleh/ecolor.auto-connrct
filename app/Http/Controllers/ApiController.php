@@ -109,10 +109,7 @@ public function autoDailer()
         }
 
 
-        if($request->input('state') )
-        $autoDailerData->state = $request->input('state', 'no answer') === 'answered' ? 'answered' : 'no answer';
-
-        $autoDailerData->save();
+        $autoDailerData->state = $request['state'];
 
         $report = AutoDailerReport::create(
 
