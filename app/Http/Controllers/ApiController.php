@@ -14,6 +14,7 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use App\Models\Setting;
 
 class ApiController extends Controller
 {
@@ -65,94 +66,110 @@ class ApiController extends Controller
 
     // Get all Auto Dailer..........................................................................................................................
 
+    public function autoDailer()
+    {
+        // Ensure the user is authenticated
+        if (!Auth::check()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
+
+        // Fetch settings
+        $settings = Setting::first();
+        $currentHour = now()->setTimezone('Asia/Riyadh')->hour;
+
+        // Check settings: allow_auto_calling, allow_calling, and time range
+        if (
+            !$settings ||                                   // No settings found
+            $settings->allow_auto_calling != 1 ||           // auto_call is not enabled
+            $settings->allow_calling != 1 ||                // online is not enabled
+            $currentHour < $settings->cfd_start_time ||     // Before allowed start time
+            $currentHour >= $settings->cfd_end_time         // After allowed end time
+        ) {
+            // Do not proceed with calls if conditions fail
+            return response()->json(['message' => 'Calls are disabled as per settings'], 200);
+        }
+
+        // Proceed to fetch the data and make API calls
+        $autoDailer = AutoDailerData::where('state', 'new')
+            ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
+            ->groupBy('mobile', 'provider_name', 'extension')
+            ->get();
+
+        // Make 3CX API calls
+        foreach ($autoDailer as $callData) {
+            $response = Http::withBasicAuth(
+                config('services.threecx.username'),
+                config('services.threecx.password')
+            )->post(config('services.threecx.url') . '/makecall', [
+                'from' => $callData->extension,
+                'to' => $callData->mobile,
+            ]);
+
+            // Log success or failure
+            if ($response->successful()) {
+                Log::info('3CX Call Success', ['from' => $callData->extension, 'to' => $callData->mobile]);
+            } else {
+                Log::error('3CX Call Failed', [
+                    'response' => $response->status(),
+                    'from' => $callData->extension,
+                    'to' => $callData->mobile,
+                ]);
+            }
+        }
+
+        return response()->json(['message' => 'API calls executed successfully'], 200);
+    }
+
+
+
+
 
 // public function autoDailer()
 // {
+//     // Check if the user is authenticated
 //     if (!Auth::check()) {
 //         return response()->json(['error' => 'Unauthorized'], 401);
 //     }
 
-//     // Fetch the latest record for each unique mobile
-//     $autoDailer = AutoDailerData::where('state', 'new')
-//         ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
-//         ->groupBy('mobile', 'provider_name', 'extension') // Group by mobile and related columns
-//         ->get();
-
-//     return response()->json($autoDailer);
-// }
-
-
-// public function autoDailer()
-// {
-//     if (!Auth::check()) {
-//         return response()->json(['error' => 'Unauthorized'], 401);
-//     }
-
-//     // Fetch the latest record for each unique mobile
+//     // Fetch the latest 'new' record for each unique mobile
 //     $autoDailer = AutoDailerData::where('state', 'new')
 //         ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
 //         ->groupBy('mobile', 'provider_name', 'extension')
 //         ->get();
 
-//     // Loop through the data and initiate calls using 3CX API
-//     foreach ($autoDailer as $dailerData) {
-//         $from = $dailerData->extension; // Define your 'from' number (may come from 3CX or your configuration)
-//         $to = $dailerData->mobile;
+//     // Loop through records and initiate calls
+//     foreach ($autoDailer as $record) {
+//         $from = $record->extension;
+//         $to = $record->mobile;
 
-//         // Call the 3CX API to initiate the call
-//         $this->initiate3CXCall($from, $to);
+//         $response = Http::withBasicAuth(
+//             config('services.three_cx.username'),
+//             config('services.three_cx.password')
+//         )->post(config('services.three_cx.api_url') . '/makecall', [
+//             'from' => $from,
+//             'to' => $to,
+//         ]);
+
+
+//         if ($response->failed()) {
+//             Log::error("3CX Call Failed", [
+//                 'response' => $response->body(),
+//                 'from' => $from,
+//                 'to' => $to
+
+
+//             ]);
+//         } else {
+//             Log::info("3CX Call Success", [
+//                 'from' => $from,
+//                 'to' => $to,
+//                 'response' => $response->json()
+//             ]);
+//         }
 //     }
 
-//     return response()->json($autoDailer);
+//     return response()->json(['message' => 'Auto dialer processed successfully']);
 // }
-
-
-public function autoDailer()
-{
-    // Check if the user is authenticated
-    if (!Auth::check()) {
-        return response()->json(['error' => 'Unauthorized'], 401);
-    }
-
-    // Fetch the latest 'new' record for each unique mobile
-    $autoDailer = AutoDailerData::where('state', 'new')
-        ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
-        ->groupBy('mobile', 'provider_name', 'extension')
-        ->get();
-
-    // Loop through records and initiate calls
-    foreach ($autoDailer as $record) {
-        $from = $record->extension;
-        $to = $record->mobile;
-
-        $response = Http::withBasicAuth(
-            config('services.three_cx.username'),
-            config('services.three_cx.password')
-        )->post(config('services.three_cx.api_url') . '/makecall', [
-            'from' => $from,
-            'to' => $to,
-        ]);
-
-
-        if ($response->failed()) {
-            Log::error("3CX Call Failed", [
-                'response' => $response->body(),
-                'from' => $from,
-                'to' => $to
-
-
-            ]);
-        } else {
-            Log::info("3CX Call Success", [
-                'from' => $from,
-                'to' => $to,
-                'response' => $response->json()
-            ]);
-        }
-    }
-
-    return response()->json(['message' => 'Auto dialer processed successfully']);
-}
 
 
 public function initiate3CXCall($from, $to)
