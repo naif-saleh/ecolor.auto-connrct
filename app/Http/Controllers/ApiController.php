@@ -58,7 +58,6 @@ class ApiController extends Controller
             ->get();
 
         return response()->json($autoDistributer);
-
     }
 
     // Get all Auto Dailer..........................................................................................................................
@@ -68,17 +67,15 @@ class ApiController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Fetch only records where state is not 'answered'
-        $autoDailer = AutoDailerData::where('state', '=', 'new')
+        // Fetch distinct records where state is 'new' to avoid duplicate numbers
+        $autoDailer = AutoDailerData::where('state', 'new')
             ->select('mobile', 'id', 'provider_name', 'extension')
+            ->distinct('mobile') // Ensure unique mobile numbers
             ->get();
 
-
-            return response()->json(
-                 $autoDailer,
-
-            );
+        return response()->json($autoDailer);
     }
+
 
 
 
