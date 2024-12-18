@@ -125,6 +125,7 @@ public function autoDailer()
                 'extension' => $autoDailerData->extension,
                 'state' => $autoDailerData->state,
                 'called_at' => now(),
+                'declined_at' => now()
             ]
         );
 
