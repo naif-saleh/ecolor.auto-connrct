@@ -11,6 +11,7 @@ use App\Models\AutoDistributerReport;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\DB;
 
 class ApiController extends Controller
 {
@@ -61,20 +62,23 @@ class ApiController extends Controller
     }
 
     // Get all Auto Dailer..........................................................................................................................
-    public function autoDailer()
+
+
+public function autoDailer()
 {
     if (!Auth::check()) {
         return response()->json(['error' => 'Unauthorized'], 401);
     }
 
-    // Fetch only unique mobile numbers using groupBy
+    // Fetch the latest record for each unique mobile
     $autoDailer = AutoDailerData::where('state', 'new')
-        ->select('mobile', 'id', 'provider_name', 'extension')
-        ->groupBy('mobile') // Group records by the 'mobile' column
+        ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
+        ->groupBy('mobile', 'provider_name', 'extension') // Group by mobile and related columns
         ->get();
 
     return response()->json($autoDailer);
 }
+
 
 
 
