@@ -36,9 +36,8 @@ class ApiController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Retrieve provider by exact name with only name and extension
         $provider = Provider::where('name', $name)
-            ->select('name', 'extension') // Select only name and extension
+            ->select('name', 'extension')
             ->first();
 
         if (!$provider) {
@@ -56,7 +55,6 @@ class ApiController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Fetch only records where state is not 'answered'
         $autoDistributer = AutoDirtibuterData::where('state', '!=', 'answered')
             ->select('mobile', 'id', 'provider_name', 'extension')
             ->get();
@@ -68,44 +66,39 @@ class ApiController extends Controller
 
     public function autoDailer()
     {
-        // Ensure the user is authenticated
+
         if (!Auth::check()) {
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Fetch settings
         $settings = Setting::first();
         $currentHour = now()->setTimezone('Asia/Riyadh')->hour;
 
-        // Check settings: allow_auto_calling, allow_calling, and time range
         if (
-            !$settings ||                                   // No settings found
-            $settings->allow_auto_calling != 1 ||           // auto_call is not enabled
-            $settings->allow_calling != 1 ||                // online is not enabled
-            $currentHour < $settings->cfd_start_time ||     // Before allowed start time
-            $currentHour >= $settings->cfd_end_time         // After allowed end time
+            !$settings ||
+            $settings->allow_auto_calling != 1 ||
+            $settings->allow_calling != 1 ||
+            $currentHour < $settings->cfd_start_time ||
+            $currentHour >= $settings->cfd_end_time
         ) {
-            // Do not proceed with calls if conditions fail
+
             return response()->json(['message' => 'Calls are disabled as per settings'], 200);
         }
 
-        // Proceed to fetch the data and make API calls
         $autoDailer = AutoDailerData::where('state', 'new')
             ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
             ->groupBy('mobile', 'provider_name', 'extension')
             ->get();
 
-        // Make 3CX API calls
         foreach ($autoDailer as $callData) {
             $response = Http::withBasicAuth(
-                config('services.threecx.username'),
-                config('services.threecx.password')
+                username: config('services.threecx.username'),
+                password: config('services.threecx.password')
             )->post(config('services.threecx.url') . '/makecall', [
                 'from' => $callData->extension,
                 'to' => $callData->mobile,
             ]);
 
-            // Log success or failure
             if ($response->successful()) {
                 Log::info('3CX Call Success', ['from' => $callData->extension, 'to' => $callData->mobile]);
             } else {
