@@ -110,7 +110,7 @@ public function autoDailer()
 
 
         $autoDailerData->state = $request['state'];
-
+        $autoDailerData->save();
         $report = AutoDailerReport::create(
 
             [
