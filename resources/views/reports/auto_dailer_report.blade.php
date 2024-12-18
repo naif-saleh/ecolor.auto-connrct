@@ -75,7 +75,7 @@
                                         <th>Extension</th>
                                         <th>State</th>
                                         <th>Called At</th>
-                                        <th>Declined At</th>
+                                        {{-- <th>Declined At</th> --}}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -95,7 +95,7 @@
                                                 @endif
                                             </td>
                                             <td>{{ $report->called_at }}</td>
-                                            <td>{{ $report->declined_at }}</td>
+                                            {{-- <td>{{ $report->declined_at }}</td> --}}
                                         </tr>
                                     @empty
                                         <tr>
