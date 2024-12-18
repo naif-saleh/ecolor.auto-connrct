@@ -107,9 +107,10 @@ class ApiController extends Controller
                 'message' => 'AutoDailerData not found.'
             ], Response::HTTP_NOT_FOUND);
         }
-       
 
-        $autoDailerData->state = $request->input('state') ? 'answered' : 'no answer';
+
+        $autoDailerData->state = $request->input('state', 'no answer') === 'answered' ? 'answered' : 'no answer';
+
         $autoDailerData->save();
 
         $report = AutoDailerReport::create(
