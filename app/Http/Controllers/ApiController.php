@@ -109,10 +109,7 @@ public function autoDailer()
         }
 
         if($request['state'] == True){
-            $autoDailerData->state = $request['state'];
-            $autoDailerData->save();
-        }else{
-            $autoDailerData->state = $request['state'];
+            $autoDailerData->state = "called";
             $autoDailerData->save();
         }
 
