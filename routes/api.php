@@ -29,5 +29,5 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::post('auto-distributer', [ApiController::class, 'autoDistributerUpdateState']);
 });
 
-Route::middleware('auth:sanctum')->get('/auto-dailer-call', [ApiController::class, 'autoDailer']);
+Route::middleware('auth:sanctum')->get('auto-dailer-call', [ApiController::class, 'autoDailer']);
 
