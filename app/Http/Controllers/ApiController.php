@@ -141,7 +141,7 @@ public function autoDailer()
                 'response' => $response->body(),
                 'from' => $from,
                 'to' => $to,
-                'responses' => $response->json()
+                'response' => $response->json()
 
 
             ]);
