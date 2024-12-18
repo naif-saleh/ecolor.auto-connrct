@@ -108,9 +108,15 @@ public function autoDailer()
             ], Response::HTTP_NOT_FOUND);
         }
 
+        if($request['state'] == True){
+            $autoDailerData->state = $request['state'];
+            $autoDailerData->save();
+        }else{
+            $autoDailerData->state = $request['state'];
+            $autoDailerData->save();
+        }
 
-        $autoDailerData->state = $request['state'];
-        $autoDailerData->save();
+
         $report = AutoDailerReport::create(
 
             [
