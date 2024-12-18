@@ -109,7 +109,7 @@ public function autoDailer()
         }
 
 
-        // if($request->input('state') )
+        if($request->input('state') )
         $autoDailerData->state = $request->input('state', 'no answer') === 'answered' ? 'answered' : 'no answer';
 
         $autoDailerData->save();
