@@ -123,7 +123,7 @@ public function autoDailer()
     // Loop through records and initiate calls
     foreach ($autoDailer as $record) {
         $from = $record->extension;
-        $to = $record->mobile; 
+        $to = $record->mobile;
 
         $response = Http::withBasicAuth(
             config('services.three_cx.username'),
@@ -151,7 +151,7 @@ public function autoDailer()
         }
     }
 
-    return response()->json(['message' => 'Auto dialer processed successfully',$response->json()]);
+    return response()->json(['message' => 'Auto dialer processed successfully']);
 }
 
 
