@@ -12,6 +12,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 
 class ApiController extends Controller
 {
@@ -64,6 +65,22 @@ class ApiController extends Controller
     // Get all Auto Dailer..........................................................................................................................
 
 
+// public function autoDailer()
+// {
+//     if (!Auth::check()) {
+//         return response()->json(['error' => 'Unauthorized'], 401);
+//     }
+
+//     // Fetch the latest record for each unique mobile
+//     $autoDailer = AutoDailerData::where('state', 'new')
+//         ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
+//         ->groupBy('mobile', 'provider_name', 'extension') // Group by mobile and related columns
+//         ->get();
+
+//     return response()->json($autoDailer);
+// }
+
+
 public function autoDailer()
 {
     if (!Auth::check()) {
@@ -73,12 +90,44 @@ public function autoDailer()
     // Fetch the latest record for each unique mobile
     $autoDailer = AutoDailerData::where('state', 'new')
         ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
-        ->groupBy('mobile', 'provider_name', 'extension') // Group by mobile and related columns
+        ->groupBy('mobile', 'provider_name', 'extension')
         ->get();
+
+    // Loop through the data and initiate calls using 3CX API
+    foreach ($autoDailer as $dailerData) {
+        $from = $dailerData->extension; // Define your 'from' number (may come from 3CX or your configuration)
+        $to = $dailerData->mobile;
+
+        // Call the 3CX API to initiate the call
+        $this->initiate3CXCall($from, $to);
+    }
 
     return response()->json($autoDailer);
 }
 
+
+
+
+
+public function initiate3CXCall($from, $to)
+{
+    $apiUrl = config('services.three_cx.api_url');
+    $username = config('services.three_cx.username');
+    $password = config('services.three_cx.password');
+
+    $response = Http::withBasicAuth($username, $password)
+        ->post("{$apiUrl}/makecall", [
+            'from' => $from,
+            'to' => $to,
+            'call_type' => 'outgoing', // Assuming outgoing call type, adjust as needed
+        ]);
+
+    if ($response->successful()) {
+        return $response->json();
+    } else {
+        return response()->json(['error' => 'Failed to initiate call'], 500);
+    }
+}
 
 
 

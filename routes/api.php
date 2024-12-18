@@ -28,3 +28,6 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // all Auto Distributer Update State.....................................................................................................
     Route::post('auto-distributer', [ApiController::class, 'autoDistributerUpdateState']);
 });
+
+Route::middleware('auth:sanctum')->get('/auto-dailer-call', [ApiController::class, 'autoDailer']);
+
