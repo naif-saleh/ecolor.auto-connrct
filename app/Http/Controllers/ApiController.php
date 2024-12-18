@@ -122,10 +122,9 @@ public function autoDailer()
 
     // Loop through records and initiate calls
     foreach ($autoDailer as $record) {
-        $from = $record->extension; // The caller's extension
-        $to = $record->mobile; // Destination phone number
+        $from = $record->extension;
+        $to = $record->mobile; 
 
-        // Initiate the call using 3CX API
         $response = Http::withBasicAuth(
             config('services.three_cx.username'),
             config('services.three_cx.password')
@@ -135,13 +134,11 @@ public function autoDailer()
         ]);
 
 
-        // Log the response for debugging
         if ($response->failed()) {
             Log::error("3CX Call Failed", [
                 'response' => $response->body(),
                 'from' => $from,
-                'to' => $to,
-                'response' => $response->json()
+                'to' => $to
 
 
             ]);
