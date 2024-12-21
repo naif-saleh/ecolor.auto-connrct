@@ -156,29 +156,29 @@ class ApiController extends Controller
                 ], $response->status());
             }
 
-            if ($response->failed()) {
-                Log::error("3CX Call Failed", [
-                    'response' => $response->body(),
-                    'from' => $from,
-                    'destination' => $to
+            // if ($response->failed()) {
+            //     Log::error("3CX Call Failed", [
+            //         'response' => $response->body(),
+            //         'from' => $from,
+            //         'destination' => $to
 
 
-                ]);
-            } else {
-                if ($from && $to) {
-                    Log::info("3CX Call Success", [
-                        'from' => $from,
-                        'destination' => $to,
-                        'response' => $response->json(),
-                    ]);
-                } else {
-                    Log::warning("3CX Call Missing Data", [
-                        'from' => $from,
-                        'destination' => $to,
-                    ]);
-                }
+            //     ]);
+            // } else {
+            //     if ($from && $to) {
+            //         Log::info("3CX Call Success", [
+            //             'from' => $from,
+            //             'destination' => $to,
+            //             'response' => $response->json(),
+            //         ]);
+            //     } else {
+            //         Log::warning("3CX Call Missing Data", [
+            //             'from' => $from,
+            //             'destination' => $to,
+            //         ]);
+            //     }
 
-            }
+            // }
 
 
         return response()->json(['message' => 'API calls executed successfully'], 200);
