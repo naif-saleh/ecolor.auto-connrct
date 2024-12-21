@@ -71,19 +71,19 @@ class ApiController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $settings = Setting::first();
-        $currentHour = now()->setTimezone('Asia/Riyadh')->hour;
+        // $settings = Setting::first();
+        // $currentHour = now()->setTimezone('Asia/Riyadh')->hour;
 
-        if (
-            !$settings ||
-            $settings->allow_auto_calling != 1 ||
-            $settings->allow_calling != 1 ||
-            $currentHour < $settings->cfd_start_time ||
-            $currentHour >= $settings->cfd_end_time
-        ) {
+        // if (
+        //     !$settings ||
+        //     $settings->allow_auto_calling != 1 ||
+        //     $settings->allow_calling != 1 ||
+        //     $currentHour < $settings->cfd_start_time ||
+        //     $currentHour >= $settings->cfd_end_time
+        // ) {
 
-            return response()->json(['message' => 'Calls are disabled as per settings'], 200);
-        }
+        //     return response()->json(['message' => 'Calls are disabled as per settings'], 200);
+        // }
 
         $autoDailer = AutoDailerData::where('state', 'new')
             ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
