@@ -95,22 +95,22 @@ class ApiController extends Controller
             $to = $record->mobile;
 
 
-            $authResponse = Http::withBasicAuth(
-                config('services.three_cx.username'),
-                config('services.three_cx.password')
-            )->post(config('services.three_cx.api_url') . '/connect/token');
+            $response = Http::asForm()->post(config('services.three_cx.api_url') . '/connect/token', [
+                'grant_type' => 'client_credentials',
+                'client_id' => config('services.three_cx.client_id'),
+                'client_secret' => config('services.three_cx.client_secret'),
+            ]);
 
-            // Check if the authentication response is successful
-            if ($authResponse->failed()) {
+            if ($response->failed()) {
                 return response()->json([
                     'status' => 'error',
                     'message' => 'Authentication failed',
-                    'details' => $authResponse->body(),
-                ], $authResponse->status());
+                    'details' => $response->body(),
+                ], $response->status());
             }
 
-            // Retrieve the token
-            $token = $authResponse->json()['token'] ?? null;
+            // Extract and return the token
+            $token = $response->json()['access_token'] ?? null;
 
             if (!$token) {
                 return response()->json([
