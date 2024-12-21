@@ -142,7 +142,7 @@ class ApiController extends Controller
             ]);
         } else {
             // Log error or handle failed API call
-            \Log::error('3CX Call Failed', [
+            Log::error('3CX Call Failed', [
                 'mobile' => $to,
                 'response' => $response->body(),
             ]);
@@ -171,7 +171,7 @@ class ApiController extends Controller
                     'response' => $response->json()
                 ]);
             }
-        }
+
 
         return response()->json(['message' => 'API calls executed successfully'], 200);
     }
