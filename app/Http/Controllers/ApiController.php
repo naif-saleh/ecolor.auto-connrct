@@ -95,12 +95,45 @@ class ApiController extends Controller
             $to = $record->mobile;
 
 
-            $response = Http::withBasicAuth(
+            $authResponse = Http::withBasicAuth(
                 config('services.three_cx.username'),
                 config('services.three_cx.password')
-            )->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
+            )->post(config('services.three_cx.api_url') . '/connect/token');
+
+            // Check if the authentication response is successful
+            if ($authResponse->failed()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Authentication failed',
+                    'details' => $authResponse->body(),
+                ], $authResponse->status());
+            }
+
+            // Retrieve the token
+            $token = $authResponse->json()['token'] ?? null;
+
+            if (!$token) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Token not found in the authentication response.',
+                ], 400);
+            }
+
+            // Step 2: Use the Token for Subsequent Requests
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
                 'destination' => $to,
             ]);
+
+            // Check if the call control response is successful
+            if ($response->failed()) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Failed to make the call.',
+                    'details' => $response->body(),
+                ], $response->status());
+            }
 
             if ($response->failed()) {
                 Log::error("3CX Call Failed", [
