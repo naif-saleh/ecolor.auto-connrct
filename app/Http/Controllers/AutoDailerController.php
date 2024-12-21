@@ -59,24 +59,24 @@ class AutoDailerController extends Controller
         $fileRows = array_map('str_getcsv', $fileContent);
 
         // Validate headers
-        $headers = $fileRows[0] ?? [];
-        if ($headers !== ['mobile', 'provider_name', 'extension']) {
-            return redirect()->route('autodailers.index')->with('error', 'Invalid CSV structure. Headers must be: mobile, provider_name, extension.');
-        }
+        // $headers = $fileRows[0] ?? [];
+        // if ($headers !== ['mobile', 'provider_name', 'extension']) {
+        //     return redirect()->route('autodailers.index')->with('error', 'Invalid CSV structure. Headers must be: mobile, provider_name, extension.');
+        // }
 
-        // Validate content rows
-        $isValidStructure = true;
-        foreach (array_slice($fileRows, 1) as $index => $row) {
-            if (count($row) !== 3 || !preg_match('/^\d+$/', $row[0]) || !is_string($row[1]) || !preg_match('/^\d{3,4}$/', $row[2])) {
-                $isValidStructure = false;
-                $errorRow = $index + 2; // Account for header and 0-based index
-                break;
-            }
-        }
+        // // Validate content rows
+        // $isValidStructure = true;
+        // foreach (array_slice($fileRows, 1) as $index => $row) {
+        //     if (count($row) !== 3 || !preg_match('/^\d+$/', $row[0]) || !is_string($row[1]) || !preg_match('/^\d{3,4}$/', $row[2])) {
+        //         $isValidStructure = false;
+        //         $errorRow = $index + 2; // Account for header and 0-based index
+        //         break;
+        //     }
+        // }
 
-        if (!$isValidStructure) {
-            return redirect()->route('autodailers.index')->with('error', "Invalid data in CSV at row {$errorRow}. Ensure the mobile is numeric, provider_name is a string, and extension is a 3-4 digit number.");
-        }
+        // if (!$isValidStructure) {
+        //     return redirect()->route('autodailers.index')->with('error', "Invalid data in CSV at row {$errorRow}. Ensure the mobile is numeric, provider_name is a string, and extension is a 3-4 digit number.");
+        // }
 
         // Create AutoDailer record
         $autoDailer = AutoDailer::create([
