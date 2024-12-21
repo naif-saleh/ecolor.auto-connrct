@@ -3,17 +3,18 @@
 @section('content')
     <div class="container">
         <h1 class="mb-4">Uploaded Auto Dailers Files</h1>
-
         @if (session('error'))
-            <script>
-                Swal.fire({
-                    title: 'Error!',
-                    text: "{{ session('error') }}",
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
-            </script>
-        @endif
+        <script>
+            console.log("Error message:", "{{ session('error') }}"); // Debugging line
+            Swal.fire({
+                title: 'Error!',
+                text: "{{ session('error') }}",
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        </script>
+    @endif
+
         <!-- Form to Upload CSV File -->
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">Auto Dailers</div>
