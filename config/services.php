@@ -38,8 +38,8 @@ return [
 
     'three_cx' => [
     'api_url' => env('THREE_CX_API_URL'),
-    'username' => env('THREE_CX_API_USER'),
-    'password' => env('THREE_CX_API_PASSWORD'),
+    'username' => env('THREE_CX_CLIENT_ID'),
+    'password' => env('THREE_CX_CLIENT_SECRET'),
     ],
 
 ];
