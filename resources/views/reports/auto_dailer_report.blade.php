@@ -2,6 +2,9 @@
 
 @section('content')
     <div class="container report-container">
+        @if (session('success'))
+            <div class="alert alert-success">{{ session('success') }}</div>
+        @endif
         <div class="row">
             <!-- Heading and Stats -->
             <div class="col-12">
@@ -16,19 +19,19 @@
                             <!-- Filter Buttons -->
                             <div>
                                 <a href="{{ url('auto-dailer-report') }}"
-                                   class="btn btn-outline-primary me-2 {{ !$filter ? 'active' : '' }}">
+                                    class="btn btn-outline-primary me-2 {{ !$filter ? 'active' : '' }}">
                                     All
                                 </a>
                                 <a href="{{ url('auto-dailer-report?filter=answered') }}"
-                                   class="btn btn-outline-success me-2 {{ $filter === 'answered' ? 'active' : '' }}">
+                                    class="btn btn-outline-success me-2 {{ $filter === 'answered' ? 'active' : '' }}">
                                     Answered
                                 </a>
                                 <a href="{{ url('auto-dailer-report?filter=no answer') }}"
-                                   class="btn btn-outline-danger {{ $filter === 'no answer' ? 'active' : '' }}">
+                                    class="btn btn-outline-danger {{ $filter === 'no answer' ? 'active' : '' }}">
                                     No Answer
                                 </a>
                                 <a href="{{ url('auto-dailer-report?filter=called') }}"
-                                   class="btn btn-outline-info {{ $filter === 'called' ? 'active' : '' }}">
+                                    class="btn btn-outline-info {{ $filter === 'called' ? 'active' : '' }}">
                                     Called
                                 </a>
                             </div>
@@ -36,7 +39,7 @@
                             <!-- Export Button -->
                             <div>
                                 <a href="{{ route('auto_dailer.report.export', ['filter' => $filter]) }}"
-                                   class="btn btn-success">
+                                    class="btn btn-success">
                                     Export as CSV
                                 </a>
                             </div>
@@ -90,7 +93,7 @@
                                                     <span class="badge bg-info">Called</span>
                                                 @elseif ($report->state === 'False')
                                                     <span class="badge bg-success">Answered</span>
-                                                    @else
+                                                @else
                                                     <span class="badge bg-danger">No Answered</span>
                                                 @endif
                                             </td>
@@ -116,4 +119,3 @@
         </div>
     </div>
 @endsection
-

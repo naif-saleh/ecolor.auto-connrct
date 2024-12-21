@@ -179,7 +179,7 @@ class ApiController extends Controller
             // }
 
 
-        return response()->json(['message' => 'API calls executed successfully'], 200);
+        return redirect('/auto-dailer-report')->with('success', 'Auto Dailer is Calling Now...');
     }
 
 
