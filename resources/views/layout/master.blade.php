@@ -7,6 +7,8 @@
     <title>@yield('title', 'Laravel Application')</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    {{-- Sweet Alert --}}
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
     <style>
         body {
@@ -106,6 +108,8 @@
     </div>
     <!-- Bootstrap JS (optional, for interactivity) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
+    {{-- Sweet Alert --}}
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 
 </html>

@@ -5,10 +5,14 @@
         <h1 class="mb-4">Uploaded Auto Dailers Files</h1>
 
         @if (session('error'))
-            <div class="alert alert-danger">{{ session('error') }}</div>
-        @endif
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
+            <script>
+                Swal.fire({
+                    title: 'Error!',
+                    text: "{{ session('error') }}",
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            </script>
         @endif
         <!-- Form to Upload CSV File -->
         <div class="card mb-4">
@@ -45,7 +49,8 @@
                         <a href="{{ route('autodailers.edit', $file->id) }}" class="btn btn-warning btn-sm">Edit</a>
 
                         <!-- Delete Form -->
-                        <form action="{{ route('autodailers.destroy', $file->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete()">
+                        <form action="{{ route('autodailers.destroy', $file->id) }}" method="POST" class="d-inline"
+                            onsubmit="return confirmDelete()">
                             @csrf @method('DELETE')
                             <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                         </form>
@@ -55,7 +60,7 @@
                     </div>
                 </div>
             @endforeach
-            @else
+        @else
             <div class="alert alert-warning">No Files Uploaded. Please Upload File.</div>
         @endif
 
