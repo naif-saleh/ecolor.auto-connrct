@@ -98,14 +98,14 @@ class AutoDailerController extends Controller
         $autoDailer->update(['file_path' => $filePath]);
 
         // Save valid rows to database
-        foreach (array_slice($fileRows, 1) as $row) {
-            AutoDailerData::create([
-                'auto_dailer_id' => $autoDailer->id,
-                'mobile' => $row[0],
-                'provider_name' => $row[1],
-                'extension' => $row[2],
-            ]);
-        }
+        // foreach (array_slice($fileRows, 1) as $row) {
+        //     AutoDailerData::create([
+        //         'auto_dailer_id' => $autoDailer->id,
+        //         'mobile' => $row[0],
+        //         'provider_name' => $row[1],
+        //         'extension' => $row[2],
+        //     ]);
+        // }
 
         // if (!$isValidStructure) {
         //     Storage::disk('public')->delete($filePath);
