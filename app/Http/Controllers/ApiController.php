@@ -129,7 +129,6 @@ class ApiController extends Controller
         $autoDailerData = AutoDailerData::find($record->id);
 
         if ($response->successful()) {
-            // Update the state and create a report
             $autoDailerData->state = "called";
             $autoDailerData->save();
 
@@ -141,7 +140,6 @@ class ApiController extends Controller
                 'called_at' => now(),
             ]);
         } else {
-            // Log error or handle failed API call
             Log::error('3CX Call Failed', [
                 'mobile' => $to,
                 'response' => $response->body(),
@@ -188,74 +186,25 @@ class ApiController extends Controller
 
 
 
-    // public function autoDailer()
+    // public function initiate3CXCall($from, $to)
     // {
-    //     // Check if the user is authenticated
-    //     if (!Auth::check()) {
-    //         return response()->json(['error' => 'Unauthorized'], 401);
-    //     }
+    //     $apiUrl = config('services.three_cx.api_url');
+    //     $username = config('services.three_cx.username');
+    //     $password = config('services.three_cx.password');
 
-    //     // Fetch the latest 'new' record for each unique mobile
-    //     $autoDailer = AutoDailerData::where('state', 'new')
-    //         ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
-    //         ->groupBy('mobile', 'provider_name', 'extension')
-    //         ->get();
-
-    //     // Loop through records and initiate calls
-    //     foreach ($autoDailer as $record) {
-    //         $from = $record->extension;
-    //         $to = $record->mobile;
-
-
-    //         $response = Http::withBasicAuth(
-    //             config('services.three_cx.username'),
-    //             config('services.three_cx.password')
-    //         )->post(config('services.three_cx.api_url') . '/makecall', [
+    //     $response = Http::withBasicAuth($username, $password)
+    //         ->post("{$apiUrl}/makecall", [
     //             'from' => $from,
     //             'to' => $to,
+    //             'call_type' => 'outgoing', // Assuming outgoing call type, adjust as needed
     //         ]);
 
-
-    //         if ($response->failed()) {
-    //             Log::error("3CX Call Failed", [
-    //                 'response' => $response->body(),
-    //                 'from' => $from,
-    //                 'to' => $to
-
-
-    //             ]);
-    //         } else {
-    //             Log::info("3CX Call Success", [
-    //                 'from' => $from,
-    //                 'to' => $to,
-    //                 'response' => $response->json()
-    //             ]);
-    //         }
+    //     if ($response->successful()) {
+    //         return $response->json();
+    //     } else {
+    //         return response()->json(['error' => 'Failed to initiate call'], 500);
     //     }
-
-    //     return response()->json(['message' => 'Auto dialer processed successfully']);
     // }
-
-
-    public function initiate3CXCall($from, $to)
-    {
-        $apiUrl = config('services.three_cx.api_url');
-        $username = config('services.three_cx.username');
-        $password = config('services.three_cx.password');
-
-        $response = Http::withBasicAuth($username, $password)
-            ->post("{$apiUrl}/makecall", [
-                'from' => $from,
-                'to' => $to,
-                'call_type' => 'outgoing', // Assuming outgoing call type, adjust as needed
-            ]);
-
-        if ($response->successful()) {
-            return $response->json();
-        } else {
-            return response()->json(['error' => 'Failed to initiate call'], 500);
-        }
-    }
 
 
 
