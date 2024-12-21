@@ -137,7 +137,7 @@ class ApiController extends Controller
                 'provider' => $autoDailerData->provider_name,
                 'extension' => $autoDailerData->extension,
                 'state' => $autoDailerData->state,
-                'called_at' => now(),
+                'called_at' => now()->addHours(2),
             ]);
         } else {
             Log::error('3CX Call Failed', [
@@ -181,30 +181,6 @@ class ApiController extends Controller
 
         return redirect('/auto-dailer-report')->with('success', 'Auto Dailer is Calling Now...');
     }
-
-
-
-
-
-    // public function initiate3CXCall($from, $to)
-    // {
-    //     $apiUrl = config('services.three_cx.api_url');
-    //     $username = config('services.three_cx.username');
-    //     $password = config('services.three_cx.password');
-
-    //     $response = Http::withBasicAuth($username, $password)
-    //         ->post("{$apiUrl}/makecall", [
-    //             'from' => $from,
-    //             'to' => $to,
-    //             'call_type' => 'outgoing', // Assuming outgoing call type, adjust as needed
-    //         ]);
-
-    //     if ($response->successful()) {
-    //         return $response->json();
-    //     } else {
-    //         return response()->json(['error' => 'Failed to initiate call'], 500);
-    //     }
-    // }
 
 
 
