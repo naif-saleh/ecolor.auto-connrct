@@ -42,6 +42,7 @@ class AutoDailerController extends Controller
     // Store Auto Dailer file & data............................................................................................................
     public function store(Request $request)
     {
+
         $request->validate([
             'file_name' => 'required|string|max:255',
             'file' => 'required|mimes:csv,txt',
@@ -49,43 +50,17 @@ class AutoDailerController extends Controller
 
         $file = $request->file('file');
         $randomFileName = Str::random(40) . '.' . $file->getClientOriginalExtension();
-
-        // Check if the file is empty
         if ($file->getSize() == 0) {
             return redirect()->route('autodailers.index')->with('error', 'The uploaded file is empty.');
         }
 
-        // $fileContent = file($file->getRealPath());
-        // $fileRows = array_map('str_getcsv', $fileContent);
-
-        // Validate headers
-        // $headers = $fileRows[0] ?? [];
-        // if ($headers !== ['mobile', 'provider_name', 'extension']) {
-        //     return redirect()->route('autodailers.index')->with('error', 'Invalid CSV structure. Headers must be: mobile, provider_name, extension.');
-        // }
-
-        // // Validate content rows
-        // $isValidStructure = true;
-        // foreach (array_slice($fileRows, 1) as $index => $row) {
-        //     if (count($row) !== 3 || !preg_match('/^\d+$/', $row[0]) || !is_string($row[1]) || !preg_match('/^\d{3,4}$/', $row[2])) {
-        //         $isValidStructure = false;
-        //         $errorRow = $index + 2; // Account for header and 0-based index
-        //         break;
-        //     }
-        // }
-
-        // if (!$isValidStructure) {
-        //     return redirect()->route('autodailers.index')->with('error', "Invalid data in CSV at row {$errorRow}. Ensure the mobile is numeric, provider_name is a string, and extension is a 3-4 digit number.");
-        // }
-
-        // Create AutoDailer record
         $autoDailer = AutoDailer::create([
             'file_name' => $request->input('file_name'),
             'uploaded_by' => Auth::id(),
         ]);
 
-        // Log activity
-        ActivityLog::create([
+         // Active Log Report...............................
+         ActivityLog::create([
             'user_id' => Auth::id(),
             'operation' => 'create',
             'file_type' => 'AutoDailer',
@@ -93,24 +68,27 @@ class AutoDailerController extends Controller
             'operation_time' => now(),
         ]);
 
-        // Store file and update file path
         $filePath = $file->storeAs('csv_files', $randomFileName, 'public');
         $autoDailer->update(['file_path' => $filePath]);
+        $fileContent = file($file->getRealPath());
+        $isValidStructure = true;
 
-        // Save valid rows to database
-        // foreach (array_slice($fileRows, 1) as $row) {
-        //     AutoDailerData::create([
-        //         'auto_dailer_id' => $autoDailer->id,
-        //         'mobile' => $row[0],
-        //         'provider_name' => $row[1],
-        //         'extension' => $row[2],
-        //     ]);
-        // }
+        foreach ($fileContent as $line) {
+            $data = str_getcsv($line);
+            if (count($data) !== 3) {
+                $isValidStructure = false;
+                break;
+            }
 
-        // if (!$isValidStructure) {
-        //     Storage::disk('public')->delete($filePath);
-        //     return redirect()->route('autodailers.index')->with('error', 'File structure is not correct. Please ensure each row has 3 columns. The File is Empty, please delete it and upload file in correct structure');
-        // }
+            AutoDailerData::create([
+                'auto_dailer_id' => $autoDailer->id,
+                'mobile' => $data[0],
+                'provider_name' => $data[1],
+                'extension' => $data[2],
+            ]);
+
+
+        }
 
         return redirect('/auto-dailer-call');
 
