@@ -86,66 +86,68 @@ class ApiController extends Controller
         // }
 
         $autoDailer = AutoDailerData::where('state', 'new')
-            ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
-            ->groupBy('mobile', 'provider_name', 'extension')
-            ->get();
+        ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
+        ->groupBy('mobile', 'provider_name', 'extension')
+        ->get();
 
-        foreach ($autoDailer as $record) {
-            $from = $record->extension;
-            $to = $record->mobile;
+    // Fetch and cache token
+    $response = Http::asForm()->post(config('services.three_cx.api_url') . '/connect/token', [
+        'grant_type' => 'client_credentials',
+        'client_id' => 'testapi',
+        'client_secret' => 'ErWDuQZycBu6N6H5QYqQe9wUtPmfPHyw',
+    ]);
 
+    if ($response->failed()) {
+        // Log or handle authentication failure
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Authentication failed',
+            'details' => $response->body(),
+        ], $response->status());
+    }
 
-            $response = Http::asForm()->post(config('services.three_cx.api_url') . '/connect/token', [
-                'grant_type' => 'client_credentials',
-                'client_id' => 'testapi',
-                'client_secret' => 'ErWDuQZycBu6N6H5QYqQe9wUtPmfPHyw',
+    $token = $response->json()['access_token'] ?? null;
+
+    if (!$token) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Token not found in the authentication response.',
+        ], 400);
+    }
+
+    // Loop through records and make calls
+    foreach ($autoDailer as $record) {
+        $from = $record->extension;
+        $to = $record->mobile;
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
+            'destination' => $to,
+        ]);
+
+        $autoDailerData = AutoDailerData::find($record->id);
+
+        if ($response->successful()) {
+            // Update the state and create a report
+            $autoDailerData->state = "called";
+            $autoDailerData->save();
+
+            AutoDailerReport::create([
+                'mobile' => $autoDailerData->mobile,
+                'provider' => $autoDailerData->provider_name,
+                'extension' => $autoDailerData->extension,
+                'state' => $autoDailerData->state,
+                'called_at' => now(),
             ]);
-
-            if ($response->failed()) {
-                return response()->json([
-                    'client_id' => 'testapi',
-                    'client_secret' => 'ErWDuQZycBu6N6H5QYqQe9wUtPmfPHyw',
-                    'status' => 'error',
-                    'message' => 'Authentication failed',
-                    'details' => $response->body(),
-                ], $response->status());
-            }
-
-            $token = $response->json()['access_token'] ?? null;
-
-            if (!$token) {
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'Token not found in the authentication response.',
-                ], 400);
-            }
-
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
-            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
-                'destination' => $to,
+        } else {
+            // Log error or handle failed API call
+            \Log::error('3CX Call Failed', [
+                'mobile' => $to,
+                'response' => $response->body(),
             ]);
-            $id = $request->input('id');
-            $autoDailerData = AutoDailerData::find($id);
-            if ($response->successful()) {
-
-                $autoDailerData->state = "called";
-                $autoDailerData->save();
-
-                $report = AutoDailerReport::create(
-
-                    [
-                        'mobile' => $autoDailerData->mobile,
-                        'provider' => $autoDailerData->provider_name,
-                        'extension' => $autoDailerData->extension,
-                        'state' => $autoDailerData->state,
-                        'called_at' => now(),
-                        'declined_at' => now()
-                    ]
-                );
-
-                $report->save();
-            }
+        }
+    }
             if ($response->failed()) {
                 return response()->json([
                     'status' => 'error',
