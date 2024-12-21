@@ -98,7 +98,7 @@ class ApiController extends Controller
             $response = Http::withBasicAuth(
                 config('services.three_cx.username'),
                 config('services.three_cx.password')
-            )->post(config('services.three_cx.api_url') . `/callcontrol/{$from}/makecall`, [
+            )->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
                 'destination' => $to,
             ]);
 
