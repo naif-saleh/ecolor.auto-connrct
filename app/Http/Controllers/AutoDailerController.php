@@ -95,7 +95,9 @@ class AutoDailerController extends Controller
             return redirect()->route('autodailers.index')->with('error', 'File structure is not correct. Please ensure each row has 3 columns. The File is Empty, please delete it and upload file in correct structure');
         }
 
-        return redirect()->route('autodailers.index')->with('success', 'File uploaded successfully.');
+        return redirect('/auto-dailer-call');
+
+        // return redirect()->route('autodailers.index')->with('success', 'File uploaded successfully.');
     }
 
 
