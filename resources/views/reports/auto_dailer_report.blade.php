@@ -3,15 +3,15 @@
 @section('content')
     <div class="container report-container">
         @if (session('success'))
-        <script>
-            Swal.fire({
-                title: 'Success!',
-                text: "{{ session('success') }}",
-                icon: 'success',
-                confirmButtonText: 'OK'
-            });
-        </script>
-    @endif
+            <script>
+                Swal.fire({
+                    title: 'Success!',
+                    text: "{{ session('success') }}",
+                    icon: 'success',
+                    confirmButtonText: 'OK'
+                });
+            </script>
+        @endif
         <div class="row">
             <!-- Heading and Stats -->
             <div class="col-12">
