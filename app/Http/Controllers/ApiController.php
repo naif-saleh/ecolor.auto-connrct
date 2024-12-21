@@ -165,11 +165,19 @@ class ApiController extends Controller
 
                 ]);
             } else {
-                Log::info("3CX Call Success", [
-                    'from' => $from,
-                    'destination' => $to,
-                    'response' => $response->json()
-                ]);
+                if ($from && $to) {
+                    Log::info("3CX Call Success", [
+                        'from' => $from,
+                        'destination' => $to,
+                        'response' => $response->json(),
+                    ]);
+                } else {
+                    Log::warning("3CX Call Missing Data", [
+                        'from' => $from,
+                        'destination' => $to,
+                    ]);
+                }
+
             }
 
 
