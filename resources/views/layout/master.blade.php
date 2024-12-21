@@ -123,17 +123,15 @@
     @endif
 
     @if (session('error'))
-        <script>
-            window.onload = function() {
-                Swal.fire({
-                    title: 'Wrong!',
-                    text: "{{ session('error') }}",
-                    icon: 'wrong',
-                    confirmButtonText: 'OK'
-                });
-            };
-        </script>
-    @endif
+    <script>
+        Swal.fire({
+            title: 'Error!',
+            text: "{{ session('error') }}",
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    </script>
+@endif
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
