@@ -104,7 +104,7 @@
                                                     <span class="badge bg-danger">No Answered</span>
                                                 @endif
                                             </td>
-                                            <td>{{ $report->called_at }}</td>
+                                            <td>{{ $report->addhour(2)->called_at }}</td>
                                             {{-- <td>{{ $report->declined_at }}</td> --}}
                                         </tr>
                                     @empty
