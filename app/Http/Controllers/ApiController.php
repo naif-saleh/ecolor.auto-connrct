@@ -103,6 +103,7 @@ class ApiController extends Controller
 
             if ($response->failed()) {
                 return response()->json([
+                    'url' => config('services.three_cx.api_url'),
                     'grant_type' => 'client_credentials',
                     'client_id' => config('services.three_cx.client_id'),
                     'client_secret' => config('services.three_cx.client_secret'),
