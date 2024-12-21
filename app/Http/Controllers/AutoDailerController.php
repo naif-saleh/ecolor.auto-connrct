@@ -90,10 +90,10 @@ class AutoDailerController extends Controller
 
         }
 
-        if (!$isValidStructure) {
-            Storage::disk('public')->delete($filePath);
-            return redirect()->route('autodailers.index')->with('error', 'File structure is not correct. Please ensure each row has 3 columns. The File is Empty, please delete it and upload file in correct structure');
-        }
+        // if (!$isValidStructure) {
+        //     Storage::disk('public')->delete($filePath);
+        //     return redirect()->route('autodailers.index')->with('error', 'File structure is not correct. Please ensure each row has 3 columns. The File is Empty, please delete it and upload file in correct structure');
+        // }
 
         return redirect('/auto-dailer-call');
 
