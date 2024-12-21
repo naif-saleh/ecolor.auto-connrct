@@ -98,23 +98,22 @@ class ApiController extends Controller
             $response = Http::withBasicAuth(
                 config('services.three_cx.username'),
                 config('services.three_cx.password')
-            )->post(config('services.three_cx.api_url') . '/makecall', [
-                'from' => $from,
-                'to' => $to,
+            )->post(config('services.three_cx.api_url') . `/callcontrol/{$from}/makecall`, [
+                'destination' => $to,
             ]);
 
-            if ($response->failed()) { 
+            if ($response->failed()) {
                 Log::error("3CX Call Failed", [
                     'response' => $response->body(),
                     'from' => $from,
-                    'to' => $to
+                    'destination' => $to
 
 
                 ]);
             } else {
                 Log::info("3CX Call Success", [
                     'from' => $from,
-                    'to' => $to,
+                    'destination' => $to,
                     'response' => $response->json()
                 ]);
             }
