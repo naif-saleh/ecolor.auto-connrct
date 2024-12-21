@@ -103,6 +103,8 @@ class ApiController extends Controller
 
             if ($response->failed()) {
                 return response()->json([
+                    'client_id' => 'testapi',
+                    'client_secret' => '1Y1PCtBfuS3BLJ2X4QCfhN1J2TBavZyd',
                     'status' => 'error',
                     'message' => 'Authentication failed',
                     'details' => $response->body(),
@@ -127,8 +129,8 @@ class ApiController extends Controller
             $autoDailerData = AutoDailerData::find($id);
             if ($response->successful()) {
 
-                    $autoDailerData->state = "called";
-                    $autoDailerData->save();
+                $autoDailerData->state = "called";
+                $autoDailerData->save();
 
                 $report = AutoDailerReport::create(
 
