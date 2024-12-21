@@ -94,7 +94,7 @@ class ApiController extends Controller
     $response = Http::asForm()->post(config('services.three_cx.api_url') . '/connect/token', [
         'grant_type' => 'client_credentials',
         'client_id' => 'testapi',
-        'client_secret' => 'ErWDuQZycBu6N6H5QYqQe9wUtPmfPHyw',
+        'client_secret' => '95ULDtdTRRJhJBZCp94K6Gd1BKRuaP1k',
     ]);
 
     if ($response->failed()) {
