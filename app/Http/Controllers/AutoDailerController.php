@@ -51,7 +51,7 @@ class AutoDailerController extends Controller
         $file = $request->file('file');
         $randomFileName = Str::random(40) . '.' . $file->getClientOriginalExtension();
         if ($file->getSize() == 0) {
-            return redirect()->route('autodailers.index')->with('error', 'The uploaded file is empty.');
+            return redirect('/autodailers')->with('error', 'The uploaded file is empty.');
         }
 
         $autoDailer = AutoDailer::create([
