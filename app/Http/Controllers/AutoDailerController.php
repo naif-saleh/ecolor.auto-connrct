@@ -55,8 +55,8 @@ class AutoDailerController extends Controller
             return redirect()->route('autodailers.index')->with('error', 'The uploaded file is empty.');
         }
 
-        $fileContent = file($file->getRealPath());
-        $fileRows = array_map('str_getcsv', $fileContent);
+        // $fileContent = file($file->getRealPath());
+        // $fileRows = array_map('str_getcsv', $fileContent);
 
         // Validate headers
         // $headers = $fileRows[0] ?? [];
