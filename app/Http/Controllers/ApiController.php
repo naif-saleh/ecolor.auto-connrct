@@ -64,7 +64,7 @@ class ApiController extends Controller
 
     // Get all Auto Dailer..........................................................................................................................
 
-    public function autoDailer()
+    public function autoDailer(Request $request)
     {
 
         if (!Auth::check()) {
@@ -103,17 +103,12 @@ class ApiController extends Controller
 
             if ($response->failed()) {
                 return response()->json([
-                    'url' => config('services.three_cx.api_url'),
-                    'grant_type' => 'client_credentials',
-                    'client_id' => 'testapi',
-                    'client_secret' => '1Y1PCtBfuS3BLJ2X4QCfhN1J2TBavZyd',
                     'status' => 'error',
                     'message' => 'Authentication failed',
                     'details' => $response->body(),
                 ], $response->status());
             }
 
-            // Extract and return the token
             $token = $response->json()['access_token'] ?? null;
 
             if (!$token) {
@@ -123,14 +118,32 @@ class ApiController extends Controller
                 ], 400);
             }
 
-            // Step 2: Use the Token for Subsequent Requests
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
             ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
                 'destination' => $to,
             ]);
+            $id = $request->input('id');
+            $autoDailerData = AutoDailerData::find($id);
+            if ($response->successful()) {
 
-            // Check if the call control response is successful
+                    $autoDailerData->state = "called";
+                    $autoDailerData->save();
+
+                $report = AutoDailerReport::create(
+
+                    [
+                        'mobile' => $autoDailerData->mobile,
+                        'provider' => $autoDailerData->provider_name,
+                        'extension' => $autoDailerData->extension,
+                        'state' => $autoDailerData->state,
+                        'called_at' => now(),
+                        'declined_at' => now()
+                    ]
+                );
+
+                $report->save();
+            }
             if ($response->failed()) {
                 return response()->json([
                     'status' => 'error',
