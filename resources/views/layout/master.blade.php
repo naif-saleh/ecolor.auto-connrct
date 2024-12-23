@@ -5,10 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <title>@yield('title', 'Laravel Application')</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
     {{-- Sweet Alert --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
@@ -41,8 +40,9 @@
                 aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            @if (Auth::check() && (Auth::user()->isSuperUser() || Auth::user()->isAdmin()))
             <div class="collapse navbar-collapse" id="navbarNav">
-                @if (Auth::check() && (Auth::user()->isSuperUser() || Auth::user()->isAdmin()))
+
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0"> <!-- Left-aligned links -->
                         <li class="nav-item">
                             <a class="nav-link active" aria-current="page" href="/">Home</a>
@@ -78,22 +78,6 @@
                                 </li>
                             </ul>
                         </li>
-                    @elseif (Auth::check() && Auth::user()->isUser())
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('users.activity.report') }}">User
-                                        Activity</a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('auto_dailer.report') }}">Auto Dailer</a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('auto_distributer.report') }}">Auto
-                                        Distributer</a>
-                                </li>
-                            </ul>
-                        
                 @endif
 
                 @if (Auth::check() && Auth::user()->isSuperUser())
@@ -131,7 +115,7 @@
     </div>
 
 
-    @yield('scripts')
+@yield('scripts')
 
 
     {{-- Java Script --}}
@@ -213,6 +197,8 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+
     {{-- Sweet Alert --}}
     @if (session('success'))
         <script>
