@@ -71,9 +71,10 @@ class ApiController extends Controller
             return redirect('/settings')->with('wrong','Calls are disabled as per settings');
         }
 
-        $autoDistributer = AutoDirtibuterData::where('state', '!=', 'answered')
-            ->select('mobile', 'id', 'provider_name', 'extension')
-            ->get();
+        $autoDistributer = AutoDirtibuterData::where('state', 'new')
+        ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
+        ->groupBy('mobile', 'provider_name', 'extension')
+        ->get();
 
 
             $count = AutoDirtibuterData::getQuery()->count();
@@ -143,6 +144,10 @@ class ApiController extends Controller
                 'message' => 'Failed to make the call.',
                 'details' => $response->body(),
             ], $response->status());
+
+
+            $delay = 20;
+            sleep($delay);
         }
 
 
