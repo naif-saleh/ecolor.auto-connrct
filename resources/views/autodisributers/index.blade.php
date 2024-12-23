@@ -30,6 +30,7 @@
                         <input type="file" name="file" class="form-control-file" required>
                     </div>
                     <button type="submit" class="btn btn-success mt-4">Upload</button>
+                    <a href="{{route('auto_distributer.call.click')}}" class="btn btn-dark mt-4">Call Auto Distributer</a>
                 </form>
             </div>
         </div>

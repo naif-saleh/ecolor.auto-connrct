@@ -1,22 +1,36 @@
 @extends('layout.master')
 
 @section('content')
+
+{{-- @if (session('wrong'))
+<script>
+    window.onload = function() {
+        Swal.fire({
+            title: 'Success!',
+            text: "{{ session('wrong') }}",
+            icon: 'error',
+            confirmButtonText: 'OK'
+        });
+    };
+</script>
+@endif --}}
     <div class="container">
         <h1 class="mb-4">Uploaded Auto Dailers Files</h1>
-        @if (session('success'))
-        <script>
-            Swal.fire({
-                title: 'Error!',
-                text: "{{ session('success') }}",
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-        </script>
-    @endif
+
 
         <!-- Form to Upload CSV File -->
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">Auto Dailers</div>
+            @if (session('wrong'))
+            <script>
+                Swal.fire({
+                    title: 'Error!',
+                    text: "{{ session('wrong') }}",
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            </script>
+        @endif
             <div class="card-body">
                 <form action="{{ route('autodailers.store') }}" method="POST" enctype="multipart/form-data">
                     @csrf
@@ -29,6 +43,7 @@
                         <input type="file" name="file" class="form-control-file" required>
                     </div>
                     <button type="submit" class="btn btn-success mt-4">Upload</button>
+                    <a href="{{route('auto_dailer.call.click')}}" class="btn btn-dark mt-4">Call Auto Dailer</a>
                 </form>
             </div>
         </div>

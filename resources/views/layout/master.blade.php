@@ -202,16 +202,18 @@
         </script>
     @endif
 
-    {{--  @if (session('error'))
-    <script>
-        Swal.fire({
-            title: 'Error!',
-            text: "{{ session('error') }}",
-            icon: 'error',
-            confirmButtonText: 'OK'
-        });
-    </script>
-@endif --}}
+    @if (session('wrong'))
+        <script>
+            window.onload = function() {
+                Swal.fire({
+                    title: 'Wrong!',
+                    text: "{{ session('wrong') }}",
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            };
+        </script>
+    @endif
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
