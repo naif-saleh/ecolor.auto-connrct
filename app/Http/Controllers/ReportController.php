@@ -117,27 +117,50 @@ class ReportController extends Controller
     public function AutoDistributerReports(Request $request)
     {
 
-        $filter = $request->query('filter');
+        $filter = $request->input('filter');
+        $extensionFrom = $request->input('extension_from');
+        $extensionTo = $request->input('extension_to');
+        $provider = $request->input('provider');
+
         $query = AutoDistributerReport::query();
 
-        if (in_array($filter, ['answered', 'no answer', 'called', 'declined'])) {
+        if ($filter) {
             $query->where('state', $filter);
         }
-        $reports = $query->paginate(1000);
+
+        if ($extensionFrom) {
+            $query->where('extension', '>=', $extensionFrom);
+        }
+
+        if ($extensionTo) {
+            $query->where('extension', '<=', $extensionTo);
+        }
+
+        if ($provider) {
+            $query->where('provider', $provider);
+        }
+
+        $providers = AutoDistributerReport::select('provider')->distinct()->pluck('provider');
+
+        $reports = $query->paginate(10);
 
         $answeredCount = AutoDistributerReport::where('state', 'answered')->count();
         $noAnswerCount = AutoDistributerReport::where('state', 'no answer')->count();
         $calledCount = AutoDistributerReport::where('state', 'called')->count();
         $declinedCount = AutoDistributerReport::where('state', 'declined')->count();
 
-        return view('reports.auto_distributer_report', [
-            'reports' => $reports,
-            'answeredCount' => $answeredCount,
-            'noAnswerCount' => $noAnswerCount,
-            'calledCount' => $calledCount,
-            'declinedCount' => $declinedCount,
-            'filter' => $filter,
-        ]);
+        return view('reports.auto_dailer_report', compact(
+            'reports',
+            'filter',
+            'extensionFrom',
+            'extensionTo',
+            'provider',
+            'providers',
+            'answeredCount',
+            'noAnswerCount',
+            'calledCount',
+            'declinedCount'
+        ));
     }
 
     // Export Auto Distributer AS CSV File...........................................................................................................
