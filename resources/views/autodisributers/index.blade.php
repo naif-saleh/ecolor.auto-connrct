@@ -5,15 +5,15 @@
         <h1 class="mb-4">Uploaded Auto Distributers Files</h1>
 
         @if (session('error'))
-        <script>
-            Swal.fire({
-                title: 'Error!',
-                text: "{{ session('error') }}",
-                icon: 'error',
-                confirmButtonText: 'OK'
-            });
-        </script>
-    @endif
+            <script>
+                Swal.fire({
+                    title: 'Error!',
+                    text: "{{ session('error') }}",
+                    icon: 'error',
+                    confirmButtonText: 'OK'
+                });
+            </script>
+        @endif
 
         <!-- Form to Upload CSV File -->
         <div class="card mb-4">
@@ -30,8 +30,16 @@
                         <input type="file" name="file" class="form-control-file" required>
                     </div>
                     <button type="submit" class="btn btn-success mt-4">Upload</button>
-                    <a href="{{route('auto_distributer.call.click')}}" class="btn btn-dark mt-4">Call Auto Distributer</a>
+                    <a href="{{ route('auto_distributer.call.click') }}" class="btn btn-dark mt-4">Call Auto Distributer</a>
                 </form>
+                @if (Auth::check() && Auth::user()->isSuperUser())
+                    <form action="{{ route('auto-distributers.deleteAll') }}" method="POST" class="delete-form text-end">
+                        @csrf
+                        @method('DELETE')
+                        <button type="button" class="btn btn-danger" onclick="confirmDelete(this)">Delete All
+                            Files</button>
+                    </form>
+                @endif
             </div>
         </div>
 
@@ -51,18 +59,21 @@
                         <a href="{{ route('autodistributers.edit', $file->id) }}" class="btn btn-warning btn-sm">Edit</a>
 
                         <!-- Delete Form -->
-                        <form action="{{ route('autodistributers.destroy', $file->id) }}" method="POST" class="d-inline delete-form">
+                        <form action="{{ route('autodistributers.destroy', $file->id) }}" method="POST"
+                            class="d-inline delete-form">
                             @csrf
                             @method('DELETE')
-                            <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete(this)">Delete</button>
+                            <button type="button" class="btn btn-danger btn-sm"
+                                onclick="confirmDelete(this)">Delete</button>
                         </form>
 
                         <!-- Download Button -->
-                        <a href="{{ route('auto_distributers.download', $file->id) }}" class="btn btn-success btn-sm">Download</a>
+                        <a href="{{ route('auto_distributers.download', $file->id) }}"
+                            class="btn btn-success btn-sm">Download</a>
                     </div>
                 </div>
             @endforeach
-            @else
+        @else
             <div class="alert alert-warning">No Files Uploaded. Please Upload File.</div>
         @endif
 

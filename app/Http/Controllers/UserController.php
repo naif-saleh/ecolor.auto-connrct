@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-
+use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Validator;
 class UserController extends Controller
 {
 
@@ -26,6 +27,28 @@ class UserController extends Controller
         return view('users.index', compact('users'));
     }
 
+    // Reset Password......................................................................................................................................
+    public function resetPassword(Request $request)
+    {
+        // Validate the new password
+        $validator = Validator::make($request->all(), [
+            'new_password' => 'required|min:8|confirmed',
+        ]);
+
+        // if ($validator->fails()) {
+        //     return response()->json(['success' => false, 'message' => 'Password validation failed.']);
+        // }
+
+        // Find the user by the ID
+        $user = User::findOrFail($request->user_id);
+
+        // Update the user's password
+        $user->password = Hash::make($request->new_password);
+        $user->save();
+
+        return response()->json(['success' => true, 'message' => 'Password reset successfully.']);
+    }
+
     // Show the form to create a new user
     public function create()
     {
@@ -42,7 +65,7 @@ class UserController extends Controller
             'role' => 'required',
         ]);
 
-         
+
         // Create the user
         User::create([
             'name' => $request->input('name'),

@@ -157,6 +157,33 @@ class AutoDailerController extends Controller
         ]);
         return back()->with('success', 'File deleted.');
     }
+
+    // Delete All Files..............................................................................................................................
+    public function deleteAllFiles()
+{
+    $autoDialers = AutoDailer::all();
+
+    foreach ($autoDialers as $autoDialer) {
+        if ($autoDialer->file_path && Storage::disk('public')->exists($autoDialer->file_path)) {
+            Storage::disk('public')->delete($autoDialer->file_path);
+        }
+
+        AutoDailerData::where('auto_dailer_id', $autoDialer->id)->delete();
+
+        $autoDialer->delete();
+    }
+
+    ActivityLog::create([
+        'user_id' => Auth::id(),
+        'operation' => 'delete',
+        'file_type' => 'AutoDailer',
+        'file_name' => 'All Files',
+        'operation_time' => now(),
+    ]);
+
+    return redirect()->route('autodailers.index')->with('success', 'All files and data have been deleted successfully.');
+}
+
     // Download File.................................................................................................................................
     public function download($id)
     {

@@ -52,6 +52,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
+    Route::post('users/reset-password', [UserController::class, 'resetPassword'])->name('users.reset.password');
     Route::get('users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('users', [UserController::class, 'store'])->name('users.store');
 
@@ -90,9 +91,11 @@ Route::middleware(['auth'])->group(function () {
     Route::post('/settings', [SettingController::class, 'saveSettings'])->name('settings.save');
     // AutoDailers............................................................................................................................
     Route::resource('autodailers', AutoDailerController::class);
+    Route::delete('/auto-dailers/delete-all', [AutoDailerController::class, 'deleteAllFiles'])->name('auto-dailers.deleteAll');
     Route::get('/auto_dailer/{id}/download', [AutoDailerController::class, 'download'])->name('auto_dailer.download');
     // AutoDistributers............................................................................................................................
     Route::resource('autodistributers', AutoDirtibuterController::class);
+    Route::delete('/auto-distributers/delete-all', [AutoDirtibuterController::class, 'deleteAllFiles'])->name('auto-distributers.deleteAll');
     Route::get('/auto_distributers/{id}/download', [AutoDirtibuterController::class, 'download'])->name('auto_distributers.download');
     // Providers............................................................................................................................
     Route::resource('providers', ProviderController::class);

@@ -152,6 +152,32 @@ class AutoDirtibuterController extends Controller
         return back()->with('success', 'File deleted.');
     }
 
+      // Delete All Files..............................................................................................................................
+      public function deleteAllFiles()
+      {
+          $autoDirtibuters = AutoDirtibuter::all();
+
+          foreach ($autoDirtibuters as $autoDirtibuter) {
+              if ($autoDirtibuter->file_path && Storage::disk('public')->exists($autoDirtibuter->file_path)) {
+                  Storage::disk('public')->delete($autoDirtibuter->file_path);
+              }
+
+              AutoDirtibuterData::where('auto_dirtibuter_id', $autoDirtibuter->id)->delete();
+
+              $autoDirtibuter->delete();
+          }
+
+          ActivityLog::create([
+              'user_id' => Auth::id(),
+              'operation' => 'delete',
+              'file_type' => 'AutoDirtibuter',
+              'file_name' => 'All Files',
+              'operation_time' => now(),
+          ]);
+
+          return redirect()->route('autodistributers.index')->with('success', 'All files and data have been deleted successfully.');
+      }
+
     // Download File.................................................................................................................................
     public function download($id)
     {
