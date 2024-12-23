@@ -18,6 +18,15 @@
         <div class="text-center mb-5">
             <h2 class="fw-bold text-primary">Auto Distributer Report</h2>
             <p class="text-muted">View and manage detailed reports on call activity.</p>
+
+
+            <!-- Export Button -->
+            <div class="text-md-start">
+                <a href="{{ route('auto_dailer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to')]) }}"
+                    class="btn btn-success">
+                    <i class="fas fa-file-export"></i> Export as CSV
+                </a>
+            </div>
         </div>
 
         <!-- Filters and Export -->
@@ -86,13 +95,6 @@
                     </div>
                 </form>
 
-                <!-- Export Button -->
-                <div class="text-md-end">
-                    <a href="{{ route('auto_dailer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to')]) }}"
-                        class="btn btn-success">
-                        <i class="fas fa-file-export"></i> Export as CSV
-                    </a>
-                </div>
             </div>
 
         </div>
