@@ -50,7 +50,7 @@ class ReportController extends Controller
 
         $providers = AutoDailerReport::select('provider')->distinct()->pluck('provider');
 
-        $reports = $query->paginate(10);
+        $reports = $query->paginate(20);
 
         $answeredCount = AutoDailerReport::where('state', 'answered')->count();
         $noAnswerCount = AutoDailerReport::where('state', 'no answer')->count();
@@ -142,7 +142,7 @@ class ReportController extends Controller
 
         $providers = AutoDistributerReport::select('provider')->distinct()->pluck('provider');
 
-        $reports = $query->paginate(10);
+        $reports = $query->paginate(20);
 
         $answeredCount = AutoDistributerReport::where('state', 'answered')->count();
         $noAnswerCount = AutoDistributerReport::where('state', 'no answer')->count();
