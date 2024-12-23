@@ -16,7 +16,7 @@
 
         <!-- Page Header -->
         <div class="text-center mb-5">
-            <h2 class="fw-bold text-primary">Auto Dialer Report</h2>
+            <h2 class="fw-bold text-primary">Auto Distributer Report</h2> 
             <p class="text-muted">View and manage detailed reports on call activity.</p>
         </div>
 
@@ -24,34 +24,34 @@
         <div class="row mb-4 g-3 align-items-center">
             <!-- Filters -->
             <div class="col-md-12">
-                <form method="GET" action="{{ url('auto-dailer-report') }}" class="row g-2 align-items-center">
+                <form method="GET" action="{{ url('auto-distributer-report') }}" class="row g-2 align-items-center">
                     <!-- State Filters -->
                     <div class="col-auto">
-                        <a href="{{ url('auto-dailer-report') }}"
+                        <a href="{{ url('auto-distributer-report') }}"
                             class="btn btn-outline-primary {{ !$filter ? 'active' : '' }}">
                             <i class="fas fa-list"></i> All
                         </a>
                     </div>
                     <div class="col-auto">
-                        <a href="{{ url('auto-dailer-report?filter=answered') }}"
+                        <a href="{{ url('auto-distributer-report?filter=answered') }}"
                             class="btn btn-outline-success {{ $filter === 'answered' ? 'active' : '' }}">
                             <i class="fas fa-phone"></i> Answered
                         </a>
                     </div>
                     <div class="col-auto">
-                        <a href="{{ url('auto-dailer-report?filter=no answer') }}"
+                        <a href="{{ url('auto-distributer-report?filter=no answer') }}"
                             class="btn btn-outline-warning {{ $filter === 'no answer' ? 'active' : '' }}">
                             <i class="fas fa-phone-slash"></i> No Answer
                         </a>
                     </div>
                     <div class="col-auto">
-                        <a href="{{ url('auto-dailer-report?filter=called') }}"
+                        <a href="{{ url('auto-distributer-report?filter=called') }}"
                             class="btn btn-outline-info {{ $filter === 'called' ? 'active' : '' }}">
                             <i class="fas fa-phone-volume"></i> Called
                         </a>
                     </div>
                     <div class="col-auto">
-                        <a href="{{ url('auto-dailer-report?filter=declined') }}"
+                        <a href="{{ url('auto-distributer-report?filter=declined') }}"
                             class="btn btn-outline-danger {{ $filter === 'declined' ? 'active' : '' }}">
                             <i class="fas fa-times-circle"></i> Declined
                         </a>
