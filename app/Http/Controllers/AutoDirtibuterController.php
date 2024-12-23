@@ -52,7 +52,7 @@ class AutoDirtibuterController extends Controller
             return view('autodailers.index')->with('error', 'The uploaded file is empty.');
         }
 
-        $autoDailer = AutoDirtibuterData::create([
+        $autoDailer = AutoDirtibuter::create([
             'file_name' => $request->input('file_name'),
             'uploaded_by' => Auth::id(),
         ]);
@@ -88,7 +88,7 @@ class AutoDirtibuterController extends Controller
 
         }
 
-       
+
 
         return redirect('/auto-distributer-call')->with('success', 'Auto Distributer is calling ...');
     }
