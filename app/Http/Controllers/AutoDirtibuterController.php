@@ -79,7 +79,7 @@ class AutoDirtibuterController extends Controller
             }
 
             AutoDirtibuterData::create([
-                'auto_dailer_id' => $autoDailer->id,
+                'auto_dirtibuter_id' => $autoDailer->id,
                 'mobile' => $data[0],
                 'provider_name' => $data[1],
                 'extension' => $data[2],
