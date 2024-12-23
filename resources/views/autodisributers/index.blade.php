@@ -5,8 +5,15 @@
         <h1 class="mb-4">Uploaded Auto Distributers Files</h1>
 
         @if (session('error'))
-            <div class="alert alert-danger">{{ session('error') }}</div>
-        @endif
+        <script>
+            Swal.fire({
+                title: 'Error!',
+                text: "{{ session('error') }}",
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        </script>
+    @endif
 
         <!-- Form to Upload CSV File -->
         <div class="card mb-4">
