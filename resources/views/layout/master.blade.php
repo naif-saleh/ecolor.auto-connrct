@@ -69,12 +69,13 @@
                                 <li>
                                     <a class="dropdown-item" href="{{ route('users.activity.report') }}">User
                                         Activity</a>
-                                    </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{route('auto_dailer.report')}}">Auto Dailer</a>
                                 </li>
                                 <li>
-                                    <a class="dropdown-item" href="{{route('auto_distributer.report')}}">Auto Distributer</a>
+                                    <a class="dropdown-item" href="{{ route('auto_dailer.report') }}">Auto Dailer</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('auto_distributer.report') }}">Auto
+                                        Distributer</a>
                                 </li>
                             </ul>
                         </li>
@@ -106,6 +107,85 @@
 
         @yield('content')
     </div>
+
+
+
+
+
+    {{-- Java Script --}}
+
+    <script>
+        // Delete Alert...................................................................................................
+        function confirmDelete(button) {
+            // SweetAlert confirmation
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This action cannot be undone!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Find the parent form and submit it
+                    button.closest('form').submit();
+                }
+            });
+        }
+
+
+        // Download Alert.....................................................................................................
+
+        document.getElementById('download-csv-button').addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default action to manage it manually
+
+            const url = this.href;
+
+            Swal.fire({
+                title: 'Preparing your file...',
+                text: 'Please wait while we generate your CSV.',
+                icon: 'info',
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Simulate file download process
+            fetch(url)
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob();
+                    } else {
+                        throw new Error('Failed to download file');
+                    }
+                })
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = 'auto_distributor_report.csv';
+                    link.click();
+
+                    Swal.fire({
+                        title: 'Download Ready!',
+                        text: 'Your CSV file has been successfully downloaded.',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                })
+                .catch(error => {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'An error occurred while preparing your file. Please try again later.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                });
+        });
+    </script>
     <!-- Bootstrap JS (optional, for interactivity) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
     {{-- Sweet Alert --}}
@@ -122,7 +202,7 @@
         </script>
     @endif
 
-    @if (session('error'))
+    {{--  @if (session('error'))
     <script>
         Swal.fire({
             title: 'Error!',
@@ -131,7 +211,7 @@
             confirmButtonText: 'OK'
         });
     </script>
-@endif
+@endif --}}
 
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>

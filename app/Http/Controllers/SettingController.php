@@ -43,10 +43,9 @@ class SettingController extends Controller
         $currentHour = now()->setTimezone('Asia/Riyadh')->hour;
         $currentDay = now()->dayOfWeek;
 
+        // dd($request->input('allow_auto_calling'));
 
         $validated = $request->validate([
-            'allow_calling' => 'required|boolean',
-            'allow_auto_calling' => 'required|boolean',
             'cfd_start_time' => 'required|integer|between:1,24',
             'cfd_end_time' => 'required|integer|between:1,24|gt:cfd_start_time',
             'cfd_allow_friday' => 'nullable|boolean',
@@ -55,8 +54,8 @@ class SettingController extends Controller
 
 
         $settings = Setting::firstOrNew();
-        $settings->allow_calling = $validated['allow_calling'];
-        $settings->allow_auto_calling = $validated['allow_auto_calling'];
+        $settings->allow_calling = $request['allow_calling'];
+        $settings->allow_auto_calling = $request['allow_auto_calling'];
         $settings->cfd_start_time = $validated['cfd_start_time'];
         $settings->cfd_end_time = $validated['cfd_end_time'];
         $settings->cfd_allow_friday = $validated['cfd_allow_friday'] ?? false;
@@ -109,8 +108,8 @@ class SettingController extends Controller
         $isInTimeRange = ($currentHour >= $settings->cfd_start_time && $currentHour < $settings->cfd_end_time);
 
         $response = [
-            'auto_call' => ($isWeekend || !$isInTimeRange) ? 0 : $settings->allow_auto_calling,
-            'online' => ($isWeekend || !$isInTimeRange) ? 0 : $settings->allow_calling,
+            'auto_distributer' => ($isWeekend || !$isInTimeRange) ? 0 : $settings->allow_calling,
+            'auto_dailer' => ($isWeekend || !$isInTimeRange) ? 0 : $settings->allow_auto_calling,
             'start' => $settings->cfd_start_time,
             'end' => $settings->cfd_end_time,
         ];

@@ -7,9 +7,7 @@
         @if (session('error'))
             <div class="alert alert-danger">{{ session('error') }}</div>
         @endif
-        @if (session('success'))
-            <div class="alert alert-success">{{ session('success') }}</div>
-        @endif
+
         <!-- Form to Upload CSV File -->
         <div class="card mb-4">
             <div class="card-header bg-primary text-white">Auto Distributers</div>
@@ -45,9 +43,10 @@
                         <a href="{{ route('autodistributers.edit', $file->id) }}" class="btn btn-warning btn-sm">Edit</a>
 
                         <!-- Delete Form -->
-                        <form action="{{ route('autodistributers.destroy', $file->id) }}" method="POST" class="d-inline" onsubmit="return confirmDelete()">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        <form action="{{ route('autodistributers.destroy', $file->id) }}" method="POST" class="d-inline delete-form">
+                            @csrf
+                            @method('DELETE')
+                            <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete(this)">Delete</button>
                         </form>
 
                         <!-- Download Button -->

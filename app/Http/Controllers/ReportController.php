@@ -27,21 +27,22 @@ class ReportController extends Controller
     $filter = $request->query('filter');
     $query = AutoDailerReport::query();
 
-    if (in_array($filter, ['answered', 'no answer', 'called'])) {
+    if (in_array($filter, ['answered', 'no answer', 'called', 'declined'])) {
         $query->where('state', $filter);
     }
 
-    $reports = $query->paginate(1000);
+    $reports = $query->paginate(10);
 
     $answeredCount = AutoDailerReport::where('state', 'answered')->count();
     $noAnswerCount = AutoDailerReport::where('state', 'no answer')->count();
-    $calledCount = AutoDailerReport::where('state', 'called')->count(); // Added "called" count
-
+    $calledCount = AutoDailerReport::where('state', 'called')->count();
+    $declinedCount = AutoDailerReport::where('state', 'declined')->count();
     return view('reports.auto_dailer_report', [
         'reports' => $reports,
         'answeredCount' => $answeredCount,
         'noAnswerCount' => $noAnswerCount,
-        'calledCount' => $calledCount, // Pass "called" count to view
+        'calledCount' => $calledCount,
+        'declinedCount' => $declinedCount,
         'filter' => $filter,
     ]);
 }
@@ -93,18 +94,22 @@ class ReportController extends Controller
          $filter = $request->query('filter');
          $query = AutoDistributerReport::query();
 
-         if ($filter === 'answered' || $filter === 'no answer') {
-             $query->where('state', $filter);
-         }
+         if (in_array($filter, ['answered', 'no answer', 'called', 'declined'])) {
+            $query->where('state', $filter);
+        }
          $reports = $query->paginate(1000);
 
          $answeredCount = AutoDistributerReport::where('state', 'answered')->count();
          $noAnswerCount = AutoDistributerReport::where('state', 'no answer')->count();
+         $calledCount = AutoDistributerReport::where('state', 'called')->count();
+         $declinedCount = AutoDistributerReport::where('state', 'declined')->count();
 
          return view('reports.auto_distributer_report', [
              'reports' => $reports,
              'answeredCount' => $answeredCount,
              'noAnswerCount' => $noAnswerCount,
+             'calledCount' => $calledCount,
+             'declinedCount' => $declinedCount,
              'filter' => $filter,
          ]);
      }

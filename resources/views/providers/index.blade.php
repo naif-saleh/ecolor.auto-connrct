@@ -2,9 +2,7 @@
 
 @section('content')
     <h1>Providers</h1>
-    @if (session('success'))
-        <div class="alert alert-success">{{ session('success') }}</div>
-    @endif
+
     <a href="{{ route('providers.create') }}" class="btn btn-primary mb-3">Add New Provider</a>
 
     @if (count($providers) > 0)
@@ -16,9 +14,10 @@
                     <p>Created by: {{ $provider->user->name }}</p>
                     <p>Created At: {{ $provider->created_at }}</p>
                     <a href="{{ route('providers.edit', $provider->id) }}" class="btn btn-warning ">Edit</a>
-                    <form action="{{ route('providers.destroy', $provider->id) }}" method="POST" class="d-inline" onsubmit="confirmDelete()">
-                        @csrf @method('DELETE')
-                        <button type="submit" class="btn btn-danger">Delete</button>
+                    <form action="{{ route('providers.destroy', $provider->id) }}" method="POST" class="d-inline delete-form">
+                        @csrf
+                        @method('DELETE')
+                        <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete(this)">Delete</button>
                     </form>
                 </div>
             </div>

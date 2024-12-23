@@ -17,7 +17,9 @@ Route::get('/', function () {
 });
 
 Route::get('/', [HomeController::class, 'index'])->name('home');
-Route::get('auto-dailer-call', [ApiController::class, 'autoDailer']);
+
+
+
 
 
 // API Endpoints Sanctum Provider...........................................................................................................
@@ -53,6 +55,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('users', [UserController::class, 'store'])->name('users.store');
 
+    // Callin...................................................................................................................................
+    Route::get('auto-dailer-call', [ApiController::class, 'autoDailer']);
+    Route::get('auto-distributer-call', [ApiController::class, 'autoDistributer']);
     // Acitvity Log Report....................................................................................................................
     Route::get('report/user-activity-report', [ReportController::class, 'activityReport'])->name('users.activity.report');
     // Auto Dailer Reports....................................................................................................................

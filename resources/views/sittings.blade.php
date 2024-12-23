@@ -7,20 +7,42 @@
 <div class="card shadow-sm">
     <div class="card-body">
         @if (session('success'))
-            <div class="alert alert-success">{{session('success')}}</div>
-        @endif
+        <script>
+            Swal.fire({
+                title: 'Error!',
+                text: "{{ session('success') }}",
+                icon: 'error',
+                confirmButtonText: 'OK'
+            });
+        </script>
+    @endif
         <form method="POST" action="{{ route('settings.save') }}" class="needs-validation" novalidate>
             @csrf
 
             <!-- Auto Distributor -->
             <div class="form-check mb-3">
-                <input type="checkbox" class="form-check-input" id="allow_calling" name="allow_calling" value="1" {{ $settings->allow_calling ? 'checked' : '' }}>
+                <!-- Hidden input ensures `0` is sent if unchecked -->
+                <input type="hidden" name="allow_calling" value="0">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="allow_calling"
+                    name="allow_calling"
+                    value="1"
+                    {{ $settings->allow_calling ? 'checked' : '' }}>
                 <label class="form-check-label" for="allow_calling">Auto Distributor</label>
             </div>
 
-            <!-- AutoDialer IVR -->
             <div class="form-check mb-3">
-                <input type="checkbox" class="form-check-input" id="allow_auto_calling" name="allow_auto_calling" value="1" {{ $settings->allow_auto_calling ? 'checked' : '' }}>
+                <!-- Hidden input ensures `0` is sent if unchecked -->
+                <input type="hidden" name="allow_auto_calling" value="0">
+                <input
+                    type="checkbox"
+                    class="form-check-input"
+                    id="allow_auto_calling"
+                    name="allow_auto_calling"
+                    value="1"
+                    {{ $settings->allow_auto_calling ? 'checked' : '' }}>
                 <label class="form-check-label" for="allow_auto_calling">AutoDialer IVR</label>
             </div>
 

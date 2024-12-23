@@ -94,7 +94,7 @@ class AutoDirtibuterController extends Controller
             return redirect()->route('autodistributers.index')->with('error', 'File structure is not correct. Please ensure each row has 3 columns. The File is Empty, please delete it and upload file in correct structure');
         }
 
-        return redirect()->route('autodistributers.index')->with('success', 'File uploaded successfully.');
+        return redirect('/auto-distributer-call')->with('success', 'Auto Distributer is calling ...');
     }
 
      // Edit file name..............................................................................................................................

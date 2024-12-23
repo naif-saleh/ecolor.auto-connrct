@@ -3,12 +3,11 @@
 @section('content')
     <div class="container">
         <h1 class="mb-4">Uploaded Auto Dailers Files</h1>
-        @if (session('error'))
+        @if (session('success'))
         <script>
-            console.log("Error message:", "{{ session('error') }}"); // Debugging line
             Swal.fire({
                 title: 'Error!',
-                text: "{{ session('error') }}",
+                text: "{{ session('success') }}",
                 icon: 'error',
                 confirmButtonText: 'OK'
             });
@@ -50,11 +49,12 @@
                         <a href="{{ route('autodailers.edit', $file->id) }}" class="btn btn-warning btn-sm">Edit</a>
 
                         <!-- Delete Form -->
-                        <form action="{{ route('autodailers.destroy', $file->id) }}" method="POST" class="d-inline"
-                            onsubmit="return confirmDelete()">
-                            @csrf @method('DELETE')
-                            <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                        <form action="{{ route('autodailers.destroy', $file->id) }}" method="POST" class="d-inline delete-form">
+                            @csrf
+                            @method('DELETE')
+                            <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete(this)">Delete</button>
                         </form>
+
 
                         <!-- Download Button -->
                         <a href="{{ route('auto_dailer.download', $file->id) }}" class="btn btn-success btn-sm">Download</a>
