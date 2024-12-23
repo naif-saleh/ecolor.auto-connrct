@@ -52,107 +52,107 @@ class ApiController extends Controller
 
     // Get all Auto Distributer..........................................................................................................................
     public function autoDistributer()
-{
-    if (!Auth::check()) {
-        return response()->json(['error' => 'Unauthorized'], 401);
-    }
-
-    $settings = Setting::first();
-    $currentHour = now()->setTimezone('Asia/Riyadh')->hour;
-
-    if ($settings->cfd_allow_friday == 1 || $settings->cfd_allow_saturday == 1) {
-        return redirect('/settings')->with('wrong', 'Today is Weekend, Auto Dialer is disabled. you can skip weekend by updating settings');
-    }
-    if (
-        $settings->allow_calling != 1 ||
-        $currentHour < $settings->cfd_start_time ||
-        $currentHour >= $settings->cfd_end_time
-    ) {
-        return redirect('/settings')->with('wrong','Calls are disabled as per settings');
-    }
-
-    $autoDistributer = AutoDirtibuterData::where('state', 'new')
-    ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
-    ->groupBy('mobile', 'provider_name', 'extension')
-    ->get();
-
-    $count = AutoDirtibuterData::getQuery()->count();
-
-    if ($count == 0) {
-        return redirect('/autodistributers')->with('wrong', 'No Auto Distributer Numbers Found. Please Insert and Call Again');
-    }
-
-    // Fetch and cache token
-    $response = Http::asForm()->post(config('services.three_cx.api_url') . '/connect/token', [
-        'grant_type' => 'client_credentials',
-        'client_id' => 'testapi',
-        'client_secret' => '95ULDtdTRRJhJBZCp94K6Gd1BKRuaP1k',
-    ]);
-
-    if ($response->failed()) {
-        // Log or handle authentication failure
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Authentication failed',
-            'details' => $response->body(),
-        ], $response->status());
-    }
-
-    $token = $response->json()['access_token'] ?? null;
-
-    if (!$token) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Token not found in the authentication response.',
-        ], 400);
-    }
-
-    // Loop through records and make calls
-    foreach ($autoDistributer as $record) {
-        $from = $record->extension;
-        $to = $record->mobile;
-
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $token,
-        ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
-            'destination' => $to,
-        ]);
-
-        $autoDistributer = AutoDirtibuterData::find($record->id);
-
-        if ($response->successful()) {
-            $autoDistributer->state = "called";
-            $autoDistributer->save();
-
-            AutoDistributerReport::create([
-                'mobile' => $autoDistributer->mobile,
-                'provider' => $autoDistributer->provider_name,
-                'extension' => $autoDistributer->extension,
-                'state' => $autoDistributer->state,
-                'called_at' => now()->addHours(2),
-            ]);
-        } else {
-            Log::error('3CX Call Failed', [
-                'mobile' => $to,
-                'response' => $response->body(),
-            ]);
+    {
+        if (!Auth::check()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // Random delay between 30 and 60 seconds
-        $delay = rand(30, 60); // Random delay between 30 and 60 seconds
-        sleep($delay); // Delay the next call
-    }
+        $settings = Setting::first();
+        $currentHour = now()->setTimezone('Asia/Riyadh')->hour;
 
-    if ($response->failed()) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Failed to make the call.',
-            'details' => $response->body(),
-        ], $response->status());
-    }
+        if ($settings->cfd_allow_friday == 1 || $settings->cfd_allow_saturday == 1) {
+            return redirect('/settings')->with('wrong', 'Today is Weekend, Auto Dialer is disabled. you can skip weekend by updating settings');
+        }
+        if (
+            $settings->allow_calling != 1 ||
+            $currentHour < $settings->cfd_start_time ||
+            $currentHour >= $settings->cfd_end_time
+        ) {
+            return redirect('/settings')->with('wrong', 'Calls are disabled as per settings');
+        }
 
-    return redirect('/auto-distributer-report')->with('success', 'Auto Distributer is Calling Now...');
-}
+        $autoDistributer = AutoDirtibuterData::where('state', 'new')
+            ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
+            ->groupBy('mobile', 'provider_name', 'extension')
+            ->get();
+
+        $count = AutoDirtibuterData::getQuery()->count();
+
+        if ($count == 0) {
+            return redirect('/autodistributers')->with('wrong', 'No Auto Distributer Numbers Found. Please Insert and Call Again');
+        }
+
+        // Fetch and cache token
+        $response = Http::asForm()->post(config('services.three_cx.api_url') . '/connect/token', [
+            'grant_type' => 'client_credentials',
+            'client_id' => 'testapi',
+            'client_secret' => '95ULDtdTRRJhJBZCp94K6Gd1BKRuaP1k',
+        ]);
+
+        if ($response->failed()) {
+            // Log or handle authentication failure
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Authentication failed',
+                'details' => $response->body(),
+            ], $response->status());
+        }
+
+        $token = $response->json()['access_token'] ?? null;
+
+        if (!$token) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Token not found in the authentication response.',
+            ], 400);
+        }
+
+        // Loop through records and make calls
+        foreach ($autoDistributer as $record) {
+            $from = $record->extension;
+            $to = $record->mobile;
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
+                'destination' => $to,
+            ]);
+
+            $autoDistributer = AutoDirtibuterData::find($record->id);
+
+            if ($response->successful()) {
+                $autoDistributer->state = "called";
+                $autoDistributer->save();
+
+                AutoDistributerReport::create([
+                    'mobile' => $autoDistributer->mobile,
+                    'provider' => $autoDistributer->provider_name,
+                    'extension' => $autoDistributer->extension,
+                    'state' => $autoDistributer->state,
+                    'called_at' => now()->addHours(2),
+                ]);
+            } else {
+                Log::error('3CX Call Failed', [
+                    'mobile' => $to,
+                    'response' => $response->body(),
+                ]);
+            }
+
+            // Random delay between 30 and 60 seconds
+            $delay = rand(30, 60); // Random delay between 30 and 60 seconds
+            sleep($delay); // Delay the next call
+        }
+
+        if ($response->failed()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Failed to make the call.',
+                'details' => $response->body(),
+            ], $response->status());
+        }
+
+        return redirect('/auto-distributer-report')->with('success', 'Auto Distributer is Calling Now...');
+    }
 
 
 
@@ -174,13 +174,13 @@ class ApiController extends Controller
             $currentHour < $settings->cfd_start_time ||
             $currentHour >= $settings->cfd_end_time
         ) {
-            return redirect('/settings')->with('wrong','Calls are disabled as per settings');
+            return redirect('/settings')->with('wrong', 'Calls are disabled as per settings');
         }
 
         $autoDistributer = AutoDirtibuterData::where('state', 'new')
-        ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
-        ->groupBy('mobile', 'provider_name', 'extension')
-        ->get();
+            ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
+            ->groupBy('mobile', 'provider_name', 'extension')
+            ->get();
 
         $count = AutoDirtibuterData::getQuery()->count();
 
@@ -244,6 +244,9 @@ class ApiController extends Controller
                     'response' => $response->body(),
                 ]);
             }
+            // Random delay between 30 and 60 seconds
+            $delay = rand(30, 60); // Random delay between 30 and 60 seconds
+            sleep($delay); // Delay the next call
         }
         if ($response->failed()) {
             return response()->json([
@@ -278,7 +281,7 @@ class ApiController extends Controller
             $currentHour >= $settings->cfd_end_time
         ) {
             // return response()->json(["data" => "Calls are disabled as per settings"], 200);
-            return redirect('/settings')->with('wrong','Calls are disabled as per settings');
+            return redirect('/settings')->with('wrong', 'Calls are disabled as per settings');
         }
 
         $autoDailer = AutoDailerData::where('state', 'new')
@@ -344,6 +347,10 @@ class ApiController extends Controller
                     'response' => $response->body(),
                 ]);
             }
+
+            // Random delay between 30 and 60 seconds
+            $delay = rand(30, 60); // Random delay between 30 and 60 seconds
+            sleep($delay); // Delay the next call
         }
 
         if ($response->failed()) {
@@ -380,7 +387,7 @@ class ApiController extends Controller
             $currentHour >= $settings->cfd_end_time
         ) {
             // return response()->json(["data" => "Calls are disabled as per settings"], 200);
-            return redirect('/settings')->with('wrong','Calls are disabled as per settings');
+            return redirect('/settings')->with('wrong', 'Calls are disabled as per settings');
         }
 
         $autoDailer = AutoDailerData::where('state', 'new')
@@ -453,6 +460,10 @@ class ApiController extends Controller
                     'response' => $response->body(),
                 ]);
             }
+
+            // Random delay between 30 and 60 seconds
+            $delay = rand(30, 60); // Random delay between 30 and 60 seconds
+            sleep($delay); // Delay the next call
         }
 
         if ($response->failed()) {
