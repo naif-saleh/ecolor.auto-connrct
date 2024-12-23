@@ -78,6 +78,22 @@
                                 </li>
                             </ul>
                         </li>
+                    @elseif (Auth::check() && Auth::user()->isUser())
+                    <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('users.activity.report') }}">User
+                                        Activity</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('auto_dailer.report') }}">Auto Dailer</a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{{ route('auto_distributer.report') }}">Auto
+                                        Distributer</a>
+                                </li>
+                            </ul>
+                        
                 @endif
 
                 @if (Auth::check() && Auth::user()->isSuperUser())
@@ -115,7 +131,7 @@
     </div>
 
 
-@yield('scripts')
+    @yield('scripts')
 
 
     {{-- Java Script --}}
