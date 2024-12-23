@@ -149,7 +149,7 @@ class ReportController extends Controller
         $calledCount = AutoDistributerReport::where('state', 'called')->count();
         $declinedCount = AutoDistributerReport::where('state', 'declined')->count();
 
-        return view('reports.auto_dailer_report', compact(
+        return view('reports.auto_distributer_report', compact(
             'reports',
             'filter',
             'extensionFrom',
