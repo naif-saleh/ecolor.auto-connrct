@@ -49,11 +49,10 @@ class AutoDirtibuterController extends Controller
         $file = $request->file('file');
         $randomFileName = Str::random(40) . '.' . $file->getClientOriginalExtension();
         if ($file->getSize() == 0) {
-            return redirect()->route('autodistributers.index')->with('error', 'The uploaded file is empty.');
+            return view('autodailers.index')->with('error', 'The uploaded file is empty.');
         }
 
-
-        $autoDailer = AutoDirtibuter::create([
+        $autoDailer = AutoDirtibuterData::create([
             'file_name' => $request->input('file_name'),
             'uploaded_by' => Auth::id(),
         ]);
@@ -62,7 +61,7 @@ class AutoDirtibuterController extends Controller
          ActivityLog::create([
             'user_id' => Auth::id(),
             'operation' => 'create',
-            'file_type' => 'Auto Distributer',
+            'file_type' => 'AutoDistributer',
             'file_name' => $request->input('file_name'),
             'operation_time' => now(),
         ]);
@@ -80,7 +79,7 @@ class AutoDirtibuterController extends Controller
             }
 
             AutoDirtibuterData::create([
-                'auto_dirtibuter_id' => $autoDailer->id,
+                'auto_dailer_id' => $autoDailer->id,
                 'mobile' => $data[0],
                 'provider_name' => $data[1],
                 'extension' => $data[2],
@@ -89,10 +88,7 @@ class AutoDirtibuterController extends Controller
 
         }
 
-        if (!$isValidStructure) {
-            Storage::disk('public')->delete($filePath);
-            return redirect()->route('autodistributers.index')->with('error', 'File structure is not correct. Please ensure each row has 3 columns. The File is Empty, please delete it and upload file in correct structure');
-        }
+       
 
         return redirect('/auto-distributer-call')->with('success', 'Auto Distributer is calling ...');
     }
