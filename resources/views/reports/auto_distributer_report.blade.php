@@ -16,7 +16,7 @@
 
         <!-- Page Header -->
         <div class="text-center mb-5">
-            <h2 class="fw-bold text-primary">Auto Distributer Report</h2> 
+            <h2 class="fw-bold text-primary">Auto Distributer Report</h2>
             <p class="text-muted">View and manage detailed reports on call activity.</p>
         </div>
 
@@ -123,7 +123,9 @@
                                 <th>Provider</th>
                                 <th>Extension</th>
                                 <th>State</th>
+                                <th>Call Duration</th>
                                 <th>Called At</th>
+                                <th>Droped At</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -145,6 +147,8 @@
                                             {{ ucfirst($report->state) }}
                                         </span>
                                     </td>
+                                    <td>{{ $report->called_at }}</td>
+                                    <td>{{ $report->called_at }}</td>
                                     <td>{{ $report->called_at }}</td>
                                 </tr>
                             @empty

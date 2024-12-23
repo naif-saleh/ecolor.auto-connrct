@@ -123,7 +123,9 @@
                                 <th>Provider</th>
                                 <th>Extension</th>
                                 <th>State</th>
+                                <th>Call Duration</th>
                                 <th>Called At</th>
+                                <th>Droped At</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -145,6 +147,8 @@
                                             {{ ucfirst($report->state) }}
                                         </span>
                                     </td>
+                                    <td>{{ $report->called_at }}</td>
+                                    <td>{{ $report->called_at }}</td>
                                     <td>{{ $report->called_at }}</td>
                                 </tr>
                             @empty
