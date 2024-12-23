@@ -115,7 +115,7 @@
         <div class="card shadow-sm border-0">
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle">
+                    <table class="table table-hover align-middle text-center">
                         <thead class="table-primary">
                             <tr>
                                 <th>#</th>
