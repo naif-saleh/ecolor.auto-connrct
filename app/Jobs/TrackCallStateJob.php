@@ -43,6 +43,7 @@ class TrackCallStateJob implements ShouldQueue
     public function handle()
     {
         $autoDailerData = AutoDailerData::find($this->recordId);
+        dd($this->recordId);
         $finalStates = ['answered', 'declined', 'no answer'];
         $maxRetries = 10;
         $retryCount = 0;
