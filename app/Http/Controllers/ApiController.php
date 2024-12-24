@@ -365,8 +365,8 @@ class ApiController extends Controller
         }
 
         // Random delay between 30 and 60 seconds
-        $delay = rand(30, 60); // Random delay between 30 and 60 seconds
-        sleep($delay); // Delay the next call
+        // $delay = rand(30, 60); // Random delay between 30 and 60 seconds
+        // sleep($delay); // Delay the next call
     }
 
     return redirect('/auto-dailer-report')->with('success', 'Auto Dialer is Calling Now...');
