@@ -352,6 +352,7 @@ class ApiController extends Controller
 
                 // Assuming `participants` is an array in the response
                 $participantData = $responseData['status'] ?? null;
+                dd($participantData);
                 if ($participantData) {
                     break; // Exit loop if data is found
                 }
