@@ -15,8 +15,6 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Setting;
-use Illuminate\Support\Facades\Queue;
-use App\Jobs\TrackCallStateJob;
 
 use function Pest\Laravel\json;
 
@@ -318,29 +316,57 @@ class ApiController extends Controller
         ], 400);
     }
 
+    foreach ($autoDailer as $record) {
+        $from = $record->extension;
+        $to = $record->mobile;
 
-
-foreach ($autoDailer as $record) {
-    $from = $record->extension;
-    $to = $record->mobile;
-
-    // Step 1: Initiate the call
-    $response = Http::withHeaders([
-        'Authorization' => 'Bearer ' . $token,
-    ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
-        'destination' => $to,
-    ]);
-
-    if ($response->successful()) {
-        // Add the call to a queue for state tracking
-        Queue::push(new TrackCallStateJob($from, $to, $record->id, $token));
-    } else {
-        Log::error('3CX Call Initiation Failed', [
-            'mobile' => $to,
-            'response' => $response->body(),
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
+            'destination' => $to,
         ]);
+
+        $autoDailerData = AutoDailerData::find($record->id);
+
+        $responseState = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->get(config('services.three_cx.api_url') . "/callcontrol/{$from}/participants");
+
+        if ($responseState->successful()) {
+            $responseData = $responseState->json();
+            // dd($responseData);
+                $partyDnType = $responseData[0]['status'] ?? null;
+
+                // dd($partyDnType);
+                if ($partyDnType) {
+                    if ($partyDnType === "Wextension") {
+                        $autoDailerData->state = "answered";
+                    } elseif ($partyDnType === "Wspecialmenu") {
+                        $autoDailerData->state = "declined";
+                    } elseif ($partyDnType === "Dialing") {
+                        $autoDailerData->state = "no answer";
+                    }
+                }
+
+
+            $autoDailerData->save();
+
+            AutoDailerReport::create([
+                'mobile' => $autoDailerData->mobile,
+                'provider' => $autoDailerData->provider_name,
+                'extension' => $autoDailerData->extension,
+                'state' => $autoDailerData->state,
+                'called_at' => now()->addHours(2),
+            ]);
+        } else {
+            Log::error('3CX Call Failed', [
+                'mobile' => $to,
+                'response' => $response->body(),
+            ]);
+        }
+
+
     }
-}
 
     return redirect('/auto-dailer-report')->with('success', 'Auto Dialer is Calling Now...');
 }
