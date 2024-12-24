@@ -54,7 +54,7 @@ class TrackCallStateJob implements ShouldQueue
 
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
-
+                dd($responseData);
                 foreach ($responseData as $participant) {
                     $partyDnType = $participant['status'] ?? null;
                     $id = $participant['id'] ?? null;
