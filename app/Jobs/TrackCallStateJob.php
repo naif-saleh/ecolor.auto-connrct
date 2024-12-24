@@ -44,7 +44,7 @@ class TrackCallStateJob implements ShouldQueue
     {
         $autoDailerData = AutoDailerData::find($this->recordId);
         $finalStates = ['answered', 'declined', 'no answer'];
-        $maxRetries = 10; // Limit retries
+        $maxRetries = 10;
         $retryCount = 0;
 
         while ($retryCount < $maxRetries) {
@@ -54,29 +54,33 @@ class TrackCallStateJob implements ShouldQueue
 
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
-                $partyDnType = $responseData['party_dn_type'] ?? null;
 
-                if ($partyDnType) {
-                    if ($partyDnType === "Wextension") {
-                        $autoDailerData->state = "answered";
-                    } elseif ($partyDnType === "Wspecialmenu") {
-                        $autoDailerData->state = "declined";
-                    } elseif ($partyDnType === "Dialing") {
-                        $autoDailerData->state = "no answer";
-                    }
+                foreach ($responseData as $participant) {
+                    $partyDnType = $participant['status'] ?? null;
+                    $id = $participant['id'] ?? null;
 
-                    // Save state and break loop if final state is reached
-                    if (in_array($autoDailerData->state, $finalStates)) {
-                        $autoDailerData->save();
+                    if ($partyDnType) {
+                        if ($partyDnType === "Wextension") {
+                            $autoDailerData->state = "answered";
+                        } elseif ($partyDnType === "Wspecialmenu") {
+                            $autoDailerData->state = "declined";
+                        } elseif ($partyDnType === "Dialing") {
+                            $autoDailerData->state = "no answer";
+                        }
 
-                        AutoDailerReport::create([
-                            'mobile' => $autoDailerData->mobile,
-                            'provider' => $autoDailerData->provider_name,
-                            'extension' => $autoDailerData->extension,
-                            'state' => $autoDailerData->state,
-                            'called_at' => now()->addHours(2),
-                        ]);
-                        return;
+                        if (in_array($autoDailerData->state, $finalStates)) {
+                            $autoDailerData->save();
+
+                            AutoDailerReport::create([
+                                'mobile' => $autoDailerData->mobile,
+                                'provider' => $autoDailerData->provider_name,
+                                'extension' => $autoDailerData->extension,
+                                'state' => $autoDailerData->state,
+                                'called_at' => now()->addHours(2),
+                            ]);
+
+                            Log::info("Processed participant ID: {$id}, State: {$autoDailerData->state}");
+                        }
                     }
                 }
             } else {
@@ -88,10 +92,9 @@ class TrackCallStateJob implements ShouldQueue
             }
 
             $retryCount++;
-            sleep(2); // Delay before retrying
+            sleep(2);
         }
 
-        // Fallback: Mark as "unknown state" if retries exceeded
         $autoDailerData->state = "unknown";
         $autoDailerData->save();
         Log::warning('3CX Call State Check Timed Out', ['mobile' => $this->to]);
