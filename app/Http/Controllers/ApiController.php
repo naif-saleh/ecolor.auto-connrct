@@ -327,26 +327,24 @@ class ApiController extends Controller
         ]);
 
         $autoDailerData = AutoDailerData::find($record->id);
+        $responseState = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->get(config('services.three_cx.api_url') . "/callcontrol/{$from}/participants");
 
-        if ($response->successful()) {
+        if ($responseState->successful()) {
             $responseData = $response->json();
-
-            // Check for "party_dn_type" in the response
-            $partyDnType = $responseData['result']['status'] ?? null;
-            dd($partyDnType);
+            $partyDnType = $responseData['party_dn_type'] ?? null;
+            dd($partyDnType);   
             if ($partyDnType) {
                 if ($partyDnType === "Wextension") {
                     $autoDailerData->state = "answered";
                 } elseif ($partyDnType === "Wspecialmenu") {
                     $autoDailerData->state = "declined";
-                } else {
-                    $autoDailerData->state = "unknown"; // Default fallback state
                 }
-            } else {
-                $autoDailerData->state = "no_response"; // No party_dn_type in response
             }
 
             $autoDailerData->save();
+
 
             // Log or save report
             AutoDailerReport::create([
