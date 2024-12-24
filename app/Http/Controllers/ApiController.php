@@ -337,7 +337,7 @@ class ApiController extends Controller
             $responseData = $responseState->json(); // Fetch JSON data
 
             // Assuming `participants` is an array in the response
-            foreach ($responseData['participants'] as $participant) {
+
                 $partyDnType = $participant['party_dn_type'] ?? null;
 
                 if ($partyDnType) {
@@ -350,7 +350,7 @@ class ApiController extends Controller
                         $autoDailerData->state = "no answer";
                     }
                 }
-            }
+            
 
             $autoDailerData->save();
 
