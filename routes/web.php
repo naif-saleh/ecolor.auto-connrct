@@ -57,7 +57,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('users', [UserController::class, 'store'])->name('users.store');
 
     // Dailer Calling..........................................................................................................................
-    Route::get('auto-dailer-call', [ApiController::class, 'autoDailer']);
+    Route::get('auto-dailer-call', [ApiController::class, 'autoDailer'])->name('autoDailer');
     Route::get('auto-dailer-call-click', [ApiController::class, 'autoDailerByClick'])->name('auto_dailer.call.click');
     // Distributer Calling.....................................................................................................................
     Route::get('auto-distributer-call', [ApiController::class, 'autoDistributer']);
