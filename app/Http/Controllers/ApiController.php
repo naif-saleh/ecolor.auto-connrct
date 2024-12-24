@@ -339,7 +339,7 @@ class ApiController extends Controller
             // Assuming `participants` is an array in the response
 
                 $partyDnType = $responseData['party_dn_type'] ?? null;
-
+                dd($partyDnType);
                 if ($partyDnType) {
                     // Update state based on party_dn_type
                     if ($partyDnType === "Wextension") {
