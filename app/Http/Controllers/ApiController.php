@@ -335,10 +335,11 @@ class ApiController extends Controller
 
         if ($responseState->successful()) {
             $responseData = $responseState->json(); // Fetch JSON data
-            dd($responseData);
+            // dd($responseData);
             // Assuming `participants` is an array in the response
 
-                $partyDnType = $responseData['status'] ?? null;
+                $partyDnType = $responseData[0]['status'] ?? null;
+
                 dd($partyDnType);
                 if ($partyDnType) {
                     // Update state based on party_dn_type
