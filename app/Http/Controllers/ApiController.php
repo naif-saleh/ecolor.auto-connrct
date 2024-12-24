@@ -338,7 +338,7 @@ class ApiController extends Controller
 
             // Assuming `participants` is an array in the response
 
-                $partyDnType = $responseData['status'] ?? null;
+                $partyDnType = $responseData['result']['status'] ?? null;
                 dd($partyDnType);
                 if ($partyDnType) {
                     // Update state based on party_dn_type
