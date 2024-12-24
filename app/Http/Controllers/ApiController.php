@@ -338,7 +338,7 @@ class ApiController extends Controller
 
             // Assuming `participants` is an array in the response
 
-                $partyDnType = $participant['party_dn_type'] ?? null;
+                $partyDnType = $responseData['party_dn_type'] ?? null;
 
                 if ($partyDnType) {
                     // Update state based on party_dn_type
@@ -350,7 +350,7 @@ class ApiController extends Controller
                         $autoDailerData->state = "no answer";
                     }
                 }
-            
+
 
             $autoDailerData->save();
 
