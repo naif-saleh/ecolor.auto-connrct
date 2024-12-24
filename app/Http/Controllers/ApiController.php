@@ -332,7 +332,7 @@ class ApiController extends Controller
             $responseData = $response->json();
 
             // Check for "party_dn_type" in the response
-            $partyDnType = $responseData['result']['party_dn_type'] ?? null;
+            $partyDnType = $responseData['result']['status'] ?? null;
             dd($partyDnType);
             if ($partyDnType) {
                 if ($partyDnType === "Wextension") {
