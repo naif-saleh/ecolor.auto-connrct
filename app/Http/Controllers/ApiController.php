@@ -349,7 +349,7 @@ class ApiController extends Controller
 
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
-                dd($response);
+                dd($response->body());
                 // Assuming `participants` is an array in the response
                 $participantData = $responseData['status'] ?? null;
                 dd($participantData);
