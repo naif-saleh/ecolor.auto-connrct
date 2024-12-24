@@ -90,7 +90,7 @@ class AutoDailerController extends Controller
 
         }
 
-        return redirect('/auto-dailer-call');
+        return view('autodailers.index');
 
         // return redirect()->route('autodailers.index')->with('success', 'File uploaded successfully.');
     }
