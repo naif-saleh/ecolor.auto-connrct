@@ -385,8 +385,8 @@ class ApiController extends Controller
             }
 
             // Random delay between 30 and 60 seconds
-            $delay = rand(30, 60);
-            sleep($delay);
+            // $delay = rand(30, 60);
+            // sleep($delay);
         }
 
         if ($response->failed()) {
