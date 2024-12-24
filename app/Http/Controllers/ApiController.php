@@ -322,7 +322,6 @@ class ApiController extends Controller
             $from = $record->extension;
             $to = $record->mobile;
 
-            // Step 1: Initiate the call
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
             ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
@@ -332,61 +331,46 @@ class ApiController extends Controller
             $autoDailerData = AutoDailerData::find($record->id);
 
             if ($response->successful()) {
-                $autoDailerData->state = "called";
+                $responseData = $response->json();
+
+                // Check for "party_dn_type" in the response
+                $partyDnType = $responseData['result']['party_dn_type'] ?? null;
+
+                if ($partyDnType) {
+                    if ($partyDnType === "Wextension") {
+                        $autoDailerData->state = "answered";
+                    } elseif ($partyDnType === "Wspecialmenu") {
+                        $autoDailerData->state = "declined";
+                    } else {
+                        $autoDailerData->state = "unknown"; // Default fallback state
+                    }
+                } else {
+                    $autoDailerData->state = "no_response"; // No party_dn_type in response
+                }
+
                 $autoDailerData->save();
 
-                // Get the callId from the response
-                $callId = $response->json()['callId'] ?? null;
-
-                if ($callId) {
-                    // Step 2: Monitor Call State
-                    $participantResponse = Http::withHeaders([
-                        'Authorization' => 'Bearer ' . $token,
-                    ])->get(config('services.three_cx.api_url') . "/callcontrol/{$from}/participants");
-
-                    if ($participantResponse->successful()) {
-                        $participants = $participantResponse->json();
-
-                        foreach ($participants as $participant) {
-                            $participantId = $participant['id'] ?? null;
-
-                            if ($participantId) {
-                                // Step 3: Perform an Action or Check State
-                                $actionResponse = Http::withHeaders([
-                                    'Authorization' => 'Bearer ' . $token,
-                                ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/participants/{$participantId}/drop", [
-                                    'reason' => 'Checking participant state',
-                                ]);
-
-                                if ($actionResponse->successful()) {
-                                    $state = $actionResponse->json()['result']['status'] ?? 'unknown';
-                                    $autoDailerData->state = $state;
-                                    $autoDailerData->save();
-                                } else {
-                                    Log::error('Failed to check or drop participant state', [
-                                        'participantId' => $participantId,
-                                        'response' => $actionResponse->body(),
-                                    ]);
-                                }
-                            }
-                        }
-                    } else {
-                        Log::error('Failed to fetch participants', [
-                            'from' => $from,
-                            'response' => $participantResponse->body(),
-                        ]);
-                    }
-                }
+                // Log or save report
+                AutoDailerReport::create([
+                    'mobile' => $autoDailerData->mobile,
+                    'provider' => $autoDailerData->provider_name,
+                    'extension' => $autoDailerData->extension,
+                    'state' => $autoDailerData->state,
+                    'called_at' => now()->addHours(2),
+                ]);
             } else {
+                // Log failed call
                 Log::error('3CX Call Failed', [
                     'mobile' => $to,
                     'response' => $response->body(),
                 ]);
             }
+        }
+
 
             // Random delay between 30 and 60 seconds
-            // $delay = rand(30, 60);
-            // sleep($delay);
+            $delay = rand(30, 60); // Random delay between 30 and 60 seconds
+            sleep($delay); // Delay the next call
         }
 
         if ($response->failed()) {
