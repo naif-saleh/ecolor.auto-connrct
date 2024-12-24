@@ -333,7 +333,7 @@ class ApiController extends Controller
 
             // Check for "party_dn_type" in the response
             $partyDnType = $responseData['result']['party_dn_type'] ?? null;
-
+            dd($partyDnType);
             if ($partyDnType) {
                 if ($partyDnType === "Wextension") {
                     $autoDailerData->state = "answered";
