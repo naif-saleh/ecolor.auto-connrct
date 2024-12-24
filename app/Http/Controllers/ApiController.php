@@ -334,12 +334,14 @@ class ApiController extends Controller
         if ($responseState->successful()) {
             $responseData = $response->json();
             $partyDnType = $responseData['party_dn_type'] ?? null;
-            dd($partyDnType);   
+            dd($partyDnType);
             if ($partyDnType) {
                 if ($partyDnType === "Wextension") {
                     $autoDailerData->state = "answered";
                 } elseif ($partyDnType === "Wspecialmenu") {
                     $autoDailerData->state = "declined";
+                } elseif($partyDnType === "Wroutepoint"){
+                    $autoDailerData->state = "no answer";
                 }
             }
 
