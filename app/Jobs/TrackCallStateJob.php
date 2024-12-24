@@ -54,7 +54,7 @@ class TrackCallStateJob implements ShouldQueue
 
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
-                $partyDnType = $responseData[0]['status'] ?? null;
+                $partyDnType = $responseData['party_dn_type'] ?? null;
 
                 if ($partyDnType) {
                     if ($partyDnType === "Wextension") {
