@@ -2,8 +2,11 @@
 
 namespace App\Jobs;
 
+use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
-use Illuminate\Foundation\Queue\Queueable;
+use Illuminate\Foundation\Bus\Dispatchable;
+use Illuminate\Queue\InteractsWithQueue;
+use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\AutoDailerData;
@@ -11,7 +14,8 @@ use App\Models\AutoDailerReport;
 
 class TrackCallStateJob implements ShouldQueue
 {
-    use Queueable;
+    use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
+
     protected $from;
     protected $to;
     protected $recordId;
@@ -19,8 +23,13 @@ class TrackCallStateJob implements ShouldQueue
 
     /**
      * Create a new job instance.
+     *
+     * @param string $from
+     * @param string $to
+     * @param int $recordId
+     * @param string $token
      */
-    public function __construct()
+    public function __construct($from, $to, $recordId, $token)
     {
         $this->from = $from;
         $this->to = $to;
@@ -35,7 +44,7 @@ class TrackCallStateJob implements ShouldQueue
     {
         $autoDailerData = AutoDailerData::find($this->recordId);
         $finalStates = ['answered', 'declined', 'no answer'];
-        $maxRetries = 10; // Limit retries to avoid infinite loops
+        $maxRetries = 10; // Limit retries
         $retryCount = 0;
 
         while ($retryCount < $maxRetries) {
@@ -88,4 +97,3 @@ class TrackCallStateJob implements ShouldQueue
         Log::warning('3CX Call State Check Timed Out', ['mobile' => $this->to]);
     }
 }
-
