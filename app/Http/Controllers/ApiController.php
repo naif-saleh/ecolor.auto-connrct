@@ -320,7 +320,6 @@ class ApiController extends Controller
         $from = $record->extension;
         $to = $record->mobile;
 
-        // Step 1: Make the call
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $token,
         ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
@@ -329,67 +328,51 @@ class ApiController extends Controller
 
         $autoDailerData = AutoDailerData::find($record->id);
 
-        if ($response->failed()) {
+        // Fetch participant data from the 3CX API
+        $responseState = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->get(config('services.three_cx.api_url') . "/callcontrol/{$from}/participants");
+
+        if ($responseState->successful()) {
+            $responseData = $responseState->json(); // Fetch JSON data
+            dd($responseData);
+            // Assuming `participants` is an array in the response
+
+                $partyDnType = $responseData['status'] ?? null;
+                dd($partyDnType);
+                if ($partyDnType) {
+                    // Update state based on party_dn_type
+                    if ($partyDnType === "Wextension") {
+                        $autoDailerData->state = "answered";
+                    } elseif ($partyDnType === "Wspecialmenu") {
+                        $autoDailerData->state = "declined";
+                    } elseif ($partyDnType === "Wroutepoint") {
+                        $autoDailerData->state = "no answer";
+                    }
+                }
+
+
+            $autoDailerData->save();
+
+
+            // Log or save report
+            AutoDailerReport::create([
+                'mobile' => $autoDailerData->mobile,
+                'provider' => $autoDailerData->provider_name,
+                'extension' => $autoDailerData->extension,
+                'state' => $autoDailerData->state,
+                'called_at' => now()->addHours(2),
+            ]);
+        } else {
             // Log failed call
-            Log::error('Failed to initiate call', [
+            Log::error('3CX Call Failed', [
                 'mobile' => $to,
                 'response' => $response->body(),
             ]);
-            continue; // Skip to the next record
         }
 
-        // Step 2: Poll the participants endpoint for status
-        $participantData = null;
-        for ($attempts = 0; $attempts < 5; $attempts++) { // Retry up to 5 times
-            sleep(2); // Delay between attempts (adjust as necessary)
 
-            $responseState = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
-            ])->get(config('services.three_cx.api_url') . "/callcontrol/{$from}/participants");
-
-            if ($responseState->successful()) {
-                $responseData = $responseState->json();
-                dd($response->body());
-                // Assuming `participants` is an array in the response
-                $participantData = $responseData['status'] ?? null;
-                dd($participantData);
-                if ($participantData) {
-                    break; // Exit loop if data is found
-                }
-            }
-        }
-
-        if (!$participantData) {
-            // Log or handle cases where participant data is unavailable
-            Log::warning('No participant data found after polling', [
-                'mobile' => $to,
-            ]);
-            continue;
-        }
-
-        // Step 3: Process participant data
-        if ($participantData === "Wextension") {
-            $autoDailerData->state = "answered";
-        } elseif ($participantData === "Wspecialmenu") {
-            $autoDailerData->state = "declined";
-        } elseif ($participantData === "Wroutepoint") {
-            $autoDailerData->state = "no answer";
-        } else {
-            $autoDailerData->state = "unknown";
-        }
-
-        $autoDailerData->save();
-
-        // Log or save report
-        AutoDailerReport::create([
-            'mobile' => $autoDailerData->mobile,
-            'provider' => $autoDailerData->provider_name,
-            'extension' => $autoDailerData->extension,
-            'state' => $autoDailerData->state,
-            'called_at' => now()->addHours(2),
-        ]);
     }
-
 
     return redirect('/auto-dailer-report')->with('success', 'Auto Dialer is Calling Now...');
 }
