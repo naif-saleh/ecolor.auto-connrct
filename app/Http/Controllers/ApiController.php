@@ -347,7 +347,7 @@ class ApiController extends Controller
                         $autoDailerData->state = "answered";
                     } elseif ($partyDnType === "Wspecialmenu") {
                         $autoDailerData->state = "declined";
-                    } elseif ($partyDnType === "Wroutepoint") {
+                    } elseif ($partyDnType === "Dialing") {
                         $autoDailerData->state = "no answer";
                     }
                 }
