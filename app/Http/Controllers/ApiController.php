@@ -327,21 +327,28 @@ class ApiController extends Controller
         ]);
 
         $autoDailerData = AutoDailerData::find($record->id);
+
+        // Fetch participant data from the 3CX API
         $responseState = Http::withHeaders([
             'Authorization' => 'Bearer ' . $token,
         ])->get(config('services.three_cx.api_url') . "/callcontrol/{$from}/participants");
 
         if ($responseState->successful()) {
-            $responseData = $response->json();
-            $partyDnType = $responseData['party_dn_type'] ?? null;
-            dd($partyDnType);
-            if ($partyDnType) {
-                if ($partyDnType === "Wextension") {
-                    $autoDailerData->state = "answered";
-                } elseif ($partyDnType === "Wspecialmenu") {
-                    $autoDailerData->state = "declined";
-                } elseif($partyDnType === "Wroutepoint"){
-                    $autoDailerData->state = "no answer";
+            $responseData = $responseState->json(); // Fetch JSON data
+
+            // Assuming `participants` is an array in the response
+            foreach ($responseData['participants'] as $participant) {
+                $partyDnType = $participant['party_dn_type'] ?? null;
+
+                if ($partyDnType) {
+                    // Update state based on party_dn_type
+                    if ($partyDnType === "Wextension") {
+                        $autoDailerData->state = "answered";
+                    } elseif ($partyDnType === "Wspecialmenu") {
+                        $autoDailerData->state = "declined";
+                    } elseif ($partyDnType === "Wroutepoint") {
+                        $autoDailerData->state = "no answer";
+                    }
                 }
             }
 
