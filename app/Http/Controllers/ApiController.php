@@ -334,20 +334,20 @@ class ApiController extends Controller
 
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
-                // dd($responseData);
-                $partyDnType = $responseData[0]['status'] ?? null;
 
-                // dd($partyDnType);
-                if ($partyDnType) {
-                    if ($partyDnType === "Wextension") {
-                        $autoDailerData->state = "answered";
-                    } elseif ($partyDnType === "Wspecialmenu") {
-                        $autoDailerData->state = "declined";
-                    } elseif ($partyDnType === "Dialing") {
-                        $autoDailerData->state = "no answer";
+                foreach ($responseData as $participant) {
+                    $partyDnType = $participant['status'] ?? null;
+
+                    if ($partyDnType) {
+                        if ($partyDnType === "Wextension") {
+                            $autoDailerData->state = "answered";
+                        } elseif ($partyDnType === "Wspecialmenu") {
+                            $autoDailerData->state = "declined";
+                        } elseif ($partyDnType === "Dialing") {
+                            $autoDailerData->state = "no answer";
+                        }
                     }
                 }
-
 
                 $autoDailerData->save();
 
@@ -358,7 +358,8 @@ class ApiController extends Controller
                     'state' => $autoDailerData->state,
                     'called_at' => now()->addHours(2),
                 ]);
-            } else {
+            }
+             else {
                 Log::error('3CX Call Failed', [
                     'mobile' => $to,
                     'response' => $response->body(),
