@@ -74,9 +74,9 @@ class ProcessAutoDailerCall implements ShouldQueue
                     }
                 }
             }
-            dd($partyDnType);
+            
         }
-         
+
         // Update record state
         $autoDailerData = AutoDailerData::find($this->record['id']);
         if ($partyDnType === "Wextension") {
