@@ -12,7 +12,6 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
-
 class ProcessAutoDailerCall implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -79,7 +78,6 @@ class ProcessAutoDailerCall implements ShouldQueue
 
         // Update record state
         $autoDailerData = AutoDailerData::find($this->record['id']);
-        
         if ($callState === "Wextension") {
             $autoDailerData->state = "answered";
         } elseif ($callState === "Wspecialmenu") {
@@ -87,7 +85,7 @@ class ProcessAutoDailerCall implements ShouldQueue
         } elseif ($callState === "Dialing") {
             $autoDailerData->state = "no answer";
         } else {
-            $autoDailerData->state = "answered";
+            $autoDailerData->state = "unknown";
         }
         $autoDailerData->save();
 
