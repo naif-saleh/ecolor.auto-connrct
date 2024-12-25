@@ -68,7 +68,6 @@ class ProcessAutoDailerCall implements ShouldQueue
                 $responseData = $responseState->json();
                 foreach ($responseData as $participant) {
                     $callState = $participant['status'] ?? "dialing";
-                    dd($callState);
 
                     // Break if the call reaches a terminal state
                     if (in_array($callState, ["Wextension", "Wspecialmenu", "Dialing"])) {
@@ -80,7 +79,7 @@ class ProcessAutoDailerCall implements ShouldQueue
 
         // Update record state
         $autoDailerData = AutoDailerData::find($this->record['id']);
-        // $autoDailerData->state = "called";
+        
         if ($callState === "Wextension") {
             $autoDailerData->state = "answered";
         } elseif ($callState === "Wspecialmenu") {
