@@ -78,7 +78,7 @@ class ProcessAutoDailerCall implements ShouldQueue
 
         // Update record state
         $autoDailerData = AutoDailerData::find($this->record['id']);
-        if ($callState === "Wextension") {
+        if ($callState === "Connected") {
             $autoDailerData->state = "answered";
         } elseif ($callState === "Wspecialmenu") {
             $autoDailerData->state = "declined";
