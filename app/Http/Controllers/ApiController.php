@@ -299,6 +299,7 @@ class ApiController extends Controller
             'client_id' => 'testapi',
             'client_secret' => '95ULDtdTRRJhJBZCp94K6Gd1BKRuaP1k',
         ]);
+        dd($response);
 
         if ($response->failed()) {
             return response()->json([
