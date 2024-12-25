@@ -299,7 +299,7 @@ class ApiController extends Controller
             'client_id' => 'testapi',
             'client_secret' => '95ULDtdTRRJhJBZCp94K6Gd1BKRuaP1k',
         ]);
-        dd($response->body());
+
 
         if ($response->failed()) {
             return response()->json([
@@ -328,6 +328,7 @@ class ApiController extends Controller
             ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
                 'destination' => $to,
             ]);
+            dd($response->body());
 
             if ($response->failed()) {
                 Log::error('3CX Call Failed', [
