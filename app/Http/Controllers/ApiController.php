@@ -15,8 +15,8 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Setting;
+use App\Jobs\ProcessAutoDailerCall;
 
-use function Pest\Laravel\json;
 
 class ApiController extends Controller
 {
@@ -287,12 +287,13 @@ class ApiController extends Controller
             ->groupBy('mobile', 'provider_name', 'extension')
             ->get();
 
-        $count = AutoDailerData::getQuery()->count();
+        $count = $autoDailer->count();
 
         if ($count == 0) {
-            return redirect('/autodailers')->with('wrong', 'No Auto Dailer Numbers Found. Please Insert and Call Again');
+            return redirect('/autodailers')->with('wrong', 'No Auto Dialer Numbers Found. Please Insert and Call Again');
         }
 
+        // Get Token
         $response = Http::asForm()->post(config('services.three_cx.api_url') . '/connect/token', [
             'grant_type' => 'client_credentials',
             'client_id' => 'testapi',
@@ -316,60 +317,12 @@ class ApiController extends Controller
             ], 400);
         }
 
+        // Dispatch jobs for each record
         foreach ($autoDailer as $record) {
-            $from = $record->extension;
-            $to = $record->mobile;
-
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
-            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
-                'destination' => $to,
-            ]);
-            // dd($response);
-            $autoDailerData = AutoDailerData::find($record->id);
-
-            $responseState = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
-            ])->get(config('services.three_cx.api_url') . "/callcontrol/{$from}/participants");
-
-            if ($responseState->successful()) {
-                $responseData = $responseState->json();
-
-                foreach ($responseData as $participant) {
-                    $partyDnType = $participant['status'] ?? null;
-
-                    if ($partyDnType) {
-                        if ($partyDnType === "Wextension") {
-                            $autoDailerData->state = "answered";
-                        } elseif ($partyDnType === "Dialing") {
-                            $autoDailerData->state = "declined";
-                        } elseif ($partyDnType === "Wspecialmenu") {
-                            $autoDailerData->state = "no answer";
-                        }
-                    }
-                }
-
-                $autoDailerData->save();
-
-                AutoDailerReport::create([
-                    'mobile' => $autoDailerData->mobile,
-                    'provider' => $autoDailerData->provider_name,
-                    'extension' => $autoDailerData->extension,
-                    'state' => $autoDailerData->state,
-                    'called_at' => now()->addHours(2),
-                ]);
-            }
-             else {
-                Log::error('3CX Call Failed', [
-                    'mobile' => $to,
-                    'response' => $response->body(),
-                ]);
-            }
-
-
+            ProcessAutoDailerCall::dispatch($record, $token);
         }
 
-        return redirect('/auto-dailer-report')->with('success', 'Auto Dialer is Calling Now...');
+        return redirect('/auto-dailer-report')->with('success', 'Auto Dialer Jobs Dispatched.');
     }
 
 
