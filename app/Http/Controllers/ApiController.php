@@ -366,7 +366,7 @@ class ApiController extends Controller
                 ]);
             }
 
-            sleep(3);
+            
         }
 
         return redirect('/auto-dailer-report')->with('success', 'Auto Dialer is Calling Now...');
