@@ -262,95 +262,127 @@ class ApiController extends Controller
 
     // Get all Auto Dailer..........................................................................................................................
     public function autoDailer(Request $request)
-{
-    if (!Auth::check()) {
-        return response()->json(['error' => 'Unauthorized'], 401);
-    }
+    {
+        if (!Auth::check()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
 
-    $settings = Setting::first();
-    $currentHour = now()->setTimezone('Asia/Riyadh')->hour;
+        $settings = Setting::first();
+        $currentHour = now()->setTimezone('Asia/Riyadh')->hour;
 
-    if ($settings->cfd_allow_friday == 1 || $settings->cfd_allow_saturday == 1) {
-        return redirect('/settings')->with('wrong', 'Today is Weekend, Auto Dialer is disabled. you can skip weekend by updating settings');
-    }
+        if ($settings->cfd_allow_friday == 1 || $settings->cfd_allow_saturday == 1) {
+            return redirect('/settings')->with('wrong', 'Today is Weekend, Auto Dialer is disabled. you can skip weekend by updating settings');
+        }
 
-    if (
-        $settings->allow_auto_calling != 1 ||
-        $currentHour < $settings->cfd_start_time ||
-        $currentHour >= $settings->cfd_end_time
-    ) {
-        return redirect('/settings')->with('wrong', 'Calls are disabled as per settings');
-    }
+        if (
+            $settings->allow_auto_calling != 1 ||
+            $currentHour < $settings->cfd_start_time ||
+            $currentHour >= $settings->cfd_end_time
+        ) {
+            return redirect('/settings')->with('wrong', 'Calls are disabled as per settings');
+        }
 
-    $autoDailer = AutoDailerData::where('state', 'new')
-        ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
-        ->groupBy('mobile', 'provider_name', 'extension')
-        ->get();
+        $autoDailer = AutoDailerData::where('state', 'new')
+            ->select('mobile', DB::raw('MAX(id) as id'), 'provider_name', 'extension')
+            ->groupBy('mobile', 'provider_name', 'extension')
+            ->get();
 
-    $count = AutoDailerData::getQuery()->count();
+        $count = $autoDailer->count();
 
-    if ($count == 0) {
-        return redirect('/autodailers')->with('wrong', 'No Auto Dailer Numbers Found. Please Insert and Call Again');
-    }
+        if ($count == 0) {
+            return redirect('/autodailers')->with('wrong', 'No Auto Dialer Numbers Found. Please Insert and Call Again');
+        }
 
-    $response = Http::asForm()->post(config('services.three_cx.api_url') . '/connect/token', [
-        'grant_type' => 'client_credentials',
-        'client_id' => 'testapi',
-        'client_secret' => '95ULDtdTRRJhJBZCp94K6Gd1BKRuaP1k',
-    ]);
-
-    if ($response->failed()) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Authentication failed',
-            'details' => $response->body(),
-        ], $response->status());
-    }
-
-    $token = $response->json()['access_token'] ?? null;
-
-    if (!$token) {
-        return response()->json([
-            'status' => 'error',
-            'message' => 'Token not found in the authentication response.',
-        ], 400);
-    }
-
-    foreach ($autoDailer as $record) {
-        $from = $record->extension;
-        $to = $record->mobile;
-
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $token,
-        ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
-            'destination' => $to,
+        // Get Token
+        $response = Http::asForm()->post(config('services.three_cx.api_url') . '/connect/token', [
+            'grant_type' => 'client_credentials',
+            'client_id' => 'testapi',
+            'client_secret' => '95ULDtdTRRJhJBZCp94K6Gd1BKRuaP1k',
         ]);
 
-        $autoDailerData = AutoDailerData::find($record->id);
+        if ($response->failed()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Authentication failed',
+                'details' => $response->body(),
+            ], $response->status());
+        }
 
-        $responseState = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $token,
-        ])->get(config('services.three_cx.api_url') . "/callcontrol/{$from}/participants");
+        $token = $response->json()['access_token'] ?? null;
 
-        if ($responseState->successful()) {
-            $responseData = $responseState->json();
-            // dd($responseData);
-                $partyDnType = $responseData[0]['status'] ?? null;
+        if (!$token) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Token not found in the authentication response.',
+            ], 400);
+        }
 
-                // dd($partyDnType);
-                if ($partyDnType) {
-                    if ($partyDnType === "Wextension") {
-                        $autoDailerData->state = "answered";
-                    } elseif ($partyDnType === "Wspecialmenu") {
-                        $autoDailerData->state = "declined";
-                    } elseif ($partyDnType === "Dialing") {
-                        $autoDailerData->state = "no answer";
+        foreach ($autoDailer as $record) {
+            $from = $record->extension;
+            $to = $record->mobile;
+
+            // Make Call
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
+                'destination' => $to,
+            ]);
+
+            if ($response->failed()) {
+                Log::error('3CX Call Failed', [
+                    'mobile' => $to,
+                    'response' => $response->body(),
+                ]);
+                continue;
+            }
+
+            // Poll for Call State
+            $maxRetries = 10;
+            $retryInterval = 5; // seconds
+            $callState = null;
+
+            for ($i = 0; $i < $maxRetries; $i++) {
+                sleep($retryInterval);
+
+                $responseState = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $token,
+                ])->get(config('services.three_cx.api_url') . "/callcontrol/{$from}/participants");
+
+                if ($responseState->successful()) {
+                    $responseData = $responseState->json();
+                    $callState = $responseData[0]['status'] ?? null;
+
+                    if ($callState) {
+                        break; // Exit loop once state is retrieved
                     }
                 }
+            }
 
+            // Update Record State Based on Call State
+            $autoDailerData = AutoDailerData::find($record->id);
+
+            if ($callState) {
+                switch ($callState) {
+                    case "Wextension":
+                        $autoDailerData->state = "answered";
+                        break;
+                    case "Wspecialmenu":
+                        $autoDailerData->state = "declined";
+                        break;
+                    case "Dialing":
+                        $autoDailerData->state = "no answer";
+                        break;
+                    default:
+                        $autoDailerData->state = "unknown";
+                        break;
+                }
+            } else {
+                $autoDailerData->state = "timeout";
+            }
 
             $autoDailerData->save();
 
+            // Save to Report
             AutoDailerReport::create([
                 'mobile' => $autoDailerData->mobile,
                 'provider' => $autoDailerData->provider_name,
@@ -358,18 +390,11 @@ class ApiController extends Controller
                 'state' => $autoDailerData->state,
                 'called_at' => now()->addHours(2),
             ]);
-        } else {
-            Log::error('3CX Call Failed', [
-                'mobile' => $to,
-                'response' => $response->body(),
-            ]);
         }
 
-
+        return redirect('/auto-dailer-report')->with('success', 'Auto Dialer is Calling Now...');
     }
 
-    return redirect('/auto-dailer-report')->with('success', 'Auto Dialer is Calling Now...');
-}
 
 
     // Call Auto Dailers By Clicking...................................................................................................................
