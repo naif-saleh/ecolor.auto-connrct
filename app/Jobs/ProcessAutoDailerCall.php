@@ -74,7 +74,7 @@ class ProcessAutoDailerCall implements ShouldQueue
                     }
                 }
             }
-            
+
         }
 
         // Update record state
@@ -82,12 +82,13 @@ class ProcessAutoDailerCall implements ShouldQueue
         if ($partyDnType === "Wextension") {
             $autoDailerData->state = "answered";
         } elseif ($partyDnType === "Wspecialmenu") {
-            $autoDailerData->state = "declined";
-        } elseif ($partyDnType === "None") {
             $autoDailerData->state = "no answer";
-        } else {
-            $autoDailerData->state = "unknown";
         }
+        // } elseif ($partyDnType === "None") {
+        //     $autoDailerData->state = "no answer";
+        // } else {
+        //     $autoDailerData->state = "unknown";
+        // }
         $autoDailerData->save();
 
         // Add to report
