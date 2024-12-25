@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\Setting;
 use App\Jobs\ProcessAutoDailerCall;
+use App\Jobs\ProcessAutoDistributerrCall;
 
 
 class ApiController extends Controller
@@ -107,48 +108,9 @@ class ApiController extends Controller
             ], 400);
         }
 
-        // Loop through records and make calls
+        // Dispatch jobs for each record
         foreach ($autoDistributer as $record) {
-            $from = $record->extension;
-            $to = $record->mobile;
-
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
-            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
-                'destination' => $to,
-            ]);
-
-            $autoDistributer = AutoDirtibuterData::find($record->id);
-
-            if ($response->successful()) {
-                $autoDistributer->state = "called";
-                $autoDistributer->save();
-
-                AutoDistributerReport::create([
-                    'mobile' => $autoDistributer->mobile,
-                    'provider' => $autoDistributer->provider_name,
-                    'extension' => $autoDistributer->extension,
-                    'state' => $autoDistributer->state,
-                    'called_at' => now()->addHours(2),
-                ]);
-            } else {
-                Log::error('3CX Call Failed', [
-                    'mobile' => $to,
-                    'response' => $response->body(),
-                ]);
-            }
-
-            // Random delay between 30 and 60 seconds
-            $delay = rand(30, 60); // Random delay between 30 and 60 seconds
-            sleep($delay); // Delay the next call
-        }
-
-        if ($response->failed()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Failed to make the call.',
-                'details' => $response->body(),
-            ], $response->status());
+            ProcessAutoDistributerrCall::dispatch($record, $token);
         }
 
         return redirect('/auto-distributer-report')->with('success', 'Auto Distributer is Calling Now...');
