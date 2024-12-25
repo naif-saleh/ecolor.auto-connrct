@@ -69,7 +69,7 @@ class ProcessAutoDailerCall implements ShouldQueue
                     $callState = $participant['status'] ?? "dialing";
 
                     // Break if the call reaches a terminal state
-                    if (in_array($callState, ["Wextension", "Wspecialmenu", "Dialing"])) {
+                    if (in_array($callState, ["Wextension", "Wspecialmenu", "Dialing", "Connected"])) {
                         break 2; // Exit both loops
                     }
                 }
