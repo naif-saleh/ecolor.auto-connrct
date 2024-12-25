@@ -341,9 +341,9 @@ class ApiController extends Controller
                     if ($partyDnType) {
                         if ($partyDnType === "Wextension") {
                             $autoDailerData->state = "answered";
-                        } elseif ($partyDnType === "Wspecialmenu") {
-                            $autoDailerData->state = "declined";
                         } elseif ($partyDnType === "Dialing") {
+                            $autoDailerData->state = "declined";
+                        } elseif ($partyDnType === "Wspecialmenu") {
                             $autoDailerData->state = "no answer";
                         }
                     }
@@ -366,7 +366,7 @@ class ApiController extends Controller
                 ]);
             }
 
-            
+
         }
 
         return redirect('/auto-dailer-report')->with('success', 'Auto Dialer is Calling Now...');
