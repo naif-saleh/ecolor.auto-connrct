@@ -54,7 +54,7 @@ class ProcessAutoDailerCall implements ShouldQueue
         // Poll for call status
         $maxRetries = 10;
         $retryInterval = 5; // seconds
-        $callState = "dialing"; // Default state
+
 
         for ($i = 0; $i < $maxRetries; $i++) {
             sleep($retryInterval);
@@ -66,23 +66,23 @@ class ProcessAutoDailerCall implements ShouldQueue
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
                 foreach ($responseData as $participant) {
-                    $callState = $participant['status'] ?? "dialing";
 
+                    $partyDnType = $participant['party_dn_type'] ?? "None";
                     // Break if the call reaches a terminal state
-                    if (in_array($callState, ["Wextension", "Wspecialmenu", "Dialing", "Connected"])) {
+                    if (in_array($partyDnType, ["Wextension", "Wspecialmenu", "None"])) {
                         break 2; // Exit both loops
                     }
                 }
             }
         }
-
+        dd($partyDnType);
         // Update record state
         $autoDailerData = AutoDailerData::find($this->record['id']);
-        if ($callState === "Connected") {
+        if ($partyDnType === "Wextension") {
             $autoDailerData->state = "answered";
-        } elseif ($callState === "Wspecialmenu") {
+        } elseif ($partyDnType === "Wspecialmenu") {
             $autoDailerData->state = "declined";
-        } elseif ($callState === "Dialing") {
+        } elseif ($partyDnType === "None") {
             $autoDailerData->state = "no answer";
         } else {
             $autoDailerData->state = "unknown";
