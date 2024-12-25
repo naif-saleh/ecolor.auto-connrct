@@ -325,7 +325,7 @@ class ApiController extends Controller
             ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
                 'destination' => $to,
             ]);
-            dd($response->body());
+            dd($response);
             $autoDailerData = AutoDailerData::find($record->id);
 
             $responseState = Http::withHeaders([
