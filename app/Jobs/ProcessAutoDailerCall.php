@@ -54,7 +54,7 @@ class ProcessAutoDailerCall implements ShouldQueue
         // Poll for call status
         $maxRetries = 10;
         $retryInterval = 5; // seconds
-
+        $partyDnType = "None"; // Initialize outside the loop for each job.
 
         for ($i = 0; $i < $maxRetries; $i++) {
             sleep($retryInterval);
@@ -77,21 +77,24 @@ class ProcessAutoDailerCall implements ShouldQueue
 
         }
 
-        // Update record state
+        // Update the record state based on individual result
         $autoDailerData = AutoDailerData::find($this->record['id']);
+        if (!$autoDailerData) {
+            Log::warning("AutoDailerData not found for ID {$this->record['id']}");
+            return;
+        }
+
         if ($partyDnType === "Wextension") {
             $autoDailerData->state = "answered";
         } elseif ($partyDnType === "Wspecialmenu") {
             $autoDailerData->state = "no answer";
+        } else {
+            $autoDailerData->state = "unknown"; // Or any other appropriate state
         }
-        // } elseif ($partyDnType === "None") {
-        //     $autoDailerData->state = "no answer";
-        // } else {
-        //     $autoDailerData->state = "unknown";
-        // }
+
         $autoDailerData->save();
 
-        // Add to report
+        // Add to report for this specific call
         AutoDailerReport::create([
             'mobile' => $autoDailerData->mobile,
             'provider' => $autoDailerData->provider_name,
@@ -101,3 +104,4 @@ class ProcessAutoDailerCall implements ShouldQueue
         ]);
     }
 }
+
