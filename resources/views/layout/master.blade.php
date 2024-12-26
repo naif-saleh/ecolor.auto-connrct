@@ -59,6 +59,12 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('providers.index') }}">Providers</a>
                         </li>
+                        {{-- {{-- <li class="nav-item">
+                            <a class="nav-link" href="{{ route('autoDailerByProvider.index') }}">AutoDailerByProvider</a>
+                        </li> --}}
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('autoDialerProviders.index') }}">AutoDailerProvider</a>
+                        </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button"
                                 data-bs-toggle="dropdown" aria-expanded="false">

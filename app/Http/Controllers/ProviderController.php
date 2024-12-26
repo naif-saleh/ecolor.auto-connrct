@@ -106,5 +106,5 @@ class ProviderController extends Controller
         return back()->with('success', 'Provider deleted.');
     }
 
-    
+
 }

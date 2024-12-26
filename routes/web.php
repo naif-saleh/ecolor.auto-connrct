@@ -10,6 +10,8 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ApiController;
 use App\Http\Controllers\ReportController;
+use App\Http\Controllers\AutoDailerByProvider\ProviderForAutoDailerController;
+use App\Http\Controllers\AutoDailerByProvider\ProviderFeedController;
 
 
 Route::get('/', function () {
@@ -19,30 +21,39 @@ Route::get('/', function () {
 Route::get('/', [HomeController::class, 'index'])->name('home');
 
 
+// Show feeds for a provider
+Route::get('providers/{id}/feeds', [ProviderFeedController::class, 'show'])->name('feeds.show');
+
+// Show individual feed details
+Route::get('feeds/{id}', [ProviderFeedController::class, 'showFeed'])->name('feeds.showFeed');
+
+// Store new feed
+Route::post('providers/{id}/feeds', [ProviderFeedController::class, 'storeFeed'])->name('feeds.store');
 
 
 
-// API Endpoints Sanctum Provider...........................................................................................................
-// Route::middleware('auth:sanctum')->group(function () {
-//     // Settings......................................................................................................
 
-//     // Providers routes..............................................................................................
-//     Route::get('api/providers', [ApiController::class, 'getProviders']);
-//     Route::get('api/providers/{name}', [ApiController::class, 'getByName']);
 
-//     // AutoDistributer routes.........................................................................................
-//     Route::get('api/auto-distributer', [ApiController::class, 'autoDistributet']);
-//     Route::put('api/auto-distributer', [ApiController::class, 'autoDistributerUpdateState']);
-//     // Users......................................................................................................
-//     Route::get('api/users', [ApiController::class, 'getUsers']);
+// AutoDailer By Provider..........................................................................................................
 
-// });
+// Provider..........................................................................................................................
+Route::get('/auto-dialer-providers', [ProviderForAutoDailerController::class, 'index'])->name('autoDialerProviders.index');
+Route::get('/auto-dialer-providers/create', [ProviderForAutoDailerController::class, 'create'])->name('autoDialerProviders.create');
+Route::post('/auto-dialer-providers', [ProviderForAutoDailerController::class, 'store'])->name('autoDialerProviders.store');
+Route::get('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'show'])->name('autoDialerProviders.show');
+Route::get('/auto-dialer-providers/{id}/edit', [ProviderForAutoDailerController::class, 'edit'])->name('autoDialerProviders.edit');
+Route::put('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'update'])->name('autoDialerProviders.update');
+Route::delete('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'destroy'])->name('autoDialerProviders.destroy');
+// Provider................................................................................................................................
 
-// AutoDailer routes..............................................................................................
-// Route::get('api/auto-dailer', [ApiController::class, 'autoDailer']);
-// Route::middleware(['api', 'auth:sanctum'])->group(function () {
-//     Route::put('/api/auto-dailer-data/{id}/state', [ApiController::class, 'updateState']);
-// });
+// Provider Feed....................................................................................................................
+Route::get('autoDialerProviders/{id}/createFeed', [ProviderFeedController::class, 'createFeed'])->name('autoDialerProviders.createFeed');
+Route::post('autoDialerProviders/{id}/storeFeed', [ProviderFeedController::class, 'storeFeed'])->name('autoDialerProviders.storeFeed');
+Route::get('autoDialerProviders/{id}', [ProviderFeedController::class, 'show'])->name('autoDialerProviders.show');
+
+// Provider Feed....................................................................................................................
+
+
 
 // Route::get('api/auto-dailer/{id}', [ApiController::class, 'autoDailerShowState']);
 Route::get('settings/json', [SettingController::class, 'getCfdApi'])->name('settings.getCfdApi')->middleware(['auth']);
@@ -55,6 +66,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('users/reset-password', [UserController::class, 'resetPassword'])->name('users.reset.password');
     Route::get('users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('users', [UserController::class, 'store'])->name('users.store');
+
+
+
 
     // Dailer Calling..........................................................................................................................
     Route::get('auto-dailer-call', [ApiController::class, 'autoDailer'])->name('autoDailer');
