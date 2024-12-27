@@ -59,8 +59,8 @@ class ProcessAutoDailerProvider implements ShouldQueue
             Log::info("Call initiated successfully for mobile: {$to}");
 
 
-            $maxRetries = 50;
-            $retryInterval = 10;
+            $maxRetries = 20;
+            $retryInterval = 5;
             $callState = 'unknown';
 
             for ($i = 0; $i < $maxRetries; $i++) {
