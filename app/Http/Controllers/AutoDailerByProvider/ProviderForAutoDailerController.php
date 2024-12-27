@@ -98,9 +98,14 @@ class ProviderForAutoDailerController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $autoDailer = AutoDailerProviderFeed::where('state', 'new')->get();
+        $autoDailer = AutoDailerProviderFeed::where('state', 'new')
+            ->select('mobile', DB::raw('MAX(id) as id'), 'extension')
+            ->groupBy('mobile', 'extension')
+            ->get();
 
-        if ($autoDailer->isEmpty()) {
+        $count = $autoDailer->count();
+
+        if ($count == 0) {
             return redirect('/auto-dialer-providers')->with('wrong', 'No Auto Dialer Numbers Found. Please Insert and Call Again');
         }
 
