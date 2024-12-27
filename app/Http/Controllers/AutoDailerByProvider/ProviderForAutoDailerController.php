@@ -103,6 +103,8 @@ class ProviderForAutoDailerController extends Controller
             ->groupBy('mobile', 'extension')
             ->get();
 
+            dd($autoDailer);
+
         $count = $autoDailer->count();
 
         if ($count == 0) {
