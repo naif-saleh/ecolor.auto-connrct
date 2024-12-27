@@ -31,7 +31,9 @@ class ProcessAutoDailerProvider implements ShouldQueue
         $this->token = $token;
     }
 
-    
+    /**
+     * Execute the job.
+     */
     public function handle()
     {
         try {
@@ -56,12 +58,11 @@ class ProcessAutoDailerProvider implements ShouldQueue
 
             Log::info("Call initiated successfully for mobile: {$to}");
 
-            // Check if the call ended (answered or no answer)
-            $callState = 'unknown'; // Start as unknown
 
-            // Poll for the call status
-            $maxRetries = 20; // Check up to 100 seconds (20 retries x 5 seconds)
-            $retryInterval = 5; // seconds
+            $maxRetries = 20;
+            $retryInterval = 5;
+            $callState = 'unknown';
+
             for ($i = 0; $i < $maxRetries; $i++) {
                 sleep($retryInterval);
 
@@ -76,7 +77,8 @@ class ProcessAutoDailerProvider implements ShouldQueue
 
                 $responseData = $responseState->json();
 
-                // Check if the call is answered or has no answer
+
+                $callState = 'unknown';
                 foreach ($responseData as $participant) {
                     if (isset($participant['party_dn_type'])) {
                         $callState = match ($participant['party_dn_type']) {
@@ -85,7 +87,6 @@ class ProcessAutoDailerProvider implements ShouldQueue
                             default => 'ringing',
                         };
 
-                        // If call ended, exit the loop
                         if (in_array($callState, ['answered', 'no answer'])) {
                             break 2;
                         }
@@ -93,18 +94,17 @@ class ProcessAutoDailerProvider implements ShouldQueue
                 }
             }
 
-            // Update the record state based on the final call state
+
             $record = AutoDailerProviderFeed::find($this->record->id);
             if (!$record) {
                 Log::warning("Record not found for ID {$this->record->id}");
                 return;
             }
 
-            // Set final call state (answered, no answer, or unknown)
             $record->state = $callState;
             $record->save();
 
-            // Create a report
+
             AutoDailerReport::create([
                 'mobile' => $record->mobile,
                 'provider' => $record->provider_name,
@@ -112,7 +112,7 @@ class ProcessAutoDailerProvider implements ShouldQueue
                 'state' => $record->state,
                 'called_at' => now()->addHours(2)->setTimezone('UTC'),
             ]);
-            sleep(15);
+
         } catch (\Exception $e) {
             Log::error('Job Failed', [
                 'error' => $e->getMessage(),
