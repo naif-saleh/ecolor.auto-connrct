@@ -12,7 +12,7 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 
-class ProcessAutoDailerCall implements ShouldQueue
+class ProcessAutoDailerProvider implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -54,7 +54,7 @@ class ProcessAutoDailerCall implements ShouldQueue
 
         $maxRetries = 10;
         $retryInterval = 5;
-        $partyDnType = "None";  
+        $partyDnType = "None";
 
         for ($i = 0; $i < $maxRetries; $i++) {
             sleep($retryInterval);

@@ -8,7 +8,7 @@ use App\Models\AutoDialerProvider;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
-use App\Jobs\ProcessAutoDailerCall;
+use App\Jobs\ProcessAutoDailerProvider;
 use Illuminate\Support\Facades\Auth;
 use App\Models\AutoDailerProviderFeed;
 
@@ -86,67 +86,67 @@ class ProviderForAutoDailerController extends Controller
 
 
 
-    // public function autoDailer(Request $request)
-    // {
-    //     if (!Auth::check()) {
-    //         return response()->json(['error' => 'Unauthorized'], 401);
-    //     }
+    public function autoDailer(Request $request)
+    {
+        if (!Auth::check()) {
+            return response()->json(['error' => 'Unauthorized'], 401);
+        }
 
-    //     // $settings = Setting::first();
-    //     // $currentHour = now()->setTimezone('Asia/Riyadh')->hour;
+        // $settings = Setting::first();
+        // $currentHour = now()->setTimezone('Asia/Riyadh')->hour;
 
-    //     // if ($settings->cfd_allow_friday == 1 || $settings->cfd_allow_saturday == 1) {
-    //     //     return redirect('/settings')->with('wrong', 'Today is Weekend, Auto Dialer is disabled. you can skip weekend by updating settings');
-    //     // }
+        // if ($settings->cfd_allow_friday == 1 || $settings->cfd_allow_saturday == 1) {
+        //     return redirect('/settings')->with('wrong', 'Today is Weekend, Auto Dialer is disabled. you can skip weekend by updating settings');
+        // }
 
-    //     // if (
-    //     //     $settings->allow_auto_calling != 1 ||
-    //     //     $currentHour < $settings->cfd_start_time ||
-    //     //     $currentHour >= $settings->cfd_end_time
-    //     // ) {
-    //     //     return redirect('/settings')->with('wrong', 'Calls are disabled as per settings');
-    //     // }
+        // if (
+        //     $settings->allow_auto_calling != 1 ||
+        //     $currentHour < $settings->cfd_start_time ||
+        //     $currentHour >= $settings->cfd_end_time
+        // ) {
+        //     return redirect('/settings')->with('wrong', 'Calls are disabled as per settings');
+        // }
 
-    //     $autoDailer = AutoDailerProviderFeed::where('state', 'new')
-    //         ->select('mobile', DB::raw('MAX(id) as id'), 'extension')
-    //         ->groupBy('mobile', 'extension')
-    //         ->get();
+        $autoDailer = AutoDailerProviderFeed::where('state', 'new')
+            ->select('mobile', DB::raw('MAX(id) as id'), 'extension')
+            ->groupBy('mobile', 'extension')
+            ->get();
 
-    //     $count = $autoDailer->count();
+        $count = $autoDailer->count();
 
-    //     if ($count == 0) {
-    //         return redirect('/autodailers')->with('wrong', 'No Auto Dialer Numbers Found. Please Insert and Call Again');
-    //     }
+        if ($count == 0) {
+            return redirect('/autodailers')->with('wrong', 'No Auto Dialer Numbers Found. Please Insert and Call Again');
+        }
 
-    //     // Get Token
-    //     $response = Http::asForm()->post(config('services.three_cx.api_url') . '/connect/token', [
-    //         'grant_type' => 'client_credentials',
-    //         'client_id' => 'testapi',
-    //         'client_secret' => '95ULDtdTRRJhJBZCp94K6Gd1BKRuaP1k',
-    //     ]);
+        // Get Token
+        $response = Http::asForm()->post(config('services.three_cx.api_url') . '/connect/token', [
+            'grant_type' => 'client_credentials',
+            'client_id' => 'testapi',
+            'client_secret' => '95ULDtdTRRJhJBZCp94K6Gd1BKRuaP1k',
+        ]);
 
-    //     if ($response->failed()) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'Authentication failed',
-    //             'details' => $response->body(),
-    //         ], $response->status());
-    //     }
+        if ($response->failed()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Authentication failed',
+                'details' => $response->body(),
+            ], $response->status());
+        }
 
-    //     $token = $response->json()['access_token'] ?? null;
+        $token = $response->json()['access_token'] ?? null;
 
-    //     if (!$token) {
-    //         return response()->json([
-    //             'status' => 'error',
-    //             'message' => 'Token not found in the authentication response.',
-    //         ], 400);
-    //     }
+        if (!$token) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Token not found in the authentication response.',
+            ], 400);
+        }
 
-    //     // Dispatch jobs for each record
-    //     foreach ($autoDailer as $record) {
-    //         ProcessAutoDailerCall::dispatch($record, $token);
-    //     }
+        // Dispatch jobs for each record
+        foreach ($autoDailer as $record) {
+            ProcessAutoDailerProvider::dispatch($record, $token);
+        }
 
-    //     return redirect('/auto-dailer-report')->with('success', 'Auto Dialer Jobs Dispatched.');
-    // }
+        return redirect()->route('autoDialerProviders.index')->with('success', 'Auto Dialer Jobs Dispatched.');
+    }
 }

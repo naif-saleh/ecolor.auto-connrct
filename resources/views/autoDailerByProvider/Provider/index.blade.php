@@ -30,7 +30,7 @@
                                 <a href="{{ route('feeds.show', $provider->id) }}" class="btn btn-info btn-sm">View</a>
                                 <a href="{{ route('autoDialerProviders.edit', $provider->id) }}" class="btn btn-warning btn-sm">Edit</a>
                                 <a href="{{ route('autoDialerProviders.createFeed', $provider->id) }}" class="btn btn-primary btn-sm">Create Feed</a>
-
+                                <a href="{{ route('call')}}"" class="btn btn-dark btn-sm">Call</a>
                                 <form action="{{ route('autoDialerProviders.destroy', $provider->id) }}" method="POST" class="d-inline">
                                     @csrf
                                     @method('DELETE')

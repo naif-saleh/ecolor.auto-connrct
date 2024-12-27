@@ -50,7 +50,7 @@ Route::delete('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::c
 Route::get('autoDialerProviders/{id}/createFeed', [ProviderFeedController::class, 'createFeed'])->name('autoDialerProviders.createFeed');
 Route::post('autoDialerProviders/{id}/storeFeed', [ProviderFeedController::class, 'storeFeed'])->name('autoDialerProviders.storeFeed');
 Route::get('autoDialerProviders/{id}', [ProviderFeedController::class, 'show'])->name('autoDialerProviders.show');
-
+Route::get('autoDialercall', [ProviderForAutoDailerController::class, 'autoDailer'])->name('call');
 // Provider Feed....................................................................................................................
 
 
