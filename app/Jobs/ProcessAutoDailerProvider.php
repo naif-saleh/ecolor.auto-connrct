@@ -16,15 +16,15 @@ class ProcessAutoDailerProvider implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $record;
     protected $token;
 
     /**
      * Create a new job instance.
+     *
+     * @param string $token
      */
-    public function __construct($record, $token)
+    public function __construct($token)
     {
-        $this->record = $record;
         $this->token = $token;
     }
 

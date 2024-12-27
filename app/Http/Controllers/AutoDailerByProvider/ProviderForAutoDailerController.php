@@ -92,29 +92,9 @@ class ProviderForAutoDailerController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        // $settings = Setting::first();
-        // $currentHour = now()->setTimezone('Asia/Riyadh')->hour;
+        $autoDailer = AutoDailerProviderFeed::where('state', 'new')->exists();
 
-        // if ($settings->cfd_allow_friday == 1 || $settings->cfd_allow_saturday == 1) {
-        //     return redirect('/settings')->with('wrong', 'Today is Weekend, Auto Dialer is disabled. you can skip weekend by updating settings');
-        // }
-
-        // if (
-        //     $settings->allow_auto_calling != 1 ||
-        //     $currentHour < $settings->cfd_start_time ||
-        //     $currentHour >= $settings->cfd_end_time
-        // ) {
-        //     return redirect('/settings')->with('wrong', 'Calls are disabled as per settings');
-        // }
-
-        $autoDailer = AutoDailerProviderFeed::where('state', 'new')
-            ->select('mobile', DB::raw('MAX(id) as id'), 'extension')
-            ->groupBy('mobile', 'extension')
-            ->get();
-
-        $count = $autoDailer->count();
-
-        if ($count == 0) {
+        if (!$autoDailer) {
             return redirect('/auto-dialer-providers')->with('wrong', 'No Auto Dialer Numbers Found. Please Insert and Call Again');
         }
 
@@ -142,11 +122,9 @@ class ProviderForAutoDailerController extends Controller
             ], 400);
         }
 
-        // Dispatch jobs for each record
-        foreach ($autoDailer as $record) {
-            ProcessAutoDailerProvider::dispatch($record, $token);
-        }
+        // Dispatch a single job to process all records
+        ProcessAutoDailerProvider::dispatch($token);
 
-        return redirect()->route('autoDialerProviders.index')->with('success', 'Auto Dialer Jobs Dispatched.');
+        return redirect()->route('autoDialerProviders.index')->with('success', 'Auto Dialer Job Dispatched.');
     }
 }
