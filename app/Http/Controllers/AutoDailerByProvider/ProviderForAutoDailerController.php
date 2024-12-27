@@ -115,7 +115,7 @@ class ProviderForAutoDailerController extends Controller
         $count = $autoDailer->count();
 
         if ($count == 0) {
-            return redirect('/autodailers')->with('wrong', 'No Auto Dialer Numbers Found. Please Insert and Call Again');
+            return redirect('/auto-dialer-providers')->with('wrong', 'No Auto Dialer Numbers Found. Please Insert and Call Again');
         }
 
         // Get Token

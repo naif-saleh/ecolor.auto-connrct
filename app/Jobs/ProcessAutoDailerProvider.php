@@ -68,16 +68,16 @@ class ProcessAutoDailerProvider implements ShouldQueue
                 foreach ($responseData as $participant) {
 
                     $partyDnType = $participant['party_dn_type'] ?? "None";
-                    // Break if the call reaches a terminal state
+
                     if (in_array($partyDnType, ["Wextension", "Wspecialmenu", "None"])) {
-                        break 2; // Exit both loops
+                        break 2;
                     }
                 }
             }
 
         }
 
-        // Update the record state based on individual result
+        
         $autoDailerData = AutoDailerProviderFeed::find($this->record['id']);
         if (!$autoDailerData) {
             Log::warning("AutoDailerData not found for ID {$this->record['id']}");
@@ -89,12 +89,12 @@ class ProcessAutoDailerProvider implements ShouldQueue
         } elseif ($partyDnType === "Wspecialmenu") {
             $autoDailerData->state = "no answer";
         } else {
-            $autoDailerData->state = "unknown"; // Or any other appropriate state
+            $autoDailerData->state = "unknown";
         }
 
         $autoDailerData->save();
 
-        // Add to report for this specific call
+
         AutoDailerReport::create([
             'mobile' => $autoDailerData->mobile,
             'provider' => $autoDailerData->provider_name,
