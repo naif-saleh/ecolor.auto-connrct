@@ -2,7 +2,7 @@
 
 namespace App\Jobs;
 
-use App\Models\AutoDailerData;
+use App\Models\AutoDailerProviderFeed;
 use App\Models\AutoDailerReport;
 use Illuminate\Bus\Queueable;
 use Illuminate\Support\Facades\Http;
@@ -78,7 +78,7 @@ class ProcessAutoDailerProvider implements ShouldQueue
         }
 
         // Update the record state based on individual result
-        $autoDailerData = AutoDailerData::find($this->record['id']);
+        $autoDailerData = AutoDailerProviderFeed::find($this->record['id']);
         if (!$autoDailerData) {
             Log::warning("AutoDailerData not found for ID {$this->record['id']}");
             return;
