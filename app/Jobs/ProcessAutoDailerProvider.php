@@ -33,75 +33,69 @@ class ProcessAutoDailerProvider implements ShouldQueue
      */
     public function handle()
     {
-        $from = $this->record['extension'];
-        $to = $this->record['mobile'];
+        try {
+            $from = $this->record['extension'];
+            $to = $this->record['mobile'];
 
-        // Make the call
-        $response = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
-        ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
-            'destination' => $to,
-        ]);
-
-        if ($response->failed()) {
-            Log::error('3CX Call Failed', [
-                'mobile' => $to,
-                'response' => $response->body(),
-            ]);
-            return;
-        }
-
-
-        $maxRetries = 10;
-        $retryInterval = 5;
-        $partyDnType = "None";
-
-        for ($i = 0; $i < $maxRetries; $i++) {
-            sleep($retryInterval);
-
-            $responseState = Http::withHeaders([
+            // Make the call
+            $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->token,
-            ])->get(config('services.three_cx.api_url') . "/callcontrol/{$from}/participants");
+            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
+                'destination' => $to,
+            ]);
 
-            if ($responseState->successful()) {
+            if ($response->failed()) {
+                throw new \Exception('3CX Call Failed: ' . $response->body());
+            }
+
+            $partyDnType = "None";
+
+            for ($i = 0; $i < 10; $i++) {
+                sleep(5);
+
+                $responseState = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $this->token,
+                ])->get(config('services.three_cx.api_url') . "/callcontrol/{$from}/participants");
+
+                if ($responseState->failed()) {
+                    continue;
+                }
+
                 $responseData = $responseState->json();
                 foreach ($responseData as $participant) {
-
-                    $partyDnType = $participant['party_dn_type'] ?? "None";
-
-                    if (in_array($partyDnType, ["Wextension", "Wspecialmenu", "None"])) {
+                    if (isset($participant['party_dn_type']) && in_array($participant['party_dn_type'], ["Wextension", "Wspecialmenu", "None"])) {
+                        $partyDnType = $participant['party_dn_type'];
                         break 2;
                     }
                 }
             }
 
+            $autoDailerData = AutoDailerProviderFeed::find($this->record['id']);
+            if (!$autoDailerData) {
+                Log::warning("AutoDailerData not found for ID {$this->record['id']}");
+                return;
+            }
+
+            $autoDailerData->state = match ($partyDnType) {
+                "Wextension" => "answered",
+                "Wspecialmenu" => "no answer",
+                default => "unknown",
+            };
+
+            $autoDailerData->save();
+
+            AutoDailerReport::create([
+                'mobile' => $autoDailerData->mobile,
+                'provider' => $autoDailerData->provider_name,
+                'extension' => $autoDailerData->extension,
+                'state' => $autoDailerData->state,
+                'called_at' => now()->addHours(2)->setTimezone('UTC'),
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Job Failed', [
+                'error' => $e->getMessage(),
+                'record' => $this->record,
+            ]);
         }
-
-        
-        $autoDailerData = AutoDailerProviderFeed::find($this->record['id']);
-        if (!$autoDailerData) {
-            Log::warning("AutoDailerData not found for ID {$this->record['id']}");
-            return;
-        }
-
-        if ($partyDnType === "Wextension") {
-            $autoDailerData->state = "answered";
-        } elseif ($partyDnType === "Wspecialmenu") {
-            $autoDailerData->state = "no answer";
-        } else {
-            $autoDailerData->state = "unknown";
-        }
-
-        $autoDailerData->save();
-
-
-        AutoDailerReport::create([
-            'mobile' => $autoDailerData->mobile,
-            'provider' => $autoDailerData->provider_name,
-            'extension' => $autoDailerData->extension,
-            'state' => $autoDailerData->state,
-            'called_at' => now()->addHours(2),
-        ]);
     }
 }
-
