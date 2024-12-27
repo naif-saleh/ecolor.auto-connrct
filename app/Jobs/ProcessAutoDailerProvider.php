@@ -31,16 +31,7 @@ class ProcessAutoDailerProvider implements ShouldQueue
         $this->token = $token;
     }
 
-    /**
-     * The queue on which the job will be dispatched
-     *
-     * @var string
-     */
-    public $queue = 'auto_dialer_queue';  // Single queue to handle jobs sequentially
-
-    /**
-     * Execute the job.
-     */
+    
     public function handle()
     {
         try {
