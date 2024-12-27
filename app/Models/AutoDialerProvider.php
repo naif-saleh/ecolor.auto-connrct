@@ -15,4 +15,8 @@ class AutoDialerProvider extends Model
     {
         return $this->belongsTo(User::class);
     }
+    public function feedFiles()
+    {
+        return $this->hasMany(AutoDailerFeedFile::class, 'provider_id');
+    }
 }

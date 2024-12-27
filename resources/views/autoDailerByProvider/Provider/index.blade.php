@@ -27,7 +27,7 @@
                             <td>{{ $provider->name }}</td>
                             <td>{{ $provider->extension }}</td>
                             <td>
-                                <a href="{{ route('feeds.show', $provider->id) }}" class="btn btn-info btn-sm">View</a>
+                                <a href="{{ route('autoDialerProvider.show', $provider->id) }}" class="btn btn-info btn-sm">View</a>
                                 <a href="{{ route('autoDialerProviders.edit', $provider->id) }}" class="btn btn-warning btn-sm">Edit</a>
                                 <a href="{{ route('autoDialerProviders.createFeed', $provider->id) }}" class="btn btn-primary btn-sm">Create Feed</a>
                                 <a href="{{ route('call')}}"" class="btn btn-dark btn-sm">Call</a>

@@ -44,9 +44,15 @@ class ProviderForAutoDailerController extends Controller
         return redirect()->route('autoDialerProviders.index')->with('success', 'Provider created successfully!');
     }
 
+    // public function show($id)
+    // {
+    //     $provider = AutoDialerProvider::findOrFail($id);
+    //     return view('autoDailerByProvider.Provider.show', compact('provider'));
+    // }
+
     public function show($id)
     {
-        $provider = AutoDialerProvider::findOrFail($id);
+        $provider = AutoDialerProvider::with('feedFiles')->findOrFail($id);
         return view('autoDailerByProvider.Provider.show', compact('provider'));
     }
 
