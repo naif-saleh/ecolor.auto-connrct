@@ -87,52 +87,53 @@ class ProviderForAutoDailerController extends Controller
 
 
     public function autoDailer(Request $request)
-    {
-        if (!Auth::check()) {
-            return response()->json(['error' => 'Unauthorized'], 401);
-        }
-
-        $autoDailer = AutoDailerProviderFeed::where('state', 'new')->get();
-
-        if ($autoDailer->isEmpty()) {
-            return redirect('/auto-dialer-providers')->with('wrong', 'No Auto Dialer Numbers Found. Please Insert and Call Again');
-        }
-
-
-        $response = Http::asForm()->post(config('services.three_cx.api_url') . '/connect/token', [
-            'grant_type' => 'client_credentials',
-            'client_id' => 'testapi',
-            'client_secret' => '95ULDtdTRRJhJBZCp94K6Gd1BKRuaP1k',
-        ]);
-
-        if ($response->failed()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Authentication failed',
-                'details' => $response->body(),
-            ], $response->status());
-        }
-
-        $token = $response->json()['access_token'] ?? null;
-
-        if (!$token) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Token not found in the authentication response.',
-            ], 400);
-        }
-
-
-        $chain = [];
-        foreach ($autoDailer as $record) {
-            $chain[] = new ProcessAutoDailerProvider($record, $token);
-        }
-
-        if (!empty($chain)) {
-
-            ProcessAutoDailerProvider::withChain($chain)->dispatch($autoDailer->first(), $token);
-        }
-
-        return redirect()->route('autoDialerProviders.index')->with('success', 'Auto Dialer Jobs Dispatched.');
+{
+    if (!Auth::check()) {
+        return response()->json(['error' => 'Unauthorized'], 401);
     }
+
+    $autoDailer = AutoDailerProviderFeed::where('state', 'new')
+        ->select('mobile', DB::raw('MAX(id) as id'), 'extension')
+        ->groupBy('mobile', 'extension')
+        ->get();
+
+    $count = $autoDailer->count();
+
+    if ($count == 0) {
+        return redirect('/auto-dialer-providers')->with('wrong', 'No Auto Dialer Numbers Found. Please Insert and Call Again');
+    }
+
+    // Get Token
+    $response = Http::asForm()->post(config('services.three_cx.api_url') . '/connect/token', [
+        'grant_type' => 'client_credentials',
+        'client_id' => 'testapi',
+        'client_secret' => '95ULDtdTRRJhJBZCp94K6Gd1BKRuaP1k',
+    ]);
+
+    if ($response->failed()) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Authentication failed',
+            'details' => $response->body(),
+        ], $response->status());
+    }
+
+    $token = $response->json()['access_token'] ?? null;
+
+    if (!$token) {
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Token not found in the authentication response.',
+        ], 400);
+    }
+
+    // Dispatch jobs for each record with the same queue
+    foreach ($autoDailer as $record) {
+        // Specify the queue here
+        ProcessAutoDailerProvider::dispatch($record, $token)->onQueue('auto_dialer_queue');
+    }
+
+    return redirect()->route('autoDialerProviders.index')->with('success', 'Auto Dialer Jobs Dispatched.');
+}
+
 }

@@ -121,7 +121,7 @@ class ProcessAutoDailerProvider implements ShouldQueue
                 'state' => $record->state,
                 'called_at' => now()->addHours(2)->setTimezone('UTC'),
             ]);
-
+            sleep(15);
         } catch (\Exception $e) {
             Log::error('Job Failed', [
                 'error' => $e->getMessage(),
