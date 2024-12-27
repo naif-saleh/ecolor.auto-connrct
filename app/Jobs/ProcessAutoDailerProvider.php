@@ -34,67 +34,86 @@ class ProcessAutoDailerProvider implements ShouldQueue
     public function handle()
     {
         try {
-            $from = $this->record['extension'];
-            $to = $this->record['mobile'];
+            // Fetch all records with state 'new'
+            $records = AutoDailerProviderFeed::where('state', 'new')->get();
 
-            // Make the call
-            $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->token,
-            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
-                'destination' => $to,
-            ]);
-
-            if ($response->failed()) {
-                throw new \Exception('3CX Call Failed: ' . $response->body());
-            }
-
-            $partyDnType = "None";
-
-            for ($i = 0; $i < 10; $i++) {
-                sleep(5);
-
-                $responseState = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $this->token,
-                ])->get(config('services.three_cx.api_url') . "/callcontrol/{$from}/participants");
-
-                if ($responseState->failed()) {
-                    continue;
-                }
-
-                $responseData = $responseState->json();
-                foreach ($responseData as $participant) {
-                    if (isset($participant['party_dn_type']) && in_array($participant['party_dn_type'], ["Wextension", "Wspecialmenu", "None"])) {
-                        $partyDnType = $participant['party_dn_type'];
-                        break 2;
-                    }
-                }
-            }
-
-            $autoDailerData = AutoDailerProviderFeed::find($this->record['id']);
-            if (!$autoDailerData) {
-                Log::warning("AutoDailerData not found for ID {$this->record['id']}");
+            if ($records->isEmpty()) {
+                Log::info("No new records to process.");
                 return;
             }
 
-            $autoDailerData->state = match ($partyDnType) {
-                "Wextension" => "answered",
-                "Wspecialmenu" => "no answer",
-                default => "unknown",
-            };
+            foreach ($records as $record) {
+                $from = $record->extension;
+                $to = $record->mobile;
 
-            $autoDailerData->save();
+                // Make the call
+                $response = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $this->token,
+                ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
+                    'destination' => $to,
+                ]);
 
-            AutoDailerReport::create([
-                'mobile' => $autoDailerData->mobile,
-                'provider' => $autoDailerData->provider_name,
-                'extension' => $autoDailerData->extension,
-                'state' => $autoDailerData->state,
-                'called_at' => now()->addHours(2)->setTimezone('UTC'),
-            ]);
+                if ($response->failed()) {
+                    Log::error('3CX Call Failed', [
+                        'mobile' => $to,
+                        'response_code' => $response->status(),
+                        'response_body' => $response->body(),
+                    ]);
+                    continue;
+                }
+
+                Log::info("Call initiated successfully for mobile: {$to}");
+
+                $partyDnType = "None";
+
+                // Check the call status
+                for ($i = 0; $i < 10; $i++) {
+                    sleep(5);
+
+                    $responseState = Http::withHeaders([
+                        'Authorization' => 'Bearer ' . $this->token,
+                    ])->get(config('services.three_cx.api_url') . "/callcontrol/{$from}/participants");
+
+                    if ($responseState->failed()) {
+                        Log::warning("Failed to retrieve call state for mobile: {$to}");
+                        continue;
+                    }
+
+                    $responseData = $responseState->json();
+                    foreach ($responseData as $participant) {
+                        if (isset($participant['party_dn_type']) && in_array($participant['party_dn_type'], ["Wextension", "Wspecialmenu", "None"])) {
+                            $partyDnType = $participant['party_dn_type'];
+                            break 2;
+                        }
+                    }
+                }
+
+                // Update the record state based on the result
+                $record->state = match ($partyDnType) {
+                    "Wextension" => "answered",
+                    "Wspecialmenu" => "no answer",
+                    default => "unknown",
+                };
+
+                $record->save();
+
+                // Create a report
+                AutoDailerReport::create([
+                    'mobile' => $record->mobile,
+                    'provider' => $record->provider_name,
+                    'extension' => $record->extension,
+                    'state' => $record->state,
+                    'called_at' => now()->addHours(2)->setTimezone('UTC'),
+                ]);
+
+                Log::info("Call processed for mobile: {$to}, state: {$record->state}");
+
+                // Wait 15 seconds before the next call
+                sleep(15);
+            }
         } catch (\Exception $e) {
             Log::error('Job Failed', [
                 'error' => $e->getMessage(),
-                'record' => $this->record,
             ]);
         }
     }
