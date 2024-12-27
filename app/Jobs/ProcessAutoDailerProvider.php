@@ -58,11 +58,13 @@ class ProcessAutoDailerProvider implements ShouldQueue
 
             Log::info("Call initiated successfully for mobile: {$to}");
 
-            $partyDnType = "None";
+            // Wait for the call to terminate
+            $maxRetries = 10;
+            $retryInterval = 5; // seconds
+            $callActive = true;
 
-            // Check the call status
-            for ($i = 0; $i < 10; $i++) {
-                sleep(5);
+            for ($i = 0; $i < $maxRetries; $i++) {
+                sleep($retryInterval);
 
                 $responseState = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $this->token,
@@ -74,27 +76,34 @@ class ProcessAutoDailerProvider implements ShouldQueue
                 }
 
                 $responseData = $responseState->json();
+
+                // Check if the call is still active
+                $callActive = false;
                 foreach ($responseData as $participant) {
-                    if (isset($participant['party_dn_type']) && in_array($participant['party_dn_type'], ["Wextension", "Wspecialmenu", "None"])) {
-                        $partyDnType = $participant['party_dn_type'];
-                        break 2;
+                    if (isset($participant['status']) && $participant['status'] === 'connected') {
+                        $callActive = true;
+                        break;
                     }
+                }
+
+                if (!$callActive) {
+                    Log::info("Call terminated for mobile: {$to}");
+                    break;
                 }
             }
 
-            // Update the record state based on the result
+            if ($callActive) {
+                Log::warning("Call did not terminate within the expected time for mobile: {$to}");
+            }
+
+            // Update the record state
             $record = AutoDailerProviderFeed::find($this->record->id);
             if (!$record) {
                 Log::warning("Record not found for ID {$this->record->id}");
                 return;
             }
 
-            $record->state = match ($partyDnType) {
-                "Wextension" => "answered",
-                "Wspecialmenu" => "no answer",
-                default => "unknown",
-            };
-
+            $record->state = $callActive ? 'unknown' : 'completed';
             $record->save();
 
             // Create a report
@@ -105,8 +114,6 @@ class ProcessAutoDailerProvider implements ShouldQueue
                 'state' => $record->state,
                 'called_at' => now()->addHours(2)->setTimezone('UTC'),
             ]);
-
-            Log::info("Call processed for mobile: {$to}, state: {$record->state}");
 
         } catch (\Exception $e) {
             Log::error('Job Failed', [
