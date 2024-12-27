@@ -30,13 +30,7 @@
                     <option value="0">No</option>
                 </select>
             </div>
-            <div class="col-md-4 mb-3">
-                <label for="off" class="form-label">Off</label>
-                <select name="off" id="off" class="form-select" required>
-                    <option value="1">Yes</option>
-                    <option value="0">No</option>
-                </select>
-            </div>
+             
         </div>
 
         <div class="mb-3">
