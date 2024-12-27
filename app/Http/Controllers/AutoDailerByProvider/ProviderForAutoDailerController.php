@@ -92,9 +92,9 @@ class ProviderForAutoDailerController extends Controller
             return response()->json(['error' => 'Unauthorized'], 401);
         }
 
-        $autoDailer = AutoDailerProviderFeed::where('state', 'new')->exists();
+        $autoDailer = AutoDailerProviderFeed::where('state', 'new')->get();
 
-        if (!$autoDailer) {
+        if ($autoDailer->isEmpty()) {
             return redirect('/auto-dialer-providers')->with('wrong', 'No Auto Dialer Numbers Found. Please Insert and Call Again');
         }
 
@@ -122,9 +122,11 @@ class ProviderForAutoDailerController extends Controller
             ], 400);
         }
 
-        // Dispatch a single job to process all records
-        ProcessAutoDailerProvider::dispatch($token);
+        // Dispatch a job for each record
+        foreach ($autoDailer as $record) {
+            ProcessAutoDailerProvider::dispatch($record, $token)->delay(now()->addSeconds(15));
+        }
 
-        return redirect()->route('autoDialerProviders.index')->with('success', 'Auto Dialer Job Dispatched.');
+        return redirect()->route('autoDialerProviders.index')->with('success', 'Auto Dialer Jobs Dispatched.');
     }
 }
