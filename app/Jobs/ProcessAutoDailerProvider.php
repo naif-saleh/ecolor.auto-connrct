@@ -40,7 +40,7 @@ class ProcessAutoDailerProvider implements ShouldQueue
             $from = $this->record->extension;
             $to = $this->record->mobile;
 
-            // Make the call
+
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $this->token,
             ])->post(config('services.three_cx.api_url') . "/callcontrol/{$from}/makecall", [
@@ -71,7 +71,7 @@ class ProcessAutoDailerProvider implements ShouldQueue
                 ])->get(config('services.three_cx.api_url') . "/callcontrol/{$from}/participants");
 
                 if ($responseState->failed()) {
-                    Log::warning("Failed to retrieve call state for mobile: {$to}");
+                    Log::warning("No retrive: {$to}");
                     continue;
                 }
 
@@ -96,11 +96,6 @@ class ProcessAutoDailerProvider implements ShouldQueue
 
 
             $record = AutoDailerProviderFeed::find($this->record->id);
-            if (!$record) {
-                Log::warning("Record not found for ID {$this->record->id}");
-                return;
-            }
-
             $record->state = $callState;
             $record->save();
 
