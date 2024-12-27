@@ -103,12 +103,10 @@ class ProviderForAutoDailerController extends Controller
             ->groupBy('mobile', 'extension')
             ->get();
 
-            dd($autoDailer);
-
         $count = $autoDailer->count();
 
         if ($count == 0) {
-            return redirect('/auto-dialer-providers')->with('wrong', 'No Auto Dialer Numbers Found. Please Insert and Call Again');
+            return redirect('/autodailers')->with('wrong', 'No Auto Dialer Numbers Found. Please Insert and Call Again');
         }
 
 
