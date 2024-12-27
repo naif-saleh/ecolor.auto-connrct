@@ -32,6 +32,13 @@ class ProcessAutoDailerProvider implements ShouldQueue
     }
 
     /**
+     * The queue on which the job will be dispatched
+     *
+     * @var string
+     */
+    public $queue = 'auto_dialer_queue';  // Single queue to handle jobs sequentially
+
+    /**
      * Execute the job.
      */
     public function handle()
@@ -58,11 +65,12 @@ class ProcessAutoDailerProvider implements ShouldQueue
 
             Log::info("Call initiated successfully for mobile: {$to}");
 
-            // Wait for the call to terminate
-            $maxRetries = 10;
-            $retryInterval = 5; // seconds
-            $callActive = true;
+            // Check if the call ended (answered or no answer)
+            $callState = 'unknown'; // Start as unknown
 
+            // Poll for the call status
+            $maxRetries = 20; // Check up to 100 seconds (20 retries x 5 seconds)
+            $retryInterval = 5; // seconds
             for ($i = 0; $i < $maxRetries; $i++) {
                 sleep($retryInterval);
 
@@ -77,33 +85,32 @@ class ProcessAutoDailerProvider implements ShouldQueue
 
                 $responseData = $responseState->json();
 
-                // Check if the call is still active
-                $callActive = false;
+                // Check if the call is answered or has no answer
                 foreach ($responseData as $participant) {
-                    if (isset($participant['status']) && $participant['status'] === 'connected') {
-                        $callActive = true;
-                        break;
+                    if (isset($participant['party_dn_type'])) {
+                        $callState = match ($participant['party_dn_type']) {
+                            "Wextension" => 'answered',
+                            "Wspecialmenu" => 'no answer',
+                            default => 'ringing',
+                        };
+
+                        // If call ended, exit the loop
+                        if (in_array($callState, ['answered', 'no answer'])) {
+                            break 2;
+                        }
                     }
                 }
-
-                if (!$callActive) {
-                    Log::info("Call terminated for mobile: {$to}");
-                    break;
-                }
             }
 
-            if ($callActive) {
-                Log::warning("Call did not terminate within the expected time for mobile: {$to}");
-            }
-
-            // Update the record state
+            // Update the record state based on the final call state
             $record = AutoDailerProviderFeed::find($this->record->id);
             if (!$record) {
                 Log::warning("Record not found for ID {$this->record->id}");
                 return;
             }
 
-            $record->state = $callActive ? 'unknown' : 'completed';
+            // Set final call state (answered, no answer, or unknown)
+            $record->state = $callState;
             $record->save();
 
             // Create a report
