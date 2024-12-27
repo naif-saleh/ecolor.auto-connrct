@@ -31,7 +31,6 @@ class ProviderFeedController extends Controller
             'to' => 'required|date_format:H:i',
             'date' => 'required|date',
             'on' => 'required|boolean',
-            'off' => 'required|boolean',
             'csv_file' => 'required|file|mimes:csv,txt',
         ]);
 
@@ -59,7 +58,7 @@ class ProviderFeedController extends Controller
     }
 
 
-    
+
 
     public function show($id)
     {
