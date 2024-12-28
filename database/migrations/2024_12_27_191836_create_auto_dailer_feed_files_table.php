@@ -13,7 +13,14 @@ return new class extends Migration
     {
         Schema::create('auto_dailer_feed_files', function (Blueprint $table) {
             $table->id();
-            $table->unsignedBigInteger('provider_id');   
+            $table->unsignedBigInteger('provider_id');  
+            $table->string('extension');
+            $table->time('from');
+            $table->time('to');
+            $table->date('date');
+            $table->integer('on')->default(1);
+
+
             $table->string('file_name');
             $table->timestamps();
 

@@ -15,12 +15,6 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('provider_id');
             $table->string('mobile');
-            $table->string('extension');
-            $table->time('from');
-            $table->time('to');
-            $table->date('date');
-            $table->boolean('on')->default(false);
-            $table->boolean('off')->default(false);
             $table->timestamps();
 
             $table->foreign('provider_id')->references('id')->on('auto_dialer_providers')->onDelete('cascade');

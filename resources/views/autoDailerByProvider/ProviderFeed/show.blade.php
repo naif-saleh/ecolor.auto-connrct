@@ -15,6 +15,7 @@
                         <th>From</th>
                         <th>To</th>
                         <th>Date</th>
+                        <th>state</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -25,6 +26,7 @@
                             <td>{{ $feed->from }}</td>
                             <td>{{ $feed->to }}</td>
                             <td>{{ $feed->date }}</td>
+                            <td>{{$feed->state}}</td>
                         </tr>
                     @endforeach
                 </tbody>

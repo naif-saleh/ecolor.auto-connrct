@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AutoDailerFeedFile extends Model
 {
-    protected $fillable = ['provider_id', 'file_name'];
+    protected $fillable = ['provider_id', 'extension', 'from', 'to', 'date', 'on', 'file_name'];
 
     // Relationship: Each FeedFile belongs to one AutoDialerProvider
     public function provider()

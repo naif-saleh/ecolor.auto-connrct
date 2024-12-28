@@ -4,8 +4,11 @@
 <div class="container py-5">
     <h1>Create Feed for Provider: {{ $provider->name }}</h1>
 
+
+
     <form action="{{ route('autoDialerProviders.storeFeed', $provider->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
+        <input type="hidden" name="timezone" id="timezone">
 
         <div class="row">
             <div class="col-md-4 mb-3">
@@ -40,7 +43,19 @@
 
         <button type="submit" class="btn btn-primary">Create Feed</button>
     </form>
+    @php
+        use Carbon\Carbon;
 
+        $utcTime = Carbon::now('UTC'); // Current UTC time
+        $userTimezone = session('user_timezone', 'UTC'); // Default to UTC if not set
+        $localTime = $utcTime->setTimezone($userTimezone);
+    @endphp
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            document.getElementById('timezone').value = timezone;
+        });
+    </script>
     <a href="{{ route('autoDialerProviders.index') }}" class="btn btn-secondary mt-4">Back to Providers</a>
 </div>
 @endsection

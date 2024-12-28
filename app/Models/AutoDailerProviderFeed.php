@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AutoDailerProviderFeed extends Model
 {
-    protected $fillable = ['provider_id', 'mobile', 'extension', 'from', 'to', 'date', 'on', 'auto_dailer_feed_file_id'];
+    protected $fillable = ['provider_id',  'mobile', 'status', 'call_id', 'party_dn_type', 'auto_dailer_feed_file_id'];
 
     public function provider()
     {
@@ -16,5 +16,14 @@ class AutoDailerProviderFeed extends Model
     public function feedFile()
     {
         return $this->belongsTo(AutoDailerFeedFile::class, 'auto_dailer_feed_file_id');
+    }
+    public function scopeByProvider($query, $providerId)
+    {
+        return $query->where('provider_id', $providerId);
+    }
+
+    public function scopeByFeedFile($query, $feedFileId)
+    {
+        return $query->where('auto_dailer_feed_file_id', $feedFileId);
     }
 }

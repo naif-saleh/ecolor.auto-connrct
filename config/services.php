@@ -37,9 +37,9 @@ return [
 
 
     'three_cx' => [
-    'api_url' => env('THREE_CX_API_URL'),
-    'app_id' => env('testapi'),
-    'app_secret' => env('213245465'),
+        'api_url' => env('THREE_CX_API_URL'),
+        'client_id' => env('THREE_CX_CLIENT_ID'),
+        'client_secret' => env('THREE_CX_CLIENT_SECRET'),
     ],
 
 ];
