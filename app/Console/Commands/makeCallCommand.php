@@ -10,7 +10,7 @@ use Carbon\Carbon;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
-
+use Mockery\Expectation;
 
 class makeCallCommand extends Command
 {
@@ -70,7 +70,9 @@ class makeCallCommand extends Command
                     Log::info('mobile ' . $mobile->mobile . ' in loop ' . $loop);
                     // TODO: make call
 
-
+                    try {
+                       
+                 
                     $responseState = Http::withHeaders([
                         'Authorization' => 'Bearer ' . $token,
                     ])->post(
@@ -85,7 +87,8 @@ class makeCallCommand extends Command
                         $responseData = $responseState->json();
                         $mobile->update([
                             'state' => $responseData['result']['status'],
-                            'call_id' => $responseData['result']['callid'],
+                            'call_date' => $now,
+                            'call_id' => $responseData['result']['id'],
                             'party_dn_type' => $responseData['result']['party_dn_type'],
                         ]);
                         Log::info('Updated state to "called" for mobile ' . $mobile->mobile);
@@ -93,91 +96,20 @@ class makeCallCommand extends Command
                         Log::error('Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
                     }
 
-                    // [2] => Array
-                    // (
-                    //     [id] => 1365
-                    //     [status] => Connected
-                    //     [dn] => 209
-                    //     [party_caller_name] =>
-                    //     [party_dn] => 666
-                    //     [party_caller_id] => 101
-                    //     [party_did] =>
-                    //     [device_id] => sip:209@127.0.0.1:5483
-                    //     [party_dn_type] => Wspecialmenu
-                    //     [direct_control] =>
-                    //     [originated_by_dn] =>
-                    //     [originated_by_type] => None
-                    //     [referred_by_dn] =>
-                    //     [referred_by_type] => None
-                    //     [on_behalf_of_dn] =>
-                    //     [on_behalf_of_type] => None
-                    //     [callid] => 1183
-                    //     [legid] => 1
-                    // )
-
-
-        //             [2] => Array
-        // (
-        //     [id] => 1365
-        //     [status] => Dialing
-        //     [dn] => 209
-        //     [party_caller_name] =>
-        //     [party_dn] => 666
-        //     [party_caller_id] => 101
-        //     [party_did] =>
-        //     [device_id] => sip:209@127.0.0.1:5483
-        //     [party_dn_type] => Wspecialmenu
-        //     [direct_control] =>
-        //     [originated_by_dn] =>
-        //     [originated_by_type] => None
-        //     [referred_by_dn] =>
-        //     [referred_by_type] => None
-        //     [on_behalf_of_dn] =>
-        //     [on_behalf_of_type] => None
-        //     [callid] => 1183
-        //     [legid] => 1
-        // )
-
-
+                   
                     //TODO: if failed
 
                     $responseData = $responseState->json();
 
-                    Log::debug('makeCallCommand responseData ' . print_r($responseData, TRUE));
+                    //   Log::debug('makeCallCommand responseData ' . print_r($responseData, TRUE));
 
-                    /*
-
- [finalstatus] => Success
-    [reason] => NotSpecified
-    [result] => Array
-        (
-            [id] => 78
-            [status] => Dialing
-            [dn] => 209
-            [party_caller_name] =>
-            [party_dn] =>
-            [party_caller_id] => 101
-            [party_did] =>
-            [device_id] => sip:209@127.0.0.1:5483
-            [party_dn_type] => None
-            [direct_control] =>
-            [originated_by_dn] =>
-            [originated_by_type] => None
-            [referred_by_dn] =>
-            [referred_by_type] => None
-            [on_behalf_of_dn] =>
-            [on_behalf_of_type] => None
-            [callid] => 26
-            [legid] => 1
-        )
-
-    [reasontext] => Dialing
-    */
-
+                   
 
                     $loop++;
                     // TODO: when you call the api you must change the status
-
+                } catch (Expectation $e) {
+                    //throw $th;
+                }
                 }
             } else {
                 Log::info('The current time is not within the specified range.');

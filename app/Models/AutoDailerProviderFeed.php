@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AutoDailerProviderFeed extends Model
 {
-    protected $fillable = ['provider_id',  'mobile', 'state', 'call_id', 'party_dn_type', 'auto_dailer_feed_file_id'];
+    protected $fillable = ['provider_id',  'mobile', 'state', 'call_id', 'party_dn_type', 'call_date', 'auto_dailer_feed_file_id'];
 
     public function provider()
     {

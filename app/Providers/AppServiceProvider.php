@@ -8,6 +8,7 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Psr7\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -29,6 +30,7 @@ class AppServiceProvider extends ServiceProvider
     }
     protected function fetchAndCacheThreeCxToken()
     {
+        if (Schema::hasTable('cache')) {
         $apiUrl = config('services.three_cx.api_url') . '/connect/token';
     $clientId = config('services.three_cx.client_id');
         $clientSecret = config('services.three_cx.client_secret');
@@ -88,5 +90,6 @@ class AppServiceProvider extends ServiceProvider
         } catch (\Exception $e) {
             Log::error('Error fetching ThreeCX token: ' . $e->getMessage());
         }
+    }
     }
 }

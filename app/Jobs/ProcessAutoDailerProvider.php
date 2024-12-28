@@ -109,10 +109,12 @@ class ProcessAutoDailerProvider implements ShouldQueue
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Job Failed', [
-                'error' => $e->getMessage(),
-                'record' => $this->record,
+            Log::error('3CX API Request Exception', [
+                'mobile' => $to,
+                'error_message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
             ]);
+            return;
         }
     }
 }

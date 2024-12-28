@@ -8,8 +8,8 @@ class Participant extends Model
 {
     protected $fillable = ['call_id', 'status', 'phone_number'];
 
-    public function autoDailerProviderFeed()
-    {
-        return $this->belongsTo(AutoDailerProviderFeed::class, 'call_id', 'call_id');
-    }
+    // public function autoDailerProviderFeed()
+    // {
+    //     return $this->belongsTo(AutoDailerProviderFeed::class, 'call_id', 'call_id');
+    // }
 }

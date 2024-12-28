@@ -11,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('participants', function (Blueprint $table) {
-            $table->id();
-            $table->string('call_id')->unique();
-            $table->string('status');
-            $table->string('phone_number'); 
-            $table->timestamps();
+        Schema::table('auto_dailer_provider_feeds', function (Blueprint $table) {
+            $table->dateTime("call_date")->nullable();
         });
     }
 
@@ -25,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('participants');
+        Schema::table('auto_dailer_provider_feeds', function (Blueprint $table) {
+            //
+        });
     }
 };

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\AutoDailerFeedFile;
 use App\Models\AutoDailerProviderFeed;
+use App\Models\Participant;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 
@@ -40,7 +41,7 @@ class participantsCommand extends Command
         // TODO: get only today feeds
 
         foreach ($providersFeeds as $feed) {
-            
+
             $ext_from = $feed->extension;
             $now = Carbon::now();
 
@@ -49,9 +50,27 @@ class participantsCommand extends Command
                 'Authorization' => 'Bearer ' . $token,
             ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
 
-            $responseData = $responseState->json();
+            // $responseData = $responseState->json();
+            if ($responseState->successful()) {
+                $responseData = $responseState->json();
+                foreach ($responseData  as  $participant_data) {
+                    Participant::firstOrCreate(
+                        [
+                            "call_id" => $participant_data['id'],
+                            "status" => $participant_data['party_dn_type'],
+                        ],
+                        [
+                            "phone_number" => $participant_data['party_caller_id'],
+                        ]
+                    ); 
+                   
+                   // TODO: if $participant_data['party_dn_type'] == 'Wextension'  change dailing to called
 
-            Log::debug('responseData ' . print_r($responseData, TRUE));
+
+                
+                }
+            }
+            //   Log::debug('responseData ' . print_r($responseData, TRUE));
 
             // if ($responseState->successful()) {
             //     $responseData = $responseState->json();
@@ -68,6 +87,7 @@ class participantsCommand extends Command
 
             if ($responseState->failed()) {
                 //TODO: set message
+                Log::error("participantsCommand failed");
             }
 
 
