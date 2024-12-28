@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="container mt-5">
-        <h1 class="text-center text-primary mb-4">Provider: {{ $provider->name }}</h1>
+        <h1 class="text-center text-primary mb-4">User: {{ $provider->name }}</h1>
 
         <h3 class="text-center mb-4">Feed Files</h3>
 
@@ -27,7 +27,7 @@
                             <td>{{ $feedFile->date }}</td>
                             <td>{{ $feedFile->on ? 'Active' : 'Inactive' }}</td>
                             <td>
-                                <a href="{{ route('autoDialerProviders.show', $feedFile->id) }}" class="btn btn-primary btn-sm">View</a>
+                                <a href="{{ route('autoDistributers.show', $feedFile->id) }}" class="btn btn-primary btn-sm">View</a>
                             </td>
                         </tr>
                     @endforeach
@@ -38,7 +38,7 @@
 
         @if ($provider->feedFiles->isEmpty())
             <div class="alert alert-warning text-center mt-4">
-                No feed files found for this provider.
+                No feed files found for this Uers.
             </div>
         @endif
     </div>

@@ -12,7 +12,8 @@ use App\Http\Controllers\ApiController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AutoDailerByProvider\ProviderForAutoDailerController;
 use App\Http\Controllers\AutoDailerByProvider\ProviderFeedController;
-
+use App\Http\Controllers\AutoDistributerByUser\UserForAutoDistributer;
+use App\Http\Controllers\AutoDistributerByUser\UserFeedController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -32,6 +33,23 @@ Route::post('providers/{id}/feeds', [ProviderFeedController::class, 'storeFeed']
 
 
 
+// AutoDistributer By User..........................................................................................................
+
+// User..........................................................................................................................
+Route::get('/auto-distributers-users', [UserForAutoDistributer::class, 'index'])->name('autoDistributers.index');
+Route::get('/auto-distributers-users/create', [UserForAutoDistributer::class, 'create'])->name('autoDistributers.create');
+Route::post('/auto-distributers-users', [UserForAutoDistributer::class, 'store'])->name('autoDistributers.store');
+Route::get('/auto-distributers-users/{id}', [UserForAutoDistributer::class, 'show'])->name('autoDistributers.show');
+Route::get('/auto-distributers-users/{id}/edit', [UserForAutoDistributer::class, 'edit'])->name('autoDistributers.edit');
+Route::put('/auto-distributers-users/{id}', [UserForAutoDistributer::class, 'update'])->name('autoDistributers.update');
+Route::delete('/auto-distributers-users/{id}', [UserForAutoDistributer::class, 'destroy'])->name('autoDistributers.destroy');
+// User................................................................................................................................
+// User Feed....................................................................................................................
+Route::get('auto-distributers/{id}/createFeed', [UserFeedController::class, 'createFeed'])->name('autoDistributers.createFeed');
+Route::post('auto-distributers/{id}/storeFeed', [UserFeedController::class, 'storeFeed'])->name('autoDistributers.storeFeed');
+Route::get('auto-distributers-user/{id}', [UserFeedController::class, 'show'])->name('autoDistributersUser.show');
+// Route::get('autoDialercall', [ProviderForAutoDailerController::class, 'autoDailer'])->name('call');
+// User Feed....................................................................................................................
 
 
 // AutoDailer By Provider..........................................................................................................
@@ -50,7 +68,7 @@ Route::delete('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::c
 Route::get('autoDialerProviders/{id}/createFeed', [ProviderFeedController::class, 'createFeed'])->name('autoDialerProviders.createFeed');
 Route::post('autoDialerProviders/{id}/storeFeed', [ProviderFeedController::class, 'storeFeed'])->name('autoDialerProviders.storeFeed');
 Route::get('autoDialerProviders/{id}', [ProviderFeedController::class, 'show'])->name('autoDialerProviders.show');
-Route::get('autoDialercall', [ProviderForAutoDailerController::class, 'autoDailer'])->name('call');
+// Route::get('autoDialercall', [ProviderForAutoDailerController::class, 'autoDailer'])->name('call');
 // Provider Feed....................................................................................................................
 
 

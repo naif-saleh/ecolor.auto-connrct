@@ -11,18 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('auto_dailer_provider_feeds', function (Blueprint $table) {
-            $table->string('state')->default('new');
+        Schema::create('auto_distributerer_feed_files', function (Blueprint $table) {
+            $table->id();
+            $table->timestamps();
         });
     }
-     
+
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::table('auto_dailer_provider_feeds', function (Blueprint $table) {
-            $table->dropColumn('state');
-        });
+        Schema::dropIfExists('auto_distributerer_feed_files');
     }
 };

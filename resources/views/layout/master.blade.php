@@ -63,7 +63,10 @@
                             <a class="nav-link" href="{{ route('autoDailerByProvider.index') }}">AutoDailerByProvider</a>
                         </li> --}}
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('autoDialerProviders.index') }}">AutoDailerProvider</a>
+                            <a class="nav-link" href="{{ route('autoDialerProviders.index') }}">Auto Dailer</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('autoDistributers.index') }}">Auto Distributer</a>
                         </li>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button"

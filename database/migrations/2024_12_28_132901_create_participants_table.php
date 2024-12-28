@@ -11,18 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::table('auto_dailer_provider_feeds', function (Blueprint $table) {
-            $table->string('state')->default('new');
+        Schema::create('participants', function (Blueprint $table) {
+            $table->id();
+            $table->string('call_id')->unique();
+            $table->string('name');
+            $table->string('phone_number');  
+            $table->timestamps();
         });
     }
-     
+
     /**
      * Reverse the migrations.
      */
     public function down(): void
     {
-        Schema::table('auto_dailer_provider_feeds', function (Blueprint $table) {
-            $table->dropColumn('state');
-        });
+        Schema::dropIfExists('participants');
     }
 };

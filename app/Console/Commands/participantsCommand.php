@@ -40,6 +40,7 @@ class participantsCommand extends Command
         // TODO: get only today feeds
 
         foreach ($providersFeeds as $feed) {
+            
             $ext_from = $feed->extension;
             $now = Carbon::now();
 
@@ -51,6 +52,19 @@ class participantsCommand extends Command
             $responseData = $responseState->json();
 
             Log::debug('responseData ' . print_r($responseData, TRUE));
+
+            // if ($responseState->successful()) {
+            //     $responseData = $responseState->json();
+            //     foreach ($responseData as $participant) {
+
+            //         $partyDnType = $participant['party_dn_type'] ?? "None";
+
+            //         if (in_array($partyDnType, ["Wextension", "Wspecialmenu", "None"])) {
+            //             break 2;
+            //         }
+            //     }
+            // }
+
 
             if ($responseState->failed()) {
                 //TODO: set message

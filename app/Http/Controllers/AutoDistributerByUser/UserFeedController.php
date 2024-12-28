@@ -1,29 +1,28 @@
 <?php
 
-namespace App\Http\Controllers\AutoDailerByProvider;
+namespace App\Http\Controllers\AutoDistributerByUser;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\AutoDialerProvider;
-use App\Models\AutoDailerProviderFeed;
-use App\Models\AutoDailerFeedFile;
+use App\Models\AutoDistributerExtensionFeed;
+use App\Models\AutoDistributerFeedFile;
+use App\Models\AutoDistributererExtension;
 use Carbon\Carbon;
 
-class ProviderFeedController extends Controller
+class UserFeedController extends Controller
 {
     public function createFeed($id)
     {
-        $provider = AutoDialerProvider::findOrFail($id);
-        return view('autoDailerByProvider.ProviderFeed.create', compact('provider'));
+        $provider = AutoDistributererExtension::findOrFail($id);
+        return view('autoDistributerByUser.UserFeed.create', compact('provider'));
     }
 
-    // Store the feed data after submission
+
     public function storeFeed(Request $request, $id)
     {
-        // Fetch the provider by its ID
-        $provider = AutoDialerProvider::findOrFail($id);
 
-        // Validate the form inputs (other than extension, which will come from provider)
+        $provider = AutoDistributererExtension::findOrFail($id);
+
         $request->validate([
             'from' => 'required|date_format:H:i',
             'to' => 'required|date_format:H:i',
@@ -39,13 +38,9 @@ class ProviderFeedController extends Controller
         $offsetInHours = $localTime_form->offsetHours;
         $utcTime_from = $localTime_form->subHours($offsetInHours);
         $utcTime_to = $localTime_to->subHours($offsetInHours);
-
         // Format the UTC time to store in the database
         $formattedTime_from = $utcTime_from->format('H:i:s');
         $formattedTime_to = $utcTime_to->format('H:i:s');
-
-
-
 
         // Handle CSV upload and processing
         if ($request->hasFile('csv_file')) {
@@ -53,8 +48,8 @@ class ProviderFeedController extends Controller
             $csvData = array_map('str_getcsv', file($file->getRealPath()));
 
             // Create a FeedFile entry to store the metadata of the uploaded file
-            $feedFile = AutoDailerFeedFile::create([
-                'provider_id' => $provider->id,
+            $feedFile = AutoDistributerFeedFile::create([
+                'user_ext_id' => $provider->id,
                 'file_name' => $file->getClientOriginalName(),
                 'extension' => $provider->extension,
                 'from' => $formattedTime_from,
@@ -67,35 +62,22 @@ class ProviderFeedController extends Controller
 
 
             foreach ($csvData as $row) {
-                AutoDailerProviderFeed::create([
-                    'provider_id' => $provider->id,
+                AutoDistributerExtensionFeed::create([
+                    'user_ext_id' => $provider->id,
                     'mobile' => $row[0],
-                    'auto_dailer_feed_file_id' => $feedFile->id,
+                    'user_ext_id' => $feedFile->id,
                 ]);
             }
         }
 
-        return redirect('/auto-dialer-providers')->with('success', 'Feed added successfully!');
+        return redirect()->route('autoDistributers.index')->with('success', 'Feed added successfully!');
     }
 
 
-
-
-    // public function show($id)
-    // {
-    //     // Fetch the provider by its ID
-    //     $provider = AutoDialerProvider::findOrFail($id);
-
-    //     // Fetch all the feeds related to this provider
-    //     $feeds = AutoDailerProviderFeed::where('provider_id', $id)->get();
-
-    //     // Return the view with provider and feeds data
-    //     return view('autoDailerByProvider.ProviderFeed.show', compact('provider', 'feeds'));
-    // }
     public function show($id)
     {
-        $feedFile = AutoDailerFeedFile::with('provider', 'feeds')->findOrFail($id);
-        $feeds = AutoDailerProviderFeed::where('auto_dailer_feed_file_id', $id)->get();
+        $feedFile = AutoDistributerFeedFile::with('provider', 'feeds')->findOrFail($id);
+        $feeds = AutoDistributerExtensionFeed::where('auto_dailer_feed_file_id', $id)->get();
         return view('autoDailerByProvider.ProviderFeed.show', compact('feedFile', 'feeds'));
     }
 
@@ -103,7 +85,7 @@ class ProviderFeedController extends Controller
     public function showFeed($id)
     {
         // Fetch the feed by its ID
-        $feed = AutoDailerProviderFeed::findOrFail($id);
+        $feed = AutoDistributerExtensionFeed::findOrFail($id);
 
         // Return view with feed data
         return view('autoDailerByProvider.ProviderFeed.feed', compact('feed'));
