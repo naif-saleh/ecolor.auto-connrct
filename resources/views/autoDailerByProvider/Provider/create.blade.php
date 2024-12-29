@@ -17,10 +17,10 @@
                     <label for="extension" class="form-label">Extension</label>
                     <input type="text" name="extension" id="extension" class="form-control" placeholder="Enter extension" required>
                 </div>
-                <div class="mb-3">
+                {{-- <div class="mb-3">
                     <label for="file_sound" class="form-label">File Sound</label>
                     <input type="file" name="file_sound" id="file_sound" class="form-control" accept=".mp3,.wav">
-                </div>
+                </div> --}}
                 <input type="hidden" name="user_id" value="{{ auth()->id() }}">
                 <div class="d-flex justify-content-end">
                     <button type="submit" class="btn btn-success">Create</button>

@@ -28,10 +28,11 @@ class ProviderForAutoDailerController extends Controller
 
     public function store(Request $request)
     {
+        
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'extension' => 'required|string|max:50',
-            'file_sound' => 'nullable|file|mimes:mp3,wav',
+            // 'file_sound' => 'nullable|file|mimes:mp3,wav',
             'user_id' => 'required|exists:users,id',
         ]);
 
@@ -69,7 +70,7 @@ class ProviderForAutoDailerController extends Controller
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
             'extension' => 'sometimes|string|max:50',
-            'file_sound' => 'nullable|file|mimes:mp3,wav',
+            // 'file_sound' => 'nullable|file|mimes:mp3,wav',
             'user_id' => 'sometimes|exists:users,id',
         ]);
 
