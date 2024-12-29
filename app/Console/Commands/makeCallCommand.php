@@ -68,11 +68,11 @@ class makeCallCommand extends Command
                 $loop = 0;
                 foreach ($providerFeeds as  $mobile) {
                     Log::info('mobile ' . $mobile->mobile . ' in loop ' . $loop);
-                    // TODO: make call
+                    // Done: make call
 
                     try {
-                       
-                 
+
+
                     $responseState = Http::withHeaders([
                         'Authorization' => 'Bearer ' . $token,
                     ])->post(
@@ -96,14 +96,14 @@ class makeCallCommand extends Command
                         Log::error('Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
                     }
 
-                   
+
                     //TODO: if failed
 
                     $responseData = $responseState->json();
 
                     //   Log::debug('makeCallCommand responseData ' . print_r($responseData, TRUE));
 
-                   
+
 
                     $loop++;
                     // TODO: when you call the api you must change the status

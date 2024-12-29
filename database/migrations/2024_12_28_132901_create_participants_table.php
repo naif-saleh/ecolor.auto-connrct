@@ -13,9 +13,10 @@ return new class extends Migration
     {
         Schema::create('participants', function (Blueprint $table) {
             $table->id();
-            $table->string('call_id')->unique();
-            $table->string('status');
-            $table->string('phone_number'); 
+            $table->string('call_id')->nullable();
+            $table->string('status')->nullable();
+            $table->string('phone_number')->nullable();
+            $table->string('provider')->nullable();
             $table->timestamps();
         });
     }

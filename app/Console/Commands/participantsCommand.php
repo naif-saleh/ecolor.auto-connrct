@@ -7,7 +7,7 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\AutoDailerFeedFile;
 use App\Models\AutoDailerProviderFeed;
-use App\Models\Participant;
+use App\Models\AutoDailerReport;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 
@@ -53,21 +53,27 @@ class participantsCommand extends Command
             // $responseData = $responseState->json();
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
-                foreach ($responseData  as  $participant_data) {
-                    Participant::firstOrCreate(
-                        [
-                            "call_id" => $participant_data['id'],
-                            "status" => $participant_data['party_dn_type'],
-                        ],
-                        [
-                            "phone_number" => $participant_data['party_caller_id'],
-                        ]
-                    ); 
-                   
+                foreach ($responseData as $participant_data) {
+                    if (in_array($participant_data['party_dn_type'], ['Wspecialmenu', 'Wextension'])) {
+                        AutoDailerReport::firstOrCreate(
+                            [
+                                "call_id" => $participant_data['id'],
+                                "status" => $participant_data['party_dn_type'],
+                            ],
+                            [
+                                "phone_number" => $participant_data['party_caller_id'],
+                                "provider" => $participant_data['dn'],
+                            ]
+                        );
+                    }
+                
+
+
+
                    // TODO: if $participant_data['party_dn_type'] == 'Wextension'  change dailing to called
 
 
-                
+
                 }
             }
             //   Log::debug('responseData ' . print_r($responseData, TRUE));

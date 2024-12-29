@@ -44,9 +44,9 @@
             <div class="collapse navbar-collapse" id="navbarNav">
 
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0"> <!-- Left-aligned links -->
-                        <li class="nav-item">
+                        {{-- <li class="nav-item">
                             <a class="nav-link active" aria-current="page" href="/">Home</a>
-                        </li>
+                        </li> --}}
                         {{-- <li class="nav-item">
                             <a class="nav-link" href="{{ route('settings.form') }}">Settings</a>
                         </li>
@@ -65,9 +65,9 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('autoDialerProviders.index') }}">Auto Dailer</a>
                         </li>
-                        <li class="nav-item">
+                        {{-- <li class="nav-item">
                             <a class="nav-link" href="{{ route('autoDistributers.index') }}">Auto Distributer</a>
-                        </li>
+                        </li> --}}
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button"
                                 data-bs-toggle="dropdown" aria-expanded="false">
@@ -81,10 +81,10 @@
                                 <li>
                                     <a class="dropdown-item" href="{{ route('auto_dailer.report') }}">Auto Dailer</a>
                                 </li>
-                                <li>
+                                {{-- <li>
                                     <a class="dropdown-item" href="{{ route('auto_distributer.report') }}">Auto
                                         Distributer</a>
-                                </li>
+                                </li> --}}
                             </ul>
                         </li>
                 @endif

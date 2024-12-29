@@ -52,24 +52,6 @@ Route::get('auto-distributers-user/{id}', [UserFeedController::class, 'show'])->
 // User Feed....................................................................................................................
 
 
-// AutoDailer By Provider..........................................................................................................
-
-// Provider..........................................................................................................................
-Route::get('/auto-dialer-providers', [ProviderForAutoDailerController::class, 'index'])->name('autoDialerProviders.index');
-Route::get('/auto-dialer-providers/create', [ProviderForAutoDailerController::class, 'create'])->name('autoDialerProviders.create');
-Route::post('/auto-dialer-providers', [ProviderForAutoDailerController::class, 'store'])->name('autoDialerProviders.store');
-Route::get('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'show'])->name('autoDialerProvider.show');
-Route::get('/auto-dialer-providers/{id}/edit', [ProviderForAutoDailerController::class, 'edit'])->name('autoDialerProviders.edit');
-Route::put('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'update'])->name('autoDialerProviders.update');
-Route::delete('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'destroy'])->name('autoDialerProviders.destroy');
-// Provider................................................................................................................................
-
-// Provider Feed....................................................................................................................
-Route::get('autoDialerProviders/{id}/createFeed', [ProviderFeedController::class, 'createFeed'])->name('autoDialerProviders.createFeed');
-Route::post('autoDialerProviders/{id}/storeFeed', [ProviderFeedController::class, 'storeFeed'])->name('autoDialerProviders.storeFeed');
-Route::get('autoDialerProviders/{id}', [ProviderFeedController::class, 'show'])->name('autoDialerProviders.show');
-// Route::get('autoDialercall', [ProviderForAutoDailerController::class, 'autoDailer'])->name('call');
-// Provider Feed....................................................................................................................
 
 
 
@@ -85,6 +67,25 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('users', [UserController::class, 'store'])->name('users.store');
 
+
+    // AutoDailer By Provider..........................................................................................................
+
+    // Provider..........................................................................................................................
+    Route::get('/auto-dialer-providers', [ProviderForAutoDailerController::class, 'index'])->name('autoDialerProviders.index');
+    Route::get('/auto-dialer-providers/create', [ProviderForAutoDailerController::class, 'create'])->name('autoDialerProviders.create');
+    Route::post('/auto-dialer-providers', [ProviderForAutoDailerController::class, 'store'])->name('autoDialerProviders.store');
+    Route::get('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'show'])->name('autoDialerProvider.show');
+    Route::get('/auto-dialer-providers/{id}/edit', [ProviderForAutoDailerController::class, 'edit'])->name('autoDialerProviders.edit');
+    Route::put('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'update'])->name('autoDialerProviders.update');
+    Route::delete('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'destroy'])->name('autoDialerProviders.destroy');
+    // Provider................................................................................................................................
+
+    // Provider Feed....................................................................................................................
+    Route::get('autoDialerProviders/{id}/createFeed', [ProviderFeedController::class, 'createFeed'])->name('autoDialerProviders.createFeed');
+    Route::post('autoDialerProviders/{id}/storeFeed', [ProviderFeedController::class, 'storeFeed'])->name('autoDialerProviders.storeFeed');
+    Route::get('autoDialerProviders/{id}', [ProviderFeedController::class, 'show'])->name('autoDialerProviders.show');
+    // Route::get('autoDialercall', [ProviderForAutoDailerController::class, 'autoDailer'])->name('call');
+    // Provider Feed....................................................................................................................
 
 
 

@@ -24,92 +24,100 @@ class ReportController extends Controller
     // display Auto Dailer Report...........................................................................................................
 
     public function AutoDailerReports(Request $request)
-    {
-        $filter = $request->input('filter');
-        $extensionFrom = $request->input('extension_from');
-        $extensionTo = $request->input('extension_to');
-        $provider = $request->input('provider');
+{
+    $filter = $request->input('filter');
+    $extensionFrom = $request->input('extension_from');
+    $extensionTo = $request->input('extension_to');
 
-        $query = AutoDailerReport::query();
+    // Map filter values to database values
+    $statusMap = [
+        'answered' => 'Wextension',
+        'no answer' => 'Wspecialmenu',
+    ];
 
-        if ($filter) {
-            $query->where('state', $filter);
-        }
+    $query = AutoDailerReport::query();
 
-        if ($extensionFrom) {
-            $query->where('extension', '>=', $extensionFrom);
-        }
-
-        if ($extensionTo) {
-            $query->where('extension', '<=', $extensionTo);
-        }
-
-        if ($provider) {
-            $query->where('provider', $provider);
-        }
-
-        $providers = AutoDailerReport::select('provider')->distinct()->pluck('provider');
-
-        $reports = $query->paginate(20);
-
-        $answeredCount = AutoDailerReport::where('state', 'answered')->count();
-        $noAnswerCount = AutoDailerReport::where('state', 'no answer')->count();
-        $calledCount = AutoDailerReport::where('state', 'called')->count();
-        $declinedCount = AutoDailerReport::where('state', 'declined')->count();
-
-        return view('reports.auto_dailer_report', compact(
-            'reports',
-            'filter',
-            'extensionFrom',
-            'extensionTo',
-            'provider',
-            'providers',
-            'answeredCount',
-            'noAnswerCount',
-            'calledCount',
-            'declinedCount'
-        ));
+    // Apply status filter
+    if ($filter && isset($statusMap[$filter])) {
+        $query->where('status', $statusMap[$filter]);
     }
+
+    // Apply extension range filters
+    if ($extensionFrom) {
+        $query->where('provider', '>=', $extensionFrom);
+    }
+
+    if ($extensionTo) {
+        $query->where('provider', '<=', $extensionTo);
+    }
+
+    $reports = $query->paginate(20);
+
+    // Calculate counts using mapped status values
+    $answeredCount = AutoDailerReport::where('status', 'Wextension')->count();
+    $noAnswerCount = AutoDailerReport::where('status', 'Wspecialmenu')->count();
+
+    return view('reports.auto_dailer_report', compact(
+        'reports',
+        'filter',
+        'extensionFrom',
+        'extensionTo',
+        'answeredCount',
+        'noAnswerCount'
+    ));
+}
+
 
 
 
 
     // Export Auto Dailer AS CSV File...........................................................................................................
-    public function exportAutoDailerReport(Request $request)
-    {
+    
 
-        $filter = $request->query('filter');
-        $query = AutoDailerReport::query();
+public function exportAutoDailerReport(Request $request)
+{
+    $filter = $request->query('filter');
 
-        if ($filter === 'answered' || $filter === 'no answer') {
-            $query->where('state', $filter);
+    // Map filter to corresponding database status values
+    $statusMap = [
+        'answered' => 'Wextension',
+        'no answer' => 'Wspecialmenu',
+    ];
+
+    $query = AutoDailerReport::query();
+
+    if ($filter && isset($statusMap[$filter])) {
+        $query->where('status', $statusMap[$filter]);
+    }
+
+    $reports = $query->get();
+
+    $response = new StreamedResponse(function () use ($reports) {
+        $handle = fopen('php://output', 'w');
+
+        // Write the CSV header
+        fputcsv($handle, ['Mobile', 'Provider', 'State', 'Called At']);
+
+        // Write each report row
+        foreach ($reports as $report) {
+            fputcsv($handle, [
+                $report->phone_number,
+                $report->provider,
+                ucfirst(($report->status === 'Wextension') ? 'answered' : 'no answer'),
+                $report->created_at,
+            ]);
         }
 
-        $reports = $query->get();
+        fclose($handle);
+    });
 
-        $response = new StreamedResponse(function () use ($reports) {
-            $handle = fopen('php://output', 'w');
+    // Set the response headers for CSV download
+    $response->headers->set('Content-Type', 'text/csv');
+    $response->headers->set('Content-Disposition', 'attachment; filename="auto_dailer_report.csv"');
 
-            fputcsv($handle, ['Mobile', 'Provider', 'Extension', 'State', 'Called At']);
+    return $response;
+}
 
-            foreach ($reports as $report) {
-                fputcsv($handle, [
-                    $report->mobile,
-                    $report->provider,
-                    $report->extension,
-                    $report->state,
-                    $report->called_at,
-                ]);
-            }
-
-            fclose($handle);
-        });
-
-        $response->headers->set('Content-Type', 'text/csv');
-        $response->headers->set('Content-Disposition', 'attachment; filename="auto_dailer_report.csv"');
-
-        return $response;
-    }
 
 
 

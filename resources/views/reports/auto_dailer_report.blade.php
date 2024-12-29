@@ -51,41 +51,20 @@
                             <i class="fas fa-phone-slash"></i> No Answer
                         </a>
                     </div>
-                    <div class="col-auto">
-                        <a href="{{ url('auto-dailer-report?filter=called') }}"
-                            class="btn btn-outline-info {{ $filter === 'called' ? 'active' : '' }}">
-                            <i class="fas fa-phone-volume"></i> Called
-                        </a>
-                    </div>
-                    <div class="col-auto">
-                        <a href="{{ url('auto-dailer-report?filter=declined') }}"
-                            class="btn btn-outline-danger {{ $filter === 'declined' ? 'active' : '' }}">
-                            <i class="fas fa-times-circle"></i> Declined
-                        </a>
-                    </div>
+
 
 
                     <!-- Extension Range Inputs -->
                     <div class="col-auto">
-                        <input type="number" name="extension_from" class="form-control" placeholder="From Ext"
+                        <input type="number" name="extension_from" class="form-control" placeholder="Provider From"
                             value="{{ request('extension_from') }}">
                     </div>
                     <div class="col-auto">
-                        <input type="number" name="extension_to" class="form-control" placeholder="To Ext"
+                        <input type="number" name="extension_to" class="form-control" placeholder="Provider To"
                             value="{{ request('extension_to') }}">
                     </div>
 
-                    <div class="col-auto">
-                        <select name="provider" class="form-select">
-                            <option value="">All Providers</option>
-                            @foreach ($providers as $provider)
-                                <option value="{{ $provider }}"
-                                    {{ request('provider') == $provider ? 'selected' : '' }}>
-                                    {{ ucfirst($provider) }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
+
                     <div class="col-auto">
                         <button type="submit" class="btn btn-primary">
                             <i class="fas fa-filter"></i> Apply
@@ -100,7 +79,7 @@
 
         <!-- Statistics -->
         <div class="row mb-5 text-center">
-            @foreach ([['Answered', 'text-success', $answeredCount], ['No Answer', 'text-warning', $noAnswerCount], ['Called', 'text-info', $calledCount], ['Declined', 'text-danger', $declinedCount]] as $stat)
+            @foreach ([['Answered', 'text-success', $answeredCount], ['No Answer', 'text-warning', $noAnswerCount]] as $stat)
                 <div class="col-md-3">
                     <div class="card shadow-sm border-0" style="background: linear-gradient(120deg, #f8f9fa, #e9ecef);">
                         <div class="card-body">
@@ -122,35 +101,34 @@
                                 <th>#</th>
                                 <th>Mobile</th>
                                 <th>Provider</th>
-                                <th>Extension</th>
                                 <th>State</th>
-                                <th>Call Duration</th>
                                 <th>Called At</th>
-                                <th>Droped At</th>
                             </tr>
                         </thead>
                         <tbody>
                             @forelse ($reports as $index => $report)
                                 <tr>
                                     <td>{{ $reports->firstItem() + $index }}</td>
-                                    <td>{{ $report->mobile }}</td>
+                                    <td>{{ $report->phone_number }}</td>
                                     <td>{{ $report->provider }}</td>
-                                    <td>{{ $report->extension }}</td>
+
                                     <td>
+                                        @php
+
+                                            $status = ($report->status == "Wextension") ? "answered" : "no answer";
+                                        @endphp
+
                                         <span
-                                            class="badge bg-{{ match ($report->state) {
+                                            class="badge bg-{{ match ($status) {
                                                 'answered' => 'success',
                                                 'no answer' => 'warning',
-                                                'called' => 'info',
-                                                'declined' => 'danger',
                                                 default => 'secondary',
                                             } }}">
-                                            {{ ucfirst($report->state) }}
+                                            {{ ucfirst($status) }}
                                         </span>
                                     </td>
-                                    <td>{{ $report->called_at }}</td>
-                                    <td>{{ $report->called_at }}</td>
-                                    <td>{{ $report->called_at }}</td>
+                                    <td>{{ $report->created_at }}</td>
+
                                 </tr>
                             @empty
                                 <tr>
