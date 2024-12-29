@@ -16,10 +16,10 @@ use App\Http\Controllers\AutoDistributerByUser\UserForAutoDistributer;
 use App\Http\Controllers\AutoDistributerByUser\UserFeedController;
 
 Route::get('/', function () {
-    return view('welcome');
+    return view('autoDailerByProvider.Provider.index');
 });
 
-Route::get('/', [HomeController::class, 'index'])->name('home');
+Route::get('/', [ProviderForAutoDailerController::class, 'index'])->name('autoDailerByProvider.index');
 
 
 // Show feeds for a provider
