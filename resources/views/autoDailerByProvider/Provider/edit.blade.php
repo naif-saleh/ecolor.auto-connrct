@@ -21,7 +21,7 @@
                     <input type="text" name="extension" id="extension" class="form-control" value="{{ $provider->extension }}" required>
                 </div>
 
-                <div class="mb-3">
+                {{-- <div class="mb-3">
                     <label for="file_sound" class="form-label">Update File Sound</label>
                     <input type="file" name="file_sound" id="file_sound" class="form-control" accept=".mp3,.wav">
                     @if ($provider->file_sound)
@@ -29,7 +29,7 @@
                     @else
                         <p class="text-muted mt-2">No file uploaded yet.</p>
                     @endif
-                </div>
+                </div> --}}
 
                 <input type="hidden" name="user_id" value="{{ auth()->id() }}">
 
