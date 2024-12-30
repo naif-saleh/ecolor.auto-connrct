@@ -7,7 +7,8 @@ use App\Models\AutoDailerProviderFeed;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-
+use App\Models\AutoDailerReport;
+use App\Models\CallsReports;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Mockery\Expectation;
@@ -66,50 +67,46 @@ class makeCallCommand extends Command
                     ->get();
 
                 $loop = 0;
-                foreach ($providerFeeds as  $mobile) {
+                foreach ($providerFeeds as $mobile) {
                     Log::info('mobile ' . $mobile->mobile . ' in loop ' . $loop);
-                    // Done: make call
 
                     try {
-
-
-                    $responseState = Http::withHeaders([
-                        'Authorization' => 'Bearer ' . $token,
-                    ])->post(
-                        config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/makecall",
-
-                        [
+                        $responseState = Http::withHeaders([
+                            'Authorization' => 'Bearer ' . $token,
+                        ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/makecall", [
                             'destination' => $mobile->mobile,
-                        ]
-                    );
-
-                    if ($responseState->successful()) {
-                        $responseData = $responseState->json();
-                        $mobile->update([
-                            'state' => $responseData['result']['status'],
-                            'call_date' => $now,
-                            'call_id' => $responseData['result']['id'],
-                            'party_dn_type' => $responseData['result']['party_dn_type'],
                         ]);
-                        Log::info('Updated state to "called" for mobile ' . $mobile->mobile);
-                    } else {
-                        Log::error('Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
+
+                        if ($responseState->successful()) {
+                            $responseData = $responseState->json();
+
+                            $reports = AutoDailerReport::create([
+
+                                'status' => "Ringing",
+                                'provider' => $responseData['result']['dn'],
+                                'call_id' => $responseData['result']['id'],
+                                'phone_number' => $responseData['result']['party_caller_id'] ?? null,
+                            ]);
+
+                            $reports->save();
+                            // Update the mobile record with the call_id and other details
+                            $mobile->update([
+                                'state' => $responseData['result']['status'],
+                                'call_date' => $now,
+                                'call_id' => $responseData['result']['id'],
+                                'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
+                            ]);
+
+
+
+
+                            Log::info('Call successfully made for mobile ' . $mobile->mobile);
+                        } else {
+                            Log::error('Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('An error occurred: ' . $e->getMessage());
                     }
-
-
-                    //TODO: if failed
-
-                    $responseData = $responseState->json();
-
-                    //   Log::debug('makeCallCommand responseData ' . print_r($responseData, TRUE));
-
-
-
-                    $loop++;
-                    // TODO: when you call the api you must change the status
-                } catch (Expectation $e) {
-                    //throw $th;
-                }
                 }
             } else {
                 Log::info('The current time is not within the specified range.');
@@ -117,4 +114,126 @@ class makeCallCommand extends Command
             }
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // Log::info('MakeCallCommand executed at ' . now());
+    // $token = Cache::get('three_cx_token');
+
+    // $providersFeeds = AutoDailerFeedFile::all();
+    // // TODO: get only today feeds
+
+    // foreach ($providersFeeds as $feed) {
+    //     $now = Carbon::now();
+
+    //     $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from);
+    //     $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to);
+
+    //     Log::info('on status ' . $feed->extension . $feed->on);
+
+    //     if ($now->between($from, $to) && $feed->on == 1) {
+    //         Log::info('The current time is within the specified range for extension ' . $feed->extension);
+
+    //         $providerFeeds = AutoDailerProviderFeed::byFeedFile($feed->id)
+    //             ->where('state', 'new')
+    //             ->get();
+
+    //         foreach ($providerFeeds as $mobile) {
+    //             Log::info('mobile ' . $mobile->mobile);
+
+    //             $callResult = $this->makeCall($feed, $mobile, $token);
+
+    //             if ($callResult) {
+    //                 $this->processParticipants($callResult);
+    //             }
+    //         }
+    //     } else {
+    //         Log::info('The current time is not within the specified range for extension ' . $feed->extension);
+    //     }
+    // }
+
+
+
+
+
+    // public function makeCall($feed, $mobile, $token)
+    // {
+    //     try {
+    //         $responseState = Http::withHeaders([
+    //             'Authorization' => 'Bearer ' . $token,
+    //         ])->post(config('services.three_cx.api_url') . "/callcontrol/{$feed->extension}/makecall", [
+    //             'destination' => $mobile->mobile,
+    //         ]);
+
+    //         if ($responseState->successful()) {
+    //             $responseData = $responseState->json();
+
+    //             $mobile->update([
+    //                 'state' => $responseData['result']['status'],
+    //                 'call_date' => Carbon::now(),
+    //                 'call_id' => $responseData['result']['id'],
+    //                 'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
+    //             ]);
+
+    //             Log::info('Call successfully made for mobile ' . $mobile->mobile);
+
+    //             return $responseData['result'];
+    //         } else {
+    //             Log::error('Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
+    //             return null;
+    //         }
+    //     } catch (\Exception $e) {
+    //         Log::error('An error occurred while making the call: ' . $e->getMessage());
+    //         return null;
+    //     }
+    // }
+
+
+
+
+    // public function processParticipants($callResult)
+    // {
+
+    //     $participantData = $callResult['participants'] ?? [];
+
+    //     foreach ($participantData as $participant) {
+    //         if (in_array($participant['party_dn_type'], ['Wspecialmenu', 'Wextension'])) {
+
+    //             $feed = AutoDailerProviderFeed::where('call_id', $participant['id'])->first();
+
+    //             if ($feed) {
+
+    //                 AutoDailerReport::updateOrCreate(
+    //                     [
+    //                         'call_id' => $participant['id'],
+    //                     ],
+    //                     [
+    //                         'status' => $participant['party_dn_type'],
+    //                         'phone_number' => $participant['party_caller_id'],
+    //                         'provider' => $participant['dn'],
+    //                     ]
+    //                 );
+
+    //                 Log::info('Participant data updated or created for call ID ' . $participant['id']);
+    //             }
+    //         }
+    //     }
+    // }
+
+
+
+
 }

@@ -8,6 +8,7 @@ use App\Models\AutoDistributerExtensionFeed;
 use App\Models\AutoDistributerFeedFile;
 use App\Models\AutoDistributererExtension;
 use Carbon\Carbon;
+use App\Models\AutoDailerProviderFeed;
 
 class UserFeedController extends Controller
 {
@@ -76,18 +77,20 @@ class UserFeedController extends Controller
 
     public function show($id)
     {
-        $feedFile = AutoDistributerFeedFile::with('provider', 'feeds')->findOrFail($id);
-        $feeds = AutoDistributerExtensionFeed::where('auto_dailer_feed_file_id', $id)->get();
-        return view('autoDailerByProvider.ProviderFeed.show', compact('feedFile', 'feeds'));
+        $feedFile = AutoDistributerFeedFile::with('user_ext', 'feeds')->findOrFail($id);
+        $feeds = AutoDistributerExtensionFeed::where('auto_dist_feed_file_id', $id)->get();
+        dd($feedFile);
+        return view('autoDistributerByUser.UserFeed.show', compact('feedFile', 'feeds'));
     }
 
 
     public function showFeed($id)
     {
+        dd('ds');
         // Fetch the feed by its ID
         $feed = AutoDistributerExtensionFeed::findOrFail($id);
 
         // Return view with feed data
-        return view('autoDailerByProvider.ProviderFeed.feed', compact('feed'));
+        return view('autoDistributerByUser.UserFeed.show', compact('feed'));
     }
 }

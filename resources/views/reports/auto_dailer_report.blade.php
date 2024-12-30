@@ -115,7 +115,7 @@
                                     <td>
                                         @php
 
-                                            $status = ($report->status == "Wextension") ? "answered" : "no answer";
+                                            $status = ($report->status == "Wextension" || $report->status == "Wexternalline") ? "answered" : "no answer";
                                         @endphp
 
                                         <span
@@ -127,7 +127,8 @@
                                             {{ ucfirst($status) }}
                                         </span>
                                     </td>
-                                    <td>{{ $report->created_at }}</td>
+                                    <td>{{ $report->created_at->addHours(2)->format('Y-m-d H:i:s') }}</td>
+
 
                                 </tr>
                             @empty

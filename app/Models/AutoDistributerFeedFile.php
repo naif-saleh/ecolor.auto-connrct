@@ -15,7 +15,7 @@ class AutoDistributerFeedFile extends Model
 
     public function feeds()
     {
-        return $this->hasMany(AutoDistributerExtensionFeed::class);
+        return $this->hasMany(AutoDistributerExtensionFeed::class,  'auto_dist_feed_file_id');
     }
 
     public function providerFeeds()

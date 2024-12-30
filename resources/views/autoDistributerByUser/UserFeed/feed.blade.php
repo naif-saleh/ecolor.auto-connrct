@@ -11,6 +11,6 @@
     <p><strong>Date:</strong> {{ $feed->date }}</p>
     <p><strong>Status:</strong> {{ $feed->on ? 'On' : 'Off' }}</p>
 
-    <a href="{{ route('autoDialerProviders.show', $feed->provider_id) }}">Back to Provider</a>
+    <a href="{{ route('autoDistributers.index', $feed->provider_id) }}">Back to Provider</a>
 </div>
 @endsection

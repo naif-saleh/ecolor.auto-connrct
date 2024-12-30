@@ -17,7 +17,7 @@ class AutoDailerProviderFeed extends Model
     {
         return $this->belongsTo(AutoDailerFeedFile::class, 'auto_dailer_feed_file_id');
     }
-    
+
     public function scopeByProvider($query, $providerId)
     {
         return $query->where('provider_id', $providerId);
@@ -31,5 +31,10 @@ class AutoDailerProviderFeed extends Model
     public function participant()
     {
         return $this->hasOne(Participant::class, 'call_id', 'call_id');
+    }
+
+    public function reports()
+    {
+        return $this->hasMany(AutoDailerReport::class, 'call_id', 'call_id');
     }
 }

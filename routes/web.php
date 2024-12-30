@@ -47,7 +47,7 @@ Route::delete('/auto-distributers-users/{id}', [UserForAutoDistributer::class, '
 // User Feed....................................................................................................................
 Route::get('auto-distributers/{id}/createFeed', [UserFeedController::class, 'createFeed'])->name('autoDistributers.createFeed');
 Route::post('auto-distributers/{id}/storeFeed', [UserFeedController::class, 'storeFeed'])->name('autoDistributers.storeFeed');
-Route::get('auto-distributers-user/{id}', [UserFeedController::class, 'show'])->name('autoDistributersUser.show');
+Route::get('auto-distributers-feed/{id}', [UserFeedController::class, 'show'])->name('autoDistributersUser.show');
 // Route::get('autoDialercall', [ProviderForAutoDailerController::class, 'autoDailer'])->name('call');
 // User Feed....................................................................................................................
 

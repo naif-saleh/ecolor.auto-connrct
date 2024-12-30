@@ -27,7 +27,7 @@
                             <td>{{ $feedFile->date }}</td>
                             <td>{{ $feedFile->on ? 'Active' : 'Inactive' }}</td>
                             <td>
-                                <a href="{{ route('autoDistributers.show', $feedFile->id) }}" class="btn btn-primary btn-sm">View</a>
+                                <a href="{{ route('autoDistributersUser.show', $feedFile->id) }}" class="btn btn-primary btn-sm">View</a>
                             </td>
                         </tr>
                     @endforeach
