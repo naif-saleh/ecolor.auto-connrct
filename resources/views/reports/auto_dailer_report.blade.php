@@ -127,7 +127,7 @@
                                             {{ ucfirst($status) }}
                                         </span>
                                     </td>
-                                    <td>{{ $report->created_at->addHours(2)->format('Y-m-d H:i:s') }}</td>
+                                    <td>{{ $report->created_at->addHours(3)->format('Y-m-d H:i:s') }}</td>
 
 
                                 </tr>
