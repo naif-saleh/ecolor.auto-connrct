@@ -114,16 +114,18 @@
 
                                     <td>
                                         @php
+                                            // Map the status directly
+                                            $status = in_array($report->status, ['Wextension', 'Wexternalline']) ? 'answered' : 'no answer';
 
-                                            $status = ($report->status == "Wextension" || $report->status == "Wexternalline") ? "answered" : "no answer";
-                                        @endphp
-
-                                        <span
-                                            class="badge bg-{{ match ($status) {
+                                            // Map the status to a badge color
+                                            $badgeClass = match ($status) {
                                                 'answered' => 'success',
                                                 'no answer' => 'warning',
                                                 default => 'secondary',
-                                            } }}">
+                                            };
+                                        @endphp
+
+                                        <span class="badge bg-{{ $badgeClass }}">
                                             {{ ucfirst($status) }}
                                         </span>
                                     </td>

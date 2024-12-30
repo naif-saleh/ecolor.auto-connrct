@@ -31,15 +31,16 @@ class ReportController extends Controller
 
     // Map filter values to database values
     $statusMap = [
-        'answered' => 'Wextension',
-        'no answer' => 'Wspecialmenu',
+        'answered' => ['Wextension', 'Wexternalline'],
+        'no answer' => ['Wspecialmenu', 'no answer'],
     ];
+
 
     $query = AutoDailerReport::query();
 
     // Apply status filter
     if ($filter && isset($statusMap[$filter])) {
-        $query->where('status', $statusMap[$filter]);
+        $query->whereIn('status', $statusMap[$filter]);
     }
 
     // Apply extension range filters
@@ -54,8 +55,9 @@ class ReportController extends Controller
     $reports = $query->paginate(20);
 
     // Calculate counts using mapped status values
-    $answeredCount = AutoDailerReport::where('status', 'Wextension')->count();
-    $noAnswerCount = AutoDailerReport::where('status', 'Wspecialmenu')->count();
+    $answeredCount = AutoDailerReport::whereIn('status', ['Wextension','Wexternalline'])->count();
+    $noAnswerCount = AutoDailerReport::whereIn('status', ['Wspecialmenu', 'no answer'])->count();
+
 
     return view('reports.auto_dailer_report', compact(
         'reports',
@@ -72,7 +74,7 @@ class ReportController extends Controller
 
 
     // Export Auto Dailer AS CSV File...........................................................................................................
-    
+
 
 public function exportAutoDailerReport(Request $request)
 {

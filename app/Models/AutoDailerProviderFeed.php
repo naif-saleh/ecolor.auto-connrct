@@ -28,10 +28,7 @@ class AutoDailerProviderFeed extends Model
         return $query->where('auto_dailer_feed_file_id', $feedFileId);
     }
 
-    public function participant()
-    {
-        return $this->hasOne(Participant::class, 'call_id', 'call_id');
-    }
+     
 
     public function reports()
     {

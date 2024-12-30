@@ -90,7 +90,7 @@ class participantsCommand extends Command
                                 [
                                     "status" => "no answer",
                                     "phone_number" => $participant_data['party_caller_id'],
-                                    "provider" => $participant_data['dn'],
+
                                 ]
                             );
                         }
@@ -117,7 +117,7 @@ class participantsCommand extends Command
             [
                 "status" => $participant_data['party_dn_type'] ?? "Unknown",
                 "phone_number" => $participant_data['party_caller_id'] ?? "Unknown",
-                "provider" => $participant_data['dn'] ?? "Unknown",
+                 
             ]
         );
     }
