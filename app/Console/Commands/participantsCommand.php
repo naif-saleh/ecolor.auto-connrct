@@ -117,7 +117,7 @@ class participantsCommand extends Command
             [
                 "status" => $participant_data['party_dn_type'] ?? "Unknown",
                 "phone_number" => $participant_data['party_caller_id'] ?? "Unknown",
-                 
+
             ]
         );
     }
@@ -128,9 +128,7 @@ class participantsCommand extends Command
     /**
      * Drop a call for a participant with additional payload.
      */
-    /**
-     * Drop a call for a participant with additional payload.
-     */
+
 
 
     private function dropCall($ext_from, $participantId, $partyCallerId, $token)
@@ -143,14 +141,14 @@ class participantsCommand extends Command
             // Request payload with dynamic destination
             $payload = [
                 "reason" => "new call",
-                "destination" => $partyCallerId, // Dynamically set destination
+                "destination" => $partyCallerId,
                 "timeout" => 0,
             ];
 
             $dropResponse = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
-                'Content-Type' => 'application/json', // Ensure correct content type
-            ])->post($url, $payload); // Pass payload as second argument
+                'Content-Type' => 'application/json',
+            ])->post($url, $payload);  
 
             if ($dropResponse->successful()) {
                 $drop = "true";
