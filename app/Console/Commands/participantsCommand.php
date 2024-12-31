@@ -82,16 +82,20 @@ class participantsCommand extends Command
                             $this->updateParticipant($participant_data);
                         } else {
                             Log::info("Skipping dropCall for participant ID {$participant_data['id']} with status: {$participant_data['status']}");
-                            AutoDailerReport::updateOrCreate(
-                                [
-                                    "call_id" => $participant_data['id'],
-                                ],
-                                [
-                                    "status" => "no answer",
-                                    "phone_number" => $participant_data['party_caller_id'],
 
-                                ]
-                            );
+                            if(!empty($participant_data['dn'])){
+                                AutoDailerReport::updateOrCreate(
+                                    [
+                                        "call_id" => $participant_data['id'],
+                                    ],
+                                    [
+                                        "status" => "no answer",
+                                        "phone_number" => $participant_data['party_caller_id'],
+
+                                    ]
+                                );
+                            }
+
                         }
                     } catch (\Exception $e) {
                         Log::error('Failed to process participant data for call ID ' . ($participant_data['id'] ?? 'N/A') . ': ' . $e->getMessage());

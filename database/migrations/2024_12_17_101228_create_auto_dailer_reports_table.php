@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('auto_dailer_reports', function (Blueprint $table) {
             $table->id();
-            $table->string('call_id')->nullable();
-            $table->string('status')->nullable();
-            $table->string('phone_number')->nullable();
-            $table->string('provider')->nullable();
-            $table->string('extension')->nullable();
+            $table->string('call_id')->require();
+            $table->string('status')->require();
+            $table->string('phone_number')->require();
+            $table->string('provider')->require();
+            $table->string('extension')->require();
             $table->timestamps();
         });
     }
