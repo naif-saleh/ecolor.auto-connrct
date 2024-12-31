@@ -105,7 +105,7 @@ public function exportAutoDailerReport(Request $request)
             fputcsv($handle, [
                 $report->phone_number,
                 $report->provider,
-                ucfirst(($report->status === 'Wextension') ? 'answered' : 'no answer'),
+                ucfirst(($report->status === 'Wextension' || $report->status === 'Wexternalline') ? 'answered' : 'no answer'),
                 $report->created_at,
             ]);
         }

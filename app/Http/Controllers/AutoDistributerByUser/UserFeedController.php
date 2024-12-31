@@ -79,7 +79,6 @@ class UserFeedController extends Controller
     {
         $feedFile = AutoDistributerFeedFile::with('user_ext', 'feeds')->findOrFail($id);
         $feeds = AutoDistributerExtensionFeed::where('auto_dist_feed_file_id', $id)->get();
-        dd($feedFile);
         return view('autoDistributerByUser.UserFeed.show', compact('feedFile', 'feeds'));
     }
 
