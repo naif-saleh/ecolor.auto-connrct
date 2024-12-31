@@ -106,7 +106,7 @@ public function exportAutoDailerReport(Request $request)
                 $report->phone_number,
                 $report->provider,
                 ucfirst(($report->status === 'Wextension' || $report->status === 'Wexternalline') ? 'answered' : 'no answer'),
-                $report->created_at,
+                \Carbon\Carbon::parse($report->created_at)->addHours(3)->format('H:i:s')
             ]);
         }
 

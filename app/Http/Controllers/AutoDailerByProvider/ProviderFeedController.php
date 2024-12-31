@@ -62,7 +62,6 @@ class ProviderFeedController extends Controller
                 'date' => $request->input('date'),
                 'on' => $request->input('on'),
                 'off' => $request->input('off'),
-
             ]);
 
 
