@@ -7,10 +7,12 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>@yield('title', 'Laravel Application')</title>
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-1BmE4kWBq78iYhFldvKuhfTAU6auU8tT94WrHftjDbrCEXSU1oBoqyl2QvZ6jIW3" crossorigin="anonymous">
     {{-- Sweet Alert --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    @yield('style')
     <style>
         body {
             background-color: #f8f9fa;
@@ -29,25 +31,31 @@
         .stats-container {
             margin-bottom: 20px;
         }
+
+        
     </style>
 </head>
 
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-sm">
-        <div class="container-fluid">
-            <a class="navbar-brand fw-bold" href="#">Auto Connect</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            @if (Auth::check() && (Auth::user()->isSuperUser() || Auth::user()->isAdmin()))
-            <div class="collapse navbar-collapse" id="navbarNav">
+    <div class="container py-5">
+        <nav class="navbar navbar-expand-lg navbar-light bg-light">
+            <div class="container-fluid">
+                <a class="navbar-brand fw-bold" href="#">
+                    <img src="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
+                        width="40" alt="">
+                </a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                    aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                @if (Auth::check() && (Auth::user()->isSuperUser() || Auth::user()->isAdmin()))
+                    <div class="collapse navbar-collapse" id="navbarNav">
 
-                    <ul class="navbar-nav me-auto mb-2 mb-lg-0"> <!-- Left-aligned links -->
-                        {{-- <li class="nav-item">
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0"> <!-- Left-aligned links -->
+                            {{-- <li class="nav-item">
                             <a class="nav-link active" aria-current="page" href="/">Home</a>
                         </li> --}}
-                        {{-- <li class="nav-item">
+                            {{-- <li class="nav-item">
                             <a class="nav-link" href="{{ route('settings.form') }}">Settings</a>
                         </li>
                         <li class="nav-item">
@@ -59,34 +67,36 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('providers.index') }}">Providers</a>
                         </li> --}}
-                        {{-- {{-- <li class="nav-item">
+                            {{-- {{-- <li class="nav-item">
                             <a class="nav-link" href="{{ route('autoDailerByProvider.index') }}">AutoDailerByProvider</a>
                         </li> --}}
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('autoDialerProviders.index') }}">Auto Dailer</a>
-                        </li>
-                        {{-- <li class="nav-item">
-                            <a class="nav-link" href="{{ route('autoDistributers.index') }}">Auto Distributer</a>
-                        </li> --}}
-                        <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                                Reports
-                            </a>
-                            <ul class="dropdown-menu" aria-labelledby="activityDropdown">
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('users.activity.report') }}">User
-                                        Activity</a>
-                                </li>
-                                <li>
-                                    <a class="dropdown-item" href="{{ route('auto_dailer.report') }}">Auto Dailer</a>
-                                </li>
-                                {{-- <li>
-                                    <a class="dropdown-item" href="{{ route('auto_distributer.report') }}">Auto
-                                        Distributer</a>
-                                </li> --}}
-                            </ul>
-                        </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('autoDialerProviders.index') }}">Auto Dailer</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('auto_distributerer_extensions.index') }}">Auto
+                                    Distributer</a>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    Reports
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="activityDropdown">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('users.activity.report') }}">User
+                                            Activity</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('auto_dailer.report') }}">Auto
+                                            Dailer</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('auto_distributer.report') }}">Auto
+                                            Distributer</a>
+                                    </li>
+                                </ul>
+                            </li>
                 @endif
 
                 @if (Auth::check() && Auth::user()->isSuperUser())
@@ -116,7 +126,8 @@
                 </ul>
             </div>
 
-        </div>
+    </div>
+    </div>
     </nav>
     <div class="container py-5">
 
@@ -124,18 +135,17 @@
     </div>
 
 
-@yield('scripts')
+    @yield('scripts')
 
 
     {{-- Java Script --}}
 
     <script>
         // Delete Alert...................................................................................................
-        function confirmDelete(button) {
-            // SweetAlert confirmation
+        function confirmDelete(extensionId) {
             Swal.fire({
                 title: 'Are you sure?',
-                text: "This action cannot be undone!",
+                text: 'You won\'t be able to revert this!',
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#d33',
@@ -144,11 +154,12 @@
                 cancelButtonText: 'Cancel'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // Find the parent form and submit it
-                    button.closest('form').submit();
+                    // Trigger form submission if confirmed
+                    document.getElementById('delete-form-' + extensionId).submit();
                 }
             });
         }
+
 
 
 
@@ -206,7 +217,9 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-YvpcrYf0tY3lHB60NNkmXc5s9fDVZLESaAA55NDzOxhy9GkcIdslK1eN7N6jIeHz" crossorigin="anonymous">
+    </script>
 
     {{-- Sweet Alert --}}
     @if (session('success'))

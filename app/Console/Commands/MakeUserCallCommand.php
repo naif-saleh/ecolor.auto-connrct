@@ -2,24 +2,23 @@
 
 namespace App\Console\Commands;
 
-use App\Models\AutoDailerFeedFile;
-use App\Models\AutoDailerProviderFeed;
+use App\Models\AutoDistributerFeedFile;
+use App\Models\AutoDistributerExtensionFeed;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use App\Models\AutoDailerReport;
+use App\Models\AutoDistributerReport;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 
-
-class makeCallCommand extends Command
+class MakeUserCallCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'app:make-call-command';
+    protected $signature = 'app:make-user-call-command';
 
     /**
      * The console command description.
@@ -33,44 +32,36 @@ class makeCallCommand extends Command
      */
     public function handle()
     {
-
         $token = Cache::get('three_cx_token');
 
-        Log::info('MakeCallCommand executed at ' . now());
-        $providersFeeds = AutoDailerFeedFile::all();
-        $usersFeeds = AutoDailerFeedFile::all();
-        // TODO: get only today feeds
+        Log::info('MakeUserCallCommand executed at ' . now());
+        $usersFeeds = AutoDistributerFeedFile::all();
 
 
-
-        //  Make Call For Providers
-        foreach ($providersFeeds as $feed) {
+        // Make Call For Users
+        foreach ($usersFeeds as $feed) {
             $ext_from = $feed->extension;
             $now = Carbon::now();
-
-            // Parse the date and time from the data
             $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from);
             $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to);
 
 
-            Log::info('Make Provider Call, Active status ' . $feed->extension . $feed->on);
 
-            // Check if the current time is within the range
             if ($now->between($from, $to) && $feed->on == 1) {
-                Log::info('The current time is within the specified range.' . $feed->id);
-                Log::info('The current time is within the specified range for extension ' . $feed->extension . $to->format('r'));
+                Log::info('Succesfully....{The current time is within the specified range.' . " And File is Active");
+                Log::info('The current time is within the specified range for extension ' . $feed->extension . $to->format('r') . " }");
                 // get all number in this feed
 
-                //$mobiles = AutoDailerProviderFeed::find($feed->id);
-                $providerFeeds = AutoDailerProviderFeed::byFeedFile($feed->id)
+                $providerFeeds = AutoDistributerExtensionFeed::byFeedFile($feed->id)
                     ->where('state', 'new')
                     ->get();
 
                 $loop = 0;
                 foreach ($providerFeeds as $mobile) {
-                    Log::info('mobile ' . $mobile->mobile . ' in loop ' . $loop);
+                    Log::info('Processing mobile ' . $mobile->mobile . ' with name ' . $mobile->name);
 
                     try {
+                        // Make the call using the 3CX API
                         $responseState = Http::withHeaders([
                             'Authorization' => 'Bearer ' . $token,
                         ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/makecall", [
@@ -80,7 +71,8 @@ class makeCallCommand extends Command
                         if ($responseState->successful()) {
                             $responseData = $responseState->json();
 
-                            $reports = AutoDailerReport::firstOrCreate([
+                            // Save or update the report
+                            $reports = AutoDistributerReport::updateOrCreate([
                                 'call_id' => $responseData['result']['id'],
                             ], [
                                 'status' => $responseData['result']['status'],
@@ -89,20 +81,18 @@ class makeCallCommand extends Command
                                 'phone_number' => $responseData['result']['party_caller_id'] ?? null,
                             ]);
 
+                            Log::info('Call successfully made for mobile ' . $mobile->mobile);
 
-                            $reports->save();
-                            // Update the mobile record with the call_id and other details
+                            // Update the mobile record with call details
                             $mobile->update([
-                                'state' => $responseData['result']['status'],
+                                'state' => "Dialing",
                                 'call_date' => $now,
                                 'call_id' => $responseData['result']['id'],
                                 'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
                             ]);
 
-
-
-
-                            Log::info('Call successfully made for mobile ' . $mobile->mobile);
+                            // Break the loop if a call is successfully made
+                            break;
                         } else {
                             Log::error('Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
                         }
@@ -111,28 +101,9 @@ class makeCallCommand extends Command
                     }
                 }
             } else {
-                Log::info('The current time is not within the specified range.');
-                Log::info('The current time is not within the specified range for extension ' . $feed->extension . $to->format('r'));
+                Log::info('Warning.......{The The File is Inactive.' . $feed->id . " or ");
+                Log::info('The current time is within the specified range for extension ' . $feed->extension . $to->format('r') . "}");
             }
         }
-
-
-
-
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }

@@ -24,120 +24,28 @@ class ReportController extends Controller
     // display Auto Dailer Report...........................................................................................................
 
     public function AutoDailerReports(Request $request)
-{
-    $filter = $request->input('filter');
-    $extensionFrom = $request->input('extension_from');
-    $extensionTo = $request->input('extension_to');
-
-    // Map filter values to database values
-    $statusMap = [
-        'answered' => ['Wextension', 'Wexternalline'],
-        'no answer' => ['Wspecialmenu', 'no answer'],
-    ];
-
-
-    $query = AutoDailerReport::query();
-
-    // Apply status filter
-    if ($filter && isset($statusMap[$filter])) {
-        $query->whereIn('status', $statusMap[$filter]);
-    }
-
-    // Apply extension range filters
-    if ($extensionFrom) {
-        $query->where('provider', '>=', $extensionFrom);
-    }
-
-    if ($extensionTo) {
-        $query->where('provider', '<=', $extensionTo);
-    }
-
-    $reports = $query->paginate(20);
-
-    // Calculate counts using mapped status values
-    $answeredCount = AutoDailerReport::whereIn('status', ['Wextension','Wexternalline'])->count();
-    $noAnswerCount = AutoDailerReport::whereIn('status', ['Wspecialmenu', 'no answer'])->count();
-
-
-    return view('reports.auto_dailer_report', compact(
-        'reports',
-        'filter',
-        'extensionFrom',
-        'extensionTo',
-        'answeredCount',
-        'noAnswerCount'
-    ));
-}
-
-
-
-
-
-    // Export Auto Dailer AS CSV File...........................................................................................................
-
-
-public function exportAutoDailerReport(Request $request)
-{
-    $filter = $request->query('filter');
-
-    // Map filter to corresponding database status values
-    $statusMap = [
-        'answered' => ['Wextension', 'Wexternalline'],
-        'no answer' => ['Wspecialmenu', 'no answer'],
-    ];
-
-    $query = AutoDailerReport::query();
-
-    if ($filter && isset($statusMap[$filter])) {
-        $query->whereIn('status', $statusMap[$filter]);
-    }
-
-    $reports = $query->get();
-
-    $response = new StreamedResponse(function () use ($reports) {
-        $handle = fopen('php://output', 'w');
-
-        // Write the CSV header
-        fputcsv($handle, ['Mobile', 'Provider', 'State', 'Called At']);
-
-        // Write each report row
-        foreach ($reports as $report) {
-            fputcsv($handle, [
-                $report->phone_number,
-                $report->provider,
-                ucfirst(($report->status === 'Wextension' || $report->status === 'Wexternalline') ? 'answered' : 'no answer'),
-                \Carbon\Carbon::parse($report->created_at)->addHours(3)->format('Y-m-d H:i:s')
-            ]);
-        }
-
-        fclose($handle);
-    });
-
-    // Set the response headers for CSV download
-    $response->headers->set('Content-Type', 'text/csv');
-    $response->headers->set('Content-Disposition', 'attachment; filename="auto_dailer_report.csv"');
-
-    return $response;
-}
-
-
-
-
-    // display Auto Distributer Report...........................................................................................................
-    public function AutoDistributerReports(Request $request)
     {
-
         $filter = $request->input('filter');
         $extensionFrom = $request->input('extension_from');
         $extensionTo = $request->input('extension_to');
         $provider = $request->input('provider');
 
-        $query = AutoDistributerReport::query();
+        // Map filter values to database values
+        $statusMap = [
+            'answered' => ['Wextension', 'Wexternalline'],
+            'no answer' => ['Wspecialmenu', 'no answer'],
+        ];
 
-        if ($filter) {
-            $query->where('state', $filter);
+        $query = AutoDailerReport::query();
+
+        // Apply status filter
+        if ($filter === 'today') {
+            $query->whereDate('created_at', now()->toDateString());
+        } elseif ($filter && isset($statusMap[$filter])) {
+            $query->whereIn('status', $statusMap[$filter]);
         }
 
+        // Apply extension range filters
         if ($extensionFrom) {
             $query->where('extension', '>=', $extensionFrom);
         }
@@ -146,18 +54,156 @@ public function exportAutoDailerReport(Request $request)
             $query->where('extension', '<=', $extensionTo);
         }
 
+        // Apply provider filter
         if ($provider) {
             $query->where('provider', $provider);
         }
 
-        $providers = AutoDistributerReport::select('provider')->distinct()->pluck('provider');
+        $reports = $query->paginate(20);
+
+        // Calculate counts
+        $totalCount = AutoDailerReport::count(); // Total calls count
+        $answeredCount = AutoDailerReport::whereIn('status', ['Wextension', 'Wexternalline'])->count();
+        $noAnswerCount = AutoDailerReport::whereIn('status', ['Wspecialmenu', 'no answer'])->count();
+
+        // Fetch distinct providers for the filter dropdown
+        $providers = AutoDailerReport::select('provider')->distinct()->get();
+
+        return view('reports.auto_dailer_report', compact(
+            'reports',
+            'filter',
+            'extensionFrom',
+            'extensionTo',
+            'provider',
+            'providers',
+            'totalCount',
+            'answeredCount',
+            'noAnswerCount'
+        ));
+    }
+
+
+
+
+
+    // Export Auto Dailer AS CSV File...........................................................................................................
+
+
+    public function exportAutoDailerReport(Request $request)
+    {
+        $filter = $request->query('filter');
+        $extensionFrom = $request->input('extension_from');
+        $extensionTo = $request->input('extension_to');
+        $provider = $request->input('provider');
+
+        // Map filter to corresponding database status values
+        $statusMap = [
+            'answered' => ['Wextension', 'Wexternalline'],
+            'no answer' => ['Wspecialmenu', 'no answer'],
+        ];
+
+        $query = AutoDailerReport::query();
+
+        // Apply status filter
+        if ($filter === 'today') {
+            $query->whereDate('created_at', now()->toDateString());
+        } elseif ($filter && isset($statusMap[$filter])) {
+            $query->whereIn('status', $statusMap[$filter]);
+        }
+
+        // Apply extension range filters
+        if ($extensionFrom) {
+            $query->where('extension', '>=', $extensionFrom);
+        }
+
+        if ($extensionTo) {
+            $query->where('extension', '<=', $extensionTo);
+        }
+
+        // Apply provider filter (ensure provider is not empty or null)
+        if (!empty($provider)) {
+            $query->where('provider', $provider);
+        }
+
+        $reports = $query->get();
+
+        $response = new StreamedResponse(function () use ($reports) {
+            $handle = fopen('php://output', 'w');
+
+            // Write the CSV header
+            fputcsv($handle, ['Mobile', 'Provider', 'extension', 'State', 'Called At']);
+
+            // Write each report row
+            foreach ($reports as $report) {
+                fputcsv($handle, [
+                    $report->phone_number,
+                    $report->provider,
+                    $report->extension,
+                    ucfirst(($report->status === 'Wextension' || $report->status === 'Wexternalline') ? 'answered' : 'no answer'),
+                    \Carbon\Carbon::parse($report->created_at)->addHours(3)->format('Y-m-d H:i:s')
+                ]);
+            }
+
+            fclose($handle);
+        });
+
+        // Set the response headers for CSV download
+        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Disposition', 'attachment; filename="auto_dailer_report.csv"');
+
+        return $response;
+    }
+
+
+
+
+
+    // display Auto Distributer Report...........................................................................................................
+    public function AutoDistributerReports(Request $request)
+    {
+        $filter = $request->input('filter');
+        $extensionFrom = $request->input('extension_from');
+        $extensionTo = $request->input('extension_to');
+        $provider = $request->input('provider');
+
+        // Map filter values to database values
+        $statusMap = [
+            'answered' => ['Wextension', 'Wexternalline'],
+            'no answer' => ['Wspecialmenu', 'no answer'],
+        ];
+
+        $query = AutoDistributerReport::query();
+
+        // Apply status filter
+        if ($filter === 'today') {
+            $query->whereDate('created_at', now()->toDateString());
+        } elseif ($filter && isset($statusMap[$filter])) {
+            $query->whereIn('status', $statusMap[$filter]);
+        }
+
+        // Apply extension range filters
+        if ($extensionFrom) {
+            $query->where('extension', '>=', $extensionFrom);
+        }
+
+        if ($extensionTo) {
+            $query->where('extension', '<=', $extensionTo);
+        }
+
+        // Apply provider filter
+        if ($provider) {
+            $query->where('provider', $provider);
+        }
 
         $reports = $query->paginate(20);
 
-        $answeredCount = AutoDistributerReport::where('state', 'answered')->count();
-        $noAnswerCount = AutoDistributerReport::where('state', 'no answer')->count();
-        $calledCount = AutoDistributerReport::where('state', 'called')->count();
-        $declinedCount = AutoDistributerReport::where('state', 'declined')->count();
+        // Calculate counts
+        $totalCount = AutoDistributerReport::count(); // Total calls count
+        $answeredCount = AutoDistributerReport::whereIn('status', ['Wextension', 'Wexternalline'])->count();
+        $noAnswerCount = AutoDistributerReport::whereIn('status', ['Wspecialmenu', 'no answer'])->count();
+
+        // Fetch distinct providers for the filter dropdown
+        $providers = AutoDistributerReport::select('provider')->distinct()->get();
 
         return view('reports.auto_distributer_report', compact(
             'reports',
@@ -166,12 +212,13 @@ public function exportAutoDailerReport(Request $request)
             'extensionTo',
             'provider',
             'providers',
+            'totalCount',
             'answeredCount',
-            'noAnswerCount',
-            'calledCount',
-            'declinedCount'
+            'noAnswerCount'
         ));
     }
+
+
 
     // Export Auto Distributer AS CSV File...........................................................................................................
     public function exportAutoDistributerReport(Request $request)

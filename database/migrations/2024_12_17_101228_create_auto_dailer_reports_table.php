@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('status')->nullable();
             $table->string('phone_number')->nullable();
             $table->string('provider')->nullable();
+            $table->string('extension')->nullable();
             $table->timestamps();
         });
     }

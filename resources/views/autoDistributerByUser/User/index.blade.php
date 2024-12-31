@@ -1,47 +1,60 @@
 @extends('layout.master')
 
 @section('content')
-<div class="container py-5">
-    <div class="d-flex justify-content-between align-items-center mb-4">
-        <h1 class="text-primary">Auto Distributers Users</h1>
-        <a href="{{ route('autoDistributers.create') }}" class="btn btn-success">Add New User</a>
-    </div>
-
-    @if($providers->isEmpty())
-        <div class="alert alert-info">
-            No Auto Distributers User found. Click "Create New Provider" to add one.
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h1 class="display-4">Auto Distributerer Users</h1>
+            <a href="{{ route('auto_distributerer_extensions.create') }}" class="btn btn-primary btn-lg">
+                <i class="bi bi-plus-circle"></i> Add New Extension
+            </a>
         </div>
-    @else
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered">
-                <thead class="bg-primary text-white">
-                    <tr>
-                        <th>Name</th>
-                        <th>Extension</th>
-                        <th>Actions</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach($providers as $provider)
+
+        @if($extensions->isEmpty())
+        <div class="alert alert-warning">
+            No Auto Distributerer Users found. Click "Create New User" to add one.
+        </div>
+        @else
+            <div class="table-responsive">
+                <table class="table table-striped table-hover">
+                    <thead class="table-dark">
                         <tr>
-                            <td>{{ $provider->name }}</td>
-                            <td>{{ $provider->extension }}</td>
-                            <td>
-                                <a href="{{ route('autoDistributers.show', $provider->id) }}" class="btn btn-info btn-sm">Feeds</a>
-                                <a href="{{ route('autoDistributers.edit', $provider->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                                <a href="{{ route('autoDistributers.createFeed', $provider->id) }}" class="btn btn-primary btn-sm">Add Feed</a>
-
-                                <form action="{{ route('autoDistributers.destroy', $provider->id) }}" method="POST" class="d-inline">
-                                    @csrf
-                                    @method('DELETE')
-                                    <button type="submit" class="btn btn-danger btn-sm" onclick="return confirm('Are you sure you want to delete this provider?')">Delete</button>
-                                </form>
-                            </td>
+                            <th>Name</th>
+                            <th>Extension</th>
+                            <th>Created By</th>
+                            <th>Actions</th>
                         </tr>
-                    @endforeach
-                </tbody>
-            </table>
-        </div>
-    @endif
-</div>
+                    </thead>
+                    <tbody>
+                        @foreach($extensions as $extension)
+                            <tr>
+                                <td>{{ $extension->name }}</td>
+                                <td>{{ $extension->extension }}</td>
+                                <td>{{ $extension->user->name }}</td>
+                                <td class="d-flex justify-content-start">
+                                    <a href="{{ route('auto_distributerer_extensions.show', $extension->id) }}" class="btn btn-info btn-sm me-2">
+                                        <i class="bi bi-eye"></i> View
+                                    </a>
+                                    <a href="{{ route('auto_distributerer_extensions.edit', $extension->id) }}" class="btn btn-warning btn-sm me-2">
+                                        <i class="bi bi-pencil"></i> Edit
+                                    </a>
+                                    <a href="{{ route('auto_distributerer_extensions.createFeed', $extension->id) }}" class="btn btn-primary btn-sm me-2">
+                                        <i class="bi bi-plus-lg"></i> Add Feed
+                                    </a>
+                                    <form action="{{ route('auto_distributerer_extensions.destroy', $extension->id) }}" method="POST" class="d-inline" id="delete-form-{{ $extension->id }}">
+                                        @csrf
+                                        @method('DELETE')
+                                        <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete({{ $extension->id }})">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+        @endif
+    </div>
 @endsection
+
+

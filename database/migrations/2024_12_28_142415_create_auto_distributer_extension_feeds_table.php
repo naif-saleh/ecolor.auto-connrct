@@ -16,15 +16,19 @@ return new class extends Migration
             $table->unsignedBigInteger('user_ext_id');
             $table->string('mobile');
             $table->string('state')->default('new');
-            $table->timestamps();
+            $table->string('call_id')->nullable();
+            $table->string('party_dn_type')->nullable();
+            $table->string('call_date')->nullable();
             $table->unsignedBigInteger('auto_dist_feed_file_id')->nullable();
-
+            $table->timestamps();
 
             $table->foreign('auto_dist_feed_file_id')
                   ->references('id')->on('auto_distributer_feed_files')
                   ->onDelete('cascade');
 
-            $table->foreign('user_ext_id')->references('id')->on('auto_distributerer_extensions')->onDelete('cascade');
+            $table->foreign('user_ext_id')
+                  ->references('id')->on('auto_distributerer_extensions')
+                  ->onDelete('cascade');
         });
     }
 

@@ -23,12 +23,13 @@ class ProviderForAutoDailerController extends Controller
 
     public function create()
     {
-        return view('autoDailerByProvider.Provider.create');
+        $users = \App\Models\User::all();
+        return view('autoDailerByProvider.Provider.create', compact('users'));
     }
 
     public function store(Request $request)
     {
-        
+
         $validated = $request->validate([
             'name' => 'required|string|max:255',
             'extension' => 'required|string|max:50',
@@ -59,8 +60,9 @@ class ProviderForAutoDailerController extends Controller
 
     public function edit($id)
     {
+        $users = \App\Models\User::all();
         $provider = AutoDialerProvider::findOrFail($id);
-        return view('autoDailerByProvider.Provider.edit', compact('provider'));
+        return view('autoDailerByProvider.Provider.edit', compact('provider','users'));
     }
 
     public function update(Request $request, $id)

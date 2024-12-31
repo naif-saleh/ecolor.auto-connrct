@@ -2,12 +2,11 @@
 
 @section('content')
     <div class="container mt-5">
-        <h1 class="text-center text-primary mb-4">User: {{ $provider->name }}</h1>
+        <h1 class="text-center text-primary mb-4">User: {{ $extension->name }}</h1>
 
-        <h3 class="text-center mb-4">Feed Files</h3>
-
-        <div class="table-responsive">
-            <table class="table table-striped table-bordered">
+        <div class="mb-3">
+            <h3>Uploaded Feed Files</h3>
+            <table class="table table-bordered">
                 <thead>
                     <tr>
                         <th>File Name</th>
@@ -19,7 +18,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($provider->feedFiles as $feedFile)
+                    @foreach ($extension->feedFiles as $feedFile)
                         <tr>
                             <td>{{ $feedFile->file_name }}</td>
                             <td>{{ $feedFile->from }}</td>
@@ -27,18 +26,19 @@
                             <td>{{ $feedFile->date }}</td>
                             <td>{{ $feedFile->on ? 'Active' : 'Inactive' }}</td>
                             <td>
-                                <a href="{{ route('autoDistributersUser.show', $feedFile->id) }}" class="btn btn-primary btn-sm">View</a>
+                                <!-- Button to view data inside the feed file -->
+                                <a href="{{ route('auto_distributer_extensions.viewFeedData', ['extensionId' => $extension->id, 'feedFileId' => $feedFile->id]) }}"
+                                    class="btn btn-info btn-sm">View Data</a>
                             </td>
                         </tr>
-                    @endforeach
+
                 </tbody>
+                @endforeach
             </table>
         </div>
-
-
-        @if ($provider->feedFiles->isEmpty())
+        @if ($extension->feedFiles->isEmpty())
             <div class="alert alert-warning text-center mt-4">
-                No feed files found for this Uers.
+                No feed files found for this provider.
             </div>
         @endif
     </div>

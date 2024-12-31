@@ -18,11 +18,10 @@ return new class extends Migration
             $table->time('from');
             $table->time('to');
             $table->date('date');
-            $table->integer('on')->default(1);
+            $table->boolean('on')->default(true);
             $table->string('file_name');
             $table->timestamps();
 
-            // Foreign key constraint
             $table->foreign('user_ext_id')->references('id')->on('auto_distributerer_extensions')->onDelete('cascade');
         });
     }

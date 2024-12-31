@@ -2,11 +2,11 @@
 
 @section('content')
 <div class="container py-5">
-    <h1>Create Feed for User: {{ $provider->name }}</h1>
+    <h1>Create Feed for User: {{ $extension->name }}</h1>
 
 
 
-    <form action="{{ route('autoDistributers.storeFeed', $provider->id) }}" method="POST" enctype="multipart/form-data">
+    <form action="{{ route('auto_distributerer_extensions.storeFeed', $extension->id) }}" method="POST" enctype="multipart/form-data">
         @csrf
         <input type="hidden" name="timezone" id="timezone">
 
@@ -56,6 +56,6 @@
             document.getElementById('timezone').value = timezone;
         });
     </script>
-    <a href="{{ route('autoDistributers.index') }}" class="btn btn-secondary mt-4">Back to Providers</a>
+    <a href="{{ route('auto_distributerer_extensions.index') }}" class="btn btn-secondary mt-4">Back to extensions</a>
 </div>
 @endsection

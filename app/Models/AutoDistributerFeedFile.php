@@ -8,18 +8,14 @@ class AutoDistributerFeedFile extends Model
 {
     protected $fillable = ['user_ext_id', 'extension', 'from', 'to', 'date', 'on', 'file_name'];
 
-    public function user_ext()
+    public function extension()
     {
-        return $this->belongsTo(AutoDistributererExtension::class);
+        return $this->belongsTo(AutoDistributererExtension::class, 'user_ext_id');
     }
 
-    public function feeds()
-    {
-        return $this->hasMany(AutoDistributerExtensionFeed::class,  'auto_dist_feed_file_id');
-    }
-
-    public function providerFeeds()
+    public function extensionFeeds()
     {
         return $this->hasMany(AutoDistributerExtensionFeed::class, 'auto_dist_feed_file_id');
     }
+
 }

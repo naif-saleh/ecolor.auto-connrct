@@ -4,7 +4,7 @@
     <div class="container mt-5">
         <h1 class="text-center text-primary mb-4">Provider: {{ $provider->name }}</h1>
 
-        <h3 class="text-center mb-4">Feed Files</h3>
+        <h3 class="">Feed Files</h3>
 
         <div class="table-responsive">
             <table class="table table-striped table-bordered">

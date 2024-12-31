@@ -12,8 +12,14 @@ class AutoDistributererExtension extends Model
     {
         return $this->belongsTo(User::class);
     }
+
     public function feedFiles()
     {
         return $this->hasMany(AutoDistributerFeedFile::class, 'user_ext_id');
+    }
+
+    public function extensionFeeds()
+    {
+        return $this->hasMany(AutoDistributerExtensionFeed::class, 'user_ext_id');
     }
 }

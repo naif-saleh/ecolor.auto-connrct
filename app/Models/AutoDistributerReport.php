@@ -11,10 +11,16 @@ class AutoDistributerReport extends Model
     use HasFactory;
 
     protected $fillable = [
-        'mobile',
+        'call_id',
+        'status',
+        'phone_number',
         'provider',
-        'extension',
-        'state',
-        'called_at',
+        'extension'
+
     ];
+
+    public function providerFeed()
+    {
+        return $this->belongsTo(AutoDistributerExtensionFeed::class, 'call_id', 'call_id');
+    }
 }

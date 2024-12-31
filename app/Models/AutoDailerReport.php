@@ -9,10 +9,10 @@ class AutoDailerReport extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['call_id', 'status', 'phone_number', 'provider'];
+    protected $fillable = ['call_id', 'status', 'phone_number', 'provider', 'extension'];
 
     public function providerFeed()
-{
-    return $this->belongsTo(AutoDailerProviderFeed::class, 'call_id', 'call_id');
-}
+    {
+        return $this->belongsTo(AutoDailerProviderFeed::class, 'call_id', 'call_id');
+    }
 }

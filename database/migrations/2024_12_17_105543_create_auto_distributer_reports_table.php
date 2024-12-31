@@ -13,11 +13,11 @@ return new class extends Migration
     {
         Schema::create('auto_distributer_reports', function (Blueprint $table) {
             $table->id();
-            $table->string('mobile');
-            $table->string('provider');
-            $table->string('extension');
-            $table->string('state');
-            $table->timestamp('called_at');
+            $table->string('call_id')->nullable();
+            $table->string('status')->nullable();
+            $table->string('phone_number')->nullable();
+            $table->string('provider')->nullable();
+            $table->string('extension')->nullable();
             $table->timestamps();
         });
     }

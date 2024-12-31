@@ -5,26 +5,26 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use App\Models\AutoDailerFeedFile;
-use App\Models\AutoDailerReport;
+use App\Models\AutoDistributerFeedFile;
+use App\Models\AutoDistributerReport;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 
-class participantsCommand extends Command
+class MakeUserParticipantCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'app:participants-command';
+    protected $signature = 'app:make-user-participant-command';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Fetch and process participants data from 3CX API';
+    protected $description = 'Command description';
 
     /**
      * Execute the console command.
@@ -39,26 +39,26 @@ class participantsCommand extends Command
             return;
         }
 
-        $providersFeeds = AutoDailerFeedFile::whereDate('created_at', Carbon::today())->get();
+        $providersFeeds = AutoDistributerFeedFile::whereDate('created_at', Carbon::today())->get();
 
         foreach ($providersFeeds as $feed) {
             $ext_from = $feed->extension;
 
             try {
-                // Fetch participants for the provider
+                // Fetch participants for the extension
                 $responseState = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token,
                 ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
 
                 if (!$responseState->successful()) {
-                    Log::error("Failed to fetch participants for provider {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
+                    Log::error("Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
                     continue;
                 }
 
                 $participants = $responseState->json();
 
                 if (empty($participants)) {
-                    Log::warning("No participants data for provider {$ext_from}");
+                    Log::warning("No participants data for extension {$ext_from}");
                     continue;
                 }
 
@@ -76,20 +76,20 @@ class participantsCommand extends Command
                                 $participant_data['party_caller_id'], // Pass party_caller_id dynamically
                                 $token
                             );
-                        } elseif ($participant_data['status'] === "Connected" && $participant_data['party_dn_type'] === "Wextension") {
+                        } elseif($participant_data['status'] === "Connected" && $participant_data['party_dn_type'] === "Wextension"){
                             $this->updateParticipant($participant_data);
-                        } elseif ($participant_data['status'] === "Connected" && $participant_data['party_dn_type'] === "Wexternalline") {
+                        }elseif($participant_data['status'] === "Connected" && $participant_data['party_dn_type'] === "Wexternalline"){
                             $this->updateParticipant($participant_data);
-                        } else {
+                        }
+                        else {
                             Log::info("Skipping dropCall for participant ID {$participant_data['id']} with status: {$participant_data['status']}");
-                            AutoDailerReport::updateOrCreate(
+                            AutoDistributerReport::updateOrCreate(
                                 [
                                     "call_id" => $participant_data['id'],
                                 ],
                                 [
                                     "status" => "no answer",
                                     "phone_number" => $participant_data['party_caller_id'],
-
                                 ]
                             );
                         }
@@ -104,16 +104,20 @@ class participantsCommand extends Command
     }
 
 
-    /**
+        /**
      * Update or create participant report.
      */
     private function updateParticipant($participant_data)
     {
-        AutoDailerReport::where('call_id', $participant_data['id'])
-            ->update([
-                'status' => $participant_data['party_dn_type'] ?? 'Unknown',
-                'phone_number' => $participant_data['party_caller_id'] ?? 'Unknown',
-            ]);
+        AutoDistributerReport::updateOrCreate(
+            [
+                "call_id" => $participant_data['id'],
+            ],
+            [
+                "status" => $participant_data['party_dn_type'] ?? "Unknown",
+                "phone_number" => $participant_data['party_caller_id'] ?? "Unknown",
+            ]
+        );
     }
 
     /**
@@ -146,13 +150,14 @@ class participantsCommand extends Command
 
             if ($dropResponse->successful()) {
                 $drop = "true";
-                Log::info("Successfully dropped the call for provider {$ext_from}, participant ID {$participantId}: " . json_encode($dropResponse->json()));
+                Log::info("Successfully dropped the call for extension {$ext_from}, participant ID {$participantId}: " . json_encode($dropResponse->json()));
             } else {
                 $drop = "false";
-                Log::error("Failed to drop the call for provider {$ext_from}, participant ID {$participantId}. HTTP Status: {$dropResponse->status()}. Response: {$dropResponse->body()}");
+                Log::error("Failed to drop the call for extension {$ext_from}, participant ID {$participantId}. HTTP Status: {$dropResponse->status()}. Response: {$dropResponse->body()}");
             }
         } catch (\Exception $e) {
-            Log::error("Error dropping call for provider {$ext_from}, participant ID {$participantId}: " . $e->getMessage());
+            Log::error("Error dropping call for extension {$ext_from}, participant ID {$participantId}: " . $e->getMessage());
         }
+
     }
 }

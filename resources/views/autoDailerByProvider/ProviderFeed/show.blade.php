@@ -2,33 +2,33 @@
 
 @section('content')
     <div class="container mt-5">
-        <h1 class="text-center text-primary mb-4">Feed File: {{ $feedFile->file_name }}</h1>
 
-        <h3 class="text-center mb-4">Feeds</h3>
 
-        <div class="table-responsive">
-            <table class="table table-bordered table-striped table-hover">
-                <thead class="thead-dark">
+        <h3>Feed File: {{ $feedFile->file_name }}</h3>
+        <h5>From: {{ $feedFile->from }} | To: {{ $feedFile->to }} | Date: {{ $feedFile->date }}</h5>
+
+        <div class="mb-3">
+            <h4>Mobile Numbers</h4>
+            <table class="table table-bordered">
+                <thead>
                     <tr>
                         <th>Mobile</th>
-                        <th>state</th>
+                        <th>Status</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach ($feeds as $feed)
                         <tr>
                             <td>{{ $feed->mobile }}</td>
-                            <td>{{$feed->state}}</td>
+                            <td>{{ $feed->state }}</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
         </div>
 
-        @if ($feeds->isEmpty())
-            <div class="alert alert-warning text-center mt-4">
-                No feeds available for this file.
-            </div>
-        @endif
+
+        <a href="{{ route('autoDialerProviders.show', $feedFile->id) }}" class="btn btn-secondary">Back to
+            Provider</a>
     </div>
 @endsection
