@@ -82,14 +82,14 @@ public function exportAutoDailerReport(Request $request)
 
     // Map filter to corresponding database status values
     $statusMap = [
-        'answered' => 'Wextension',
-        'no answer' => 'Wspecialmenu',
+        'answered' => ['Wextension', 'Wexternalline'],
+        'no answer' => ['Wspecialmenu', 'no answer'],
     ];
 
     $query = AutoDailerReport::query();
 
     if ($filter && isset($statusMap[$filter])) {
-        $query->where('status', $statusMap[$filter]);
+        $query->whereIn('status', $statusMap[$filter]);
     }
 
     $reports = $query->get();
