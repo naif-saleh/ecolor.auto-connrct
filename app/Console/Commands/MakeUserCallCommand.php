@@ -40,9 +40,10 @@ class MakeUserCallCommand extends Command
 
         Log::info('MakeCallCommand executed at ' . now());
         $providersFeeds = AutoDistributerFeedFile::all();
-        $usersFeeds = AutoDistributerFeedFile::all();
+
         // TODO: get only today feeds
 
+        // Log::info('Providers Feeds:', $providersFeeds->toArray());
 
 
         //  Make Call For Providers
@@ -67,6 +68,7 @@ class MakeUserCallCommand extends Command
                 $providerFeeds = AutoDistributerExtensionFeed::byFeedFile($feed->id)
                     ->where('state', 'new')
                     ->get();
+                    Log::info('Provider Feeds:', $providerFeeds->toArray());
 
                 $loop = 0;
                 foreach ($providerFeeds as $mobile) {
@@ -82,21 +84,22 @@ class MakeUserCallCommand extends Command
                         if ($responseState->successful()) {
                             $responseData = $responseState->json();
 
-                            $providerName = $mobile->extension->name ?? 'Unknown Provider';
-                            Log::info('Provider Name: ' . $providerName);
-                            $reports = AutoDistributerReport::create( [
-                                'call_id' => $responseData['result']['id'],
-                                'status' => $responseData['result']['status'],
-                                'provider' => $providerName,
-                                'extension' => $responseData['result']['dn'],
-                                'phone_number' => $responseData['result']['party_caller_id'] ?? null,
-                            ]);
 
+                                $reports = AutoDistributerReport::firstOrCreate([
+                                    'call_id' => $responseData['result']['id'],
+                                ], [
+                                    'status' => $responseData['result']['status'],
+                                    'provider' => $mobile->extension->name,
+                                    'extension' => $responseData['result']['dn'],
+                                    'phone_number' => $responseData['result']['party_caller_id'],
 
-                            $reports->save();
+                                ]);
+
+                                $reports->save();
+
                             // Update the mobile record with the call_id and other details
                             $mobile->update([
-                                'state' => 'dialing',
+                                'state' => $responseData['result']['status'],
                                 'call_date' => $now,
                                 'call_id' => $responseData['result']['id'],
                                 'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,

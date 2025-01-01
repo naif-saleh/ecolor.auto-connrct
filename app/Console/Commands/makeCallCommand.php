@@ -65,7 +65,7 @@ class makeCallCommand extends Command
                 $providerFeeds = AutoDailerProviderFeed::byFeedFile($feed->id)
                     ->where('state', 'new')
                     ->get();
-
+                    Log::info('Provider Feeds:', $providerFeeds->toArray());
                 $loop = 0;
                 foreach ($providerFeeds as $mobile) {
                     Log::info('mobile ' . $mobile->mobile . ' in loop ' . $loop);
