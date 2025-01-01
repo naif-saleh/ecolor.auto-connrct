@@ -279,6 +279,7 @@
                                             $badgeClass = match ($status) {
                                                 'answered' => 'success',
                                                 'no answer' => 'warning',
+                                                
                                                 default => 'secondary',
                                             };
                                         @endphp

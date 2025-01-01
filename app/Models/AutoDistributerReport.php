@@ -13,10 +13,9 @@ class AutoDistributerReport extends Model
     protected $fillable = [
         'call_id',
         'status',
-        'phone_number',
         'provider',
-        'extension'
-
+        'extension',
+        'phone_number',
     ];
 
     public function providerFeed()

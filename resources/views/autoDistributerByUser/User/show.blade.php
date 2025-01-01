@@ -21,8 +21,8 @@
                     @foreach ($extension->feedFiles as $feedFile)
                         <tr>
                             <td>{{ $feedFile->file_name }}</td>
-                            <td>{{ $feedFile->from }}</td>
-                            <td>{{ $feedFile->to }}</td>
+                            <td>{{ \Carbon\Carbon::parse($feedFile->from)->addHours(3)->format('H:i:s') }}</td>
+                            <td>{{ \Carbon\Carbon::parse($feedFile->from)->addHours(3)->format('H:i:s') }}</td>
                             <td>{{ $feedFile->date }}</td>
                             <td>{{ $feedFile->on ? 'Active' : 'Inactive' }}</td>
                             <td>

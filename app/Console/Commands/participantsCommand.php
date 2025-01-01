@@ -80,6 +80,7 @@ class participantsCommand extends Command
                             $this->updateParticipant($participant_data);
                         } elseif ($participant_data['status'] === "Connected" && $participant_data['party_dn_type'] === "Wexternalline") {
                             $this->updateParticipant($participant_data);
+                            Log::info('Successfully Wexternalline updated AutoDistributerReport for call_id: ' . $participant_data['id']);
                         } else {
                             Log::info("Skipping dropCall for participant ID {$participant_data['id']} with status: {$participant_data['status']}");
                                 AutoDailerReport::updateOrCreate(
@@ -87,7 +88,7 @@ class participantsCommand extends Command
                                         "call_id" => $participant_data['id'],
                                     ],
                                     [
-                                        "status" => "no answer",
+                                        "status" => $participant_data['status'],
                                         "phone_number" => $participant_data['party_caller_id'],
 
                                     ]

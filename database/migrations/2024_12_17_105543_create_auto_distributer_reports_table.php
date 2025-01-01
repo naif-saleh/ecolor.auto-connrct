@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('call_id')->require();
             $table->string('status')->require();
             $table->string('phone_number')->require();
-            $table->string('provider')->require();
+            $table->string('provider')->nullable();
             $table->string('extension')->require();
             $table->timestamps();
         });

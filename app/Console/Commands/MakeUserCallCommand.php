@@ -82,10 +82,12 @@ class MakeUserCallCommand extends Command
                         if ($responseState->successful()) {
                             $responseData = $responseState->json();
 
-                            $reports = AutoDistributerReport::firstOrCreate([
+                            $providerName = $mobile->extension->name ?? 'Unknown Provider';
+                            Log::info('Provider Name: ' . $providerName);
+                            $reports = AutoDistributerReport::create( [
                                 'call_id' => $responseData['result']['id'],
                                 'status' => $responseData['result']['status'],
-                                'provider' => $mobile->extension->name,
+                                'provider' => $providerName,
                                 'extension' => $responseData['result']['dn'],
                                 'phone_number' => $responseData['result']['party_caller_id'] ?? null,
                             ]);

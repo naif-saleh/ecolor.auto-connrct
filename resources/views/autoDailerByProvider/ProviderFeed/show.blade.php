@@ -5,7 +5,7 @@
 
 
         <h3>Feed File: {{ $feedFile->file_name }}</h3>
-        <h5>From: {{ $feedFile->from }} | To: {{ $feedFile->to }} | Date: {{ $feedFile->date }}</h5>
+        <h5>From: {{ \Carbon\Carbon::parse($feedFile->from)->addHours(3)->format('H:i:s') }} | To: {{ \Carbon\Carbon::parse($feedFile->to)->addHours(3)->format('H:i:s') }} | Date: {{ $feedFile->date }}</h5>
 
         <div class="mb-3">
             <h4>Mobile Numbers</h4>

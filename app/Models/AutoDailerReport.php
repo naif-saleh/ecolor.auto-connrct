@@ -8,8 +8,14 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class AutoDailerReport extends Model
 {
     use HasFactory;
+    protected $fillable = [
+        'call_id',
+        'status',
+        'provider',
+        'extension',
+        'phone_number',
+    ];
 
-    protected $fillable = ['call_id', 'status', 'phone_number', 'provider', 'extension'];
 
     public function providerFeed()
     {
