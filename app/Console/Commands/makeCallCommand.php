@@ -84,7 +84,7 @@ class makeCallCommand extends Command
                                 $reports = AutoDailerReport::firstOrCreate([
                                     'call_id' => $responseData['result']['id'],
                                 ], [
-                                    'status' => "new",
+                                    'status' => $responseData['result']['status'],
                                     'provider' => $mobile->provider->name,
                                     'extension' => $responseData['result']['dn'],
                                     'phone_number' => $responseData['result']['party_caller_id'],
