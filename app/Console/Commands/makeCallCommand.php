@@ -80,11 +80,11 @@ class makeCallCommand extends Command
                         if ($responseState->successful()) {
                             $responseData = $responseState->json();
 
-                         
+
                                 $reports = AutoDailerReport::firstOrCreate([
                                     'call_id' => $responseData['result']['id'],
                                 ], [
-                                    'status' => $responseData['result']['status'],
+                                    'status' => "new",
                                     'provider' => $mobile->provider->name,
                                     'extension' => $responseData['result']['dn'],
                                     'phone_number' => $responseData['result']['party_caller_id'],

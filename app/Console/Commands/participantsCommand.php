@@ -82,8 +82,6 @@ class participantsCommand extends Command
                             $this->updateParticipant($participant_data);
                         } else {
                             Log::info("Skipping dropCall for participant ID {$participant_data['id']} with status: {$participant_data['status']}");
-
-                            if(!empty($participant_data['dn'])){
                                 AutoDailerReport::updateOrCreate(
                                     [
                                         "call_id" => $participant_data['id'],
@@ -94,7 +92,7 @@ class participantsCommand extends Command
 
                                     ]
                                 );
-                            }
+
 
                         }
                     } catch (\Exception $e) {
