@@ -68,7 +68,7 @@ class MakeUserCallCommand extends Command
                 $providerFeeds = AutoDistributerExtensionFeed::byFeedFile($feed->id)
                     ->where('state', 'new')
                     ->get();
-                    Log::info('Provider Feeds:', $providerFeeds->toArray());
+                Log::info('Provider Feeds:', $providerFeeds->toArray());
 
                 $loop = 0;
                 foreach ($providerFeeds as $mobile) {
@@ -83,30 +83,30 @@ class MakeUserCallCommand extends Command
 
                         if ($responseState->successful()) {
                             $responseData = $responseState->json();
-
-
-                                $reports = AutoDistributerReport::firstOrCreate([
-                                    'call_id' => $responseData['result']['id'],
-                                ], [
-                                    'status' => $responseData['result']['status'],
-                                    'provider' => $mobile->extension->name,
-                                    'extension' => $responseData['result']['dn'],
-                                    'phone_number' => $responseData['result']['party_caller_id'],
-
-                                ]);
-
-                                $reports->save();
-
-                            // Update the mobile record with the call_id and other details
-                            $mobile->update([
-                                'state' => $responseData['result']['status'],
-                                'call_date' => $now,
-                                'call_id' => $responseData['result']['id'],
-                                'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
+                            log::info("Make Call Data Response: ". print_r($responseData));
+                            $reports = AutoDistributerReport::firstOrCreate([
+                                'call_id' => $responseData['result']['callid'],
+                            ], [
+                                'status' => $responseData['result']['status'],
+                                'provider' => $mobile->extension->name,
+                                'extension' => $responseData['result']['dn'],
+                                'phone_number' => $responseData['result']['party_caller_id'],
                             ]);
 
+                            $reports->save();
 
-
+                            // Update the mobile record with the call_id and other details
+                            if ($responseData['result']['status'] === "Dialing" && $responseData['result']['party_dn_type'] == "None") {
+                                $mobile->update([
+                                    'state' => $responseData['result']['status'],
+                                    'call_date' => $now,
+                                    'call_id' => $responseData['result']['callid'],
+                                    'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
+                                ]);
+                            } else {
+                                Log::info("Sorry, I can not update. Mobile Status still: " . $mobile->state);
+                                log::info("Make Call Data Response: ". print_r($responseData, True));
+                            }
 
                             Log::info('Call successfully made for mobile ' . $mobile->mobile);
                         } else {
@@ -115,15 +115,15 @@ class MakeUserCallCommand extends Command
                     } catch (\Exception $e) {
                         Log::error('An error occurred: ' . $e->getMessage());
                     }
+
+
+                    
                 }
+
             } else {
                 Log::info('The current time is not within the specified range.');
                 Log::info('The current time is not within the specified range for extension ' . $feed->extension . $to->format('r'));
             }
         }
-
-
-
-
     }
 }

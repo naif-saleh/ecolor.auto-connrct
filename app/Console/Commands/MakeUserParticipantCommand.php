@@ -9,6 +9,8 @@ use App\Models\AutoDistributerFeedFile;
 use App\Models\AutoDistributerReport;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use App\Models\AutoDistributerExtensionFeed;
+
 
 class MakeUserParticipantCommand extends Command
 {
@@ -32,7 +34,7 @@ class MakeUserParticipantCommand extends Command
     public function handle()
     {
         Log::info('participantsCommand executed at ' . now());
-
+        $now = Carbon::now();
         $token = Cache::get('three_cx_token');
         if (!$token) {
             Log::error('3CX token not found in cache');
@@ -64,26 +66,25 @@ class MakeUserParticipantCommand extends Command
 
                 foreach ($participants as $participant_data) {
                     try {
-                        Log::debug("Processing participant data: " . json_encode($participant_data));
-
+                        Log::debug("Processing participant data: " . print_r($participant_data, True));
                         if ($participant_data['status'] === "Connected" && $participant_data['party_dn_type'] === "Wspecialmenu") {
                             $this->updateParticipant($participant_data);
 
-                             // Attempt to drop the call if the status is "Connected"
-                             $this->dropCall(
+                            // Attempt to drop the call if the status is "Connected"
+                            $this->dropCall(
                                 $ext_from,
                                 $participant_data['id'],
-                                $participant_data['party_caller_id'], // Pass party_caller_id dynamically
+                                $participant_data['party_caller_id'],
                                 $token
                             );
                         } elseif ($participant_data['status'] === "Connected" && $participant_data['party_dn_type'] === "Wextension") {
                             $this->updateParticipant($participant_data);
                         } elseif ($participant_data['status'] === "Dialing" && $participant_data['party_dn_type'] === "Wexternalline") {
                             $this->updateParticipant($participant_data);
-                            Log::info('Successfully Wexternalline updated AutoDistributerReport for call_id: ' . $participant_data['id']);
+                            Log::info('Successfully Wexternalline updated AutoDistributerReport for call_id: ' . $participant_data['callid']);
                         }
                     } catch (\Exception $e) {
-                        Log::error('Failed to process participant data for call ID ' . ($participant_data['id'] ?? 'N/A') . ': ' . $e->getMessage());
+                        Log::error('Failed to process participant data for call ID ' . ($participant_data['callid'] ?? 'N/A') . ': ' . $e->getMessage());
                     }
                 }
             } catch (\Exception $e) {
@@ -91,67 +92,6 @@ class MakeUserParticipantCommand extends Command
             }
         }
 
-
-
-        // Log::info('participantsCommand executed at ' . now());
-
-        // $token = Cache::get('three_cx_token');
-        // if (!$token) {
-        //     Log::error('3CX token not found in cache');
-        //     return;
-        // }
-
-        // $providersFeeds = AutoDistributerFeedFile::whereDate('created_at', Carbon::today())->get();
-
-        // foreach ($providersFeeds as $feed) {
-        //     $ext_from = $feed->extension;
-
-        //     try {
-        //         // Fetch participants for the provider
-        //         $responseState = Http::withHeaders([
-        //             'Authorization' => 'Bearer ' . $token,
-        //         ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
-
-        //         if (!$responseState->successful()) {
-        //             Log::error("Failed to fetch participants for provider {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
-        //             continue;
-        //         }
-
-        //         $participants = $responseState->json();
-
-        //         if (empty($participants)) {
-        //             Log::warning("No participants data for provider {$ext_from}");
-        //             continue;
-        //         }
-
-        //         foreach ($participants as $participant_data) {
-        //             try {
-
-
-        //                 if ($participant_data['status'] === "Connected" && $participant_data['party_dn_type'] === "Wspecialmenu") {
-        //                     $this->updateParticipant($participant_data);
-
-        //                     // Attempt to drop the call if the status is "Connected"
-        //                     $this->dropCall(
-        //                         $ext_from,
-        //                         $participant_data['id'],
-        //                         $participant_data['party_caller_id'], // Pass party_caller_id dynamically
-        //                         $token
-        //                     );
-        //                 } elseif ($participant_data['status'] === "Connected" && $participant_data['party_dn_type'] === "Wextension") {
-        //                     $this->updateParticipant($participant_data);
-        //                 } elseif ($participant_data['status'] === "Connected" && $participant_data['party_dn_type'] === "Wexternalline") {
-        //                     $this->updateParticipant($participant_data);
-        //                     Log::debug("My Data**: " . json_encode($participant_data));
-        //                 }
-        //             } catch (\Exception $e) {
-        //                 Log::error('Failed to process participant data for call ID ' . ($participant_data['id'] ?? 'N/A') . ': ' . $e->getMessage());
-        //             }
-        //         }
-        //     } catch (\Exception $e) {
-        //         Log::error("Error fetching participants for provider {$ext_from}: " . $e->getMessage());
-        //     }
-        // }
     }
 
     /**
@@ -159,12 +99,12 @@ class MakeUserParticipantCommand extends Command
      */
     private function updateParticipant($participant_data)
     {
-        AutoDistributerReport::where('call_id', $participant_data['id'])->update(
+        AutoDistributerReport::where('call_id', $participant_data['callid'])->update(
 
             [
                 "status" => $participant_data['party_dn_type'] ?? "Unknown",
                 "phone_number" => $participant_data['party_caller_id'] ?? "Unknown",
-                'extension' => $participant_data['dn'] ?? "Unknown" ,
+                'extension' => $participant_data['dn'] ?? "Unknown",
             ]
         );
     }
