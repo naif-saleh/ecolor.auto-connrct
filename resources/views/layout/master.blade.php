@@ -31,8 +31,6 @@
         .stats-container {
             margin-bottom: 20px;
         }
-
-        
     </style>
 </head>
 
@@ -163,7 +161,8 @@
 
 
 
-        // Download Alert.....................................................................................................
+        // Download
+        Alert.....................................................................................................
 
         document.getElementById('download-csv-button').addEventListener('click', function(event) {
             event.preventDefault(); // Prevent default action to manage it manually
@@ -213,6 +212,31 @@
                 });
         });
     </script>
+
+
+
+    <script>
+        document.getElementById('delete-all-users-button').addEventListener('click', function(e) {
+            e.preventDefault(); // Prevent the button's default action
+
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This will delete all users permanently!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
+                confirmButtonText: 'Yes, delete all!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Submit the form
+                    document.getElementById('delete-all-users-form').submit();
+                }
+            });
+        });
+    </script>
+
     <!-- Bootstrap JS (optional, for interactivity) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
