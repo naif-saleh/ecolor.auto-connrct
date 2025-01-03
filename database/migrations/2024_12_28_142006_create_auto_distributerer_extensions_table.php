@@ -14,8 +14,11 @@ return new class extends Migration
         Schema::create('auto_distributerer_extensions', function (Blueprint $table) {
             $table->id();
             $table->string('name');
+            $table->string('lastName')->default('');
             $table->string('extension');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
+            $table->string('3cx_user_id')->default('');
+
             $table->timestamps();
         });
     }

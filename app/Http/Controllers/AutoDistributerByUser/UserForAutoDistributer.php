@@ -22,38 +22,49 @@ class UserForAutoDistributer extends Controller
     public function import()
     {
         $token = Cache::get('three_cx_token');
-        
+
         try {
             $responseState = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
-            ])->get(config('services.three_cx.api_url') . "/xapi/v1/Users");
-            dd($responseState);
+            ])->get("https://ecolor.3cx.agency/xapi/v1/Users");
+
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
-dd($responseData);
-//foreach 
-// foreach ($responseData as $data) {
-//     # code...
-// }
-// add $data['DisplayName']
-// $data['Id']
-// $data['Number']
-// 
 
-// AutoDistributererExtension::firstOrcreate([
-//     "name"=> $data['DisplayName'],
-//     "ext" => $data['Number'],
-//     "3cxID" => $data['Id'],
-// ]);
+                // Check if the response contains the 'value' key and it's an array
+                if (isset($responseData['value']) && is_array($responseData['value'])) {
+                    foreach ($responseData['value'] as $data) {
+                        AutoDistributererExtension::firstOrCreate([
+                            "user_id" => auth()->id(),
+                            "name" => $data['FirstName'] ?? null,
+                            "lastName" => $data['LastName'] ?? null,
+                            "extension" => $data['Number'] ?? null,
+                            "3cx_user_id" => $data['Id'] ?? null,
+                        ]);
+                    }
 
+                    // Redirect after successful import
+                    return redirect()->route('auto_distributerer_extensions.index')->with('success', 'Your 3cx Users imported successfully');
+                } else {
+                    // Log and redirect if 'value' key is missing or not an array
+                    Log::info("No users found in the response.");
+                    return redirect()->route('auto_distributerer_extensions.index')->with('warning', 'No users found in the response.');
+                }
+            } else {
+                // Log and redirect if the API response is unsuccessful
+                Log::info("Users cannot be imported!!");
+                return redirect()->route('auto_distributerer_extensions.index')->with('warning', 'Users cannot be imported!!');
             }
-
         } catch (\Exception $e) {
+            // Log the error and redirect
             Log::error('import: An error occurred: ' . $e->getMessage());
+            return redirect()->route('auto_distributerer_extensions.index')->with('error', 'An error occurred while importing users.');
         }
-
-
     }
+
+
+
+
     public function create()
     {
         $users = \App\Models\User::all();
@@ -72,7 +83,7 @@ dd($responseData);
         AutoDistributererExtension::create($request->all());
 
         return redirect()->route('auto_distributerer_extensions.index')
-                         ->with('success', 'Extension created successfully.');
+            ->with('success', 'Extension created successfully.');
     }
 
 
@@ -85,7 +96,7 @@ dd($responseData);
     public function edit(AutoDistributererExtension $autoDistributererExtension)
     {
         $users = \App\Models\User::all();
-        return view('autoDistributerByUser.User.edit', compact('autoDistributererExtension','users'));
+        return view('autoDistributerByUser.User.edit', compact('autoDistributererExtension', 'users'));
     }
 
 
@@ -100,7 +111,7 @@ dd($responseData);
         $autoDistributererExtension->update($request->all());
 
         return redirect()->route('auto_distributerer_extensions.index')
-                         ->with('success', 'Extension updated successfully.');
+            ->with('success', 'Extension updated successfully.');
     }
 
 
@@ -109,8 +120,12 @@ dd($responseData);
         $autoDistributererExtension->delete();
 
         return redirect()->route('auto_distributerer_extensions.index')
-                         ->with('success', 'Extension deleted successfully.');
+            ->with('success', 'Extension deleted successfully.');
     }
-
-
+    public function destroyAllUsers()
+    {
+        AutoDistributererExtension::query()->delete();
+        return redirect()->route('auto_distributerer_extensions.index')
+            ->with('success', 'All users have been deleted successfully.');
+    }
 }

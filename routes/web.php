@@ -77,6 +77,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::resource('auto_distributerer_extensions', UserForAutoDistributer::class);
 
     Route::get('auto-distributer-extensions/import', [UserForAutoDistributer::class, 'import'])->name('auto_distributerer_extensions.import');
+    Route::get('auto-distributer-extensions/delete-all', [UserForAutoDistributer::class, 'destroyAllUsers'])->name('auto_distributerer_extensions.deleteAll');
 
 
     Route::get('auto-distributer-extensions/{id}/show', [UserFeedController::class, 'show'])->name('auto_distributerer_extensions.show');

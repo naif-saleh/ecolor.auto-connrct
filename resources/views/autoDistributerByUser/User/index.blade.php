@@ -2,15 +2,26 @@
 
 @section('content')
     <div class="container py-5">
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <h1 class="display-4">Auto Distributerer Users</h1>
-            <a href="{{ route('auto_distributerer_extensions.create') }}" class="btn btn-primary btn-lg">
-                <i class="bi bi-plus-circle"></i> Add New Extension
-            </a>
-            <a href="{{ route('auto_distributerer_extensions.import') }}" class="btn btn-success btn-lg">
-                <i class="bi bi-plus-circle"></i> Import users
-            </a>
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
+            <h2 class="mb-0 text-center text-md-left">Auto Distributerer Users</h2>
+
+            <div class="d-flex flex-wrap gap-2 justify-content-center justify-content-md-end">
+                {{-- Import Users Button --}}
+                @if($extensions->isEmpty())
+                <a href="{{ route('auto_distributerer_extensions.import') }}" class="btn btn-success btn-lg">
+                    <i class="bi bi-cloud-arrow-down"></i> Import Users
+                </a>
+                @endif
+                {{-- Delete All Users Button --}}
+                @if(!$extensions->isEmpty())
+                    <a href="{{ route('auto_distributerer_extensions.deleteAll') }}" class="btn btn-danger btn-lg">
+                        <i class="bi bi-trash"></i> Delete All Users
+                    </a>
+                @endif
+            </div>
         </div>
+
+
 
         @if($extensions->isEmpty())
         <div class="alert alert-warning">
@@ -30,7 +41,7 @@
                     <tbody>
                         @foreach($extensions as $extension)
                             <tr>
-                                <td>{{ $extension->name }}</td>
+                                <td>{{ $extension->name }} {{$extension->lastName}}</td>
                                 <td>{{ $extension->extension }}</td>
                                 <td>{{ $extension->user->name }}</td>
                                 <td class="d-flex justify-content-start">
