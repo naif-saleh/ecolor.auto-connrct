@@ -16,10 +16,14 @@ use App\Http\Controllers\AutoDistributerByUser\UserForAutoDistributer;
 use App\Http\Controllers\AutoDistributerByUser\UserFeedController;
 
 Route::get('/', function () {
-    return view('autoDailerByProvider.Provider.index');
+    if (auth()->check()) {
+        // If the user is authenticated, redirect to the desired route
+        return redirect('/auto-dialer-providers');
+    }
+    return view('auth.login');
 });
 
-Route::get('/', [ProviderForAutoDailerController::class, 'index'])->name('autoDailerByProvider.index');
+// Route::get('/', [ProviderForAutoDailerController::class, 'index'])->name('autoDailerByProvider.index');
 
 
 // Show feeds for a provider
