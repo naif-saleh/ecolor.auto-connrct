@@ -162,7 +162,7 @@
 
 
         // Download
-        Alert.....................................................................................................
+        // Alert.....................................................................................................
 
         document.getElementById('download-csv-button').addEventListener('click', function(event) {
             event.preventDefault(); // Prevent default action to manage it manually
@@ -214,7 +214,35 @@
     </script>
 
 
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchInput = document.getElementById('search-input');
+            const tableRows = document.querySelectorAll('.user-row');
 
+            // Function to filter rows
+            function filterRows() {
+                const searchValue = searchInput.value.toLowerCase();
+
+                tableRows.forEach(row => {
+                    const name = row.querySelector('.name').textContent.toLowerCase();
+                    const lastName = row.querySelector('.lastName').textContent.toLowerCase();
+
+                    if (name.includes(searchValue) || lastName.includes(searchValue)) {
+                        row.style.display = ''; // Show row
+                    } else {
+                        row.style.display = 'none'; // Hide row
+                    }
+                });
+            }
+
+            // Add event listener to the search input for dynamic filtering
+            searchInput.addEventListener('input', filterRows);
+        });
+    </script>
+
+
+
+    {{-- Delete All Alert --}}
     <script>
         document.getElementById('delete-all-users-button').addEventListener('click', function(e) {
             e.preventDefault(); // Prevent the button's default action
