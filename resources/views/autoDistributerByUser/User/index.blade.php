@@ -49,7 +49,7 @@
                     </a>
                 @endif
 
-                @if (Auth::check() && Auth::user()->isSuperUser())
+
                     {{-- Delete All Users Button --}}
                     @if (!$extensions->isEmpty())
                         <form action="{{ route('auto_distributerer_extensions.deleteAll') }}" method="POST"
@@ -63,7 +63,7 @@
 
                         </form>
                     @endif
-                @endif
+               
             </div>
 
         </div>
