@@ -43,22 +43,26 @@
 
                 {{-- Import Users Button --}}
                 @if ($extensions->isEmpty())
-                    <a href="{{ route('auto_distributerer_extensions.import') }}" class="btn btn-success btn-lg import-button">
+                    <a href="{{ route('auto_distributerer_extensions.import') }}"
+                        class="btn btn-success btn-lg import-button">
                         <i class="bi bi-cloud-arrow-down"></i> Import Users
                     </a>
                 @endif
 
-                {{-- Delete All Users Button --}}
-                @if (!$extensions->isEmpty())
-                    <form action="{{ route('auto_distributerer_extensions.deleteAll') }}" method="POST"
-                        id="delete-all-users-form" style="display: inline;">
-                        @csrf
-                        @method('DELETE')
-                        <button type="button" class="btn btn-danger btn-lg damaged-button" id="delete-all-users-button">
-                            <i class="bi bi-trash"></i> Delete All Users
-                        </button>
+                @if (Auth::check() && Auth::user()->isSuperUser())
+                    {{-- Delete All Users Button --}}
+                    @if (!$extensions->isEmpty())
+                        <form action="{{ route('auto_distributerer_extensions.deleteAll') }}" method="POST"
+                            id="delete-all-users-form" style="display: inline;">
+                            @csrf
+                            @method('DELETE')
+                            <button type="button" class="btn btn-danger btn-lg damaged-button"
+                                id="delete-all-users-button">
+                                <i class="bi bi-trash"></i> Delete All Users
+                            </button>
 
-                    </form>
+                        </form>
+                    @endif
                 @endif
             </div>
 
@@ -78,6 +82,7 @@
                             <th>Name</th>
                             <th>Extension</th>
                             <th>Created By</th>
+                            <th>User Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -87,23 +92,24 @@
                                 <td class="name">{{ $extension->name }} {{ $extension->lastName }}</td>
                                 <td>{{ $extension->extension }}</td>
                                 <td>{{ $extension->user->name }}</td>
+                                <td>{{ $extension->userStatus }}</td>
                                 <td class="d-flex justify-content-start gap-2">
                                     {{-- View Button --}}
                                     <a href="{{ route('auto_distributerer_extensions.show', $extension->id) }}"
                                         class="btn btn-info btn-sm">
-                                        <i class="bi bi-eye"></i> View
+                                        <i class="bi bi-eye"></i>
                                     </a>
 
                                     {{-- Edit Button --}}
-                                    <a href="{{ route('auto_distributerer_extensions.edit', $extension->id) }}"
+                                    {{-- <a href="{{ route('auto_distributerer_extensions.edit', $extension->id) }}"
                                         class="btn btn-warning btn-sm">
                                         <i class="bi bi-pencil"></i> Edit
-                                    </a>
+                                    </a> --}}
 
                                     {{-- Add Feed Button --}}
                                     <a href="{{ route('auto_distributerer_extensions.createFeed', $extension->id) }}"
                                         class="btn btn-primary btn-sm">
-                                        <i class="bi bi-plus-lg"></i> Add Feed
+                                        <i class="bi bi-plus-lg"></i>
                                     </a>
 
                                     {{-- Delete Button --}}
@@ -113,7 +119,7 @@
                                         @method('DELETE')
                                         <button type="button" class="btn btn-danger btn-sm"
                                             onclick="confirmDelete({{ $extension->id }})">
-                                            <i class="bi bi-trash"></i> Delete
+                                            <i class="bi bi-trash"></i>
                                         </button>
                                     </form>
                                 </td>

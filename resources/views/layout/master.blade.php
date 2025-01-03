@@ -65,9 +65,9 @@
                         <li class="nav-item">
                             <a class="nav-link" href="{{ route('providers.index') }}">Providers</a>
                         </li> --}}
-                            {{-- {{-- <li class="nav-item">
-                            <a class="nav-link" href="{{ route('autoDailerByProvider.index') }}">AutoDailerByProvider</a>
-                        </li> --}}
+                             <li class="nav-item">
+                            <a class="nav-link" href="{{route('calls.dashboard')}}">Dashboard</a>
+                        </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('autoDialerProviders.index') }}">Auto Dailer</a>
                             </li>
@@ -134,7 +134,7 @@
 
 
     @yield('scripts')
-
+    @stack('scripts')
 
     {{-- Java Script --}}
 

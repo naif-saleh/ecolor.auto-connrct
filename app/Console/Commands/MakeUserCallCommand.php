@@ -8,6 +8,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\AutoDailerReport;
+use App\Models\AutoDistributererExtension;
 use App\Models\AutoDistributerReport;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
@@ -40,10 +41,31 @@ class MakeUserCallCommand extends Command
 
         Log::info('ADist: MakeCallCommand executed at ' . now());
         $providersFeeds = AutoDistributerFeedFile::all();
+        // $users = AutoDistributererExtension::all();
 
         // TODO: get only today feeds
 
         // Log::info('Providers Feeds:', $providersFeeds->toArray());
+
+        // try {
+        //     $responseState = Http::withHeaders([
+        //         'Authorization' => 'Bearer ' . $token,
+        //     ])->post(config('services.three_cx.api_url') . "/xapi/v1/Users", [
+        //         'destination' => $mobile->mobile,
+        //     ]);
+
+        //     if ($responseState->successful()) {
+        //         $responseData = $responseState->json();
+        //         log::info("ADist: Make Call Data Response: " . print_r($responseData, TRUE));
+
+        //         Log::info('ADist: Call successfully made for mobile ' . $mobile->mobile);
+        //     } else {
+        //         Log::error('ADist: Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
+        //     }
+        // } catch (\Exception $e) {
+        //     Log::error('ADist: An error occurred: ' . $e->getMessage());
+        // }
+
 
 
         //  Make Call For Providers

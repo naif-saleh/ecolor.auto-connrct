@@ -14,6 +14,7 @@ use App\Http\Controllers\AutoDailerByProvider\ProviderForAutoDailerController;
 use App\Http\Controllers\AutoDailerByProvider\ProviderFeedController;
 use App\Http\Controllers\AutoDistributerByUser\UserForAutoDistributer;
 use App\Http\Controllers\AutoDistributerByUser\UserFeedController;
+use App\Http\Controllers\DashboardController;
 
 Route::get('/', function () {
     if (auth()->check()) {
@@ -73,9 +74,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 
 
+    Route::get('/dashboard-calls', [DashboardController::class, 'index'])->name('calls.dashboard') ;
 
+    // AutoDistributer..............................................................................................................
     Route::resource('auto_distributerer_extensions', UserForAutoDistributer::class);
-
     Route::get('auto-distributer-extensions/import', [UserForAutoDistributer::class, 'import'])->name('auto_distributerer_extensions.import');
     Route::delete('auto-distributer-extensions/delete-all', [UserForAutoDistributer::class, 'destroyAllUsers'])->name('auto_distributerer_extensions.deleteAll');
 

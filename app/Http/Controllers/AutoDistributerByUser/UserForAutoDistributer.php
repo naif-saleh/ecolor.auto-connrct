@@ -5,10 +5,11 @@ namespace App\Http\Controllers\AutoDistributerByUser;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AutoDistributererExtension;
-
+use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Auth;
 
 class UserForAutoDistributer extends Controller
 {
@@ -39,9 +40,19 @@ class UserForAutoDistributer extends Controller
                             "name" => $data['FirstName'] ?? null,
                             "lastName" => $data['LastName'] ?? null,
                             "extension" => $data['Number'] ?? null,
+                            "userStatus" => $data['CurrentProfileName'] ?? null,
                             "3cx_user_id" => $data['Id'] ?? null,
                         ]);
                     }
+
+                    // Active Log Report...............................
+                    ActivityLog::create([
+                        'user_id' => Auth::id(),
+                        'operation' => 'import',
+                        'file_type' => '3cx all users',
+                        'file_name' => 'import users',
+                        'operation_time' => now(),
+                    ]);
 
                     // Redirect after successful import
                     return redirect()->route('auto_distributerer_extensions.index')->with('success', 'Your 3cx Users imported successfully');
@@ -118,6 +129,14 @@ class UserForAutoDistributer extends Controller
     public function destroy(AutoDistributererExtension $autoDistributererExtension)
     {
         $autoDistributererExtension->delete();
+         // Active Log Report...............................
+         ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => 'delete',
+            'file_type' => 'delete user',
+            'file_name' => 'delete user',
+            'operation_time' => now(),
+        ]);
 
         return redirect()->route('auto_distributerer_extensions.index')
             ->with('success', 'Extension deleted successfully.');
@@ -125,6 +144,14 @@ class UserForAutoDistributer extends Controller
     public function destroyAllUsers()
     {
         AutoDistributererExtension::query()->delete();
+         // Active Log Report...............................
+         ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => 'delete',
+            'file_type' => 'All Users',
+            'file_name' => 'All Users',
+            'operation_time' => now(),
+        ]);
         return redirect()->route('auto_distributerer_extensions.index')
             ->with('success', 'All users have been deleted successfully.');
     }
