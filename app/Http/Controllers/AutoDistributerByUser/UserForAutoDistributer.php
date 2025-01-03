@@ -6,6 +6,10 @@ use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AutoDistributererExtension;
 
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+
 class UserForAutoDistributer extends Controller
 {
 
@@ -15,7 +19,41 @@ class UserForAutoDistributer extends Controller
         return view('autoDistributerByUser.User.index', compact('extensions'));
     }
 
+    public function import()
+    {
+        $token = Cache::get('three_cx_token');
+        
+        try {
+            $responseState = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+            ])->get(config('services.three_cx.api_url') . "/xapi/v1/Users");
+            dd($responseState);
+            if ($responseState->successful()) {
+                $responseData = $responseState->json();
+dd($responseData);
+//foreach 
+// foreach ($responseData as $data) {
+//     # code...
+// }
+// add $data['DisplayName']
+// $data['Id']
+// $data['Number']
+// 
 
+// AutoDistributererExtension::firstOrcreate([
+//     "name"=> $data['DisplayName'],
+//     "ext" => $data['Number'],
+//     "3cxID" => $data['Id'],
+// ]);
+
+            }
+
+        } catch (\Exception $e) {
+            Log::error('import: An error occurred: ' . $e->getMessage());
+        }
+
+
+    }
     public function create()
     {
         $users = \App\Models\User::all();

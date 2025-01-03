@@ -7,6 +7,9 @@
             <a href="{{ route('auto_distributerer_extensions.create') }}" class="btn btn-primary btn-lg">
                 <i class="bi bi-plus-circle"></i> Add New Extension
             </a>
+            <a href="{{ route('auto_distributerer_extensions.import') }}" class="btn btn-success btn-lg">
+                <i class="bi bi-plus-circle"></i> Import users
+            </a>
         </div>
 
         @if($extensions->isEmpty())

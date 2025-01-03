@@ -75,6 +75,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 
     Route::resource('auto_distributerer_extensions', UserForAutoDistributer::class);
+
+    Route::get('auto-distributer-extensions/import', [UserForAutoDistributer::class, 'import'])->name('auto_distributerer_extensions.import');
+
+
     Route::get('auto-distributer-extensions/{id}/show', [UserFeedController::class, 'show'])->name('auto_distributerer_extensions.show');
     Route::post('auto-distributer-extensions/{id}/store', [UserFeedController::class, 'store'])->name('auto_distributerer_extensions.storeFeed');
     Route::get('auto-distributer-extensions/{id}/createFeed', [UserFeedController::class, 'createFeed'])->name('auto_distributerer_extensions.createFeed');
