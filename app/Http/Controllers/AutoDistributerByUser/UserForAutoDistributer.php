@@ -10,9 +10,17 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
+use App\Services\ThreeCXTokenService;
+
 
 class UserForAutoDistributer extends Controller
 {
+    protected $threeCXTokenService;
+
+    public function __construct(ThreeCXTokenService $threeCXTokenService)
+    {
+        $this->threeCXTokenService = $threeCXTokenService;
+    }
 
     public function index()
     {
@@ -24,7 +32,9 @@ class UserForAutoDistributer extends Controller
 
     public function import()
     {
-        $token = Cache::get('three_cx_token');
+       // $token = Cache::get('three_cx_token');
+        $token = $this->threeCXTokenService->fetchToken();
+
 
         try {
             $responseState = Http::withHeaders([

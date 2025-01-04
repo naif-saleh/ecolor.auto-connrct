@@ -10,6 +10,7 @@ use Carbon\Carbon;
 use App\Models\AutoDailerReport;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
+use App\Services\ThreeCXTokenService;
 
 
 class makeCallCommand extends Command
@@ -27,6 +28,14 @@ class makeCallCommand extends Command
      * @var string
      */
     protected $description = 'Command description';
+    protected $threeCXTokenService;
+
+
+    public function __construct(ThreeCXTokenService $threeCXTokenService)
+    {
+        $this->threeCXTokenService = $threeCXTokenService;
+    }
+
 
     /**
      * Execute the console command.
@@ -34,8 +43,8 @@ class makeCallCommand extends Command
     public function handle()
     {
 
-        $token = Cache::get('three_cx_token');
-
+        // $token = Cache::get('three_cx_token');
+        $token = $this->threeCXTokenService->fetchToken();
         Log::info('MakeCallCommand executed at ' . now());
         $providersFeeds = AutoDailerFeedFile::all();
         $usersFeeds = AutoDailerFeedFile::all();
@@ -65,7 +74,7 @@ class makeCallCommand extends Command
                 $providerFeeds = AutoDailerProviderFeed::byFeedFile($feed->id)
                     ->where('state', 'new')
                     ->get();
-                    Log::info('Provider Feeds:', $providerFeeds->toArray());
+                Log::info('Provider Feeds:', $providerFeeds->toArray());
                 $loop = 0;
                 foreach ($providerFeeds as $mobile) {
                     Log::info('mobile ' . $mobile->mobile . ' in loop ' . $loop);
@@ -81,17 +90,17 @@ class makeCallCommand extends Command
                             $responseData = $responseState->json();
 
 
-                                $reports = AutoDailerReport::firstOrCreate([
-                                    'call_id' => $responseData['result']['callid'],
-                                ], [
-                                    'status' => $responseData['result']['status'],
-                                    'provider' => $mobile->provider->name,
-                                    'extension' => $responseData['result']['dn'],
-                                    'phone_number' => $responseData['result']['party_caller_id'],
+                            $reports = AutoDailerReport::firstOrCreate([
+                                'call_id' => $responseData['result']['callid'],
+                            ], [
+                                'status' => $responseData['result']['status'],
+                                'provider' => $mobile->provider->name,
+                                'extension' => $responseData['result']['dn'],
+                                'phone_number' => $responseData['result']['party_caller_id'],
 
-                                ]);
+                            ]);
 
-                                $reports->save();
+                            $reports->save();
 
                             // Update the mobile record with the call_id and other details
                             $mobile->update([
@@ -110,7 +119,6 @@ class makeCallCommand extends Command
                             Log::info('ADailer:  Response Status Code: ' . $responseState->status());
                             Log::info('ADailer:   Full Response: ' . print_r($responseState, TRUE));
                             Log::info('ADailer: Headers: ' . json_encode($responseState->headers()));
-                    
                         }
                     } catch (\Exception $e) {
                         Log::error('An error occurred: ' . $e->getMessage());
@@ -121,24 +129,5 @@ class makeCallCommand extends Command
                 Log::info('The current time is not within the specified range for extension ' . $feed->extension . $to->format('r'));
             }
         }
-
-
-
-
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 }
