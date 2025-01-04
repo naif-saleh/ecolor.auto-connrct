@@ -30,6 +30,7 @@ class participantsCommand extends Command
     protected $description = 'Fetch and process participants data from 3CX API';
     public function __construct(ThreeCXTokenService $threeCXTokenService)
     {
+        parent::__construct(); // This is required
         $this->threeCXTokenService = $threeCXTokenService;
     }
 

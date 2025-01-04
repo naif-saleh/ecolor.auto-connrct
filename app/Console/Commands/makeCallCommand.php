@@ -33,6 +33,7 @@ class makeCallCommand extends Command
 
     public function __construct(ThreeCXTokenService $threeCXTokenService)
     {
+        parent::__construct(); // This is required
         $this->threeCXTokenService = $threeCXTokenService;
     }
 

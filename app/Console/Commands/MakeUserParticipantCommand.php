@@ -31,6 +31,7 @@ class MakeUserParticipantCommand extends Command
     protected $description = 'Command description';
     public function __construct(ThreeCXTokenService $threeCXTokenService)
     {
+        parent::__construct(); // This is required
         $this->threeCXTokenService = $threeCXTokenService;
     }
 
