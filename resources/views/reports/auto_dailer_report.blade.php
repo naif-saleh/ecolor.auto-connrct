@@ -164,8 +164,8 @@
         <div class="d-flex justify-content-between align-items-center mb-4">
             <!-- Export Button -->
             <div>
-                <a href="{{ route('auto_dailer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to')]) }}"
-                    class="btn btn-modern-export">
+                <a href="{{ route('auto_dailer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to')]) }} "
+                    class="btn btn-modern-export" id="download-csv-button">
                     <i class="fas fa-file-export me-2"></i> Export as CSV
                 </a>
             </div>

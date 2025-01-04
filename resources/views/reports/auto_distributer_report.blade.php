@@ -165,7 +165,7 @@
             <!-- Export Button -->
             <div>
                 <a href="{{ route('auto_distributer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to')]) }}"
-                    class="btn btn-modern-export">
+                    class="btn btn-modern-export" id="download-csv-button">
                     <i class="fas fa-file-export me-2"></i> Export as CSV
                 </a>
             </div>
@@ -279,7 +279,7 @@
                                             $badgeClass = match ($status) {
                                                 'answered' => 'success',
                                                 'no answer' => 'warning',
-                                                
+
                                                 default => 'secondary',
                                             };
                                         @endphp
