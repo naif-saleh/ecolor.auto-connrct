@@ -106,7 +106,11 @@ class makeCallCommand extends Command
 
                             Log::info('Call successfully made for mobile ' . $mobile->mobile);
                         } else {
-                            Log::error('Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
+                            Log::error('ADailer: Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
+                            Log::info('ADailer:  Response Status Code: ' . $responseState->status());
+                            Log::info('ADailer:   Full Response: ' . print_r($responseState, TRUE));
+                            Log::info('ADailer: Headers: ' . json_encode($responseState->headers()));
+                    
                         }
                     } catch (\Exception $e) {
                         Log::error('An error occurred: ' . $e->getMessage());

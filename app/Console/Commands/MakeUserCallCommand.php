@@ -124,7 +124,11 @@ class MakeUserCallCommand extends Command
 
                                     Log::info('ADist: Call successfully made for mobile ' . $mobile->mobile);
                                 } else {
+                                   
                                     Log::error('ADist: Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
+                                    Log::info('ADist:  Response Status Code: ' . $responseState->status());
+                                    Log::info('ADist:  Full Response: ' . print_r($responseState, TRUE));
+                                    Log::info('ADist: Headers: ' . json_encode($responseState->headers()));
                                 }
 
                                 // Add a 30-second delay between calls
