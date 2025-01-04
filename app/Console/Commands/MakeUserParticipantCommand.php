@@ -11,7 +11,9 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use App\Models\AutoDistributerExtensionFeed;
 use phpDocumentor\Reflection\PseudoTypes\True_;
-use App\Services\ThreeCXTokenService;
+
+use App\Services\TokenService;
+
 
 class MakeUserParticipantCommand extends Command
 {
@@ -22,17 +24,17 @@ class MakeUserParticipantCommand extends Command
      */
     protected $signature = 'app:make-user-participant-command';
     protected $threeCXTokenService;
-
+    protected $tokenService;
     /**
      * The console command description.
      *
      * @var string
      */
     protected $description = 'Command description';
-    public function __construct(ThreeCXTokenService $threeCXTokenService)
+    public function __construct(TokenService $tokenService)
     {
         parent::__construct(); // This is required
-        $this->threeCXTokenService = $threeCXTokenService;
+        $this->tokenService = $tokenService;
     }
 
     /**
@@ -43,7 +45,7 @@ class MakeUserParticipantCommand extends Command
         Log::info('participantsCommand executed at ' . now());
         $now = Carbon::now();
        // $token = Cache::get('three_cx_token');
-       $token = $this->threeCXTokenService->fetchToken(); 
+       $token = $this->tokenService->getToken();
        if (!$token) {
             Log::error('3CX token not found in cache');
             return;

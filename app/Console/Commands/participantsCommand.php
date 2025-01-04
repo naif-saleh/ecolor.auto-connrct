@@ -10,7 +10,9 @@ use App\Models\AutoDailerReport;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 
-use App\Services\ThreeCXTokenService;
+
+use App\Services\TokenService;
+
 
 class participantsCommand extends Command
 {
@@ -20,18 +22,18 @@ class participantsCommand extends Command
      * @var string
      */
     protected $signature = 'app:participants-command';
-    protected $threeCXTokenService;
 
+    protected $tokenService;
     /**
      * The console command description.
      *
      * @var string
      */
     protected $description = 'Fetch and process participants data from 3CX API';
-    public function __construct(ThreeCXTokenService $threeCXTokenService)
+    public function __construct(TokenService $tokenService)
     {
         parent::__construct(); // This is required
-        $this->threeCXTokenService = $threeCXTokenService;
+        $this->tokenService = $tokenService;
     }
 
 
@@ -43,7 +45,7 @@ class participantsCommand extends Command
         Log::info('participantsCommand executed at ' . now());
 
        // $token = Cache::get('three_cx_token');
-        $token = $this->threeCXTokenService->fetchToken();
+       $token = $this->tokenService->getToken();
         Log::error("participantsCommand token " . $token );
 
         if (!$token) {

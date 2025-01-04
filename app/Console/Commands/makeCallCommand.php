@@ -10,7 +10,8 @@ use Carbon\Carbon;
 use App\Models\AutoDailerReport;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
-use App\Services\ThreeCXTokenService;
+
+use App\Services\TokenService;
 
 
 class makeCallCommand extends Command
@@ -28,13 +29,13 @@ class makeCallCommand extends Command
      * @var string
      */
     protected $description = 'Command description';
-    protected $threeCXTokenService;
 
+    protected $tokenService;
 
-    public function __construct(ThreeCXTokenService $threeCXTokenService)
+    public function __construct(TokenService $tokenService)
     {
         parent::__construct(); // This is required
-        $this->threeCXTokenService = $threeCXTokenService;
+        $this->tokenService = $tokenService;
     }
 
 
@@ -45,7 +46,7 @@ class makeCallCommand extends Command
     {
 
         // $token = Cache::get('three_cx_token');
-        $token = $this->threeCXTokenService->fetchToken();
+        $token = $this->tokenService->getToken();
         Log::info('MakeCallCommand executed at ' . now());
         $providersFeeds = AutoDailerFeedFile::all();
         $usersFeeds = AutoDailerFeedFile::all();

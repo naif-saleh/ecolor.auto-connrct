@@ -10,17 +10,20 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Auth;
-use App\Services\ThreeCXTokenService;
+
+use App\Services\TokenService;
 
 
 class UserForAutoDistributer extends Controller
 {
-    protected $threeCXTokenService;
 
-    public function __construct(ThreeCXTokenService $threeCXTokenService)
+    protected $tokenService;
+    
+    public function __construct(TokenService $tokenService)
     {
         parent::__construct(); // This is required
-        $this->threeCXTokenService = $threeCXTokenService;
+        $this->tokenService = $tokenService;
+
     }
 
     public function index()
@@ -34,7 +37,7 @@ class UserForAutoDistributer extends Controller
     public function import()
     {
        // $token = Cache::get('three_cx_token');
-        $token = $this->threeCXTokenService->fetchToken();
+       $token = $this->tokenService->getToken();
 
 
         try {

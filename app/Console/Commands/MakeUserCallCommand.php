@@ -13,7 +13,9 @@ use App\Models\AutoDistributerReport;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use App\Models\AutoDistributerFeedFile;
-use App\Services\ThreeCXTokenService;
+
+use App\Services\TokenService;
+
 class MakeUserCallCommand extends Command
 {
     /**
@@ -23,7 +25,7 @@ class MakeUserCallCommand extends Command
      */
     protected $signature = 'app:make-user-call-command';
     protected $threeCXTokenService;
-
+    protected $tokenService;
     /**
      * The console command description.
      *
@@ -31,10 +33,10 @@ class MakeUserCallCommand extends Command
      */
     protected $description = 'Command description';
 
-    public function __construct(ThreeCXTokenService $threeCXTokenService)
+    public function __construct(TokenService $tokenService)
     {
         parent::__construct(); // This is required
-        $this->threeCXTokenService = $threeCXTokenService;
+        $this->tokenService = $tokenService;
     }
 
     /**
@@ -45,7 +47,7 @@ class MakeUserCallCommand extends Command
     {
 
        // $token = Cache::get('three_cx_token');
-$token = $this->threeCXTokenService->fetchToken();
+       $token = $this->tokenService->getToken();
         Log::info('ADist: MakeCallCommand executed at ' . now());
         $providersFeeds = AutoDistributerFeedFile::all();
 

@@ -8,8 +8,8 @@ use Illuminate\Support\Facades\Log;
 use App\Models\AutoDistributererExtension;
 use App\Models\AutoDistributerFeedFile;
 use Illuminate\Support\Facades\Cache;
+use App\Services\TokenService;
 
-use App\Services\ThreeCXTokenService;
 
 
 class UpdateUserStatusCommand extends Command
@@ -20,8 +20,8 @@ class UpdateUserStatusCommand extends Command
      * @var string
      */
     protected $signature = 'app:update-user-status-command';
-    protected $threeCXTokenService;
 
+    protected $tokenService;
     /**
      * The console command description.
      *
@@ -29,10 +29,10 @@ class UpdateUserStatusCommand extends Command
      */
     protected $description = 'Command description';
 
-    public function __construct(ThreeCXTokenService $threeCXTokenService)
+    public function __construct(TokenService $tokenService)
     {
         parent::__construct(); // This is required
-        $this->threeCXTokenService = $threeCXTokenService;
+        $this->tokenService = $tokenService;
     }
 
     /**
@@ -42,7 +42,7 @@ class UpdateUserStatusCommand extends Command
     {
        // $token = Cache::get('three_cx_token'); // Assuming you store the token in cache
 
-        $token = $this->threeCXTokenService->fetchToken();
+       $token = $this->tokenService->getToken();
         if (!$token) {
             Log::error('ADist: 3CX token not found in cache.');
             $this->error('3CX token not found. Ensure it is cached before running the command.');
