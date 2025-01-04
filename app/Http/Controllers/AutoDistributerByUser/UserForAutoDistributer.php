@@ -16,6 +16,8 @@ class UserForAutoDistributer extends Controller
 
     public function index()
     {
+        // dd(config('services.three_cx.client_id'), config('services.three_cx.client_secret'));
+
         $extensions = AutoDistributererExtension::all();
         return view('autoDistributerByUser.User.index', compact('extensions'));
     }
