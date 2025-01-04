@@ -51,7 +51,12 @@ class participantsCommand extends Command
                 ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
 
                 if (!$responseState->successful()) {
-                    Log::error("Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
+                    Log::error("participantsCommand Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
+                    Log::info('participantsCommand:  Response Status Code: ' . $responseState->status());
+                    Log::info('participantsCommand:  Full Response: ' . print_r($responseState, TRUE));
+                    Log::info('participantsCommand: Headers: ' . json_encode($responseState->headers()));
+            
+                 
                     continue;
                 }
 
