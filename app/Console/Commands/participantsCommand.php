@@ -45,59 +45,63 @@ class participantsCommand extends Command
             $ext_from = $feed->extension;
 
             try {
-                // Fetch participants for the provider
+                // Fetch participants for the extension
                 $responseState = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token,
                 ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
 
                 if (!$responseState->successful()) {
-                    Log::error("Failed to fetch participants for provider {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
+                    Log::error("Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
                     continue;
                 }
 
                 $participants = $responseState->json();
 
                 if (empty($participants)) {
-                    Log::warning("No participants data for provider {$ext_from}");
+                    Log::warning("No participants data for extension {$ext_from}");
                     continue;
                 }
 
                 foreach ($participants as $participant_data) {
                     try {
-                        Log::debug("Processing participant data: " . json_encode($participant_data));
+                        Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));
 
-                        if ($participant_data['status'] === "Connected" && $participant_data['party_dn_type'] === "Wspecialmenu") {
-                            $this->updateParticipant($participant_data);
+                        $filter = "contains(Caller, '{$participant_data['dn']}')";
+                        $url = "https://ecolor.3cx.agency/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
-                            // Attempt to drop the call if the status is "Connected"
-                            $this->dropCall(
-                                $ext_from,
-                                $participant_data['id'],
-                                $participant_data['party_caller_id'], // Pass party_caller_id dynamically
-                                $token
-                            );
-                        } elseif ($participant_data['status'] === "Connected" && $participant_data['party_dn_type'] === "Wextension") {
-                            $this->updateParticipant($participant_data);
-                        } elseif ($participant_data['status'] === "Connected" && $participant_data['party_dn_type'] === "Wexternalline") {
-                            $this->updateParticipant($participant_data);
-                            Log::info('Successfully Wexternalline updated AutoDistributerReport for call_id: ' . $participant_data['id']);
+                        $activeCallsResponse = Http::withHeaders([
+                            'Authorization' => 'Bearer ' . $token,
+                        ])->get($url);
+
+                        if ($activeCallsResponse->successful()) {
+                            Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));
+                            $activeCalls = $activeCallsResponse->json();
+                            Log::debug("Active Calls: " . print_r($participant_data, true));
+                            Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
+
+
+                            // Iterate through all active calls to find matching callId
+                            foreach ($activeCalls['value'] as $call) {
+                                // Check if the call contains the required information
+                                Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
+                                if (isset($call['Id']) && isset($call['Status'])) {
+                                    // Log the status to track each call's behavior
+                                    Log::info("Processing Call ID {$call['Id']} with status {$call['Status']}");
+
+                                    // Check if the call is in progress
+                                    if ($call['Status'] === "Talking") { // Routing When Ringing
+                                        AutoDailerReport::where('call_id', $call['Id'])->update(['status' => $call['Status']]);
+                                        Log::info("Updated status for call ID {$call['Id']} to ".$call['Status']);
+                                    }
+                                } else {
+                                    Log::warning("Call missing 'Id' or 'Status' for participant DN {$participant_data['dn']}. Call Data: " . print_r($call, true));
+                                }
+                            }
                         } else {
-                            Log::info("Skipping dropCall for participant ID {$participant_data['id']} with status: {$participant_data['status']}");
-                                AutoDailerReport::updateOrCreate(
-                                    [
-                                        "call_id" => $participant_data['id'],
-                                    ],
-                                    [
-                                        "status" => $participant_data['status'],
-                                        "phone_number" => $participant_data['party_caller_id'],
-
-                                    ]
-                                );
-
-
+                            Log::error('Failed to fetch active calls. Response: ' . $activeCallsResponse->body());
                         }
                     } catch (\Exception $e) {
-                        Log::error('Failed to process participant data for call ID ' . ($participant_data['id'] ?? 'N/A') . ': ' . $e->getMessage());
+                        Log::error('Failed to process participant data for call ID ' . ($participant_data['callid'] ?? 'N/A') . ': ' . $e->getMessage());
                     }
                 }
             } catch (\Exception $e) {

@@ -273,7 +273,7 @@
                                     <td>{{ $report->extension }}</td>
                                     <td>
                                         @php
-                                            $status = in_array($report->status, ['Wextension', 'Wexternalline'])
+                                            $status = in_array($report->status, ['Wextension', 'Wexternalline','Talking'])
                                                 ? 'answered'
                                                 : 'no answer';
                                             $badgeClass = match ($status) {

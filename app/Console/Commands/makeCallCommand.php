@@ -82,7 +82,7 @@ class makeCallCommand extends Command
 
 
                                 $reports = AutoDailerReport::firstOrCreate([
-                                    'call_id' => $responseData['result']['id'],
+                                    'call_id' => $responseData['result']['callid'],
                                 ], [
                                     'status' => $responseData['result']['status'],
                                     'provider' => $mobile->provider->name,
@@ -97,7 +97,7 @@ class makeCallCommand extends Command
                             $mobile->update([
                                 'state' => $responseData['result']['status'],
                                 'call_date' => $now,
-                                'call_id' => $responseData['result']['id'],
+                                'call_id' => $responseData['result']['callid'],
                                 'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
                             ]);
 
