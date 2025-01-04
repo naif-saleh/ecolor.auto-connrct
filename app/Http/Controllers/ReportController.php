@@ -139,7 +139,7 @@ class ReportController extends Controller
                     $report->phone_number,
                     $report->provider,
                     $report->extension,
-                    ucfirst(($report->status === 'Wextension' || $report->status === 'Wexternalline') ? 'answered' : 'no answer'),
+                    ucfirst(($report->status === 'Talking' || $report->status === 'Wexternalline') ? 'answered' : 'no answer'),
                     \Carbon\Carbon::parse($report->created_at)->addHours(3)->format('Y-m-d H:i:s')
                 ]);
             }
