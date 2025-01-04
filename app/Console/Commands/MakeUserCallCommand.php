@@ -41,36 +41,13 @@ class MakeUserCallCommand extends Command
 
         Log::info('ADist: MakeCallCommand executed at ' . now());
         $providersFeeds = AutoDistributerFeedFile::all();
-        // $users = AutoDistributererExtension::all();
-
-        // TODO: get only today feeds
-
-        // Log::info('Providers Feeds:', $providersFeeds->toArray());
-
-        // try {
-        //     $responseState = Http::withHeaders([
-        //         'Authorization' => 'Bearer ' . $token,
-        //     ])->post(config('services.three_cx.api_url') . "/xapi/v1/Users", [
-        //         'destination' => $mobile->mobile,
-        //     ]);
-
-        //     if ($responseState->successful()) {
-        //         $responseData = $responseState->json();
-        //         log::info("ADist: Make Call Data Response: " . print_r($responseData, TRUE));
-
-        //         Log::info('ADist: Call successfully made for mobile ' . $mobile->mobile);
-        //     } else {
-        //         Log::error('ADist: Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
-        //     }
-        // } catch (\Exception $e) {
-        //     Log::error('ADist: An error occurred: ' . $e->getMessage());
-        // }
 
 
 
         //  Make Call For Providers
         foreach ($providersFeeds as $feed) {
             $ext_from = $feed->extension;
+
             $now = Carbon::now();
 
             // Parse the date and time from the data
@@ -79,6 +56,7 @@ class MakeUserCallCommand extends Command
 
 
             Log::info('ADist:  Make Provider Call, Active status ' . $feed->extension . $feed->on);
+            Log::info('ADist:  User Status' . $feed->userStatus);
 
             // Check if the current time is within the range
             if ($now->between($from, $to) && $feed->on == 1) {
@@ -90,43 +68,72 @@ class MakeUserCallCommand extends Command
                 $providerFeeds = AutoDistributerExtensionFeed::byFeedFile($feed->id)
                     ->where('state', 'new')
                     ->get();
-                Log::info('ADist: Provider ID ' . $feed->id . ' Feeds count = ' . $providerFeeds->count());
+                // Log::info('ADist: Provider ID ' . $feed->id . ' User Status = ' . $feed->userStatus);
 
                 $loop = 0;
                 foreach ($providerFeeds as $mobile) {
-                    Log::info('ADist: mobile ' . $mobile->mobile . ' in loop ' . $loop);
+                    Log::info('ADist: Processing mobile ' . $mobile->mobile);
 
                     try {
-                        $responseState = Http::withHeaders([
-                            'Authorization' => 'Bearer ' . $token,
-                        ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/makecall", [
-                            'destination' => $mobile->mobile,
-                        ]);
+                        if ($feed->userStatus === "Available") {
+                            // Check if there are active calls for this extension
+                            $filter = "contains(Caller, '{$ext_from}')";
+                            $url = "https://ecolor.3cx.agency/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
-                        if ($responseState->successful()) {
-                            $responseData = $responseState->json();
-                            log::info("ADist: Make Call Data Response: " . print_r($responseData, TRUE));
-                            $reports = AutoDistributerReport::firstOrCreate([
-                                'call_id' => $responseData['result']['callid'],
-                            ], [
-                                'status' => $responseData['result']['status'],
-                                'provider' => $mobile->extension->name,
-                                'extension' => $responseData['result']['dn'],
-                                'phone_number' => $responseData['result']['party_caller_id'],
-                            ]);
+                            $activeCallsResponse = Http::withHeaders([
+                                'Authorization' => 'Bearer ' . $token,
+                            ])->get($url);
 
-                            $reports->save();
-                            $mobile->update([
-                                'state' => $responseData['result']['status'],
-                                'call_date' => $now,
-                                'call_id' => $responseData['result']['callid'],
-                                'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
-                            ]);
+                            if ($activeCallsResponse->successful()) {
+                                $activeCalls = $activeCallsResponse->json();
 
+                                if (!empty($activeCalls['value'])) {
+                                    Log::info("Active calls detected for extension {$ext_from}. Skipping call for mobile {$mobile->mobile}.");
+                                    continue; // Skip this number if active calls exist
+                                }
 
-                            Log::info('ADist: Call successfully made for mobile ' . $mobile->mobile);
-                        } else {
-                            Log::error('ADist: Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
+                                // No active calls, proceed to make the call
+                                $responseState = Http::withHeaders([
+                                    'Authorization' => 'Bearer ' . $token,
+                                ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/makecall", [
+                                    'destination' => $mobile->mobile,
+                                ]);
+
+                                if ($responseState->successful()) {
+                                    $responseData = $responseState->json();
+
+                                    // Handle the report creation and update
+                                    $reports = AutoDistributerReport::firstOrCreate([
+                                        'call_id' => $responseData['result']['callid'],
+                                    ], [
+                                        'status' => $responseData['result']['status'],
+                                        'provider' => $mobile->extension->name,
+                                        'extension' => $responseData['result']['dn'],
+                                        'phone_number' => $responseData['result']['party_caller_id'],
+                                    ]);
+
+                                    $reports->save();
+
+                                    // Update the mobile record
+                                    $mobile->update([
+                                        'state' => $responseData['result']['status'],
+                                        'call_date' => now(),
+                                        'call_id' => $responseData['result']['callid'],
+                                        'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
+                                    ]);
+
+                                    Log::info('ADist: Call successfully made for mobile ' . $mobile->mobile);
+                                } else {
+                                    Log::error('ADist: Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
+                                }
+
+                                // Add a 30-second delay between calls
+                                Log::info("ADist: Waiting for 30 seconds before making the next call.");
+                                // sleep(100); // Wait for 30 seconds before continuing to the next iteration
+
+                            } else {
+                                Log::error('ADist: Error fetching active calls for mobile ' . $mobile->mobile . '. Response: ' . $activeCallsResponse->body());
+                            }
                         }
                     } catch (\Exception $e) {
                         Log::error('ADist: An error occurred: ' . $e->getMessage());

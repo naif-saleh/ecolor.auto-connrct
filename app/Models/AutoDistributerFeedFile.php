@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AutoDistributerFeedFile extends Model
 {
-    protected $fillable = ['user_ext_id', 'extension', 'from', 'to', 'date', 'on', 'file_name'];
+    protected $fillable = ['user_ext_id', 'extension', 'userStatus', 'three_cx_user_id', 'from', 'to', 'date', 'on', 'file_name'];
 
     public function extension()
     {

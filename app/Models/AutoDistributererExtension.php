@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AutoDistributererExtension extends Model
 {
-    protected $fillable = ['name','lastName', 'extension', 'userStatus', 'user_id', '3cx_user_id'];
+    protected $fillable = ['name', 'lastName', 'extension', 'userStatus', 'user_id', 'three_cx_user_id'];
 
     public function user()
     {

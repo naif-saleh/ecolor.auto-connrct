@@ -18,7 +18,7 @@ return new class extends Migration
             $table->string('extension');
             $table->string('userStatus');
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
-            $table->string('3cx_user_id')->default('');
+            $table->string('three_cx_user_id')->default('');
 
             $table->timestamps();
         });

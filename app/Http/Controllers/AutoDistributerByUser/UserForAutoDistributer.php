@@ -41,7 +41,7 @@ class UserForAutoDistributer extends Controller
                             "lastName" => $data['LastName'] ?? null,
                             "extension" => $data['Number'] ?? null,
                             "userStatus" => $data['CurrentProfileName'] ?? null,
-                            "3cx_user_id" => $data['Id'] ?? null,
+                            "three_cx_user_id" => $data['Id'] ?? null,
                         ]);
                     }
 

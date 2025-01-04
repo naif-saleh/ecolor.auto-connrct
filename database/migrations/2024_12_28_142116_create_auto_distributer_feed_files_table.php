@@ -15,6 +15,8 @@ return new class extends Migration
             $table->id();
             $table->unsignedBigInteger('user_ext_id');
             $table->string('extension');
+            $table->string('userStatus');
+            $table->string('three_cx_user_id');
             $table->time('from');
             $table->time('to');
             $table->date('date');

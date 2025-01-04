@@ -169,7 +169,7 @@ class ReportController extends Controller
         // Map filter values to database values
         $statusMap = [
             'answered' => ['Wextension', 'Wexternalline'],
-            'no answer' => ['Wspecialmenu', 'no answer'],
+            'no answer' => ['Dialing', 'no answer'],
         ];
 
         $query = AutoDistributerReport::query();
@@ -200,7 +200,7 @@ class ReportController extends Controller
         // Calculate counts
         $totalCount = AutoDistributerReport::count(); // Total calls count
         $answeredCount = AutoDistributerReport::whereIn('status', ['Wextension', 'Wexternalline'])->count();
-        $noAnswerCount = AutoDistributerReport::whereIn('status', ['Wspecialmenu', 'no answer'])->count();
+        $noAnswerCount = AutoDistributerReport::whereIn('status', ['Dialing', 'no answer'])->count();
 
         // Fetch distinct providers for the filter dropdown
         $providers = AutoDistributerReport::select('provider')->distinct()->get();

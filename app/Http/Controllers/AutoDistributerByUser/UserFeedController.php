@@ -24,7 +24,7 @@ class UserFeedController extends Controller
         $extension = AutoDistributererExtension::findOrFail($extensionId);
         $feedFile = AutoDistributerFeedFile::findOrFail($feedFileId);
         $extensionFeeds = AutoDistributerExtensionFeed::where('auto_dist_feed_file_id', $feedFileId)->get();
-        
+
         return view('autoDistributerByUser.UserFeed.show', compact('extension', 'feedFile', 'extensionFeeds'));
     }
 
@@ -67,6 +67,8 @@ class UserFeedController extends Controller
         $feedFile = AutoDistributerFeedFile::create([
             'user_ext_id' => $extension->id,
             'extension' => $extension->extension,
+            'userStatus' => $extension->userStatus,
+            "three_cx_user_id" => $extension->three_cx_user_id,
             'from' => $formattedTime_from,
             'to' => $formattedTime_to,
             'date' => $request->input('date'),

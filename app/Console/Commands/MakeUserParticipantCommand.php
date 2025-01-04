@@ -10,7 +10,7 @@ use App\Models\AutoDistributerReport;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use App\Models\AutoDistributerExtensionFeed;
-
+use phpDocumentor\Reflection\PseudoTypes\True_;
 
 class MakeUserParticipantCommand extends Command
 {
@@ -66,22 +66,41 @@ class MakeUserParticipantCommand extends Command
 
                 foreach ($participants as $participant_data) {
                     try {
-                        Log::debug("Processing participant data: " . print_r($participant_data, True));
-                        if ($participant_data['status'] === "Connected" && $participant_data['party_dn_type'] === "Wspecialmenu") {
-                            $this->updateParticipant($participant_data);
+                        Log::debug("Processing participant data: " . print_r($participant_data, true));
 
-                            // Attempt to drop the call if the status is "Connected"
-                            $this->dropCall(
-                                $ext_from,
-                                $participant_data['id'],
-                                $participant_data['party_caller_id'],
-                                $token
-                            );
-                        } elseif ($participant_data['status'] === "Connected" && $participant_data['party_dn_type'] === "Wextension") {
-                            $this->updateParticipant($participant_data);
-                        } elseif ($participant_data['status'] === "Dialing" && $participant_data['party_dn_type'] === "Wexternalline") {
-                            $this->updateParticipant($participant_data);
-                            Log::info('Successfully Wexternalline updated AutoDistributerReport for call_id: ' . $participant_data['callid']);
+                        $filter = "contains(Caller, '{$participant_data['dn']}')";
+                        $url = "https://ecolor.3cx.agency/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+
+                        $activeCallsResponse = Http::withHeaders([
+                            'Authorization' => 'Bearer ' . $token,
+                        ])->get($url);
+
+                        if ($activeCallsResponse->successful()) {
+                            $activeCalls = $activeCallsResponse->json();
+                            Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
+
+                            if (!empty($activeCalls['value'])) {
+                                // Iterate through all active calls to find matching callId
+                                foreach ($activeCalls['value'] as $call) {
+                                    // Check if the call contains the required information
+                                    if (isset($call['Id']) && isset($call['Status'])) {
+                                        // Log the status to track each call's behavior
+                                        Log::info("Processing Call ID {$call['Id']} with status {$call['Status']}");
+
+                                        // Check if the call is in progress
+                                        if ($call['Status'] === "Talking") {
+                                            AutoDistributerReport::where('call_id', $call['Id'])->update(['status' => "Wexternalline"]);
+                                            Log::info("Updated status for call ID {$call['Id']} to 'Wexternalline'.");
+                                        }  
+                                    } else {
+                                        Log::warning("Call missing 'Id' or 'Status' for participant DN {$participant_data['dn']}. Call Data: " . print_r($call, true));
+                                    }
+                                }
+                            } else {
+                                Log::warning("No active calls found for participant DN {$participant_data['dn']}");
+                            }
+                        } else {
+                            Log::error('Failed to fetch active calls. Response: ' . $activeCallsResponse->body());
                         }
                     } catch (\Exception $e) {
                         Log::error('Failed to process participant data for call ID ' . ($participant_data['callid'] ?? 'N/A') . ': ' . $e->getMessage());
@@ -91,22 +110,14 @@ class MakeUserParticipantCommand extends Command
                 Log::error("Error fetching participants for provider {$ext_from}: " . $e->getMessage());
             }
         }
-
     }
 
     /**
      * Update or create participant report.
      */
-    private function updateParticipant($participant_data)
+    private function updateReportStatus($callId, $status)
     {
-        AutoDistributerReport::where('call_id', $participant_data['callid'])->update(
-
-            [
-                "status" => $participant_data['party_dn_type'] ?? "Unknown",
-                "phone_number" => $participant_data['party_caller_id'] ?? "Unknown",
-                'extension' => $participant_data['dn'] ?? "Unknown",
-            ]
-        );
+        AutoDistributerReport::where('call_id', $callId)->update(['status' => $status]);
     }
 
     /**
