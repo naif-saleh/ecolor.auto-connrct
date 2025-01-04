@@ -79,7 +79,7 @@ class MakeUserParticipantCommand extends Command
                             $activeCalls = $activeCallsResponse->json();
                             Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
 
-                            if (!empty($activeCalls['value'])) {
+
                                 // Iterate through all active calls to find matching callId
                                 foreach ($activeCalls['value'] as $call) {
                                     // Check if the call contains the required information
@@ -97,9 +97,7 @@ class MakeUserParticipantCommand extends Command
                                         Log::warning("Call missing 'Id' or 'Status' for participant DN {$participant_data['dn']}. Call Data: " . print_r($call, true));
                                     }
                                 }
-                            } else {
-                                Log::warning("No active calls found for participant DN {$participant_data['dn']}");
-                            }
+                             
                         } else {
                             Log::error('Failed to fetch active calls. Response: ' . $activeCallsResponse->body());
                         }
