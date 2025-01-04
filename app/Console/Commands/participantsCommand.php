@@ -44,6 +44,8 @@ class participantsCommand extends Command
 
        // $token = Cache::get('three_cx_token');
         $token = $this->threeCXTokenService->fetchToken();
+        Log::error("participantsCommand token " . $token );
+
         if (!$token) {
             Log::error('3CX token not found in cache');
             return;
