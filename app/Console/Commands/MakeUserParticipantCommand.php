@@ -88,7 +88,7 @@ class MakeUserParticipantCommand extends Command
                                         Log::info("Processing Call ID {$call['Id']} with status {$call['Status']}");
 
                                         // Check if the call is in progress
-                                        if ($call['Status'] === "ٌRouting") {
+                                        if ($call['Status'] === "Talking") { // Routing When Ringing
                                             AutoDistributerReport::where('call_id', $call['Id'])->update(['status' => "Wexternalline"]);
                                             Log::info("Updated status for call ID {$call['Id']} to 'Wexternalline'.");
                                         }
