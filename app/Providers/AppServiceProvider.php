@@ -51,7 +51,7 @@ class AppServiceProvider extends ServiceProvider
             ], http_build_query([
                 'grant_type' => 'client_credentials',
                 'client_id' => 'testapi',
-                'client_secret' => '95ULDtdTRRJhJBZCp94K6Gd1BKRuaP1k',
+                'client_secret' => 'Ae0z1J7Q3a8O4yhM0bM7hgnSdmZBWkpH',
             ]));
 
             // Log the equivalent curl command

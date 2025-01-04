@@ -83,6 +83,7 @@ class MakeUserParticipantCommand extends Command
                                 // Iterate through all active calls to find matching callId
                                 foreach ($activeCalls['value'] as $call) {
                                     // Check if the call contains the required information
+                                    Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
                                     if (isset($call['Id']) && isset($call['Status'])) {
                                         // Log the status to track each call's behavior
                                         Log::info("Processing Call ID {$call['Id']} with status {$call['Status']}");
