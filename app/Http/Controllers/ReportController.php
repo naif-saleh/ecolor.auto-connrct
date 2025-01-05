@@ -168,7 +168,7 @@ class ReportController extends Controller
 
         // Map filter values to database values
         $statusMap = [
-            'answered' => ['Wextension', 'Wexternalline'],
+            'answered' => 'Wexternalline',
             'no answer' => ['Dialing', 'no answer'],
         ];
 
@@ -223,12 +223,38 @@ class ReportController extends Controller
     // Export Auto Distributer AS CSV File...........................................................................................................
     public function exportAutoDistributerReport(Request $request)
     {
-
         $filter = $request->query('filter');
+        $extensionFrom = $request->input('extension_from');
+        $extensionTo = $request->input('extension_to');
+        $provider = $request->input('provider');
+
+        // Map filter to corresponding database status values
+        $statusMap = [
+            'answered' => ['Wexternalline', 'Talking'],
+            'no answer' => ['no answer', 'Dialing'],
+        ];
+
         $query = AutoDistributerReport::query();
 
-        if ($filter === 'answered' || $filter === 'no answer') {
-            $query->where('state', $filter);
+        // Apply status filter
+        if ($filter === 'today') {
+            $query->whereDate('created_at', now()->toDateString());
+        } elseif ($filter && isset($statusMap[$filter])) {
+            $query->whereIn('status', $statusMap[$filter]);
+        }
+
+        // Apply extension range filters
+        if ($extensionFrom) {
+            $query->where('extension', '>=', $extensionFrom);
+        }
+
+        if ($extensionTo) {
+            $query->where('extension', '<=', $extensionTo);
+        }
+
+        // Apply provider filter (ensure provider is not empty or null)
+        if (!empty($provider)) {
+            $query->where('provider', $provider);
         }
 
         $reports = $query->get();
@@ -236,21 +262,24 @@ class ReportController extends Controller
         $response = new StreamedResponse(function () use ($reports) {
             $handle = fopen('php://output', 'w');
 
-            fputcsv($handle, ['Mobile', 'Provider', 'Extension', 'State', 'Called At']);
+            // Write the CSV header
+            fputcsv($handle, ['Mobile', 'Provider', 'extension', 'State', 'Called At']);
 
+            // Write each report row
             foreach ($reports as $report) {
                 fputcsv($handle, [
-                    $report->mobile,
+                    $report->phone_number,
                     $report->provider,
                     $report->extension,
-                    $report->state,
-                    $report->called_at,
+                    ucfirst(($report->status === 'Talking' || $report->status === 'Wexternalline') ? 'answered' : 'no answer'),
+                    \Carbon\Carbon::parse($report->created_at)->addHours(3)->format('Y-m-d H:i:s')
                 ]);
             }
 
             fclose($handle);
         });
 
+        // Set the response headers for CSV download
         $response->headers->set('Content-Type', 'text/csv');
         $response->headers->set('Content-Disposition', 'attachment; filename="auto_dailer_report.csv"');
 
