@@ -18,10 +18,10 @@ class UserForAutoDistributer extends Controller
 {
 
     protected $tokenService;
-    
+
     public function __construct(TokenService $tokenService)
     {
-        parent::__construct(); // This is required
+         
         $this->tokenService = $tokenService;
 
     }
