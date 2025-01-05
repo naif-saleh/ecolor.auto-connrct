@@ -92,7 +92,7 @@ class MakeUserCallCommand extends Command
                             $activeCallsResponse = Http::withHeaders([
                                 'Authorization' => 'Bearer ' . $token,
                             ])->get($url);
-                                sleep(30);
+                               
                             if ($activeCallsResponse->successful()) {
                                 $activeCalls = $activeCallsResponse->json();
 
