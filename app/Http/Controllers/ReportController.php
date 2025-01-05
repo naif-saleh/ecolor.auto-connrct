@@ -64,7 +64,7 @@ class ReportController extends Controller
         // Calculate counts
         $totalCount = AutoDailerReport::count(); // Total calls count
         $answeredCount = AutoDailerReport::whereIn('status', ['Wextension', 'Wexternalline', "Talking"])->count();
-        $noAnswerCount = AutoDailerReport::whereIn('status', ['Wspecialmenu','Dialing', 'no answer'])->count();
+        $noAnswerCount = AutoDailerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer'])->count();
 
         // Fetch distinct providers for the filter dropdown
         $providers = AutoDailerReport::select('provider')->distinct()->get();
@@ -168,7 +168,7 @@ class ReportController extends Controller
 
         // Map filter values to database values
         $statusMap = [
-            'answered' => 'Wexternalline',
+            'answered' => ['Wexternalline', 'Talking'],
             'no answer' => ['Dialing', 'no answer'],
         ];
 
@@ -230,9 +230,10 @@ class ReportController extends Controller
 
         // Map filter to corresponding database status values
         $statusMap = [
-            'answered' => 'Wexternalline',
+            'answered' => ['Wexternalline', 'Talking'],
             'no answer' => ['no answer', 'Dialing'],
         ];
+
 
         $query = AutoDistributerReport::query();
 
@@ -240,8 +241,15 @@ class ReportController extends Controller
         if ($filter === 'today') {
             $query->whereDate('created_at', now()->toDateString());
         } elseif ($filter && isset($statusMap[$filter])) {
-            $query->whereIn('status', $statusMap[$filter]);
+            // Ensure it's an array before using whereIn
+            if (is_array($statusMap[$filter])) {
+                $query->whereIn('status', $statusMap[$filter]);
+            } else {
+                // Handle non-array case (for debugging or fallback)
+                throw new \Exception("The value for filter '$filter' is not an array");
+            }
         }
+
 
         // Apply extension range filters
         if ($extensionFrom) {
@@ -281,7 +289,7 @@ class ReportController extends Controller
 
         // Set the response headers for CSV download
         $response->headers->set('Content-Type', 'text/csv');
-        $response->headers->set('Content-Disposition', 'attachment; filename="auto_dailer_report.csv"');
+        $response->headers->set('Content-Disposition', 'attachment; filename="auto_distributor_report.csv"');
 
         return $response;
     }
