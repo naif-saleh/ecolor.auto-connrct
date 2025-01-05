@@ -46,8 +46,8 @@ class MakeUserCallCommand extends Command
     public function handle()
     {
 
-       // $token = Cache::get('three_cx_token');
-       $token = $this->tokenService->getToken();
+        // $token = Cache::get('three_cx_token');
+        $token = $this->tokenService->getToken();
         Log::info('ADist: MakeCallCommand executed at ' . now());
         $providersFeeds = AutoDistributerFeedFile::all();
 
@@ -92,7 +92,7 @@ class MakeUserCallCommand extends Command
                             $activeCallsResponse = Http::withHeaders([
                                 'Authorization' => 'Bearer ' . $token,
                             ])->get($url);
-
+                                sleep(30);
                             if ($activeCallsResponse->successful()) {
                                 $activeCalls = $activeCallsResponse->json();
 
@@ -144,9 +144,10 @@ class MakeUserCallCommand extends Command
                                 // Log::info("ADist: Waiting for 30 seconds before making the next call.");
 
 
-                            } else {
-                                Log::error('ADist: Error fetching active calls for mobile ' . $mobile->mobile . '. Response: ' . $activeCallsResponse->body());
-                            }
+                            }       // Wait for 30 seconds before the next call
+                                    //  $this->waitFor(30);
+                        } else {
+                            Log::error('ADist: Error fetching active calls for mobile ' . $mobile['mobile']);
                         }
                     } catch (\Exception $e) {
                         Log::error('ADist: An error occurred: ' . $e->getMessage());
@@ -156,6 +157,15 @@ class MakeUserCallCommand extends Command
                 Log::info('The current time is not within the specified range.');
                 Log::info('The current time is not within the specified range for extension ' . $feed->extension . $to->format('r'));
             }
+        }
+    }
+
+
+    private function waitFor($seconds)
+    {
+        $startTime = time();
+        while (time() - $startTime < $seconds) {
+
         }
     }
 }
