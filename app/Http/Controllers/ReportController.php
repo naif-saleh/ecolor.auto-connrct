@@ -230,7 +230,7 @@ class ReportController extends Controller
 
         // Map filter to corresponding database status values
         $statusMap = [
-            'answered' => ['Wexternalline', 'Talking'],
+            'answered' => 'Wexternalline',
             'no answer' => ['no answer', 'Dialing'],
         ];
 
