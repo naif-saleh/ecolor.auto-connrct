@@ -141,8 +141,8 @@ class MakeUserCallCommand extends Command
                                 }
 
                                 // Add a 30-second delay between calls
-                                Log::info("ADist: Waiting for 30 seconds before making the next call.");
-                                sleep(30);
+                                // Log::info("ADist: Waiting for 30 seconds before making the next call.");
+
 
                             } else {
                                 Log::error('ADist: Error fetching active calls for mobile ' . $mobile->mobile . '. Response: ' . $activeCallsResponse->body());
