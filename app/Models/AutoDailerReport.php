@@ -17,8 +17,8 @@ class AutoDailerReport extends Model
     ];
 
 
-    public function providerFeed()
-    {
-        return $this->belongsTo(AutoDailerProviderFeed::class, 'call_id', 'call_id');
-    }
+    // public function providerFeed()
+    // {
+    //     return $this->belongsTo(AutoDailerProviderFeed::class, 'call_id', 'call_id');
+    // }
 }

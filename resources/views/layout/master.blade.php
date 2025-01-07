@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <title>@yield('title', 'Laravel Application')</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -12,6 +13,7 @@
     {{-- Sweet Alert --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
     @yield('style')
     <style>
         body {
@@ -69,10 +71,10 @@
                             <a class="nav-link" href="{{route('calls.dashboard')}}">Dashboard</a>
                         </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('autoDialerProviders.index') }}">Auto Dailer</a>
+                                <a class="nav-link" href="{{ route('autodailers.files.index') }}">Auto Dailer</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('auto_distributerer_extensions.index') }}">Auto
+                                <a class="nav-link" href=" ">Auto
                                     Distributer</a>
                             </li>
                             <li class="nav-item dropdown">
@@ -137,8 +139,46 @@
     @stack('scripts')
 
     {{-- Java Script --}}
+    {{-- <script>
+        // Enable AJAX for the switch toggle
+        document.getElementById('allowSwitch{{ $file->id }}').addEventListener('change', function() {
+            let fileId = this.getAttribute('data-file-id');
+            let checked = this.checked ? 1 : 0; // Determine the state of the switch
 
+            // AJAX request to update the 'allow' field
+            fetch("{{ route('autodailers.files.allow', '') }}/" + fileId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
+                            'content')
+                    },
+                    body: JSON.stringify({
+                        allow: checked
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Optionally update the label text after the switch is toggled
+                        document.querySelector(`#allowSwitch${fileId} + label`).innerText = checked ?
+                            'Allowed' : 'Disallowed';
+                    } else {
+                        alert('Error updating the file status.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                });
+        });
+    </script> --}}
     <script>
+
+
+
+
+
+
         // Delete Alert...................................................................................................
         function confirmDelete(extensionId) {
             Swal.fire({

@@ -171,8 +171,7 @@
             </div>
 
             <!-- Filters Form -->
-            <form method="GET" action="{{ url('auto-dailer-report') }}"
-                class="d-flex align-items-center gap-2 flex-wrap">
+            <form method="GET" action="{{ url('auto-dailer-report') }}" class="d-flex align-items-center gap-2 flex-wrap">
                 <!-- State Filters -->
                 <a href="{{ url('auto-dailer-report') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
                     <i class="fas fa-list me-1"></i> All
@@ -261,7 +260,8 @@
                                 <th>User</th>
                                 <th>Extension</th>
                                 <th>State</th>
-                                <th>Called At</th>
+                                <th>Called At - Day</th>
+                                <th>Called At - Time</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -273,7 +273,11 @@
                                     <td>{{ $report->extension }}</td>
                                     <td>
                                         @php
-                                            $status = in_array($report->status, ['Wextension', 'Wexternalline','Talking'])
+                                            $status = in_array($report->status, [
+                                                'Wextension',
+                                                'Wexternalline',
+                                                'Talking',
+                                            ])
                                                 ? 'answered'
                                                 : 'no answer';
                                             $badgeClass = match ($status) {
@@ -286,7 +290,9 @@
                                             {{ ucfirst($status) }}
                                         </span>
                                     </td>
-                                    <td>{{ $report->created_at->addHours(3)->format('Y-m-d H:i:s') }}</td>
+                                    <td>{{ $report->created_at->addHours(3)->format('Y-m-d') }}</td> <!-- For Date -->
+                                    <td>{{ $report->created_at->addHours(3)->format('H:i:s') }}</td> <!-- For Time -->
+
                                 </tr>
                             @empty
                                 <tr>

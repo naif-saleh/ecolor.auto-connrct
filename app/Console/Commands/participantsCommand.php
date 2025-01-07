@@ -9,7 +9,7 @@ use App\Models\AutoDailerFeedFile;
 use App\Models\AutoDailerReport;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
-
+use App\Models\AutoDailerUploadedData;
 
 use App\Services\TokenService;
 
@@ -53,7 +53,7 @@ class participantsCommand extends Command
             return;
         }
 
-        $providersFeeds = AutoDailerFeedFile::whereDate('created_at', Carbon::today())->get();
+        $providersFeeds = AutoDailerUploadedData::whereDate('created_at', Carbon::today())->get();
 
         foreach ($providersFeeds as $feed) {
             $ext_from = $feed->extension;
@@ -69,8 +69,8 @@ class participantsCommand extends Command
                     Log::info('participantsCommand:  Response Status Code: ' . $responseState->status());
                     Log::info('participantsCommand:  Full Response: ' . print_r($responseState, TRUE));
                     Log::info('participantsCommand: Headers: ' . json_encode($responseState->headers()));
-            
-                 
+
+
                     continue;
                 }
 
@@ -83,7 +83,7 @@ class participantsCommand extends Command
 
                 foreach ($participants as $participant_data) {
                     try {
-                        Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));
+                        // Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));
 
                         $filter = "contains(Caller, '{$participant_data['dn']}')";
                         $url = "https://ecolor.3cx.agency/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
@@ -93,16 +93,16 @@ class participantsCommand extends Command
                         ])->get($url);
 
                         if ($activeCallsResponse->successful()) {
-                            Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));
+                            // Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));
                             $activeCalls = $activeCallsResponse->json();
-                            Log::debug("Active Calls: " . print_r($participant_data, true));
+                            //Log::debug("Active Calls: " . print_r($participant_data, true));
                             Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
 
 
                             // Iterate through all active calls to find matching callId
                             foreach ($activeCalls['value'] as $call) {
                                 // Check if the call contains the required information
-                                Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
+                               // Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
                                 if (isset($call['Id']) && isset($call['Status'])) {
                                     // Log the status to track each call's behavior
                                     Log::info("Processing Call ID {$call['Id']} with status {$call['Status']}");

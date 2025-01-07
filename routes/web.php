@@ -15,11 +15,12 @@ use App\Http\Controllers\AutoDailerByProvider\ProviderFeedController;
 use App\Http\Controllers\AutoDistributerByUser\UserForAutoDistributer;
 use App\Http\Controllers\AutoDistributerByUser\UserFeedController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\AutoDailerFileController;
 
 Route::get('/', function () {
     if (auth()->check()) {
         // If the user is authenticated, redirect to the desired route
-        return redirect('/auto-dialer-providers');
+        return redirect('/auto-dailer/files');
     }
     return view('auth.login');
 });
@@ -27,14 +28,14 @@ Route::get('/', function () {
 // Route::get('/', [ProviderForAutoDailerController::class, 'index'])->name('autoDailerByProvider.index');
 
 
-// Show feeds for a provider
-Route::get('providers/{id}/feeds', [ProviderFeedController::class, 'show'])->name('feeds.show');
+// // Show feeds for a provider
+// Route::get('providers/{id}/feeds', [ProviderFeedController::class, 'show'])->name('feeds.show');
 
-// Show individual feed details
-Route::get('feeds/{id}', [ProviderFeedController::class, 'showFeed'])->name('feeds.showFeed');
+// // Show individual feed details
+// Route::get('feeds/{id}', [ProviderFeedController::class, 'showFeed'])->name('feeds.showFeed');
 
-// Store new feed
-Route::post('providers/{id}/feeds', [ProviderFeedController::class, 'storeFeed'])->name('feeds.store');
+// // Store new feed
+// Route::post('providers/{id}/feeds', [ProviderFeedController::class, 'storeFeed'])->name('feeds.store');
 
 
 
@@ -61,7 +62,7 @@ Route::post('providers/{id}/feeds', [ProviderFeedController::class, 'storeFeed']
 
 
 // Route::get('api/auto-dailer/{id}', [ApiController::class, 'autoDailerShowState']);
-Route::get('settings/json', [SettingController::class, 'getCfdApi'])->name('settings.getCfdApi')->middleware(['auth']);
+// Route::get('settings/json', [SettingController::class, 'getCfdApi'])->name('settings.getCfdApi')->middleware(['auth']);
 // User Management..........................................................................................................................
 Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('users', [UserController::class, 'index'])->name('users.index');
@@ -73,57 +74,79 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('users', [UserController::class, 'store'])->name('users.store');
 
 
+    // // Dashboard Statistics....................................................................................................................
+    Route::get('/dashboard-calls', [DashboardController::class, 'index'])->name('calls.dashboard');
+    // // Acitvity Log Report....................................................................................................................
+    Route::get('report/user-activity-report', [ReportController::class, 'activityReport'])->name('users.activity.report');
+    // // Auto Dailer Reports....................................................................................................................
+    Route::get('auto-dailer-report', [ReportController::class, 'AutoDailerReports'])->name('auto_dailer.report');
+    // // Export Auto Dailer...........................................................................................................
+    Route::get('auto-dailer-report/export', [ReportController::class, 'exportAutoDailerReport'])->name('auto_dailer.report.export');
+    // // Auto Distributer Reports....................................................................................................................
+    Route::get('auto-distributer-report', [ReportController::class, 'AutoDistributerReports'])->name('auto_distributer.report');
+    // // Export Auto Distributer...........................................................................................................
+    Route::get('auto-distributer-report/export', [ReportController::class, 'exportAutoDistributerReport'])->name('auto_distributer.report.export');
 
-    Route::get('/dashboard-calls', [DashboardController::class, 'index'])->name('calls.dashboard') ;
+
+
+    Route::get('auto-dailer/files', [AutoDailerFileController::class, 'index'])->name('autodailers.files.index');
+    Route::get('auto-dailer/files/{slug}', [AutoDailerFileController::class, 'show'])->name('autodailers.files.show');
+    Route::post('auto-dailer/upload-csv', [AutoDailerFileController::class, 'uploadCsv'])->name('autodailers.upload.csv');
+    Route::delete('/autodailer-file/{id}', [AutoDailerFileController::class, 'deleteFile'])->name('autodailer-file.delete');
+    // routes/web.php
+    Route::post('autodailers/files/{slug}/allow', [AutoDailerFileController::class, 'updateAllowStatus'])->name('autodailers.files.allow');
+    // Download Example csv.............................................................................................................
+    Route::get('/download-example-csv', [AutoDailerFileController::class, 'downloadExampleCsv'])->name('download.example.csv');
+
+
+
+
+
+
+
+
+
+
 
     // AutoDistributer..............................................................................................................
-    Route::resource('auto_distributerer_extensions', UserForAutoDistributer::class);
-    Route::get('auto-distributer-extensions/import', [UserForAutoDistributer::class, 'import'])->name('auto_distributerer_extensions.import');
-    Route::delete('auto-distributer-extensions/delete-all', [UserForAutoDistributer::class, 'destroyAllUsers'])->name('auto_distributerer_extensions.deleteAll');
+    // Route::resource('auto_distributerer_extensions', UserForAutoDistributer::class);
+    // Route::get('auto-distributer-extensions/import', [UserForAutoDistributer::class, 'import'])->name('auto_distributerer_extensions.import');
+    // Route::delete('auto-distributer-extensions/delete-all', [UserForAutoDistributer::class, 'destroyAllUsers'])->name('auto_distributerer_extensions.deleteAll');
 
 
-    Route::get('auto-distributer-extensions/{id}/show', [UserFeedController::class, 'show'])->name('auto_distributerer_extensions.show');
-    Route::post('auto-distributer-extensions/{id}/store', [UserFeedController::class, 'store'])->name('auto_distributerer_extensions.storeFeed');
-    Route::get('auto-distributer-extensions/{id}/createFeed', [UserFeedController::class, 'createFeed'])->name('auto_distributerer_extensions.createFeed');
-    Route::get('auto-distributer-extensions/{extensionId}/feed/{feedFileId}/view-data', [UserFeedController::class, 'viewFeedData'])->name('auto_distributer_extensions.viewFeedData');
+    // Route::get('auto-distributer-extensions/{id}/show', [UserFeedController::class, 'show'])->name('auto_distributerer_extensions.show');
+    // Route::post('auto-distributer-extensions/{id}/store', [UserFeedController::class, 'store'])->name('auto_distributerer_extensions.storeFeed');
+    // Route::get('auto-distributer-extensions/{id}/createFeed', [UserFeedController::class, 'createFeed'])->name('auto_distributerer_extensions.createFeed');
+    // Route::get('auto-distributer-extensions/{extensionId}/feed/{feedFileId}/view-data', [UserFeedController::class, 'viewFeedData'])->name('auto_distributer_extensions.viewFeedData');
 
-    // AutoDailer By Provider..........................................................................................................
+    // // AutoDailer By Provider..........................................................................................................
 
-    // Provider..........................................................................................................................
-    Route::get('/auto-dialer-providers', [ProviderForAutoDailerController::class, 'index'])->name('autoDialerProviders.index');
-    Route::get('/auto-dialer-providers/create', [ProviderForAutoDailerController::class, 'create'])->name('autoDialerProviders.create');
-    Route::post('/auto-dialer-providers', [ProviderForAutoDailerController::class, 'store'])->name('autoDialerProviders.store');
-    Route::get('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'show'])->name('autoDialerProvider.show');
-    Route::get('/auto-dialer-providers/{id}/edit', [ProviderForAutoDailerController::class, 'edit'])->name('autoDialerProviders.edit');
-    Route::put('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'update'])->name('autoDialerProviders.update');
-    Route::delete('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'destroy'])->name('autoDialerProviders.destroy');
-    // Provider................................................................................................................................
+    // // Provider..........................................................................................................................
+    // Route::get('/auto-dialer-providers', [ProviderForAutoDailerController::class, 'index'])->name('autoDialerProviders.index');
+    // Route::get('/auto-dialer-providers/create', [ProviderForAutoDailerController::class, 'create'])->name('autoDialerProviders.create');
+    // Route::post('/auto-dialer-providers', [ProviderForAutoDailerController::class, 'store'])->name('autoDialerProviders.store');
+    // Route::get('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'show'])->name('autoDialerProvider.show');
+    // Route::get('/auto-dialer-providers/{id}/edit', [ProviderForAutoDailerController::class, 'edit'])->name('autoDialerProviders.edit');
+    // Route::put('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'update'])->name('autoDialerProviders.update');
+    // Route::delete('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'destroy'])->name('autoDialerProviders.destroy');
+    // // Provider................................................................................................................................
 
+    // // Provider Feed....................................................................................................................
+    // Route::get('autoDialerProviders/{id}/createFeed', [ProviderFeedController::class, 'createFeed'])->name('autoDialerProviders.createFeed');
+    // Route::post('autoDialerProviders/{id}/storeFeed', [ProviderFeedController::class, 'storeFeed'])->name('autoDialerProviders.storeFeed');
+    // Route::get('autoDialerProviders/{id}', [ProviderFeedController::class, 'show'])->name('autoDialerProviders.show');
+    // // Route::get('autoDialercall', [ProviderForAutoDailerController::class, 'autoDailer'])->name('call');
     // Provider Feed....................................................................................................................
-    Route::get('autoDialerProviders/{id}/createFeed', [ProviderFeedController::class, 'createFeed'])->name('autoDialerProviders.createFeed');
-    Route::post('autoDialerProviders/{id}/storeFeed', [ProviderFeedController::class, 'storeFeed'])->name('autoDialerProviders.storeFeed');
-    Route::get('autoDialerProviders/{id}', [ProviderFeedController::class, 'show'])->name('autoDialerProviders.show');
-    // Route::get('autoDialercall', [ProviderForAutoDailerController::class, 'autoDailer'])->name('call');
-    // Provider Feed....................................................................................................................
 
 
 
-    // Dailer Calling..........................................................................................................................
-    Route::get('auto-dailer-call', [ApiController::class, 'autoDailer'])->name('autoDailer');
-    Route::get('auto-dailer-call-click', [ApiController::class, 'autoDailerByClick'])->name('auto_dailer.call.click');
-    // Distributer Calling.....................................................................................................................
-    Route::get('auto-distributer-call', [ApiController::class, 'autoDistributer']);
-    Route::get('auto-distributer-call-click', [ApiController::class, 'autoDistributerByClicking'])->name('auto_distributer.call.click');
-    // Acitvity Log Report....................................................................................................................
-    Route::get('report/user-activity-report', [ReportController::class, 'activityReport'])->name('users.activity.report');
-    // Auto Dailer Reports....................................................................................................................
-    Route::get('auto-dailer-report', [ReportController::class, 'AutoDailerReports'])->name('auto_dailer.report');
-    // Export Auto Dailer...........................................................................................................
-    Route::get('auto-dailer-report/export', [ReportController::class, 'exportAutoDailerReport'])->name('auto_dailer.report.export');
-    // Auto Distributer Reports....................................................................................................................
-    Route::get('auto-distributer-report', [ReportController::class, 'AutoDistributerReports'])->name('auto_distributer.report');
-    // Export Auto Distributer...........................................................................................................
-    Route::get('auto-distributer-report/export', [ReportController::class, 'exportAutoDistributerReport'])->name('auto_distributer.report.export');
+    // // Dailer Calling..........................................................................................................................
+    // Route::get('auto-dailer-call', [ApiController::class, 'autoDailer'])->name('autoDailer');
+    // Route::get('auto-dailer-call-click', [ApiController::class, 'autoDailerByClick'])->name('auto_dailer.call.click');
+    // // Distributer Calling.....................................................................................................................
+    // Route::get('auto-distributer-call', [ApiController::class, 'autoDistributer']);
+    // Route::get('auto-distributer-call-click', [ApiController::class, 'autoDistributerByClicking'])->name('auto_distributer.call.click');
+
 });
 
 
@@ -139,18 +162,18 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
     // Settings............................................................................................................................
-    Route::get('/settings', [SettingController::class, 'showForm'])->name('settings.form');
-    Route::post('/settings', [SettingController::class, 'saveSettings'])->name('settings.save');
-    // AutoDailers............................................................................................................................
-    Route::resource('autodailers', AutoDailerController::class);
-    Route::delete('/auto-dailers/delete-all', [AutoDailerController::class, 'deleteAllFiles'])->name('auto-dailers.deleteAll');
-    Route::get('/auto_dailer/{id}/download', [AutoDailerController::class, 'download'])->name('auto_dailer.download');
-    // AutoDistributers............................................................................................................................
-    Route::resource('autodistributers', AutoDirtibuterController::class);
-    Route::delete('/auto-distributers/delete-all', [AutoDirtibuterController::class, 'deleteAllFiles'])->name('auto-distributers.deleteAll');
-    Route::get('/auto_distributers/{id}/download', [AutoDirtibuterController::class, 'download'])->name('auto_distributers.download');
-    // Providers............................................................................................................................
-    Route::resource('providers', ProviderController::class);
+    // Route::get('/settings', [SettingController::class, 'showForm'])->name('settings.form');
+    // Route::post('/settings', [SettingController::class, 'saveSettings'])->name('settings.save');
+    // // AutoDailers............................................................................................................................
+    // Route::resource('autodailers', AutoDailerController::class);
+    // Route::delete('/auto-dailers/delete-all', [AutoDailerController::class, 'deleteAllFiles'])->name('auto-dailers.deleteAll');
+    // Route::get('/auto_dailer/{id}/download', [AutoDailerController::class, 'download'])->name('auto_dailer.download');
+    // // AutoDistributers............................................................................................................................
+    // Route::resource('autodistributers', AutoDirtibuterController::class);
+    // Route::delete('/auto-distributers/delete-all', [AutoDirtibuterController::class, 'deleteAllFiles'])->name('auto-distributers.deleteAll');
+    // Route::get('/auto_distributers/{id}/download', [AutoDirtibuterController::class, 'download'])->name('auto_distributers.download');
+    // // Providers............................................................................................................................
+    // Route::resource('providers', ProviderController::class);
 });
 
 require __DIR__ . '/auth.php';

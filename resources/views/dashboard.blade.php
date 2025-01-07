@@ -24,7 +24,7 @@
         data: {
             labels: ['AutoDistributorCalls', 'AutoDialerCalls'], // Categories for the bars
             datasets: [{
-                label: 'Number of Calls',
+                label: 'Number of Calls ' ,
                 data: [{{ $autoDistributorCalls }}, {{ $autoDialerCalls }}], // The data passed from the controller
                 backgroundColor: ['rgba(75, 192, 192, 0.2)', 'rgba(255, 99, 132, 0.2)'],
                 borderColor: ['rgba(75, 192, 192, 1)', 'rgba(255, 99, 132, 1)'],
