@@ -36,8 +36,9 @@
                                 @csrf
                                 @method('DELETE')
                                 <button type="submit" class="btn btn-danger btn-sm"
-                                    onclick="confirmDelete(this)">Delete</button>
+                                    onclick="confirmDelete(event, this.closest('form'))">Delete</button>
                             </form>
+
                             <!-- Reset Password Button with SweetAlert -->
                             <a href="javascript:void(0);"
                                 onclick="resetPassword({{ $user->id }}, '{{ $user->name }}')"
@@ -103,6 +104,32 @@
                         });
                 },
                 allowOutsideClick: () => !Swal.isLoading() // Close popup when not loading
+            });
+        }
+
+
+
+
+
+
+        function confirmDelete(event, form) {
+            // Prevent the form from submitting immediately
+            event.preventDefault();
+
+            // SweetAlert2 confirmation dialog
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this action!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'No, cancel!',
+                reverseButtons: true
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // If confirmed, submit the form
+                    form.submit();
+                }
             });
         }
     </script>
