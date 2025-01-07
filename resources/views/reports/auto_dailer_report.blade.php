@@ -257,7 +257,7 @@
                             <tr>
                                 <th>#</th>
                                 <th>Mobile</th>
-                                <th>User</th>
+                                <th>Provider</th>
                                 <th>Extension</th>
                                 <th>State</th>
                                 <th>Called At - Day</th>
