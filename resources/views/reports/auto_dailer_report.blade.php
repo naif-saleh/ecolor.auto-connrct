@@ -132,6 +132,24 @@
         .card .text-warning {
             color: #ffc107;
         }
+
+        /* Flexbox for the first row */
+        .filter-buttons {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .filter-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+
+        /* Styling for the form buttons and filters */
+        .filter-buttons .btn, .filter-form .form-modern, .filter-form button {
+            margin: 5px;
+        }
     </style>
 @endsection
 @section('content')
@@ -152,28 +170,21 @@
         <div class="text-center mb-5">
             <h2 class="fw-bold text-primary">Auto Dailer Report</h2>
             <p class="text-muted">View and manage detailed reports on call activity.</p>
-            {{-- <div class="text-md-start">
-                <a href="{{ route('auto_dailer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to')]) }}"
-                    class="btn btn-soft-primary">
-                    <i class="fas fa-file-export me-2"></i> Export as CSV
-                </a>
-            </div> --}}
         </div>
 
         <!-- Filters Section -->
-        <div class="d-flex justify-content-between align-items-center mb-4">
-            <!-- Export Button -->
-            <div>
-                <a href="{{ route('auto_dailer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to')]) }} "
+        <div class="mb-4">
+            <!-- First Line: Export and Filter Buttons -->
+            <div class="filter-buttons">
+                <!-- Export Button -->
+                <a href="{{ route('auto_dailer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to')]) }}"
                     class="btn btn-modern-export" id="download-csv-button">
                     <i class="fas fa-file-export me-2"></i> Export as CSV
                 </a>
-            </div>
 
-            <!-- Filters Form -->
-            <form method="GET" action="{{ url('auto-dailer-report') }}" class="d-flex align-items-center gap-2 flex-wrap">
-                <!-- State Filters -->
-                <a href="{{ url('auto-dailer-report') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
+                <!-- State Filters (All, Answered, No Answer, Today) -->
+                <a href="{{ url('auto-dailer-report') }}"
+                    class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
                     <i class="fas fa-list me-1"></i> All
                 </a>
                 <a href="{{ url('auto-dailer-report?filter=answered') }}"
@@ -188,7 +199,10 @@
                     class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}">
                     <i class="fas fa-calendar-day me-1"></i> Today
                 </a>
+            </div>
 
+            <!-- Second Line: Filters Form -->
+            <form method="GET" action="{{ url('auto-dailer-report') }}" class="filter-form">
                 <!-- Extension Inputs -->
                 <input type="number" name="extension_from" class="form-modern" placeholder="Extension From"
                     value="{{ request('extension_from') }}">
@@ -218,7 +232,6 @@
                 </button>
             </form>
         </div>
-
 
         <!-- Statistics -->
         <div class="row mb-5 text-center justify-content-center">
@@ -252,7 +265,6 @@
                 </div>
             </div>
         </div>
-
 
         <!-- Report Table -->
         <div class="card shadow-sm border-0 rounded">
@@ -302,18 +314,18 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="text-center text-muted">No records found.</td>
+                                    <td colspan="7">No reports found for the given filter.</td>
                                 </tr>
                             @endforelse
                         </tbody>
                     </table>
                 </div>
-
-                <!-- Pagination -->
-                <div class="d-flex justify-content-center mt-3">
-                    {{ $reports->appends(request()->query())->links('pagination::bootstrap-5') }}
-                </div>
             </div>
+        </div>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-center">
+            {!! $reports->links() !!}
         </div>
     </div>
 @endsection
