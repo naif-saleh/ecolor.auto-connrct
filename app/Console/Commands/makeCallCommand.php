@@ -59,7 +59,7 @@ class makeCallCommand extends Command
 
         //  Make Call For Providers
         foreach ($autoDailerFiles as $feed) {
-            $ext_from = $feed->extension;
+            // $ext_from = $feed->extension;
             $now = Carbon::now();
 
             // Parse the date and time from the data
@@ -90,11 +90,11 @@ class makeCallCommand extends Command
                     $loop = 0;
                     foreach ($providerFeeds as $mobile) {
                         Log::info('Mobile ' . $mobile->mobile . ' in loop ' . $loop);
-
+                        $ext = $mobile->extension;
                         try {
                             $responseState = Http::withHeaders([
                                 'Authorization' => 'Bearer ' . $token,
-                            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/makecall", [
+                            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
                                 'destination' => $mobile->mobile,
                             ]);
 
