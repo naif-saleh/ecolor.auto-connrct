@@ -206,6 +206,12 @@
                     @endforeach
                 </select>
 
+                <!-- Date Filters -->
+                <input type="date" name="date_from" class="form-modern" placeholder="From Date"
+                    value="{{ request('date_from') }}">
+                <input type="date" name="date_to" class="form-modern" placeholder="To Date"
+                    value="{{ request('date_to') }}">
+
                 <!-- Apply Button -->
                 <button type="submit" class="btn btn-modern-apply">
                     <i class="fas fa-filter me-2"></i> Apply

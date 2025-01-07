@@ -24,7 +24,7 @@
             </div>
 
             <!-- Example CSV Download Link -->
-            <a href="/example.csv" class="btn btn-info">Example CSV Structure</a>
+            <a href="/example.csv" class="btn btn-info" download="example.csv">Example CSV Structure</a>
         </form>
 
 

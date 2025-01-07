@@ -37,7 +37,7 @@
                             <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete(this)">Delete</button>
                         </form>
                          <!-- Reset Password Button with SweetAlert -->
-                         <a href="javascript:void(0);" onclick="resetPassword({{ $user->id }}, '{{ $user->name }}')" class="btn btn-warning btn-sm">Reset Password</a>
+                         <a href="javascript:void(0);" onclick="resetPassword({{ $user->id }}, '{{ $user->name }}')" class="btn btn-secondary btn-sm">Reset Password</a>
                     </td>
                 </tr>
             @endforeach
@@ -66,7 +66,7 @@
         cancelButtonText: 'Cancel',
         showLoaderOnConfirm: true,
         customClass: {
-            confirmButton: 'btn btn-success'  
+            confirmButton: 'btn btn-success'
         },
         preConfirm: (newPassword) => {
             if (!newPassword || newPassword.length < 8) {

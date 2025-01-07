@@ -13,7 +13,13 @@
     {{-- Sweet Alert --}}
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons/font/bootstrap-icons.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+
+
     @yield('style')
     <style>
         body {
@@ -48,34 +54,24 @@
                     aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
                     <span class="navbar-toggler-icon"></span>
                 </button>
+
                 @if (Auth::check() && (Auth::user()->isSuperUser() || Auth::user()->isAdmin()))
                     <div class="collapse navbar-collapse" id="navbarNav">
 
                         <ul class="navbar-nav me-auto mb-2 mb-lg-0"> <!-- Left-aligned links -->
-                            {{-- <li class="nav-item">
-                            <a class="nav-link active" aria-current="page" href="/">Home</a>
-                        </li> --}}
-                            {{-- <li class="nav-item">
-                            <a class="nav-link" href="{{ route('settings.form') }}">Settings</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('autodailers.index') }}">Auto Dailer</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('autodistributers.index') }}">Auto Distributer</a>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('providers.index') }}">Providers</a>
-                        </li> --}}
-                             <li class="nav-item">
-                            <a class="nav-link" href="{{route('calls.dashboard')}}">Dashboard</a>
-                        </li>
+
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('manager.dashboard') }}">Manager</a>
+                            </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('autodailers.files.index') }}">Auto Dailer</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href=" ">Auto
                                     Distributer</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('users.index') }}">Users</a>
                             </li>
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button"
@@ -97,14 +93,45 @@
                                     </li>
                                 </ul>
                             </li>
+                        </ul>
+
+                            @elseif (Auth::check() && (Auth::user()->isManagerUser()))
+                            <ul class="navbar-nav me-auto mb-2 mb-lg-0"> <!-- Left-aligned links -->
+
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('manager.dashboard') }}">Manager Statistics</a>
+                                </li>
+
+                                <li class="nav-item dropdown">
+                                    <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button"
+                                        data-bs-toggle="dropdown" aria-expanded="false">
+                                        Reports
+                                    </a>
+                                    <ul class="dropdown-menu" aria-labelledby="activityDropdown">
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('users.activity.report') }}">User
+                                                Activity</a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('auto_dailer.report') }}">Auto
+                                                Dailer</a>
+                                        </li>
+                                        <li>
+                                            <a class="dropdown-item" href="{{ route('auto_distributer.report') }}">Auto
+                                                Distributer</a>
+                                        </li>
+                                    </ul>
+                                </li>
+
+
                 @endif
 
-                @if (Auth::check() && Auth::user()->isSuperUser())
+                {{-- @if (Auth::check() && Auth::user()->isSuperUser())
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('users.index') }}">Users</a>
                     </li>
                     </ul>
-                @endif
+                @endif --}}
 
                 <ul class="navbar-nav ms-auto"> <!-- Right-aligned login/logout links -->
                     @if (Auth::check())
@@ -173,12 +200,6 @@
         });
     </script> --}}
     <script>
-
-
-
-
-
-
         // Delete Alert...................................................................................................
         function confirmDelete(extensionId) {
             Swal.fire({
