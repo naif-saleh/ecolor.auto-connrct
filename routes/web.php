@@ -24,7 +24,7 @@ Route::get('/', function () {
 
         // Check if the user is a SuperUser or Admin
         if ($user->isSuperUser() || $user->isAdmin()) {
-            return redirect('/auto-dailer/files');
+            return redirect('/manager/dashboard');
         }
 
         // Check if the user is a Manager
