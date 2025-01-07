@@ -22,8 +22,9 @@
                                     <tr>
                                         <th scope="col">Username</th>
                                         <th scope="col">Operation</th>
-                                        <th scope="col">File Type</th>
-                                        <th scope="col">File Name</th>
+                                        <th scope="col">User Role</th>
+                                        <th scope="col">User Name</th>
+                                        <th scope="col">User Email</th>
                                         <th scope="col">Time</th>
                                         <th scope="col">Date</th>
                                     </tr>
@@ -35,15 +36,16 @@
                                             <td>
                                                 <span
                                                     class="badge
-                                            @if ($log->operation == 'create') bg-success
-                                            @elseif($log->operation == 'update') bg-warning
-                                            @elseif($log->operation == 'delete') bg-danger
+                                            @if ($log->opreation == 'add') bg-success
+                                            @elseif($log->opreation == 'update') bg-warning
+                                            @elseif($log->opreation == 'delete') bg-danger
                                             @else bg-secondary @endif">
-                                                    {{ ucfirst($log->operation) }}
+                                                    {{ ucfirst($log->opreation) }}
                                                 </span>
                                             </td>
-                                            <td>{{ $log->file_type }}</td>
-                                            <td>{{ $log->file_name }}</td>
+                                            <td>{{ $log->user_role }}</td>
+                                            <td>{{ $log->user_name }}</td>
+                                            <td>{{ $log->user_email }}</td>
                                             {{-- <td>{{ $log->operation_time }}</td> --}}
                                             <td>{{ $log->created_at->addHours(3)->format('H:i:s') }}</td>
                                             <td>{{ $log->created_at->addHours(3)->format('Y-m-d') }}</td>

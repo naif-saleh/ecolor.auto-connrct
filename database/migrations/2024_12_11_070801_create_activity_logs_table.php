@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->string('operation');
+            $table->string('file_id')->nullable();
             $table->string('file_type');
             $table->string('file_name')->nullable();
             $table->timestamp('operation_time')->useCurrent();

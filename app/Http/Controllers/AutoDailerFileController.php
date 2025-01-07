@@ -7,6 +7,7 @@ use App\Models\AutoDailerUploadedData;
 use App\Models\AutoDailerFile;
 use Illuminate\Support\Facades\Auth;
 use Carbon\Carbon;
+use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
@@ -25,6 +26,17 @@ class AutoDailerFileController extends Controller
         $uploadedFile = AutoDailerFile::create([
             'file_name' => $fileName,
             'uploaded_by' => Auth::id(),
+        ]);
+
+
+         // Active Log Report...............................
+         ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => 'import File',
+            'file_id' => $uploadedFile->id,
+            'file_type' => 'Auto-Dailer',
+            'file_name' => $uploadedFile->file_name,
+            'operation_time' => now(),
         ]);
 
         $path = $file->getRealPath();
@@ -83,6 +95,16 @@ class AutoDailerFileController extends Controller
         $file->allow = $request->has('allow') ? (bool) $request->allow : false; // Ensure that allow is properly set as a boolean
         $file->save();
 
+        // Active Log Report...............................
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => $file->allow ? 'Active' : "Inactive",
+            'file_id' => $file->id,
+            'file_type' => 'Auto-Dailer',
+            'file_name' => $file->file_name,
+            'operation_time' => now(),
+        ]);
+
         return redirect('/auto-dailer/files');
     }
 
@@ -125,6 +147,15 @@ class AutoDailerFileController extends Controller
         // Delete the record from the database
         $file->delete();
 
+          // Active Log Report...............................
+          ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => 'delete',
+            'file_id' => $file->id,
+            'file_type' => 'Auto-Dailer',
+            'file_name' => $file->file_name,
+            'operation_time' => now(),
+        ]);
         return redirect()->route('autodailers.files.index')->with('success', 'File deleted successfully.');
     }
 

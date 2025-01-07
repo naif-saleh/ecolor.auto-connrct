@@ -1,5 +1,6 @@
 <?php
 
+use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\SettingController;
@@ -18,10 +19,20 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AutoDailerFileController;
 
 Route::get('/', function () {
-    if (auth()->check()) {
-        // If the user is authenticated, redirect to the desired route
-        return redirect('/auto-dailer/files');
+    if (Auth::check()) {
+        $user = Auth::user();
+
+        // Check if the user is a SuperUser or Admin
+        if ($user->isSuperUser() || $user->isAdmin()) {
+            return redirect('/auto-dailer/files');
+        }
+
+        // Check if the user is a Manager
+        if ($user->isManagerUser()) {
+            return redirect('/manager/dashboard');
+        }
     }
+
     return view('auth.login');
 });
 
@@ -76,8 +87,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // // Dashboard Statistics....................................................................................................................
     Route::get('/dashboard-calls', [DashboardController::class, 'index'])->name('calls.dashboard');
-    // // Acitvity Log Report....................................................................................................................
-    Route::get('report/user-activity-report', [ReportController::class, 'activityReport'])->name('users.activity.report');
+    // // Acitvity System Log Report....................................................................................................................
+    Route::get('report/system-log-report', [ReportController::class, 'activityReport'])->name('system.activity.report');
+    // // Acitvity User Log Report....................................................................................................................
+    Route::get('report/user-log-report', [ReportController::class, 'UserActivityReport'])->name('users.activity.report');
     // // Auto Dailer Reports....................................................................................................................
     Route::get('auto-dailer-report', [ReportController::class, 'AutoDailerReports'])->name('auto_dailer.report');
     // // Export Auto Dailer...........................................................................................................

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ActivityLog;
+use App\Models\UserActivityLog;
 use App\Models\AutoDailerReport;
 use App\Models\AutoDistributerReport;
 use Symfony\Component\HttpFoundation\StreamedResponse;
@@ -18,6 +19,15 @@ class ReportController extends Controller
             ->paginate(100);
 
         return view('reports.user_activity_report', compact('logs'));
+    }
+
+    public function UserActivityReport()
+    {
+        $logs = UserActivityLog::with('user:id,name')
+            ->orderBy('created_at', 'desc')
+            ->paginate(100);
+
+        return view('reports.user_logs', compact('logs'));
     }
 
 

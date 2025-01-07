@@ -46,7 +46,7 @@
     <div class="container py-5">
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" href="#">
+                <a class="navbar-brand fw-bold" href="/manager/dashboard">
                     <img src="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
                         width="40" alt="">
                 </a>
@@ -79,10 +79,7 @@
                                     Reports
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="activityDropdown">
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('users.activity.report') }}">User
-                                            Activity</a>
-                                    </li>
+
                                     <li>
                                         <a class="dropdown-item" href="{{ route('auto_dailer.report') }}">Auto
                                             Dailer</a>
@@ -90,6 +87,22 @@
                                     <li>
                                         <a class="dropdown-item" href="{{ route('auto_distributer.report') }}">Auto
                                             Distributer</a>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li class="nav-item dropdown">
+                                <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button"
+                                    data-bs-toggle="dropdown" aria-expanded="false">
+                                    Activity Logs
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="activityDropdown">
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('system.activity.report') }}">System Logs
+                                            Activity</a>
+                                    </li>
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('users.activity.report') }}">User Logs
+                                            Activity</a>
                                     </li>
                                 </ul>
                             </li>
