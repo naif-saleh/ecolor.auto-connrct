@@ -12,4 +12,8 @@ class AutoDailerUploadedData extends Model
     public function file(){
         return $this->belongsTo(AutoDailerFile::class, 'file_id');
     }
+
+    public function report(){
+        return $this->belongsTo(AutoDailerReport::class, 'call_id');
+    }
 }
