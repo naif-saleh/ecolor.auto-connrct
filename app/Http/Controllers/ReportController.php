@@ -118,7 +118,7 @@ class ReportController extends Controller
             'no answer' => ['no answer', 'Dialing'],
         ];
 
-        $query = AutoDistributerReport::query();
+        $query = AutoDailerReport::query();
 
         if ($filter === 'today') {
             $query->whereDate('created_at', now()->toDateString());
