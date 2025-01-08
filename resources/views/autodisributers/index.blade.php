@@ -6,7 +6,7 @@
 
         <!-- Upload Button -->
         <form action="{{ route('distributor.upload.csv') }}" method="POST" enctype="multipart/form-data"
-            class="mb-2 d-flex justify-content-between">
+            class="mb-2 d-flex justify-content-between" id="uploadForm">
             @csrf
             <div>
                 <!-- Hidden File Input -->
@@ -19,10 +19,10 @@
                     </label>
                 @endif
 
-
-               @if ($threeCxUsers->count() === 0)
-               <a href="{{route('distributor.import.users')}}" class="btn btn-warning">import users</a>
-               @endif
+                @if ($threeCxUsers->count() === 0)
+                    <a href="{{ route('distributor.import.users') }}" class="btn btn-warning" id="importUsersButton">Import
+                        Users</a>
+                @endif
 
                 <!-- Upload Button (Initially Hidden) -->
                 <button type="submit" id="uploadLink" class="btn btn-success" style="display: none;">
@@ -86,7 +86,7 @@
                                     <!-- View and Delete Buttons (moved to end) -->
                                     <div>
                                         <a href="{{ route('distributor.download.processed.file', $file->id) }}"
-                                            class="btn btn-sm bg-primary mx-1">
+                                            class="btn btn-sm bg-primary mx-1" id="downloadLink{{ $file->id }}">
                                             <i class="bi bi-download"></i>
                                         </a>
 
@@ -97,10 +97,12 @@
                                         </a>
 
                                         <!-- Delete Button -->
-                                        <form action="{{ route('distributor.delete', $file->slug) }}" method="POST" style="display: inline;" id="deleteForm{{ $file->id }}">
+                                        <form action="{{ route('distributor.delete', $file->slug) }}" method="POST"
+                                            style="display: inline;" id="deleteForm{{ $file->id }}">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="button" class="btn btn-danger btn-sm mx-1" title="Delete File" onclick="confirmDeleteAction('{{ $file->id }}')">
+                                            <button type="button" class="btn btn-danger btn-sm mx-1" title="Delete File"
+                                                onclick="confirmDeleteAction('{{ $file->id }}')">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
@@ -147,22 +149,87 @@
         });
 
 
-        // Delete Confirm
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            Swal.fire({
+                title: 'Uploading...',
+                text: 'Please wait while your file is being uploaded.',
+                icon: 'info',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+        });
+
+        // Show the upload button when a file is selected
+        document.getElementById('uploadButton').addEventListener('change', function() {
+            document.getElementById('uploadLink').style.display = 'inline-block';
+        });
+
+        // Delete Confirm..........................................................................
         function confirmDeleteAction(fileId) {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: "This action cannot be undone!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Submit the form if the user confirms
-                document.getElementById('deleteForm' + fileId).submit();
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "This action cannot be undone!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Submit the form if the user confirms
+                    document.getElementById('deleteForm' + fileId).submit();
+                }
+            });
+        }
+
+
+        // Import users Loading...............................................................................
+        document.getElementById('importUsersButton').addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent immediate navigation
+
+            Swal.fire({
+                title: 'Please wait...',
+                text: 'Importing users. This might take a few moments.',
+                icon: 'info',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                    window.location.href =
+                        "{{ route('distributor.import.users') }}"; // Redirect after showing the loader
+                }
+            });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const downloadLink = document.getElementById('downloadLink{{ $file->id }}');
+
+            if (downloadLink) {
+                downloadLink.addEventListener('click', function(event) {
+                    event.preventDefault();
+
+                    Swal.fire({
+                        title: 'Processing...',
+                        text: 'Your file is being prepared for download.',
+                        icon: 'info',
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        didOpen: () => {
+                            Swal.showLoading();
+
+                            // Simulate a slight delay to ensure the loading screen is visible
+                            setTimeout(() => {
+                                window.location.href = downloadLink.href;
+                            }, 500); // Adjust the delay as needed
+                        }
+                    });
+                });
             }
         });
-    }
+
+
+        
     </script>
 @endsection

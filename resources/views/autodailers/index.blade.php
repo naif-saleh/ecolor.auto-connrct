@@ -6,7 +6,7 @@
 
         <!-- Upload Button -->
         <form action="{{ route('autodailers.upload.csv') }}" method="POST" enctype="multipart/form-data"
-            class="mb-2 d-flex justify-content-between">
+            class="mb-2 d-flex justify-content-between" id="uploadForm">
             @csrf
             <div>
                 <!-- Hidden File Input -->
@@ -26,7 +26,6 @@
             <!-- Example CSV Download Link -->
             <a href="/example.csv" class="btn btn-info" download="example.csv">Example CSV Structure</a>
         </form>
-
 
 
         <div class="table-responsive shadow-sm rounded">
@@ -130,6 +129,20 @@
         const uploadButton = document.getElementById('uploadButton');
         const uploadLink = document.getElementById('uploadLink');
 
+    // Show SweetAlert loading when form is submitted
+    document.getElementById('uploadForm').addEventListener('submit', function(event) {
+        Swal.fire({
+            title: 'Uploading...',
+            text: 'Please wait while your file is being uploaded.',
+            icon: 'info',
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            didOpen: () => {
+                Swal.showLoading();
+            }
+        });
+    });
+
         // Listen for changes in the file input
         uploadButton.addEventListener('change', function() {
             // If a file is selected, show the upload button
@@ -143,20 +156,20 @@
 
         // Delete Confirm
         function confirmDeleteAction(fileId) {
-        Swal.fire({
-            title: 'Are you sure?',
-            text: "You won't be able to revert this!",
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, delete it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                // Submit the form
-                document.getElementById('deleteForm' + fileId).submit();
-            }
-        });
-    }
+            Swal.fire({
+                title: 'Are you sure?',
+                text: "You won't be able to revert this!",
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, delete it!'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Submit the form
+                    document.getElementById('deleteForm' + fileId).submit();
+                }
+            });
+        }
     </script>
 @endsection

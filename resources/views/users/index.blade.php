@@ -113,22 +113,20 @@
 
 
         function confirmDelete(event, form) {
-            // Prevent the form from submitting immediately
-            event.preventDefault();
+            event.preventDefault(); // Prevent the form from being submitted immediately
 
-            // SweetAlert2 confirmation dialog
             Swal.fire({
                 title: 'Are you sure?',
-                text: "You won't be able to revert this action!",
+                text: 'This action cannot be undone.',
                 icon: 'warning',
                 showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#3085d6',
                 confirmButtonText: 'Yes, delete it!',
-                cancelButtonText: 'No, cancel!',
-                reverseButtons: true
+                cancelButtonText: 'No, cancel!'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    // If confirmed, submit the form
-                    form.submit();
+                    form.submit(); // Submit the form if the user confirmed the deletion
                 }
             });
         }
