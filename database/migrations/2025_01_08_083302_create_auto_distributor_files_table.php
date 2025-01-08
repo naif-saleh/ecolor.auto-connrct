@@ -11,7 +11,7 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('auto_dailer_files', function (Blueprint $table) {
+        Schema::create('auto_distributor_files', function (Blueprint $table) {
             $table->id();
             $table->string('file_name');
             $table->boolean('allow')->default(false);
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('auto_dailer_files');
+        Schema::dropIfExists('auto_distributor_files');
     }
 };

@@ -17,6 +17,7 @@ use App\Http\Controllers\AutoDistributerByUser\UserForAutoDistributer;
 use App\Http\Controllers\AutoDistributerByUser\UserFeedController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AutoDailerFileController;
+use App\Http\Controllers\AutoDistributorFileController;
 
 Route::get('/', function () {
     if (Auth::check()) {
@@ -101,12 +102,14 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('auto-distributer-report/export', [ReportController::class, 'exportAutoDistributerReport'])->name('auto_distributer.report.export');
 
 
-
+    // AutoDailer..........................................................................................................................
     Route::get('auto-dailer/files', [AutoDailerFileController::class, 'index'])->name('autodailers.files.index');
     Route::get('auto-dailer/files/{slug}', [AutoDailerFileController::class, 'show'])->name('autodailers.files.show');
     Route::post('auto-dailer/upload-csv', [AutoDailerFileController::class, 'uploadCsv'])->name('autodailers.upload.csv');
-    Route::delete('/autodailer-file/{id}', [AutoDailerFileController::class, 'deleteFile'])->name('autodailer-file.delete');
-    // routes/web.php
+    Route::delete('/autodailer-file/{id}', [AutoDailerFileController::class, 'deleteFile'])->name('autodailer.delete');
+    // download File....................................................................................................................
+    Route::get('auto-dailer/download-processed-file/{fileId}', [AutoDailerFileController::class, 'downloadUploadedFile'])->name('autodailers.download.processed.files');
+    // Update value if file done or not.................................................................................................
     Route::post('autodailers/files/{slug}/allow', [AutoDailerFileController::class, 'updateAllowStatus'])->name('autodailers.files.allow');
     // Download Example csv.............................................................................................................
     Route::get('/download-example-csv', [AutoDailerFileController::class, 'downloadExampleCsv'])->name('download.example.csv');
@@ -115,6 +118,21 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 
 
+    // AutoDistributor..........................................................................................................................
+    Route::get('auto-distributor/files', [AutoDistributorFileController::class, 'index'])->name('distributor.files.index');
+    Route::get('auto-distributor/files/{slug}', [AutoDistributorFileController::class, 'show'])->name('distributor.files.show');
+    Route::post('auto-distributor/upload-csv', [AutoDistributorFileController::class, 'uploadCsv'])->name('distributor.upload.csv');
+    Route::delete('auto-distributor-file/{id}', [AutoDistributorFileController::class, 'deleteFile'])->name('distributor.delete');
+    Route::get('/download-processed-file/{fileId}', [AutoDistributorFileController::class, 'downloadUploadedFile'])->name('distributor.download.processed.file');
+    // Update value if file done or not.................................................................................................
+    Route::post('auto-distributor/files/{slug}/allow', [AutoDistributorFileController::class, 'updateAllowStatus'])->name('distributor.files.allow');
+    // Download Example csv.............................................................................................................
+    Route::get('/download-example-csv', [AutoDistributorFileController::class, 'downloadExampleCsv'])->name('download.example.csv');
+    // Import All Users...................................................................................................................
+    Route::get('auto-distributor/import-users', [AutoDistributorFileController::class, 'importAllUsers'])->name('distributor.import.users');
+
+    // //    Manager Dashboard........................................................................................................
+    // Route::get('manager/dashboard', [DashboardController::class, 'getCallManagerStatisticsAutoDailer'])->name('manager.dashboard');
 
 
 

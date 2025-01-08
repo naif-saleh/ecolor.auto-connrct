@@ -5,12 +5,10 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use App\Models\AutoDistributerFeedFile;
+use App\Models\AutoDistributorUploadedData;
 use App\Models\AutoDistributerReport;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
-use App\Models\AutoDistributerExtensionFeed;
-use phpDocumentor\Reflection\PseudoTypes\True_;
 
 use App\Services\TokenService;
 
@@ -43,82 +41,90 @@ class MakeUserParticipantCommand extends Command
     public function handle()
     {
         Log::info('participantsCommand executed at ' . now());
-        $now = Carbon::now();
-       // $token = Cache::get('three_cx_token');
-       $token = $this->tokenService->getToken();
-       if (!$token) {
-            Log::error('3CX token not found in cache');
-            return;
-        }
 
-        $providersFeeds = AutoDistributerFeedFile::whereDate('created_at', Carbon::today())->get();
+        // $token = Cache::get('three_cx_token');
+        $token = $this->tokenService->getToken();
+         Log::error("participantsCommand token " . $token );
 
-        foreach ($providersFeeds as $feed) {
-            $ext_from = $feed->extension;
+         if (!$token) {
+             Log::error('3CX token not found in cache');
+             return;
+         }
 
-            try {
-                // Fetch participants for the extension
-                $responseState = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $token,
-                ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
+         $providersFeeds = AutoDistributorUploadedData::whereDate('created_at', Carbon::today())->get();
 
-                if (!$responseState->successful()) {
-                    Log::error("Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
-                    continue;
-                }
+         foreach ($providersFeeds as $feed) {
+             $ext_from = $feed->extension;
 
-                $participants = $responseState->json();
+             try {
+                 // Fetch participants for the extension
+                 $responseState = Http::withHeaders([
+                     'Authorization' => 'Bearer ' . $token,
+                 ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
 
-                if (empty($participants)) {
-                    Log::warning("No participants data for extension {$ext_from}");
-                    continue;
-                }
-
-                foreach ($participants as $participant_data) {
-                    try {
-                        Log::debug("Processing participant data: " . print_r($participant_data, true));
-
-                        $filter = "contains(Caller, '{$participant_data['dn']}')";
-                        $url = "https://ecolor.3cx.agency/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
-
-                        $activeCallsResponse = Http::withHeaders([
-                            'Authorization' => 'Bearer ' . $token,
-                        ])->get($url);
-
-                        if ($activeCallsResponse->successful()) {
-                            $activeCalls = $activeCallsResponse->json();
-                            Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
+                 if (!$responseState->successful()) {
+                     Log::error("participantsCommand Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
+                     Log::info('participantsCommand:  Response Status Code: ' . $responseState->status());
+                     Log::info('participantsCommand:  Full Response: ' . print_r($responseState, TRUE));
+                     Log::info('participantsCommand: Headers: ' . json_encode($responseState->headers()));
 
 
-                                // Iterate through all active calls to find matching callId
-                                foreach ($activeCalls['value'] as $call) {
-                                    // Check if the call contains the required information
-                                    Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
-                                    if (isset($call['Id']) && isset($call['Status'])) {
-                                        // Log the status to track each call's behavior
-                                        Log::info("Processing Call ID {$call['Id']} with status {$call['Status']}");
+                     continue;
+                 }
 
-                                        // Check if the call is in progress
-                                        if ($call['Status'] === "Talking") { // Routing When Ringing
-                                            AutoDistributerReport::where('call_id', $call['Id'])->update(['status' => "Wexternalline"]);
-                                            Log::info("Updated status for call ID {$call['Id']} to 'Wexternalline'.");
-                                        }
-                                    } else {
-                                        Log::warning("Call missing 'Id' or 'Status' for participant DN {$participant_data['dn']}. Call Data: " . print_r($call, true));
-                                    }
-                                }
-                             
-                        } else {
-                            Log::error('Failed to fetch active calls. Response: ' . $activeCallsResponse->body());
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Failed to process participant data for call ID ' . ($participant_data['callid'] ?? 'N/A') . ': ' . $e->getMessage());
-                    }
-                }
-            } catch (\Exception $e) {
-                Log::error("Error fetching participants for provider {$ext_from}: " . $e->getMessage());
-            }
-        }
+                 $participants = $responseState->json();
+
+                 if (empty($participants)) {
+                     Log::warning("No participants data for extension {$ext_from}");
+                     continue;
+                 }
+
+                 foreach ($participants as $participant_data) {
+                     try {
+                         // Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));
+
+                         $filter = "contains(Caller, '{$participant_data['dn']}')";
+                         $url = "https://ecolor.3cx.agency/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+
+                         $activeCallsResponse = Http::withHeaders([
+                             'Authorization' => 'Bearer ' . $token,
+                         ])->get($url);
+
+                         if ($activeCallsResponse->successful()) {
+                             // Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));
+                             $activeCalls = $activeCallsResponse->json();
+                             //Log::debug("Active Calls: " . print_r($participant_data, true));
+                             Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
+
+
+                             // Iterate through all active calls to find matching callId
+                             foreach ($activeCalls['value'] as $call) {
+                                 // Check if the call contains the required information
+                                // Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
+                                 if (isset($call['Id']) && isset($call['Status'])) {
+                                     // Log the status to track each call's behavior
+                                     Log::info("Processing Call ID {$call['Id']} with status {$call['Status']}");
+
+                                     // Check if the call is in progress
+                                     if ($call['Status'] === "Talking") { // Routing When Ringing
+                                        AutoDistributerReport::where('call_id', $call['Id'])->update(['status' => $call['Status']]);
+                                         Log::info("Updated status for call ID {$call['Id']} to ".$call['Status']);
+                                     }
+                                 } else {
+                                     Log::warning("Call missing 'Id' or 'Status' for participant DN {$participant_data['dn']}. Call Data: " . print_r($call, true));
+                                 }
+                             }
+                         } else {
+                             Log::error('Failed to fetch active calls. Response: ' . $activeCallsResponse->body());
+                         }
+                     } catch (\Exception $e) {
+                         Log::error('Failed to process participant data for call ID ' . ($participant_data['callid'] ?? 'N/A') . ': ' . $e->getMessage());
+                     }
+                 }
+             } catch (\Exception $e) {
+                 Log::error("Error fetching participants for provider {$ext_from}: " . $e->getMessage());
+             }
+         }
     }
 
     /**

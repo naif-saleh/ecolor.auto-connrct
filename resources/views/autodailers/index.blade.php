@@ -76,19 +76,25 @@
 
                                     <!-- View and Delete Buttons (moved to end) -->
                                     <div>
+                                        <a href="{{ url('auto-dailer/download-processed-file', $file->id) }}"
+                                            class="btn btn-sm bg-primary mx-1">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+
+
                                         <!-- View Button -->
                                         <a href="{{ route('autodailers.files.show', $file->slug) }}"
-                                            class="btn btn-primary btn-sm mx-1" title="View File">
+                                            class="btn btn-info btn-sm mx-1" title="View File">
                                             <i class="bi bi-eye"></i>
                                         </a>
 
                                         <!-- Delete Button -->
-                                        <form action="{{ route('autodailer-file.delete', $file->slug) }}" method="POST"
+                                        <form action="{{ route('autodailer.delete', $file->slug) }}" method="POST"
                                             style="display: inline;" id="deleteForm{{ $file->id }}">
                                             @csrf
                                             @method('DELETE')
-                                            <button type="submit" class="btn btn-danger btn-sm mx-1" title="Delete File"
-                                                onclick="return confirmDeleteAction('{{ $file->id }}')">
+                                            <button type="button" class="btn btn-danger btn-sm mx-1" title="Delete File"
+                                                onclick="confirmDeleteAction('{{ $file->id }}')">
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
@@ -137,7 +143,20 @@
 
         // Delete Confirm
         function confirmDeleteAction(fileId) {
-            return confirm('Are you sure you want to delete this file?');
-        }
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "You won't be able to revert this!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Submit the form
+                document.getElementById('deleteForm' + fileId).submit();
+            }
+        });
+    }
     </script>
 @endsection

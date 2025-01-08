@@ -40,10 +40,11 @@
                             <th>Mobile</th>
                             <th>Provider</th>
                             <th>Extension</th>
+                            <th>status</th>
                             <th>From</th>
                             <th>To</th>
                             <th>Date</th>
-                           
+
                         </tr>
                     </thead>
                     <tbody>
@@ -52,6 +53,7 @@
                                 <td>{{ $row->mobile }}</td>
                                 <td>{{ $row->provider }}</td>
                                 <td>{{ $row->extension }}</td>
+                                <td>{{ $row->state }}</td>
                                 <td>{{ $row->from }}</td>
                                 <td>{{ $row->to }}</td>
                                 <td>{{ $row->date }}</td>

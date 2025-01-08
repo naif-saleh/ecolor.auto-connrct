@@ -185,11 +185,13 @@ class ReportController extends Controller
         $extensionFrom = $request->input('extension_from');
         $extensionTo = $request->input('extension_to');
         $provider = $request->input('provider');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
 
         // Map filter values to database values
         $statusMap = [
-            'answered' => ['Wexternalline', 'Talking'],
-            'no answer' => ['Dialing', 'no answer'],
+            'answered' => ['Talking', 'Wexternalline'],
+            'no answer' => ['Wspecialmenu', 'no answer', 'Dialing'],
         ];
 
         $query = AutoDistributerReport::query();
@@ -215,17 +217,25 @@ class ReportController extends Controller
             $query->where('provider', $provider);
         }
 
+        // Apply date range filter
+        if ($dateFrom && $dateTo) {
+            $query->whereBetween('created_at', [
+                \Carbon\Carbon::parse($dateFrom)->startOfDay(),
+                \Carbon\Carbon::parse($dateTo)->endOfDay()
+            ]);
+        }
+
         $reports = $query->paginate(20);
 
         // Calculate counts
         $totalCount = AutoDistributerReport::count(); // Total calls count
-        $answeredCount = AutoDistributerReport::whereIn('status', ['Wextension', 'Wexternalline'])->count();
-        $noAnswerCount = AutoDistributerReport::whereIn('status', ['Dialing', 'no answer'])->count();
+        $answeredCount = AutoDistributerReport::whereIn('status', ['Wextension', 'Wexternalline', "Talking"])->count();
+        $noAnswerCount = AutoDistributerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer'])->count();
 
         // Fetch distinct providers for the filter dropdown
         $providers = AutoDistributerReport::select('provider')->distinct()->get();
 
-        return view('reports.auto_distributer_report', compact(
+        return view('reports.auto_dailer_report', compact(
             'reports',
             'filter',
             'extensionFrom',
@@ -247,31 +257,22 @@ class ReportController extends Controller
         $extensionFrom = $request->input('extension_from');
         $extensionTo = $request->input('extension_to');
         $provider = $request->input('provider');
+        $dateFrom = $request->input('date_from');
+        $dateTo = $request->input('date_to');
 
-        // Map filter to corresponding database status values
         $statusMap = [
             'answered' => ['Wexternalline', 'Talking'],
             'no answer' => ['no answer', 'Dialing'],
         ];
 
-
         $query = AutoDistributerReport::query();
 
-        // Apply status filter
         if ($filter === 'today') {
             $query->whereDate('created_at', now()->toDateString());
         } elseif ($filter && isset($statusMap[$filter])) {
-            // Ensure it's an array before using whereIn
-            if (is_array($statusMap[$filter])) {
-                $query->whereIn('status', $statusMap[$filter]);
-            } else {
-                // Handle non-array case (for debugging or fallback)
-                throw new \Exception("The value for filter '$filter' is not an array");
-            }
+            $query->whereIn('status', $statusMap[$filter]);
         }
 
-
-        // Apply extension range filters
         if ($extensionFrom) {
             $query->where('extension', '>=', $extensionFrom);
         }
@@ -280,9 +281,16 @@ class ReportController extends Controller
             $query->where('extension', '<=', $extensionTo);
         }
 
-        // Apply provider filter (ensure provider is not empty or null)
         if (!empty($provider)) {
             $query->where('provider', $provider);
+        }
+
+         // Apply date range filter
+         if ($dateFrom && $dateTo) {
+            $query->whereBetween('created_at', [
+                \Carbon\Carbon::parse($dateFrom)->startOfDay(),
+                \Carbon\Carbon::parse($dateTo)->endOfDay()
+            ]);
         }
 
         $reports = $query->get();
@@ -291,7 +299,7 @@ class ReportController extends Controller
             $handle = fopen('php://output', 'w');
 
             // Write the CSV header
-            fputcsv($handle, ['Mobile', 'Provider', 'extension', 'State', 'Called At']);
+            fputcsv($handle, ['Mobile', 'Provider', 'Extension', 'State', 'Time', 'Date']);
 
             // Write each report row
             foreach ($reports as $report) {
@@ -299,15 +307,15 @@ class ReportController extends Controller
                     $report->phone_number,
                     $report->provider,
                     $report->extension,
-                    ucfirst(($report->status === 'Talking' || $report->status === 'Wexternalline') ? 'answered' : 'no answer'),
-                    \Carbon\Carbon::parse($report->created_at)->addHours(3)->format('Y-m-d H:i:s')
+                    in_array($report->status, ['Wexternalline', 'Talking']) ? 'Answered' : 'No Answer',
+                    $report->created_at->addHours(3)->format('H:i:s'),
+                    $report->created_at->addHours(3)->format('H:i:s')
                 ]);
             }
 
             fclose($handle);
         });
 
-        // Set the response headers for CSV download
         $response->headers->set('Content-Type', 'text/csv');
         $response->headers->set('Content-Disposition', 'attachment; filename="auto_distributor_report.csv"');
 

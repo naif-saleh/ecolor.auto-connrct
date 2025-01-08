@@ -1,87 +1,168 @@
 @extends('layout.master')
 
 @section('content')
-    <div class="container">
-        <h1 class="mb-4">Uploaded Auto Distributers Files</h1>
+    <div class="container mt-5">
+        <h1 class="mb-4">Auto Distributor Files List</h1>
 
-        @if (session('error'))
-            <script>
-                Swal.fire({
-                    title: 'Error!',
-                    text: "{{ session('error') }}",
-                    icon: 'error',
-                    confirmButtonText: 'OK'
-                });
-            </script>
-        @endif
+        <!-- Upload Button -->
+        <form action="{{ route('distributor.upload.csv') }}" method="POST" enctype="multipart/form-data"
+            class="mb-2 d-flex justify-content-between">
+            @csrf
+            <div>
+                <!-- Hidden File Input -->
+                <input type="file" name="file" id="uploadButton" style="display: none" accept=".csv">
 
-        <!-- Form to Upload CSV File -->
-        <div class="card mb-4">
-            <div class="card-header bg-primary text-white">Auto Distributers</div>
-            <div class="card-body">
-                <form action="{{ route('autodistributers.store') }}" method="POST" enctype="multipart/form-data">
-                    @csrf
-                    <div class="form-group">
-                        <label for="file_name">File Name</label>
-                        <input type="text" name="file_name" class="form-control" required>
-                    </div>
-                    <div class="form-group mt-3">
-                        <label for="file">CSV File</label>
-                        <input type="file" name="file" class="form-control-file" required>
-                    </div>
-                    <button type="submit" class="btn btn-success mt-4">Upload</button>
-                    <a href="{{ route('auto_distributer.call.click') }}" class="btn btn-dark mt-4">Call Auto Distributer</a>
-                </form>
-                @if (Auth::check() && Auth::user()->isSuperUser())
-                    <form action="{{ route('auto-distributers.deleteAll') }}" method="POST" class="delete-form text-end">
-                        @csrf
-                        @method('DELETE')
-                        <button type="button" class="btn btn-danger" onclick="confirmDelete(this)">Delete All
-                            Files</button>
-                    </form>
+                @if ($threeCxUsers->count() != 0)
+                    <!-- Trigger link wrapped inside a label with the 'for' attribute -->
+                    <label for="uploadButton" class="btn btn-secondary">
+                        <i class="bi bi-plus"></i>
+                    </label>
                 @endif
+
+
+               @if ($threeCxUsers->count() === 0)
+               <a href="{{route('distributor.import.users')}}" class="btn btn-warning">import users</a>
+               @endif
+
+                <!-- Upload Button (Initially Hidden) -->
+                <button type="submit" id="uploadLink" class="btn btn-success" style="display: none;">
+                    <i class="bi bi-upload"></i> Upload New File
+                </button>
             </div>
+
+            <!-- Example CSV Download Link -->
+            @if ($threeCxUsers->count() != 0)
+                <a href="/example.csv" class="btn btn-info" download="example.csv">Example CSV Structure</a>
+            @endif
+        </form>
+
+
+
+        <div class="table-responsive shadow-sm rounded">
+            @if ($files->isEmpty())
+                <div class="alert alert-info text-center" role="alert">
+                    No files available.
+                </div>
+            @else
+                <table class="table table-striped table-hover table-bordered">
+                    <thead class="thead-dark">
+                        <tr>
+                            <th>File Name</th>
+                            <th>Uploaded By</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($files as $file)
+                            <tr>
+                                <td>{{ $file->file_name }}</td>
+                                <td>{{ $file->user->name ?? 'Unknown' }}</td>
+                                <td class="d-flex justify-content-between">
+                                    <!-- Switch for Allow (moved to start) -->
+                                    <form action="{{ route('distributor.files.allow', $file->slug) }}" method="POST"
+                                        id="allowForm{{ $file->slug }}">
+                                        @csrf
+                                        <div class="form-check form-switch form-check-lg">
+                                            <input class="form-check-input" type="checkbox"
+                                                id="allowSwitch{{ $file->slug }}" name="allow"
+                                                {{ $file->allow ? 'checked' : '' }} data-file-id="{{ $file->slug }}"
+                                                onchange="this.form.submit()">
+                                            <span id="statusText{{ $file->slug }}"
+                                                class="{{ $file->allow ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill' }}">
+                                                {{ $file->allow ? 'Active' : 'Inactive' }}
+                                            </span>
+                                        </div>
+                                    </form>
+
+
+                                    <div>
+
+                                        <span
+                                            class="{{ $file->is_done ? 'badge rounded-pill text-bg-success' : 'badge rounded-pill text-bg-warning' }}">{{ $file->is_done ? 'All Numbers Called' : 'Not Called Yet' }}</span>
+                                    </div>
+
+
+
+                                    <!-- View and Delete Buttons (moved to end) -->
+                                    <div>
+                                        <a href="{{ route('distributor.download.processed.file', $file->id) }}"
+                                            class="btn btn-sm bg-primary mx-1">
+                                            <i class="bi bi-download"></i>
+                                        </a>
+
+                                        <!-- View Button -->
+                                        <a href="{{ route('distributor.files.show', $file->slug) }}"
+                                            class="btn btn-info btn-sm mx-1" title="View File">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+
+                                        <!-- Delete Button -->
+                                        <form action="{{ route('distributor.delete', $file->slug) }}" method="POST" style="display: inline;" id="deleteForm{{ $file->id }}">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="button" class="btn btn-danger btn-sm mx-1" title="Delete File" onclick="confirmDeleteAction('{{ $file->id }}')">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+
+
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            @endif
         </div>
 
-        <!-- Display Uploaded Files -->
-        @if (count($files) > 0)
-            @foreach ($files as $file)
-                <div class="card mb-3">
-                    <div class="card-body">
-                        <h5>{{ $file->file_name }}</h5>
-                        <p><strong>Uploaded by:</strong> {{ $file->user->name }}</p>
-                        <p><strong>Uploaded on:</strong> {{ $file->created_at->format('Y-m-d') }}</p>
 
-                        <!-- View Button -->
-                        <a href="{{ route('autodistributers.show', $file->id) }}" class="btn btn-info btn-sm">View</a>
-
-                        <!-- Edit Button -->
-                        <a href="{{ route('autodistributers.edit', $file->id) }}" class="btn btn-warning btn-sm">Edit</a>
-
-                        <!-- Delete Form -->
-                        <form action="{{ route('autodistributers.destroy', $file->id) }}" method="POST"
-                            class="d-inline delete-form">
-                            @csrf
-                            @method('DELETE')
-                            <button type="button" class="btn btn-danger btn-sm"
-                                onclick="confirmDelete(this)">Delete</button>
-                        </form>
-
-                        <!-- Download Button -->
-                        <a href="{{ route('auto_distributers.download', $file->id) }}"
-                            class="btn btn-success btn-sm">Download</a>
-                    </div>
-                </div>
-            @endforeach
-        @else
-            <div class="alert alert-warning">No Files Uploaded. Please Upload File.</div>
-        @endif
-
+        <!-- Pagination Controls -->
+        <div class="d-flex justify-content-between">
+            <div>
+                Showing {{ $files->firstItem() }} to {{ $files->lastItem() }} of {{ $files->total() }} results
+            </div>
+            <div>
+                {{ $files->links('vendor.pagination.bootstrap-4') }}
+            </div>
+        </div>
     </div>
+@endsection
 
+
+{{-- upload file using ajax --}}
+{{-- Update Active or not using ajax --}}
+@section('scripts')
     <script>
-        function confirmDelete() {
-            return confirm("Are you sure you want to delete this file?");
-        }
+        const uploadButton = document.getElementById('uploadButton');
+        const uploadLink = document.getElementById('uploadLink');
+
+        // Listen for changes in the file input
+        uploadButton.addEventListener('change', function() {
+            // If a file is selected, show the upload button
+            if (uploadButton.files.length > 0) {
+                uploadLink.style.display = 'inline-block';
+            } else {
+                uploadLink.style.display = 'none';
+            }
+        });
+
+
+        // Delete Confirm
+        function confirmDeleteAction(fileId) {
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This action cannot be undone!",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, delete it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                // Submit the form if the user confirms
+                document.getElementById('deleteForm' + fileId).submit();
+            }
+        });
+    }
     </script>
 @endsection

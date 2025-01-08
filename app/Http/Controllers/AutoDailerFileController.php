@@ -29,8 +29,8 @@ class AutoDailerFileController extends Controller
         ]);
 
 
-         // Active Log Report...............................
-         ActivityLog::create([
+        // Active Log Report...............................
+        ActivityLog::create([
             'user_id' => Auth::id(),
             'operation' => 'import File',
             'file_id' => $uploadedFile->id,
@@ -66,7 +66,7 @@ class AutoDailerFileController extends Controller
             $formattedTime_to = $utcTime_to->format('H:i:s');
 
 
-            Log::info("Time From: ".$formattedTime_from." | Time To: ".$formattedTime_to);
+            Log::info("Time From: " . $formattedTime_from . " | Time To: " . $formattedTime_to);
 
 
             // Insert the data into the AutoDailerUploadedData table
@@ -147,8 +147,8 @@ class AutoDailerFileController extends Controller
         // Delete the record from the database
         $file->delete();
 
-          // Active Log Report...............................
-          ActivityLog::create([
+        // Active Log Report...............................
+        ActivityLog::create([
             'user_id' => Auth::id(),
             'operation' => 'delete',
             'file_id' => $file->id,
@@ -171,4 +171,57 @@ class AutoDailerFileController extends Controller
         }
     }
 
+
+    public function downloadUploadedFile($fileId)
+    {
+        $uploadedFile = AutoDailerFile::findOrFail($fileId);
+
+        // Join AutoDailerUploadedData with users to get the uploader's name
+        $data = AutoDailerUploadedData::where('file_id', $fileId)
+            ->join('users', 'users.id', '=', 'auto_dailer_uploaded_data.uploaded_by')
+            ->select('auto_dailer_uploaded_data.*', 'users.name as uploader_name')
+            ->get();
+
+        $fileName = 'uploaded_data_' . $uploadedFile->file_name . '.csv';
+        $headers = [
+            "Content-type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=$fileName",
+            "Pragma" => "no-cache",
+            "Cache-Control" => "must-revalidate, post-check=0, pre-check=0",
+            "Expires" => "0"
+        ];
+
+        $columns = ['Mobile', 'Provider', 'Extension', 'From', 'To', 'Date', 'Uploader Name'];
+
+        $callback = function () use ($data, $columns) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, $columns);
+
+            foreach ($data as $row) {
+                fputcsv($file, [
+                    $row->mobile,
+                    $row->provider,
+                    $row->extension,
+                    $row->from,
+                    $row->to,
+                    $row->date,
+                    $row->uploader_name // Add the uploader's name
+                ]);
+            }
+
+            fclose($file);
+        };
+
+         // Active Log Report...............................
+         ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => 'Download',
+            'file_id' => $fileId,
+            'file_type' => 'Auto-Dailer',
+            'file_name' => $fileName,
+            'operation_time' => now(),
+        ]);
+
+        return response()->stream($callback, 200, $headers);
+    }
 }

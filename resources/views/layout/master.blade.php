@@ -67,7 +67,7 @@
                                 <a class="nav-link" href="{{ route('autodailers.files.index') }}">Auto Dailer</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href=" ">Auto
+                                <a class="nav-link" href="{{route('distributor.files.index')}}">Auto
                                     Distributer</a>
                             </li>
                             <li class="nav-item">
