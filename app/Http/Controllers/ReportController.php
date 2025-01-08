@@ -27,7 +27,7 @@ class ReportController extends Controller
             ->orderBy('created_at', 'desc')
             ->paginate(100);
 
-        return view('reports', compact('logs'));
+        return view('reports.user_logs', compact('logs'));
     }
 
 
