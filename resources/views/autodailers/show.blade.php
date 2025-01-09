@@ -26,7 +26,7 @@
         }
     </style>
 @endsection
-
+@section('title', 'Auto Dailer | File')
 @section('content')
     <div class="container mt-5">
         <h1 class="mb-4">Data for File: {{ $file->file_name }}</h1>

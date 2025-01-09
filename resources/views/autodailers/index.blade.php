@@ -1,5 +1,5 @@
 @extends('layout.master')
-
+@section('title', 'Auto Dailer')
 @section('content')
     <div class="container mt-5">
         <h1 class="mb-4">Auto Dailers Files List</h1>

@@ -193,6 +193,7 @@
         }
     </style>
 @endsection
+@section('title', 'Auto Dailer | Report')
 @section('content')
     <div class="container">
         <!-- Success Alert -->

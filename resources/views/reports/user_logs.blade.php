@@ -1,5 +1,5 @@
 @extends('layout.master')
-
+@section('title', 'Logs | User Log')
 @section('content')
     <div class="container mt-5">
         <div class="row">
