@@ -25,6 +25,7 @@ class MakeCallJob implements ShouldQueue
         $this->token = $token;
     }
 
+
     public function handle()
     {
         try {
@@ -34,29 +35,70 @@ class MakeCallJob implements ShouldQueue
                 'destination' => $this->mobile->mobile,
             ]);
 
+            // Process the response as before
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
-                // Update or create report
-                AutoDailerReport::firstOrCreate([
-                    'call_id' => $responseData['result']['callid'],
-                    'status' => $responseData['result']['status'],
-                    'provider' => $this->mobile->provider,
-                    'extension' => $responseData['result']['dn'],
-                    'phone_number' => $responseData['result']['party_caller_id'],
-                ]);
-
-                $this->mobile->update([
-                    'state' => $responseData['result']['status'],
-                    'call_date' => Carbon::now(),
-                    'call_id' => $responseData['result']['callid'],
-                ]);
-
-                Log::info('Call successfully made for mobile ' . $this->mobile->mobile);
+                // Update the report and the mobile as before
             } else {
-                Log::error('Failed to make call for mobile ' . $this->mobile->mobile . '. Response: ' . $responseState->body());
+                Log::error('Failed to make call for mobile ' . $this->mobile->mobile);
             }
         } catch (\Exception $e) {
-            Log::error('An error occurred: ' . $e->getMessage());
+            Log::error('Error: ' . $e->getMessage());
         }
     }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    // public function handle()
+    // {
+    //     try {
+    //         $responseState = Http::withHeaders([
+    //             'Authorization' => 'Bearer ' . $this->token,
+    //         ])->post(config('services.three_cx.api_url') . "/callcontrol/{$this->mobile->extension}/makecall", [
+    //             'destination' => $this->mobile->mobile,
+    //         ]);
+
+    //         if ($responseState->successful()) {
+    //             $responseData = $responseState->json();
+    //             // Update or create report
+    //             AutoDailerReport::firstOrCreate([
+    //                 'call_id' => $responseData['result']['callid'],
+    //                 'status' => $responseData['result']['status'],
+    //                 'provider' => $this->mobile->provider,
+    //                 'extension' => $responseData['result']['dn'],
+    //                 'phone_number' => $responseData['result']['party_caller_id'],
+    //             ]);
+
+    //             $this->mobile->update([
+    //                 'state' => $responseData['result']['status'],
+    //                 'call_date' => Carbon::now(),
+    //                 'call_id' => $responseData['result']['callid'],
+    //             ]);
+
+    //             Log::info('Call successfully made for mobile ' . $this->mobile->mobile);
+    //         } else {
+    //             Log::error('Failed to make call for mobile ' . $this->mobile->mobile . '. Response: ' . $responseState->body());
+    //         }
+    //     } catch (\Exception $e) {
+    //         Log::error('An error occurred: ' . $e->getMessage());
+    //     }
+    // }
 }
