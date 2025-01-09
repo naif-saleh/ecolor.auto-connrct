@@ -78,7 +78,7 @@ class MakeUserCallCommand extends Command
                     $loop = 0;
                     foreach ($providerFeeds as $mobile) {
                         Log::info('Mobile ' . $mobile->mobile . ' in loop ' . $loop);
-                        $ext = $mobile->extension;
+                        
                         $delay = 0;
                         MakeUserCallJob::dispatch($mobile, $token)->delay(now()->addSeconds($delay));
                         $delay += 10;
