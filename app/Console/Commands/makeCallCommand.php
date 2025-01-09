@@ -63,8 +63,39 @@ class makeCallCommand extends Command
                 $delay = 0;
 
                 foreach ($providerFeeds as $mobile) {
-                    MakeCallJob::dispatch($mobile, $token)->delay(now()->addSeconds($delay));
-                    $delay += 5;  
+                    try {
+                        $responseState = Http::withHeaders([
+                            'Authorization' => 'Bearer ' . $token,
+                        ])->post(config('services.three_cx.api_url') . "/callcontrol/{$mobile->extension}/makecall", [
+                            'destination' => $mobile->mobile,
+                        ]);
+
+                        if ($responseState->successful()) {
+                            $responseData = $responseState->json();
+                            // Update or create report
+                            AutoDailerReport::firstOrCreate([
+                                'call_id' => $responseData['result']['callid'],
+                                'status' => $responseData['result']['status'],
+                                'provider' => $mobile->provider,
+                                'extension' => $responseData['result']['dn'],
+                                'phone_number' => $responseData['result']['party_caller_id'],
+                            ]);
+
+                            $mobile->update([
+                                'state' => $responseData['result']['status'],
+                                'call_date' => Carbon::now(),
+                                'call_id' => $responseData['result']['callid'],
+                            ]);
+
+                            Log::info('Call successfully made for mobile ' . $mobile->mobile);
+                        } else {
+                            Log::error('Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
+                        }
+                    } catch (\Exception $e) {
+                        Log::error('An error occurred: ' . $e->getMessage());
+                    }
+                    // MakeCallJob::dispatch($mobile, $token)->delay(now()->addSeconds($delay));
+                    // $delay += 5;
                 }
 
                 $allCalled = AutoDailerUploadedData::where('file_id', $feed->file->id)->where('state', 'new')->count() == 0;
