@@ -48,18 +48,14 @@ class MakeUserCallCommand extends Command
         $token = $this->tokenService->getToken();
         Log::info('ADist: MakeCallCommand executed at ' . now());
         $providersFeeds = AutoDistributorUploadedData::all();
-
+        $now = Carbon::now();
 
         foreach ($providersFeeds as $feed) {
             // $ext_from = $feed->extension;
-            $now = Carbon::now();
 
-            // Parse the date and time from the data
-            $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from);
-            $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to);
-            $from = $from->subHour(2);
-            $to = $to->subHour(2);
-
+            // Recalculate 'from' and 'to' for each feed
+            $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHour(2);
+            $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHour(2);
             // Log::info("From Time: " . $from . " | To Time: " . $to);
             // Log::info('Make Provider Call, Active status ' . $feed->extension . " | " . $feed->file->allow);
             // Log::info("Current Time: " . $now);
@@ -156,7 +152,7 @@ class MakeUserCallCommand extends Command
 
                     // Check if all mobiles in this file are called (state == 'called')
                     $allCalled = AutoDistributorUploadedData::where('file_id', $file->id)->where('state', '==', 'new')->count() == 0;
-                    Log::info('All numbers in file ' . $allCalled );
+                    Log::info('All numbers in file ' . $allCalled);
                     // If all calls have been made, update the AutoDailerFile status
                     if ($allCalled) {
                         $file->update(['is_done' => true]); // Ensure 'is_done' column exists in your model and database
