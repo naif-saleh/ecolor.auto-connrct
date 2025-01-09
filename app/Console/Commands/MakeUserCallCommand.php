@@ -46,13 +46,11 @@ class MakeUserCallCommand extends Command
 
         // $token = Cache::get('three_cx_token');
         $token = $this->tokenService->getToken();
-        Log::info('ADist: MakeCallCommand executed at ' . now());
-        $providersFeeds = AutoDistributorUploadedData::all();
+        Log::info('MakeCallCommand executed at ' . now());
+        $autoDailerFiles = AutoDistributorUploadedData::all();
         $now = Carbon::now();
 
-            // Check if the current time is within the range
-        foreach ($providersFeeds as $feed) {
-            // Recalculate 'from' and 'to' for each feed
+        foreach ($autoDailerFiles as $feed) {
             $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHour(2);
             $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHour(2);
 
