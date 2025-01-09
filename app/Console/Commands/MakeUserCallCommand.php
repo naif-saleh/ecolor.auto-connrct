@@ -81,7 +81,7 @@ class MakeUserCallCommand extends Command
                         $ext = $mobile->extension;
                         $delay = 0;
                         MakeUserCallJob::dispatch($mobile, $token)->delay(now()->addSeconds($delay));
-                        $delay += 5;
+                        $delay += 10;
 
                     }
 
