@@ -38,6 +38,9 @@ class MakeUserCallJob implements ShouldQueue
                 $filter = "contains(Caller, '{$ext}')";
                 $url = "https://ecolor.3cx.agency/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
+                // Log the token for debugging
+                Log::info("ADist: Using Token: " . $this->token);
+
                 // Set a timeout and retry logic
                 $activeCallsResponse = Http::timeout(10) // Timeout after 10 seconds
                     ->retry(3, 2) // Retry up to 3 times with a 2-second delay between retries
