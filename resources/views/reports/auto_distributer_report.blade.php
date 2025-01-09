@@ -147,8 +147,48 @@
         }
 
         /* Styling for the form buttons and filters */
-        .filter-buttons .btn, .filter-form .form-modern, .filter-form button {
+        .filter-buttons .btn,
+        .filter-form .form-modern,
+        .filter-form button {
             margin: 5px;
+        }
+
+        /* Custom Pagination Styles */
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .pagination .page-item {
+            margin: 0;
+        }
+
+        .pagination .page-link {
+            border-radius: 50px;
+            /* Rounded corners */
+            border: 1px solid #dee2e6;
+            /* Light border */
+            padding: 8px 16px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .pagination .page-link:hover {
+            background-color: #007bff;
+            /* Blue background on hover */
+            color: white;
+        }
+
+        .pagination .page-item.active .page-link {
+            background-color: #007bff;
+            border-color: #007bff;
+            color: white;
+        }
+
+        .pagination .page-item.disabled .page-link {
+            background-color: #f8f9fa;
+            color: #6c757d;
         }
     </style>
 @endsection
@@ -183,8 +223,7 @@
                 </a>
 
                 <!-- State Filters (All, Answered, No Answer, Today) -->
-                <a href="{{ url('auto-dailer-report') }}"
-                    class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
+                <a href="{{ url('auto-dailer-report') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
                     <i class="fas fa-list me-1"></i> All
                 </a>
                 <a href="{{ url('auto-dailer-report?filter=answered') }}"
@@ -325,7 +364,8 @@
 
         <!-- Pagination -->
         <div class="d-flex justify-content-center">
-            {!! $reports->links() !!}
+            {!! $reports->links('pagination::bootstrap-5') !!}
         </div>
+
     </div>
 @endsection
