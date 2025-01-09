@@ -72,8 +72,85 @@ class MakeUserCallCommand extends Command
                     foreach ($providerFeeds as $mobile) {
                         Log::info('Mobile ' . $mobile->mobile . ' in loop ' . $loop);
                         $ext = $mobile->extension;
+                        try {
+                            // if (!$mobile || !$mobile->extension || !$mobile->mobile) {
+                            //     Log::error('ADist: Invalid mobile data for mobile ' . $mobile);
+                            //     return;
+                            // }
 
-                        MakeUserCallJob::dispatch($mobile, $token);
+                            $ext = $mobile->extension;
+                            if ($mobile->userStatus === "Available") {
+                                // Check if there are active calls for this extension
+                                $filter = "contains(Caller, '{$ext}')";
+                                $url = "https://ecolor.3cx.agency/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+
+                                // Logging the API call URL for debugging
+                                Log::info('Fetching active calls from URL: ' . $url);
+
+                                $activeCallsResponse = Http::withHeaders([
+                                    'Authorization' => 'Bearer ' . $token,
+                                ])->get($url);
+
+                                if ($activeCallsResponse->failed()) {
+                                    Log::error('ADist: Failed to fetch active calls for mobile ' . $mobile->mobile . '. Response: ' . $activeCallsResponse->body());
+                                    return;
+                                }
+
+                                if ($activeCallsResponse->successful()) {
+                                    $activeCalls = $activeCallsResponse->json();
+
+                                    if (!empty($activeCalls['value'])) {
+                                        Log::info("Active calls detected for extension {$ext}. Skipping call for mobile {$mobile->mobile}.");
+                                        return; // Skip this number if active calls exist
+                                    }
+
+                                    // No active calls, proceed to make the call
+                                    $responseState = Http::withHeaders([
+                                        'Authorization' => 'Bearer ' . $token,
+                                    ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
+                                        'destination' => $mobile->mobile,
+                                    ]);
+
+                                    if ($responseState->successful()) {
+                                        $responseData = $responseState->json();
+
+                                        // Handle the report creation and update
+                                        $reports = AutoDistributerReport::firstOrCreate([
+                                            'call_id' => $responseData['result']['callid'],
+                                        ], [
+                                            'status' => $responseData['result']['status'],
+                                            'provider' => $mobile->user,
+                                            'extension' => $responseData['result']['dn'],
+                                            'phone_number' => $responseData['result']['party_caller_id'],
+                                        ]);
+
+                                        $reports->save();
+
+                                        // Update the mobile record
+                                        $mobile->update([
+                                            'state' => $responseData['result']['status'],
+                                            'call_date' => Carbon::now(),
+                                            'call_id' => $responseData['result']['callid'],
+                                            'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
+                                        ]);
+
+                                        Log::info('ADist: Call successfully made for mobile ' . $mobile->mobile);
+                                    } else {
+                                        Log::error('ADist: Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
+                                        Log::info('ADist: Response Status Code: ' . $responseState->status());
+                                        Log::info('ADist: Full Response: ' . print_r($responseState, true));
+                                        Log::info('ADist: Headers: ' . json_encode($responseState->headers()));
+                                    }
+                                } else {
+                                    Log::error('ADist: Error fetching active calls for mobile ' . $mobile->mobile);
+                                }
+                            } else {
+                                Log::error('ADist: Mobile is not available. Skipping call for mobile ' . $mobile->mobile);
+                            }
+                        } catch (\Exception $e) {
+                            Log::error('ADist: An error occurred: ' . $e->getMessage());
+                        }
+                        // MakeUserCallJob::dispatch($mobile, $token);
 
 
                     }
@@ -205,7 +282,7 @@ class MakeUserCallCommand extends Command
 
 
     //                     }       // Wait for 30 seconds before the next call
-    //                     //  $this->waitFor(30);
+    //                     //  $waitFor(30);
     //                 } else {
     //                     Log::error('ADist: Error fetching active calls for mobile ' . $mobile['mobile']);
     //                 }
