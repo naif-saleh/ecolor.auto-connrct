@@ -17,8 +17,8 @@ class MakeUserCallJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $mobile;
-    // protected $token;
     protected $tokenService;
+
     public function __construct($mobile, TokenService $tokenService)
     {
         $this->mobile = $mobile;
