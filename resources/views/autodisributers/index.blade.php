@@ -203,33 +203,9 @@
             });
         });
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const downloadLink = document.getElementById('downloadLink{{ $file->id }}');
-
-            if (downloadLink) {
-                downloadLink.addEventListener('click', function(event) {
-                    event.preventDefault();
-
-                    Swal.fire({
-                        title: 'Processing...',
-                        text: 'Your file is being prepared for download.',
-                        icon: 'info',
-                        allowOutsideClick: false,
-                        showConfirmButton: false,
-                        didOpen: () => {
-                            Swal.showLoading();
-
-                            // Simulate a slight delay to ensure the loading screen is visible
-                            setTimeout(() => {
-                                window.location.href = downloadLink.href;
-                            }, 500); // Adjust the delay as needed
-                        }
-                    });
-                });
-            }
-        });
+       
 
 
-        
+
     </script>
 @endsection

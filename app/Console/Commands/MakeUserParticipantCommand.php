@@ -75,7 +75,7 @@ class MakeUserParticipantCommand extends Command
                  $participants = $responseState->json();
 
                  if (empty($participants)) {
-                     Log::warning("No participants data for extension {$ext_from}");
+                     Log::warning("No User participants data for extension {$ext_from}");
                      continue;
                  }
 
