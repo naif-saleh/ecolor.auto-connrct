@@ -5,7 +5,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
-    <link rel="icon" href="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png" type="image/png">
+    <link rel="icon"
+        href="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
+        type="image/png">
     <title>@yield('title', 'Laravel Application')</title>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet"
@@ -61,25 +63,38 @@
                         <ul class="navbar-nav me-auto mb-2 mb-lg-0"> <!-- Left-aligned links -->
 
                             <li class="nav-item">
+                                <a class="nav-link" href="{{ route('manager.autodistributor.report.extension') }}">Per Extensions</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('manager.autodistributor.report.providers') }}">Per Providers</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="#">Per Compaign</a>
+                            </li>
+                            {{-- <li class="nav-item">
+                                <a class="nav-link" href="{{ route('manager.auotdailer.report.extension') }}">Auto Dailer Reports</a>
+                            </li> --}}
+
+
+
+                        </ul>
+                    @elseif (Auth::check() && Auth::user()->isManagerUser())
+                        <ul class="navbar-nav me-auto mb-2 mb-lg-0"> <!-- Left-aligned links -->
+
+                            <li class="nav-item">
                                 <a class="nav-link" href="{{ route('manager.dashboard') }}">Manager Statistics</a>
                             </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('autodailers.files.index') }}">Auto Dailer</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{route('distributor.files.index')}}">Auto
-                                    Distributer</a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('users.index') }}">Users</a>
-                            </li>
+
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button"
                                     data-bs-toggle="dropdown" aria-expanded="false">
                                     Reports
                                 </a>
                                 <ul class="dropdown-menu" aria-labelledby="activityDropdown">
-
+                                    <li>
+                                        <a class="dropdown-item" href="{{ route('users.activity.report') }}">User
+                                            Activity</a>
+                                    </li>
                                     <li>
                                         <a class="dropdown-item" href="{{ route('auto_dailer.report') }}">Auto
                                             Dailer</a>
@@ -90,53 +105,6 @@
                                     </li>
                                 </ul>
                             </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                    Activity Logs
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="activityDropdown">
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('system.activity.report') }}">System Logs
-                                            Activity</a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('users.activity.report') }}">User Logs
-                                            Activity</a>
-                                    </li>
-                                </ul>
-                            </li>
-                        </ul>
-
-                            @elseif (Auth::check() && (Auth::user()->isManagerUser()))
-                            <ul class="navbar-nav me-auto mb-2 mb-lg-0"> <!-- Left-aligned links -->
-
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('manager.dashboard') }}">Manager Statistics</a>
-                                </li>
-
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button"
-                                        data-bs-toggle="dropdown" aria-expanded="false">
-                                        Reports
-                                    </a>
-                                    <ul class="dropdown-menu" aria-labelledby="activityDropdown">
-                                        <li>
-                                            <a class="dropdown-item" href="{{ route('users.activity.report') }}">User
-                                                Activity</a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="{{ route('auto_dailer.report') }}">Auto
-                                                Dailer</a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="{{ route('auto_distributer.report') }}">Auto
-                                                Distributer</a>
-                                        </li>
-                                    </ul>
-                                </li>
-
-
                 @endif
 
                 {{-- @if (Auth::check() && Auth::user()->isSuperUser())
@@ -154,7 +122,8 @@
                                 <i class="bi bi-box-arrow-right"></i> Logout
                             </a>
                         </li>
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST"
+                            style="display: none;">
                             @csrf
                         </form>
                     @else

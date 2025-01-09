@@ -25,7 +25,7 @@ Route::get('/', function () {
 
         // Check if the user is a SuperUser or Admin
         if ($user->isSuperUser() || $user->isAdmin()) {
-            return redirect('/manager/dashboard');
+            return redirect('/auto-dailer/files');
         }
 
         // Check if the user is a Manager
@@ -85,6 +85,22 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('users', [UserController::class, 'store'])->name('users.store');
 
+
+
+
+
+    // Manager Reports...................................................................................................................
+
+    // Auto Dailer Extensios...............
+    Route::get('manager/auto-dailer/report-extensions', [DashboardController::class, 'managerAutoDailersReports'])->name('manager.auotdailer.report.extension');
+    // Auto Dailer Providers...............
+    Route::get('manager/auto-dailer/report-providers', [DashboardController::class, 'managerAutoDailersReportsProvider'])->name('manager.auotdailer.report.providers');
+
+
+    // Auto Distributer Extensions...........
+    Route::get('manager/auto-distributor/report-extensions', [DashboardController::class, 'managerAutoDistributorsReports'])->name('manager.autodistributor.report.extension');
+    // Auto Distributer Providers...............
+    Route::get('manager/auto-distributor/report-providers', [DashboardController::class, 'managerAutoDistributorsReportsProvider'])->name('manager.autodistributor.report.providers');
 
     // // Dashboard Statistics....................................................................................................................
     Route::get('/dashboard-calls', [DashboardController::class, 'index'])->name('calls.dashboard');

@@ -1,4 +1,4 @@
-@extends('layout.master')
+@extends('layout.manager')
 @section('title', 'Manager | Statistics Dashboard')
 @section('content')
 @section('style')

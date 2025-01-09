@@ -155,6 +155,7 @@
 
         /* Custom Pagination Styles */
         .pagination {
+            margin-top: 10px;
             display: flex;
             justify-content: center;
             gap: 5px;
@@ -339,8 +340,8 @@
                                                 ? 'answered'
                                                 : 'no answer';
                                             $badgeClass = match ($status) {
-                                                'answered' => 'success',
-                                                'no answer' => 'warning',
+                                                'answered' => 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill',
+                                                'no answer' => 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill',
                                                 default => 'secondary',
                                             };
                                         @endphp

@@ -39,12 +39,8 @@ class MakeUserCallCommand extends Command
     /**
      * Execute the console command.
      */
-
     public function handle()
     {
-
-
-        // $token = Cache::get('three_cx_token');
         $token = $this->tokenService->getToken();
         Log::info('MakeCallCommand executed at ' . now());
         $autoDailerFiles = AutoDistributorUploadedData::all();
@@ -55,117 +51,230 @@ class MakeUserCallCommand extends Command
             $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHour(2);
 
             if ($now->between($from, $to) && $feed->file->allow == 1) {
-                Log::info('The current time is within the specified range.' . $feed->id);
-                Log::info('The current time is within the specified range for extension ' . $feed->extension . $to->format('r'));
+                Log::info('Processing file with ID ' . $feed->file->id);
 
-                // Get all numbers in this feed
-                $files = AutoDistributorFile::all();
-                Log::info('Files:', $files->toArray());
+                $providerFeeds = AutoDistributorUploadedData::where('file_id', $feed->file->id)
+                    ->where('state', 'new')
+                    ->get();
 
-                foreach ($files as $file) {
-                    $providerFeeds = AutoDistributorUploadedData::where('file_id', $file->id)->where('state', 'new')->get();
-                    Log::info('Provider Feeds:', $providerFeeds->toArray());
+                foreach ($providerFeeds as $mobile) {
+                    try {
+                        // if (!$mobile || !$mobile->extension || !$mobile->mobile) {
+                        //     Log::error('ADist: Invalid mobile data for mobile ' . $mobile);
+                        //     return;
+                        // }
 
-                    $loop = 0;
-                    foreach ($providerFeeds as $mobile) {
-                        Log::info('Mobile ' . $mobile->mobile . ' in loop ' . $loop);
                         $ext = $mobile->extension;
-                        try {
-                            // if (!$mobile || !$mobile->extension || !$mobile->mobile) {
-                            //     Log::error('ADist: Invalid mobile data for mobile ' . $mobile);
-                            //     return;
-                            // }
+                        if ($mobile->userStatus === "Available") {
+                            // Check if there are active calls for this extension
+                            $filter = "contains(Caller, '{$ext}')";
+                            $url = "https://ecolor.3cx.agency/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
-                            $ext = $mobile->extension;
-                            if ($mobile->userStatus === "Available") {
-                                // Check if there are active calls for this extension
-                                $filter = "contains(Caller, '{$ext}')";
-                                $url = "https://ecolor.3cx.agency/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+                            // Logging the API call URL for debugging
+                            Log::info('Fetching active calls from URL: ' . $url);
 
-                                // Logging the API call URL for debugging
-                                Log::info('Fetching active calls from URL: ' . $url);
+                            $activeCallsResponse = Http::withHeaders([
+                                'Authorization' => 'Bearer ' . $token,
+                            ])->get($url);
 
-                                $activeCallsResponse = Http::withHeaders([
-                                    'Authorization' => 'Bearer ' . $token,
-                                ])->get($url);
+                            if ($activeCallsResponse->failed()) {
+                                Log::error('ADist: Failed to fetch active calls for mobile ' . $mobile->mobile . '. Response: ' . $activeCallsResponse->body());
+                                return;
+                            }
 
-                                if ($activeCallsResponse->failed()) {
-                                    Log::error('ADist: Failed to fetch active calls for mobile ' . $mobile->mobile . '. Response: ' . $activeCallsResponse->body());
-                                    return;
+                            if ($activeCallsResponse->successful()) {
+                                $activeCalls = $activeCallsResponse->json();
+
+                                if (!empty($activeCalls['value'])) {
+                                    Log::info("Active calls detected for extension {$ext}. Skipping call for mobile {$mobile->mobile}.");
+                                    return; // Skip this number if active calls exist
                                 }
 
-                                if ($activeCallsResponse->successful()) {
-                                    $activeCalls = $activeCallsResponse->json();
 
-                                    if (!empty($activeCalls['value'])) {
-                                        Log::info("Active calls detected for extension {$ext}. Skipping call for mobile {$mobile->mobile}.");
-                                        return; // Skip this number if active calls exist
-                                    }
 
-                                    // No active calls, proceed to make the call
-                                    $responseState = Http::withHeaders([
-                                        'Authorization' => 'Bearer ' . $token,
-                                    ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
-                                        'destination' => $mobile->mobile,
+                                // No active calls, proceed to make the call
+                                $responseState = Http::withHeaders([
+                                    'Authorization' => 'Bearer ' . $token,
+                                ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
+                                    'destination' => $mobile->mobile,
+                                ]);
+
+                                if ($responseState->successful()) {
+                                    $responseData = $responseState->json();
+                                    // Handle the report creation and update
+                                    $reports = AutoDistributerReport::firstOrCreate([
+                                        'call_id' => $responseData['result']['callid'],
+                                    ], [
+                                        'status' => $responseData['result']['status'],
+                                        'provider' => $mobile->user,
+                                        'extension' => $responseData['result']['dn'],
+                                        'phone_number' => $responseData['result']['party_caller_id'],
                                     ]);
 
-                                    if ($responseState->successful()) {
-                                        $responseData = $responseState->json();
+                                    $reports->save();
 
-                                        // Handle the report creation and update
-                                        $reports = AutoDistributerReport::firstOrCreate([
-                                            'call_id' => $responseData['result']['callid'],
-                                        ], [
-                                            'status' => $responseData['result']['status'],
-                                            'provider' => $mobile->user,
-                                            'extension' => $responseData['result']['dn'],
-                                            'phone_number' => $responseData['result']['party_caller_id'],
-                                        ]);
+                                    // Update the mobile record
+                                    $mobile->update([
+                                        'state' => $responseData['result']['status'],
+                                        'call_date' => Carbon::now(),
+                                        'call_id' => $responseData['result']['callid'],
+                                        'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
+                                    ]);
 
-                                        $reports->save();
-
-                                        // Update the mobile record
-                                        $mobile->update([
-                                            'state' => $responseData['result']['status'],
-                                            'call_date' => Carbon::now(),
-                                            'call_id' => $responseData['result']['callid'],
-                                            'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
-                                        ]);
-
-                                        Log::info('ADist: Call successfully made for mobile ' . $mobile->mobile);
-                                    } else {
-                                        Log::error('ADist: Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
-                                        Log::info('ADist: Response Status Code: ' . $responseState->status());
-                                        Log::info('ADist: Full Response: ' . print_r($responseState, true));
-                                        Log::info('ADist: Headers: ' . json_encode($responseState->headers()));
-                                    }
+                                    Log::info('ADist: Call successfully made for mobile ' . $mobile->mobile);
                                 } else {
-                                    Log::error('ADist: Error fetching active calls for mobile ' . $mobile->mobile);
+                                    Log::error('ADist: Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
+                                    Log::info('ADist: Response Status Code: ' . $responseState->status());
+                                    Log::info('ADist: Full Response: ' . print_r($responseState, true));
+                                    Log::info('ADist: Headers: ' . json_encode($responseState->headers()));
                                 }
                             } else {
-                                Log::error('ADist: Mobile is not available. Skipping call for mobile ' . $mobile->mobile);
+                                Log::error('ADist: Error fetching active calls for mobile ' . $mobile->mobile);
                             }
-                        } catch (\Exception $e) {
-                            Log::error('ADist: An error occurred: ' . $e->getMessage());
+                        } else {
+                            Log::error('ADist: Mobile is not available. Skipping call for mobile ' . $mobile->mobile);
                         }
-                        // MakeUserCallJob::dispatch($mobile, $token);
-
-
-                    }
-
-                    // Check if all mobiles in this file are called (state == 'called')
-                    $allCalled = AutoDistributorUploadedData::where('file_id', $feed->file->id)->where('state', 'new')->count() == 0;
-                    if ($allCalled) {
-                        $feed->file->update(['is_done' => true]);
-                        Log::info('All numbers in file ' . $feed->file->slug . ' have been called. The file is marked as done.');
+                    } catch (\Exception $e) {
+                        Log::error('ADist: An error occurred: ' . $e->getMessage());
                     }
                 }
+
+                $allCalled = AutoDistributorUploadedData::where('file_id', $feed->file->id)->where('state', 'new')->count() == 0;
+                if ($allCalled) {
+                    $feed->file->update(['is_done' => true]);
+                    Log::info('All numbers in file ' . $feed->file->slug . ' have been called. The file is marked as done.');
+                }
             } else {
-                Log::info('The current time is not within the specified range.');
-                Log::info('The current time is not within the specified range for extension ' . $feed->extension . $to->format('r'));
+                Log::info('The current time is not within the specified range for file ID ' . $feed->file->id);
             }
         }
     }
+    // public function handle()
+    // {
+
+
+    //     // $token = Cache::get('three_cx_token');
+    //     $token = $this->tokenService->getToken();
+    //     Log::info('MakeCallCommand executed at ' . now());
+    //     $autoDailerFiles = AutoDistributorUploadedData::all();
+    //     $now = Carbon::now();
+
+    //     foreach ($autoDailerFiles as $feed) {
+    //         $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHour(2);
+    //         $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHour(2);
+
+    //         if ($now->between($from, $to) && $feed->file->allow == 1) {
+    //             Log::info('The current time is within the specified range.' . $feed->id);
+    //             Log::info('The current time is within the specified range for extension ' . $feed->extension . $to->format('r'));
+
+    //             // Get all numbers in this feed
+    //             $files = AutoDistributorFile::all();
+    //             Log::info('Files:', $files->toArray());
+
+    //             foreach ($files as $file) {
+    //                 $providerFeeds = AutoDistributorUploadedData::where('file_id', $file->id)->where('state', 'new')->get();
+    //                 Log::info('Provider Feeds:', $providerFeeds->toArray());
+
+    //                 $loop = 0;
+    //                 foreach ($providerFeeds as $mobile) {
+    //                     Log::info('Mobile ' . $mobile->mobile . ' in loop ' . $loop);
+    //                     $ext = $mobile->extension;
+    //                     try {
+    //                         // if (!$mobile || !$mobile->extension || !$mobile->mobile) {
+    //                         //     Log::error('ADist: Invalid mobile data for mobile ' . $mobile);
+    //                         //     return;
+    //                         // }
+
+    //                         $ext = $mobile->extension;
+    //                         if ($mobile->userStatus === "Available") {
+    //                             // Check if there are active calls for this extension
+    //                             $filter = "contains(Caller, '{$ext}')";
+    //                             $url = "https://ecolor.3cx.agency/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+
+    //                             // Logging the API call URL for debugging
+    //                             Log::info('Fetching active calls from URL: ' . $url);
+
+    //                             $activeCallsResponse = Http::withHeaders([
+    //                                 'Authorization' => 'Bearer ' . $token,
+    //                             ])->get($url);
+
+    //                             if ($activeCallsResponse->failed()) {
+    //                                 Log::error('ADist: Failed to fetch active calls for mobile ' . $mobile->mobile . '. Response: ' . $activeCallsResponse->body());
+    //                                 return;
+    //                             }
+
+    //                             if ($activeCallsResponse->successful()) {
+    //                                 $activeCalls = $activeCallsResponse->json();
+
+    //                                 if (!empty($activeCalls['value'])) {
+    //                                     Log::info("Active calls detected for extension {$ext}. Skipping call for mobile {$mobile->mobile}.");
+    //                                     return; // Skip this number if active calls exist
+    //                                 }
+
+    //                                 // No active calls, proceed to make the call
+    //                                 $responseState = Http::withHeaders([
+    //                                     'Authorization' => 'Bearer ' . $token,
+    //                                 ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
+    //                                     'destination' => $mobile->mobile,
+    //                                 ]);
+
+    //                                 if ($responseState->successful()) {
+    //                                     $responseData = $responseState->json();
+
+    //                                     // Handle the report creation and update
+    //                                     $reports = AutoDistributerReport::firstOrCreate([
+    //                                         'call_id' => $responseData['result']['callid'],
+    //                                     ], [
+    //                                         'status' => $responseData['result']['status'],
+    //                                         'provider' => $mobile->user,
+    //                                         'extension' => $responseData['result']['dn'],
+    //                                         'phone_number' => $responseData['result']['party_caller_id'],
+    //                                     ]);
+
+    //                                     $reports->save();
+
+    //                                     // Update the mobile record
+    //                                     $mobile->update([
+    //                                         'state' => $responseData['result']['status'],
+    //                                         'call_date' => Carbon::now(),
+    //                                         'call_id' => $responseData['result']['callid'],
+    //                                         'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
+    //                                     ]);
+
+    //                                     Log::info('ADist: Call successfully made for mobile ' . $mobile->mobile);
+    //                                 } else {
+    //                                     Log::error('ADist: Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
+    //                                     Log::info('ADist: Response Status Code: ' . $responseState->status());
+    //                                     Log::info('ADist: Full Response: ' . print_r($responseState, true));
+    //                                     Log::info('ADist: Headers: ' . json_encode($responseState->headers()));
+    //                                 }
+    //                             } else {
+    //                                 Log::error('ADist: Error fetching active calls for mobile ' . $mobile->mobile);
+    //                             }
+    //                         } else {
+    //                             Log::error('ADist: Mobile is not available. Skipping call for mobile ' . $mobile->mobile);
+    //                         }
+    //                     } catch (\Exception $e) {
+    //                         Log::error('ADist: An error occurred: ' . $e->getMessage());
+    //                     }
+    //                     // MakeUserCallJob::dispatch($mobile, $token);
+
+
+    //                 }
+
+    //                 // Check if all mobiles in this file are called (state == 'called')
+    //                 $allCalled = AutoDistributorUploadedData::where('file_id', $feed->file->id)->where('state', 'new')->count() == 0;
+    //                 if ($allCalled) {
+    //                     $feed->file->update(['is_done' => true]);
+    //                     Log::info('All numbers in file ' . $feed->file->slug . ' have been called. The file is marked as done.');
+    //                 }
+    //             }
+    //         } else {
+    //             Log::info('The current time is not within the specified range.');
+    //             Log::info('The current time is not within the specified range for extension ' . $feed->extension . $to->format('r'));
+    //         }
+    //     }
+    // }
 
 
 
