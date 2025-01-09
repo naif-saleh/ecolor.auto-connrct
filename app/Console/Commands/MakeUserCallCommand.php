@@ -10,7 +10,7 @@ use Carbon\Carbon;
 use App\Models\AutoDistributerReport;
 use Illuminate\Support\Facades\Http;
 use App\Models\AutoDistributorFile;
-
+use App\Jobs\MakeUserCallJob;
 use App\Services\TokenService;
 
 class MakeUserCallCommand extends Command
@@ -79,84 +79,17 @@ class MakeUserCallCommand extends Command
                     foreach ($providerFeeds as $mobile) {
                         Log::info('Mobile ' . $mobile->mobile . ' in loop ' . $loop);
                         $ext = $mobile->extension;
-                        try {
-                            if ($mobile->userStatus === "Available") {
-                                // Check if there are active calls for this extension
-                                $filter = "contains(Caller, '{$ext}')";
-                                $url = "https://ecolor.3cx.agency/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+                        $delay = 0;
+                        MakeUserCallJob::dispatch($mobile, $token)->delay(now()->addSeconds($delay));
+                        $delay += 5;
 
-                                $activeCallsResponse = Http::withHeaders([
-                                    'Authorization' => 'Bearer ' . $token,
-                                ])->get($url);
-
-                                if ($activeCallsResponse->successful()) {
-                                    $activeCalls = $activeCallsResponse->json();
-
-                                    if (!empty($activeCalls['value'])) {
-                                        Log::info("Active calls detected for extension {$ext}. Skipping call for mobile {$mobile->mobile}.");
-                                        continue; // Skip this number if active calls exist
-                                    }
-
-                                    // No active calls, proceed to make the call
-                                    $responseState = Http::withHeaders([
-                                        'Authorization' => 'Bearer ' . $token,
-                                    ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
-                                        'destination' => $mobile->mobile,
-                                    ]);
-
-                                    if ($responseState->successful()) {
-                                        $responseData = $responseState->json();
-
-                                        // Handle the report creation and update
-                                        $reports = AutoDistributerReport::firstOrCreate([
-                                            'call_id' => $responseData['result']['callid'],
-                                        ], [
-                                            'status' => $responseData['result']['status'],
-                                            'provider' => $mobile->user,
-                                            'extension' => $responseData['result']['dn'],
-                                            'phone_number' => $responseData['result']['party_caller_id'],
-                                        ]);
-
-                                        $reports->save();
-
-                                        // Update the mobile record
-                                        $mobile->update([
-                                            'state' => $responseData['result']['status'],
-                                            'call_date' => now(),
-                                            'call_id' => $responseData['result']['callid'],
-                                            'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
-                                        ]);
-
-                                        Log::info('ADist: Call successfully made for mobile ' . $mobile->mobile);
-                                    } else {
-
-                                        Log::error('ADist: Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
-                                        Log::info('ADist:  Response Status Code: ' . $responseState->status());
-                                        Log::info('ADist:  Full Response: ' . print_r($responseState, TRUE));
-                                        Log::info('ADist: Headers: ' . json_encode($responseState->headers()));
-                                    }
-
-                                    // Add a 30-second delay between calls
-                                    // Log::info("ADist: Waiting for 30 seconds before making the next call.");
-
-
-                                }       // Wait for 30 seconds before the next call
-                                //  $this->waitFor(30);
-                            } else {
-                                Log::error('ADist: Error fetching active calls for mobile ' . $mobile['mobile']);
-                            }
-                        } catch (\Exception $e) {
-                            Log::error('ADist: An error occurred: ' . $e->getMessage());
-                        }
                     }
 
                     // Check if all mobiles in this file are called (state == 'called')
-                    $allCalled = AutoDistributorUploadedData::where('file_id', $file->id)->where('state', '==', 'new')->count() == 0;
-                    Log::info('All numbers in file ' . $allCalled);
-                    // If all calls have been made, update the AutoDailerFile status
+                    $allCalled = AutoDistributorUploadedData::where('file_id', $feed->file->id)->where('state', 'new')->count() == 0;
                     if ($allCalled) {
-                        $file->update(['is_done' => true]); // Ensure 'is_done' column exists in your model and database
-                        Log::info('All numbers in file ' . $file->slug . ' have been called. The file is done.');
+                        $feed->file->update(['is_done' => true]);
+                        Log::info('All numbers in file ' . $feed->file->slug . ' have been called. The file is marked as done.');
                     }
                 }
             } else {
