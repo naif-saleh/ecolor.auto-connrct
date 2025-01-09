@@ -38,12 +38,12 @@ class MakeUserCallJob implements ShouldQueue
                 $filter = "contains(Caller, '{$ext}')";
                 $url = "https://ecolor.3cx.agency/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
-                // Logging the API call URL for debugging
-                Log::info('Fetching active calls from URL: ' . $url);
-
-                $activeCallsResponse = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $this->token,
-                ])->get($url);
+                // Set a timeout and retry logic
+                $activeCallsResponse = Http::timeout(10) // Timeout after 10 seconds
+                    ->retry(3, 2) // Retry up to 3 times with a 2-second delay between retries
+                    ->withHeaders([
+                        'Authorization' => 'Bearer ' . $this->token,
+                    ])->get($url);
 
                 if ($activeCallsResponse->failed()) {
                     Log::error('ADist: Failed to fetch active calls for mobile ' . $this->mobile->mobile . '. Response: ' . $activeCallsResponse->body());
@@ -59,11 +59,13 @@ class MakeUserCallJob implements ShouldQueue
                     }
 
                     // No active calls, proceed to make the call
-                    $responseState = Http::withHeaders([
-                        'Authorization' => 'Bearer ' . $this->token,
-                    ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
-                        'destination' => $this->mobile->mobile,
-                    ]);
+                    $responseState = Http::timeout(10) // Timeout after 10 seconds
+                        ->retry(3, 2) // Retry up to 3 times with a 2-second delay between retries
+                        ->withHeaders([
+                            'Authorization' => 'Bearer ' . $this->token,
+                        ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
+                            'destination' => $this->mobile->mobile,
+                        ]);
 
                     if ($responseState->successful()) {
                         $responseData = $responseState->json();
