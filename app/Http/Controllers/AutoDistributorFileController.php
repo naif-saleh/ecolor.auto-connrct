@@ -188,6 +188,7 @@ class AutoDistributorFileController extends Controller
     {
         $files = AutoDistributorFile::paginate(20);
         $threeCxUsers = TrheeCxUserStatus::all();
+        // $numbersCount =  AutoDistributorUploadedData::where('file_id', $files->file->id)->where('state', 'new')->count();
         return view('autodisributers.index', compact('files', 'threeCxUsers'));
     }
 

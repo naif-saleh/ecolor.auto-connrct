@@ -28,6 +28,7 @@ class AutoDirtibuterController extends Controller
     public function index()
     {
         $files = AutoDirtibuter::with('user')->latest()->get();
+        
         return view('autodisributers.index', compact('files'));
     }
 
