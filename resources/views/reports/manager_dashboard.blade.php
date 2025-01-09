@@ -91,12 +91,12 @@
 <h1>Call Statistics</h1>
 <div class="charts-container">
     <div class="chart-box">
-        <h2>Auto Dialer Calls</h2>
-        <canvas id="autoDailerChart"></canvas>
-    </div>
-    <div class="chart-box">
         <h2>Auto Distributor Calls</h2>
         <canvas id="autoDistributorChart"></canvas>
+    </div>
+    <div class="chart-box">
+        <h2>Auto Dialer Calls</h2>
+        <canvas id="autoDailerChart"></canvas>
     </div>
 </div>
 @endsection
