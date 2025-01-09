@@ -45,7 +45,6 @@ class MakeUserCallCommand extends Command
 
 
         // $token = Cache::get('three_cx_token');
-        $tokenService = app(TokenService::class);
         $token = $this->tokenService->getToken();
         Log::info('ADist: MakeCallCommand executed at ' . now());
         $providersFeeds = AutoDistributorUploadedData::all();
@@ -79,9 +78,9 @@ class MakeUserCallCommand extends Command
                     $loop = 0;
                     foreach ($providerFeeds as $mobile) {
                         Log::info('Mobile ' . $mobile->mobile . ' in loop ' . $loop);
-
+                        $ext = $mobile->extension;
                         $delay = 0;
-                        MakeUserCallJob::dispatch($mobile, $tokenService)->delay(now()->addSeconds($delay));
+                        MakeUserCallJob::dispatch($mobile, $token)->delay(now()->addSeconds($delay));
                         $delay += 10;
 
                     }

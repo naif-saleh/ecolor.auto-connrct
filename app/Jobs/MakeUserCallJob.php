@@ -11,25 +11,21 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use App\Models\AutoDistributerReport;
-use App\Services\TokenService;
 
 class MakeUserCallJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
     protected $mobile;
-    protected $tokenService;
+    protected $token;
 
-    public function __construct($mobile, TokenService $tokenService)
+    public function __construct($mobile, $token)
     {
         $this->mobile = $mobile;
-        $this->tokenService = $tokenService;
+        $this->token = $token;
     }
 
     public function handle()
     {
-
-        $token = $this->tokenService->getToken();
-
         try {
             if (!$this->mobile || !$this->mobile->extension || !$this->mobile->mobile) {
                 Log::error('ADist: Invalid mobile data for mobile ' . $this->mobile);
@@ -46,7 +42,7 @@ class MakeUserCallJob implements ShouldQueue
                 Log::info('Fetching active calls from URL: ' . $url);
 
                 $activeCallsResponse = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $token,
+                    'Authorization' => 'Bearer ' . $this->token,
                 ])->get($url);
 
                 if ($activeCallsResponse->failed()) {
@@ -64,7 +60,7 @@ class MakeUserCallJob implements ShouldQueue
 
                     // No active calls, proceed to make the call
                     $responseState = Http::withHeaders([
-                        'Authorization' => 'Bearer ' . $token,
+                        'Authorization' => 'Bearer ' . $this->token,
                     ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
                         'destination' => $this->mobile->mobile,
                     ]);
