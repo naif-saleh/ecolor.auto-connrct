@@ -1,4 +1,5 @@
 @extends('layout.master')
+@section('title', '`User | Edit')
 
 @section('content')
 <div class="container">

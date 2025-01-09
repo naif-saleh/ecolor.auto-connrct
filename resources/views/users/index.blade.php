@@ -1,4 +1,5 @@
 @extends('layout.master')
+@section('title', '`Users')
 
 @section('content')
     <div class="container">
