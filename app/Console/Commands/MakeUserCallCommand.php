@@ -49,12 +49,7 @@ class MakeUserCallCommand extends Command
         Log::info('ADist: MakeCallCommand executed at ' . now());
         $providersFeeds = AutoDistributorUploadedData::all();
         $now = Carbon::now();
- // Log::info("From Time: " . $from . " | To Time: " . $to);
-            // Log::info('Make Provider Call, Active status ' . $feed->extension . " | " . $feed->file->allow);
-            // Log::info("Current Time: " . $now);
-            // Log::info("From Time: " . $from);
-            // Log::info("To Time: " . $to);
-            // Log::info("File Allow Status: " . $feed->file->allow);
+
             // Check if the current time is within the range
         foreach ($providersFeeds as $feed) {
             // Recalculate 'from' and 'to' for each feed
@@ -77,9 +72,9 @@ class MakeUserCallCommand extends Command
                     foreach ($providerFeeds as $mobile) {
                         Log::info('Mobile ' . $mobile->mobile . ' in loop ' . $loop);
                         $ext = $mobile->extension;
-                        $delay = 0;
-                        MakeUserCallJob::dispatch($mobile, $token)->delay(now()->addSeconds($delay));
-                        $delay += 10;
+
+                        MakeUserCallJob::dispatch($mobile, $token);
+
 
                     }
 
