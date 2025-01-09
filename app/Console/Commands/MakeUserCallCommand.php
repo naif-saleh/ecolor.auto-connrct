@@ -49,20 +49,18 @@ class MakeUserCallCommand extends Command
         Log::info('ADist: MakeCallCommand executed at ' . now());
         $providersFeeds = AutoDistributorUploadedData::all();
         $now = Carbon::now();
-
-        foreach ($providersFeeds as $feed) {
-            // $ext_from = $feed->extension;
-
-            // Recalculate 'from' and 'to' for each feed
-            $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHour(2);
-            $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHour(2);
-            // Log::info("From Time: " . $from . " | To Time: " . $to);
+ // Log::info("From Time: " . $from . " | To Time: " . $to);
             // Log::info('Make Provider Call, Active status ' . $feed->extension . " | " . $feed->file->allow);
             // Log::info("Current Time: " . $now);
             // Log::info("From Time: " . $from);
             // Log::info("To Time: " . $to);
             // Log::info("File Allow Status: " . $feed->file->allow);
             // Check if the current time is within the range
+        foreach ($providersFeeds as $feed) {
+            // Recalculate 'from' and 'to' for each feed
+            $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHour(2);
+            $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHour(2);
+
             if ($now->between($from, $to) && $feed->file->allow == 1) {
                 Log::info('The current time is within the specified range.' . $feed->id);
                 Log::info('The current time is within the specified range for extension ' . $feed->extension . $to->format('r'));

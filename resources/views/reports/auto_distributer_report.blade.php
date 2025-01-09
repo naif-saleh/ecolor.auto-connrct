@@ -209,7 +209,7 @@
 
         <!-- Page Header -->
         <div class="text-center mb-5">
-            <h2 class="fw-bold text-primary">Auto Dailer Report</h2>
+            <h2 class="fw-bold text-primary">Auto Distributer Report</h2>
             <p class="text-muted">View and manage detailed reports on call activity.</p>
         </div>
 
@@ -218,31 +218,31 @@
             <!-- First Line: Export and Filter Buttons -->
             <div class="filter-buttons">
                 <!-- Export Button -->
-                <a href="{{ route('auto_dailer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to')]) }}"
+                <a href="{{ route('auto_distributer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to')]) }}"
                     class="btn btn-modern-export" id="download-csv-button">
                     <i class="fas fa-file-export me-2"></i> Export as CSV
                 </a>
 
                 <!-- State Filters (All, Answered, No Answer, Today) -->
-                <a href="{{ url('auto-dailer-report') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
+                <a href="{{ url('auto-distributer-report') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
                     <i class="fas fa-list me-1"></i> All
                 </a>
-                <a href="{{ url('auto-dailer-report?filter=answered') }}"
+                <a href="{{ url('auto-distributer-report?filter=answered') }}"
                     class="btn btn-modern-filter {{ $filter === 'answered' ? 'active' : '' }}">
                     <i class="fas fa-phone me-1"></i> Answered
                 </a>
-                <a href="{{ url('auto-dailer-report?filter=no answer') }}"
+                <a href="{{ url('auto-distributer-report?filter=no answer') }}"
                     class="btn btn-modern-filter {{ $filter === 'no answer' ? 'active' : '' }}">
                     <i class="fas fa-phone-slash me-1"></i> No Answer
                 </a>
-                <a href="{{ url('auto-dailer-report?filter=today') }}"
+                <a href="{{ url('auto-distributer-report?filter=today') }}"
                     class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}">
                     <i class="fas fa-calendar-day me-1"></i> Today
                 </a>
             </div>
 
             <!-- Second Line: Filters Form -->
-            <form method="GET" action="{{ url('auto-dailer-report') }}" class="filter-form">
+            <form method="GET" action="{{ url('auto-distributer-report') }}" class="filter-form">
                 <!-- Extension Inputs -->
                 <input type="number" name="extension_from" class="form-modern" placeholder="Extension From"
                     value="{{ request('extension_from') }}">

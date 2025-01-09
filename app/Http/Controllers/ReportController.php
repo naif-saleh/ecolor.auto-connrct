@@ -235,7 +235,7 @@ class ReportController extends Controller
         // Fetch distinct providers for the filter dropdown
         $providers = AutoDistributerReport::select('provider')->distinct()->get();
 
-        return view('reports.auto_dailer_report', compact(
+        return view('reports.auto_distributer_report', compact(
             'reports',
             'filter',
             'extensionFrom',
