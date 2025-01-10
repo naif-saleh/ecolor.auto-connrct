@@ -91,7 +91,8 @@ class MakeUserCallCommand extends Command
                                 }
 
 
-                                MakeCallJob::dispatch($mobile, $token);
+                                MakeCallJob::dispatch($mobile, $token)->delay(now()->addSeconds(20));
+
 
                                 // No active calls, proceed to make the call
 
@@ -114,8 +115,6 @@ class MakeUserCallCommand extends Command
             } else {
                 Log::info('The current time is not within the specified range for file ID ' . $feed->file->id);
             }
-
-
         }
 
 
