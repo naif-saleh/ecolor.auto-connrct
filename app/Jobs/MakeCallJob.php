@@ -29,6 +29,7 @@ class MakeCallJob implements ShouldQueue
 
     public function handle()
     {
+        Log::info('Make Call Executed Now....');
         try {
             $token = $this->tokenService->getToken();
 
