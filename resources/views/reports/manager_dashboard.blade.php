@@ -1,5 +1,6 @@
 @extends('layout.manager')
 @section('title', 'Manager | Statistics Dashboard')
+
 @section('content')
 @section('style')
     <style>
@@ -35,16 +36,6 @@
             max-width: 500px;
         }
 
-        .chart-box h2 {
-            font-size: 24px;
-            margin-bottom: 20px;
-        }
-
-        canvas {
-            margin: auto;
-            width: 100%;
-        }
-
         .card-body {
             padding: 30px;
         }
@@ -53,24 +44,6 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
             border-radius: 8px;
             margin-bottom: 40px;
-        }
-
-        .charts-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-            gap: 30px;
-            justify-items: center;
-            margin-top: 40px;
-        }
-
-        .chart-box {
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            text-align: center;
-            width: 100%;
-            max-width: 500px;
         }
     </style>
 @endsection

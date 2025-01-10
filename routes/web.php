@@ -22,20 +22,20 @@ use App\Http\Controllers\AutoDistributorFileController;
 Route::get('/', function () {
     if (Auth::check()) {
         $user = Auth::user();
+         
 
-        // Check if the user is a SuperUser or Admin
         if ($user->isSuperUser() || $user->isAdmin()) {
             return redirect('/auto-dailer/files');
         }
 
-        // Check if the user is a Manager
         if ($user->isManagerUser()) {
-            return redirect('/auto-dailer/files');
+            return view('reports.manager_dashboard');
         }
     }
 
     return view('auth.login');
 });
+
 
 // Route::get('/', [ProviderForAutoDailerController::class, 'index'])->name('autoDailerByProvider.index');
 
@@ -101,6 +101,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('manager/auto-distributor/report-extensions', [DashboardController::class, 'managerAutoDistributorsReports'])->name('manager.autodistributor.report.extension');
     // Auto Distributer Providers...............
     Route::get('manager/auto-distributor/report-providers', [DashboardController::class, 'managerAutoDistributorsReportsProvider'])->name('manager.autodistributor.report.providers');
+    // Auto Distributer Compagin...............
+    Route::get('manager/auto-distributor/report-compagin', [DashboardController::class, 'managerAutoDistributorsReportsCompaign'])->name('manager.autodistributor.report.compaign');
 
     // // Dashboard Statistics....................................................................................................................
     Route::get('/dashboard-calls', [DashboardController::class, 'index'])->name('calls.dashboard');

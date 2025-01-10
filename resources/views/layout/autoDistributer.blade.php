@@ -69,7 +69,7 @@
                                 <a class="nav-link" href="{{ route('manager.autodistributor.report.providers') }}">Per Providers</a>
                             </li>
                             <li class="nav-item">
-                                <a class="nav-link" href="#">Per Compaign</a>
+                                <a class="nav-link" href="{{route('manager.autodistributor.report.compaign')}}">Per Compaign</a>
                             </li>
                             {{-- <li class="nav-item">
                                 <a class="nav-link" href="{{ route('manager.auotdailer.report.extension') }}">Auto Dailer Reports</a>

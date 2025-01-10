@@ -43,7 +43,7 @@ class MakeUserCallCommand extends Command
     {
         $token = $this->tokenService->getToken();
         Log::info('MakeCallCommand executed at ' . now());
-        $autoDailerFiles = AutoDistributorUploadedData::where('state', 'new')->take(5)
+        $autoDailerFiles = AutoDistributorUploadedData::where('state', 'new')->take(10)
         ->get();;
         $now = Carbon::now();
 

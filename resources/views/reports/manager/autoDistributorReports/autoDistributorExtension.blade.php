@@ -9,7 +9,7 @@
                 <!-- Card Container -->
                 <div class="card shadow border-0">
                     <div class="card-header bg-gradient text-white text-center" style="background-color: #1a73e8; color: #fff;">
-                        <h3 class="mb-0">Auto Distributor Report Per Extensions</h3>
+                        <h3 class="mb-0">Report Per Extensions</h3>
                     </div>
                     <div class="card-body">
                         <!-- Filter Form -->
@@ -40,12 +40,13 @@
                         <!-- Activity Table -->
                         <div class="table-responsive">
                             <table class="table table-hover table-bordered align-middle text-center">
-                                <thead class="table-dark-">
+                                <thead class="table-dark">
                                     <tr>
                                         <th scope="col">Extension</th>
                                         <th scope="col">Provider</th>
                                         <th scope="col">Answered</th>
                                         <th scope="col">Unanswered</th>
+                                        <th scope="col">Unanswered - Emplooyee</th>
                                         <th scope="col">Total Calls</th>
                                     </tr>
                                 </thead>
@@ -56,6 +57,7 @@
                                             <td>{{ $data->provider }}</td>
                                             <td>{{ $data->answered }}</td>
                                             <td>{{ $data->unanswered }}</td>
+                                            <td>{{ $data->unansweredByEmplooyee }}</td>
                                             <td>{{ $data->total_calls }}</td>
                                         </tr>
                                     @endforeach

@@ -6,30 +6,33 @@
     <div class="container mt-5">
         <div class="row">
             <div class="col-12">
-                <!-- Card Container -->
                 <div class="card shadow border-0">
-                    <div class="card-header bg-gradient text-white text-center" style="background-color: #1a73e8; color: #fff;">
+                    <div class="card-header bg-gradient text-white text-center"
+                        style="background-color: #1a73e8; color: #fff;">
                         <h3 class="mb-0">Auto Dailer Report Per Extensions</h3>
                     </div>
                     <div class="card-body">
-                        <!-- Filter Form -->
                         <form method="GET" action="{{ route('manager.auotdailer.report.extension') }}" class="mb-4">
                             <div class="row">
                                 <div class="col-md-3">
                                     <label for="from_date" class="form-label">From Date</label>
-                                    <input type="date" name="from_date" value="{{ $from_date }}" class="form-control rounded-pill border-primary" />
+                                    <input type="date" name="from_date" value="{{ $from_date }}"
+                                        class="form-control rounded-pill border-primary" />
                                 </div>
                                 <div class="col-md-3">
                                     <label for="to_date" class="form-label">To Date</label>
-                                    <input type="date" name="to_date" value="{{ $to_date }}" class="form-control rounded-pill border-primary" />
+                                    <input type="date" name="to_date" value="{{ $to_date }}"
+                                        class="form-control rounded-pill border-primary" />
                                 </div>
                                 <div class="col-md-3">
                                     <label for="extension" class="form-label">Extension</label>
-                                    <input type="text" name="extension" value="{{ $extension }}" class="form-control rounded-pill border-primary" placeholder="Extension" />
+                                    <input type="text" name="extension" value="{{ $extension }}"
+                                        class="form-control rounded-pill border-primary" placeholder="Extension" />
                                 </div>
                                 <div class="col-md-3">
                                     <label for="provider" class="form-label">Provider</label>
-                                    <input type="text" name="provider" value="{{ $provider }}" class="form-control rounded-pill border-primary" placeholder="Provider" />
+                                    <input type="text" name="provider" value="{{ $provider }}"
+                                        class="form-control rounded-pill border-primary" placeholder="Provider" />
                                 </div>
                                 <div class="col-md-2 mt-3">
                                     <button type="submit" class="btn btn-primary rounded-pill w-100">Filter</button>
@@ -37,16 +40,16 @@
                             </div>
                         </form>
 
-                        <!-- Activity Table -->
                         <div class="table-responsive">
                             <table class="table table-hover table-bordered align-middle text-center">
-                                <thead class="table-dark-">
+                                <thead>
                                     <tr>
                                         <th scope="col">Extension</th>
                                         <th scope="col">Provider</th>
                                         <th scope="col">Answered</th>
                                         <th scope="col">Unanswered</th>
                                         <th scope="col">Total Calls</th>
+                                        <th scope="col">Unique Phone Numbers</th> <!-- New Column -->
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -57,6 +60,8 @@
                                             <td>{{ $data->answered }}</td>
                                             <td>{{ $data->unanswered }}</td>
                                             <td>{{ $data->total_calls }}</td>
+                                            <td>{{ $data->unique_phone_numbers }}</td>
+                                            <!-- Display Unique Phone Numbers -->
                                         </tr>
                                     @endforeach
                                 </tbody>
@@ -64,14 +69,9 @@
                         </div>
                     </div>
                     <div class="card-footer text-muted text-center">
-                        Total Records: {{ $reportData->total() }}
+                        Total Records: {{ $reportData->count() }}
                     </div>
                 </div>
-            </div>
-
-            <!-- Pagination Links -->
-            <div class="d-flex justify-content-center mt-4">
-                {{ $reportData->links('pagination::bootstrap-5') }}
             </div>
         </div>
     </div>

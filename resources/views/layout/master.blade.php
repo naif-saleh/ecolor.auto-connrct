@@ -117,27 +117,12 @@
                                 <li class="nav-item">
                                     <a class="nav-link" href="{{ route('manager.dashboard') }}">Manager Statistics</a>
                                 </li>
-
-                                <li class="nav-item dropdown">
-                                    <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button"
-                                        data-bs-toggle="dropdown" aria-expanded="false">
-                                        Reports
-                                    </a>
-                                    <ul class="dropdown-menu" aria-labelledby="activityDropdown">
-                                        <li>
-                                            <a class="dropdown-item" href="{{ route('users.activity.report') }}">User
-                                                Activity</a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="{{ route('auto_dailer.report') }}">Auto
-                                                Dailer</a>
-                                        </li>
-                                        <li>
-                                            <a class="dropdown-item" href="{{ route('auto_distributer.report') }}">Auto
-                                                Distributer</a>
-                                        </li>
-                                    </ul>
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('manager.autodistributor.report.extension') }}">Auto
+                                        Distributor Report</a>
                                 </li>
+
+
 
 
                 @endif
