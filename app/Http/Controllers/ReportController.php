@@ -108,6 +108,8 @@ class ReportController extends Controller
     // Export Auto Distributer AS CSV File...........................................................................................................
     public function exportAutoDailerReport(Request $request)
     {
+
+        // dd('Autodailer');
         $filter = $request->query('filter');
         $extensionFrom = $request->input('extension_from');
         $extensionTo = $request->input('extension_to');
@@ -164,7 +166,7 @@ class ReportController extends Controller
                     $report->extension,
                     in_array($report->status, ['Wexternalline', 'Talking']) ? 'Answered' : 'No Answer',
                     $report->created_at->addHours(3)->format('H:i:s'),
-                    $report->created_at->addHours(3)->format('H:i:s')
+                    $report->created_at->addHours(3)->format('Y-m-d')
                 ]);
             }
 
@@ -313,7 +315,7 @@ class ReportController extends Controller
                     $report->extension,
                     in_array($report->status, ['Wexternalline', 'Talking']) ? 'Answered' : 'No Answer',
                     $report->created_at->addHours(3)->format('H:i:s'),
-                    $report->created_at->addHours(3)->format('H:i:s')
+                    $report->created_at->addHours(3)->format('Y-m-d')
                 ]);
             }
 
