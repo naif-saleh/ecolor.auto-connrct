@@ -91,7 +91,7 @@ class MakeUserCallCommand extends Command
                                 }
 
 
-                                MakeCallJob::dispatch($mobile, $token)->delay(now()->addSeconds(20));
+                                MakeCallJob::dispatch($mobile, $this->tokenService)->delay(now()->addSeconds(20));
 
 
                                 // No active calls, proceed to make the call
