@@ -69,6 +69,7 @@ class MakeCallJob implements ShouldQueue
                 Log::info('ADist: Call successfully made for mobile ' . $this->mobile->mobile);
             } else {
                 Log::error('ADist: Failed to make call for mobile ' . $this->mobile->mobile . '. Response: ' . $responseState->body());
+                Log::error('ADist: Token: ' . $token);
             }
         } catch (\Exception $e) {
             Log::error('Failed to make call for mobile ' . $this->mobile->mobile . ': ' . $e->getMessage());
