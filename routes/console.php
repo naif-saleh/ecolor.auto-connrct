@@ -11,6 +11,6 @@ Artisan::command('inspire', function () {
 Schedule::command('app:make-call-command')->everySecond();
 Schedule::command('app:participants-command')->everySecond();
 Schedule::command('app:make-user-call-command')->everySecond();
-// Schedule::command('app:make-user-participant-command')->everySecond();
+Schedule::command('app:make-user-participant-command')->everySecond();
 Schedule::command('app:update-user-status-command')->everySecond();
 
