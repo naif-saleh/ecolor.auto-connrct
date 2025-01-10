@@ -39,6 +39,8 @@
                         <tr>
                             <th>File Name</th>
                             <th>Uploaded By</th>
+                            <th>Date</th>
+                            <th>Time</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -47,6 +49,8 @@
                             <tr>
                                 <td>{{ $file->file_name }}</td>
                                 <td>{{ $file->user->name ?? 'Unknown' }}</td>
+                                <td>{{ $file->created_at->addHours(3)->format('Y-m-d') }}</td> <!-- For Date -->
+                                <td>{{ $file->created_at->addHours(3)->format('H:i:s') }}</td> <!-- For Time -->
                                 <td class="d-flex justify-content-between">
                                     <!-- Switch for Allow (moved to start) -->
                                     <form action="{{ route('autodailers.files.allow', $file->slug) }}" method="POST"
