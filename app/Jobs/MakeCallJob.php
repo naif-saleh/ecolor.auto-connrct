@@ -29,52 +29,49 @@ class MakeCallJob implements ShouldQueue
 
     public function handle()
     {
-
         try {
             $token = $this->tokenService->getToken();
-            // Use the token
+
+            if (empty($token)) {
+                Log::error('Token is empty or invalid');
+                return;
+            }
+
+            $ext = $this->mobile->extension;
+
+            $responseState = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
+                'destination' => $this->mobile->mobile,
+            ]);
+
+            if ($responseState->successful()) {
+                $responseData = $responseState->json();
+
+                $reports = AutoDistributerReport::firstOrCreate([
+                    'call_id' => $responseData['result']['callid'],
+                ], [
+                    'status' => "Initiating",
+                    'provider' => $this->mobile->user,
+                    'extension' => $responseData['result']['dn'],
+                    'phone_number' => $responseData['result']['party_caller_id'],
+                ]);
+
+                $reports->save();
+
+                $this->mobile->update([
+                    'state' => "Initiating",
+                    'call_date' => Carbon::now(),
+                    'call_id' => $responseData['result']['callid'],
+                    'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
+                ]);
+
+                Log::info('ADist: Call successfully made for mobile ' . $this->mobile->mobile);
+            } else {
+                Log::error('ADist: Failed to make call for mobile ' . $this->mobile->mobile . '. Response: ' . $responseState->body());
+            }
         } catch (\Exception $e) {
-            Log::error('Failed to fetch token: ' . $e->getMessage());
-            // Handle re-authentication if necessary
-        }
-
-
-        $ext = $this->mobile->extension;
-
-        $responseState = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $token,
-        ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
-            'destination' => $this->mobile->mobile,
-        ]);
-
-        if ($responseState->successful()) {
-            $responseData = $responseState->json();
-            // Handle the report creation and update
-            $reports = AutoDistributerReport::firstOrCreate([
-                'call_id' => $responseData['result']['callid'],
-            ], [
-                'status' => "Initiating",
-                'provider' => $this->mobile->user,
-                'extension' => $responseData['result']['dn'],
-                'phone_number' => $responseData['result']['party_caller_id'],
-            ]);
-
-            $reports->save();
-
-            // Update the mobile record
-            $this->mobile->update([
-                'state' => "Initiating",
-                'call_date' => Carbon::now(),
-                'call_id' => $responseData['result']['callid'],
-                'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
-            ]);
-
-            Log::info('ADist: Call successfully made for mobile ' . $this->mobile->mobile);
-        } else {
-            Log::error('ADist: Failed to make call for mobile ' . $this->mobile->mobile . '. Response: ' . $responseState->body());
-            Log::info('ADist: Response Status Code: ' . $responseState->status());
-            Log::info('ADist: Full Response: ' . print_r($responseState, true));
-            Log::info('ADist: Headers: ' . json_encode($responseState->headers()));
+            Log::error('Failed to make call for mobile ' . $this->mobile->mobile . ': ' . $e->getMessage());
         }
     }
 }
