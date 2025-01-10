@@ -108,8 +108,6 @@ class ReportController extends Controller
     // Export Auto Distributer AS CSV File...........................................................................................................
     public function exportAutoDailerReport(Request $request)
     {
-
-        // dd('Autodailer');
         $filter = $request->query('filter');
         $extensionFrom = $request->input('extension_from');
         $extensionTo = $request->input('extension_to');
@@ -142,8 +140,8 @@ class ReportController extends Controller
             $query->where('provider', $provider);
         }
 
-         // Apply date range filter
-         if ($dateFrom && $dateTo) {
+        // Apply date range filter
+        if ($dateFrom && $dateTo) {
             $query->whereBetween('created_at', [
                 \Carbon\Carbon::parse($dateFrom)->startOfDay(),
                 \Carbon\Carbon::parse($dateTo)->endOfDay()
@@ -174,10 +172,11 @@ class ReportController extends Controller
         });
 
         $response->headers->set('Content-Type', 'text/csv');
-        $response->headers->set('Content-Disposition', 'attachment; filename="auto_dailer_report.csv"');
+        $response->headers->set('Content-Disposition', 'attachment; filename="Auto_Dailer_Report.csv"');
 
         return $response;
     }
+
 
 
 
@@ -291,8 +290,8 @@ class ReportController extends Controller
             $query->where('provider', $provider);
         }
 
-         // Apply date range filter
-         if ($dateFrom && $dateTo) {
+        // Apply date range filter
+        if ($dateFrom && $dateTo) {
             $query->whereBetween('created_at', [
                 \Carbon\Carbon::parse($dateFrom)->startOfDay(),
                 \Carbon\Carbon::parse($dateTo)->endOfDay()
