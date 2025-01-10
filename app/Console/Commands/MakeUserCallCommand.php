@@ -90,8 +90,48 @@ class MakeUserCallCommand extends Command
                                     return; // Skip this number if active calls exist
                                 }
 
+                                try {
+
+
+                                    $ext = $mobile->extension;
+
+                                    $responseState = Http::withHeaders([
+                                        'Authorization' => 'Bearer ' . $token,
+                                    ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
+                                        'destination' => $mobile->mobile,
+                                    ]);
+
+                                    if ($responseState->successful()) {
+                                        $responseData = $responseState->json();
+
+                                        $reports = AutoDistributerReport::firstOrCreate([
+                                            'call_id' => $responseData['result']['callid'],
+                                        ], [
+                                            'status' => "Initiating",
+                                            'provider' => $mobile->user,
+                                            'extension' => $responseData['result']['dn'],
+                                            'phone_number' => $responseData['result']['party_caller_id'],
+                                        ]);
+
+                                        $reports->save();
+
+                                        $mobile->update([
+                                            'state' => "Initiating",
+                                            'call_date' => Carbon::now(),
+                                            'call_id' => $responseData['result']['callid'],
+                                            'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
+                                        ]);
+
+                                        Log::info('ADist: Call successfully made for mobile ' . $mobile->mobile);
+                                    } else {
+                                        Log::error('ADist: Failed to make call for mobile Number** ' . $mobile->mobile . '. Response: ' . $responseState->body());
+                                        Log::error('ADist: Token: ' . $token);
+                                    }
+                                } catch (\Exception $e) {
+                                    Log::error('Failed to make call for mobile ' . $mobile->mobile . ': ' . $e->getMessage());
+                                }
                                 // Log::info("Adist: Token: ", $token);
-                                MakeCallJob::dispatch($mobile, $this->tokenService)->delay(now()->addSeconds(20));
+                                // MakeCallJob::dispatch($mobile, $this->tokenService)->delay(now()->addSeconds(20));
 
 
                                 // No active calls, proceed to make the call
