@@ -12,26 +12,37 @@ use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\AutoDistributorUploadedData;
 use App\Models\AutoDistributerReport;
+use App\Services\TokenService;
 
 class MakeCallJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $mobile;
-    protected $token;
+    protected $tokenService;
 
-    public function __construct($mobile, $token)
+    public function __construct($mobile, TokenService $tokenService)
     {
         $this->mobile = $mobile;
-        $this->token = $token;
+        $this->tokenService = $tokenService;
     }
 
     public function handle()
     {
+
+        try {
+            $token = $this->tokenService->getToken();
+            // Use the token
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch token: ' . $e->getMessage());
+            // Handle re-authentication if necessary
+        }
+
+
         $ext = $this->mobile->extension;
 
         $responseState = Http::withHeaders([
-            'Authorization' => 'Bearer ' . $this->token,
+            'Authorization' => 'Bearer ' . $token,
         ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
             'destination' => $this->mobile->mobile,
         ]);
