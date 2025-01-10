@@ -90,7 +90,7 @@ class MakeUserCallCommand extends Command
                                     return; // Skip this number if active calls exist
                                 }
 
-
+                                Log::info("Adist: Token: ", $this->tokenService);
                                 MakeCallJob::dispatch($mobile, $this->tokenService)->delay(now()->addSeconds(20));
 
 
