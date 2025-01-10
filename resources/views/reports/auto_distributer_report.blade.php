@@ -220,7 +220,7 @@
             <div class="filter-buttons">
                 <!-- Export Button -->
                 <a href="{{ route('auto_distributer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to')]) }}"
-                    class="btn btn-modern-export" id="download-csv-button">
+                    class="btn btn-modern-export" id="download-autoDistributer-csv-button">
                     <i class="fas fa-file-export me-2"></i> Export as CSV
                 </a>
 
