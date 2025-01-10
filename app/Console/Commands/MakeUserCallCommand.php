@@ -50,7 +50,7 @@ class MakeUserCallCommand extends Command
             $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHour(2);
             $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHour(2);
 
-            if ($now->between($from, $to) && $feed->file->allow == 1) {
+            if ($now->between(\Carbon\Carbon::parse($from)->startOfDay(), \Carbon\Carbon::parse($to)->startOfDay()) && $feed->file->allow == 1) {
                 Log::info('Processing file with ID ' . $feed->file->id);
 
                 $providerFeeds = AutoDistributorUploadedData::where('file_id', $feed->file->id)
