@@ -30,7 +30,7 @@ Route::get('/', function () {
 
         // Check if the user is a Manager
         if ($user->isManagerUser()) {
-            return redirect('/manager/dashboard');
+            return redirect('/auto-dailer/files');
         }
     }
 

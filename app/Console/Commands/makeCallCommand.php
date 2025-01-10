@@ -110,5 +110,27 @@ class makeCallCommand extends Command
                 Log::info('The current time is not within the specified range for file ID ' . $feed->file->id);
             }
         }
+
+
+
+
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }

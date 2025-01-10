@@ -225,13 +225,13 @@ class ReportController extends Controller
             ]);
         }
         // Skip Initiating
-        $query->where('status', '!=', 'Initiating');
+        // $query->where('status', '!=', 'Initiating');
         $reports = $query->paginate(20);
 
         // Calculate counts
-        $totalCount = AutoDistributerReport::where('status', '!=', 'Initiating')->count(); // Total calls count
+        $totalCount = AutoDistributerReport::count(); // Total calls count
         $answeredCount = AutoDistributerReport::whereIn('status', ['Wextension', 'Wexternalline', "Talking"])->count();
-        $noAnswerCount = AutoDistributerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer', 'Routing'])->count();
+        $noAnswerCount = AutoDistributerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer', 'Routing','Initiating'])->count();
 
         // Fetch distinct providers for the filter dropdown
         $providers = AutoDistributerReport::select('provider')->distinct()->get();
@@ -263,7 +263,7 @@ class ReportController extends Controller
 
         $statusMap = [
             'answered' => ['Wexternalline', 'Talking'],
-            'no answer' => ['no answer', 'Dialing', 'Routing'],
+            'no answer' => ['no answer', 'Dialing', 'Routing', 'Initiating'],
         ];
 
         $query = AutoDistributerReport::query();

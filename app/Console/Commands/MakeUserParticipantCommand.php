@@ -111,7 +111,7 @@ class MakeUserParticipantCommand extends Command
                                         AutoDistributorUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
                                         Log::info("Updated status for call ID {$call['Id']} to " . $call['Status']);
                                     } else {
-                                        AutoDistributorUploadedData::where('call_id', $call['Id'])->update(['state' => "new"]);
+                                        AutoDistributorUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
                                         AutoDistributerReport::where('call_id', $call['Id'])->update(['status' => $call['Status']]);
                                         Log::info("Updated status for call ID {$call['Id']} to " . $call['Status']);
                                     }

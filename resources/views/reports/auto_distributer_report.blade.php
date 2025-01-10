@@ -332,19 +332,26 @@
                                     <td>{{ $report->extension }}</td>
                                     <td>
                                         @php
-                                            $status = in_array($report->status, [
-                                                'Wextension',
-                                                'Wexternalline',
-                                                'Talking',
-                                            ])
-                                                ? 'answered'
-                                                : 'no answer';
+                                            $status = '';
+                                            if ($report->status === 'Talking') {
+                                                $status = 'answered';
+                                            } elseif ($report->status === 'Routing' || $report->status === 'Dialing') {
+                                                $status = 'no answer';
+                                            } else {
+                                                $status = 'Employee not answer';
+                                            }
+
                                             $badgeClass = match ($status) {
-                                                'answered' => 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill',
-                                                'no answer' => 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill',
-                                                default => 'secondary',
+                                                'answered'
+                                                    => 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill',
+                                                'no answer'
+                                                    => 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill',
+                                                default
+                                                    => 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill',
                                             };
                                         @endphp
+
+
                                         <span class="badge bg-{{ $badgeClass }}">
                                             {{ ucfirst($status) }}
                                         </span>
