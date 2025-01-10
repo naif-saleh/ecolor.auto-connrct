@@ -373,7 +373,7 @@
 
         <!-- Pagination -->
         <div class="d-flex justify-content-center">
-            {!! $reports->links('pagination::bootstrap-5') !!}
+            {!! $reports->appends(request()->except('page'))->links('pagination::bootstrap-5') !!}
         </div>
 
     </div>

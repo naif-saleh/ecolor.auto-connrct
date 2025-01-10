@@ -49,27 +49,28 @@ class makeCallCommand extends Command
     {
         $token = $this->tokenService->getToken();
         Log::info('MakeCallCommand executed at ' . now());
-        $autoDailerFiles = AutoDailerUploadedData::all();
+        $autoDailerFiles = AutoDailerUploadedData::where('state', 'new')->get();
+
         $now = Carbon::now();
 
         foreach ($autoDailerFiles as $feed) {
             $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHour(2);
             $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHour(2);
 
-            if ($now->between($from, $to) && $feed->file->allow == 1) {
+            if ($now > $from && $now < $to && $feed->file->allow == 1) {
                 Log::info('Processing file with ID ' . $feed->file->id);
 
-                $providerFeeds = AutoDailerUploadedData::where('file_id', $feed->file->id)
-                    ->where('state', 'new')
-                    ->get();
+                // $providerFeeds = AutoDailerUploadedData::where('file_id', $feed->file->id)
+                //     ->where('state', 'new')
+                //     ->get();
 
-                foreach ($providerFeeds as $mobile) {
+
                     try {
                         // Make the call
                         $responseState = Http::withHeaders([
                             'Authorization' => 'Bearer ' . $token,
-                        ])->post(config('services.three_cx.api_url') . "/callcontrol/{$mobile->extension}/makecall", [
-                            'destination' => $mobile->mobile,
+                        ])->post(config('services.three_cx.api_url') . "/callcontrol/{$feed->extension}/makecall", [
+                            'destination' => $feed->mobile,
                         ]);
 
                         // Wait for the response before proceeding to the next call
@@ -80,26 +81,26 @@ class makeCallCommand extends Command
                             AutoDailerReport::firstOrCreate([
                                 'call_id' => $responseData['result']['callid'],
                                 'status' => $responseData['result']['status'],
-                                'provider' => $mobile->provider,
+                                'provider' => $feed->provider,
                                 'extension' => $responseData['result']['dn'],
                                 'phone_number' => $responseData['result']['party_caller_id'],
                             ]);
 
                             // Update the status for the current mobile
-                            $mobile->update([
+                            $feed->update([
                                 'state' => $responseData['result']['status'],
                                 'call_date' => Carbon::now(),
                                 'call_id' => $responseData['result']['callid'],
                             ]);
 
-                            Log::info('Call successfully made for mobile ' . $mobile->mobile);
+                            Log::info('Call successfully made for mobile ' . $feed->mobile);
                         } else {
-                            Log::error('Failed to make call for mobile ' . $mobile->mobile . '. Response: ' . $responseState->body());
+                            Log::error('Failed to make call for mobile ' . $feed->mobile . '. Response: ' . $responseState->body());
                         }
                     } catch (\Exception $e) {
                         Log::error('An error occurred: ' . $e->getMessage());
                     }
-                }
+
 
                 $allCalled = AutoDailerUploadedData::where('file_id', $feed->file->id)->where('state', 'new')->count() == 0;
                 if ($allCalled) {
@@ -110,27 +111,5 @@ class makeCallCommand extends Command
                 Log::info('The current time is not within the specified range for file ID ' . $feed->file->id);
             }
         }
-
-
-
-
-
-        
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
     }
 }

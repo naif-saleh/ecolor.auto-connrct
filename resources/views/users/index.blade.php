@@ -29,21 +29,29 @@
                         <td>{{ $user->name }}</td>
                         <td>{{ $user->email }}</td>
                         <td>{{ $user->role }}</td>
-                        <td>
-                            <a href="{{ route('users.edit', $user->id) }}" class="btn btn-warning btn-sm">Edit</a>
-                            <!-- Delete User Form -->
+                        <td class="d-flex gap-2">
+                            <!-- Edit Button -->
+                            <a href="{{ route('users.edit', $user->id) }}"
+                                class="btn btn-warning btn-sm d-flex align-items-center">
+                                <i class="fas fa-edit mr-2"></i> Edit
+                            </a>
+
+                            <!-- Delete User Button with SweetAlert -->
                             <form action="{{ route('users.destroy', $user->id) }}" method="POST"
-                                class="d-inline delete-form">
+                                id="delete-form-{{ $user->id }}">
                                 @csrf
                                 @method('DELETE')
-                                <button type="submit" class="btn btn-danger btn-sm"
-                                    onclick="confirmDelete(event, this.closest('form'))">Delete</button>
+                                <button type="button" class="btn btn-danger btn-sm d-flex align-items-center"
+                                    onclick="confirmDelete({{ $user->id }})">
+                                    <i class="fas fa-trash-alt mr-2"></i> Delete
+                                </button>
                             </form>
 
-                            <!-- Reset Password Button with SweetAlert -->
-                            <a href="javascript:void(0);"
-                                onclick="resetPassword({{ $user->id }}, '{{ $user->name }}')"
-                                class="btn btn-secondary btn-sm">Reset Password</a>
+                            <!-- Reset Password Button -->
+                            <button type="button" class="btn btn-secondary btn-sm d-flex align-items-center"
+                                onclick="resetPassword({{ $user->id }}, '{{ $user->name }}')">
+                                <i class="fas fa-key mr-2"></i> Reset Password
+                            </button>
                         </td>
                     </tr>
                 @endforeach
@@ -110,24 +118,25 @@
 
 
 
-
-
-
-        function confirmDelete(event, form) {
-            event.preventDefault(); // Prevent the form from being submitted immediately
-
+        function confirmDelete(userId) {
+            // Show SweetAlert confirmation
             Swal.fire({
                 title: 'Are you sure?',
                 text: 'This action cannot be undone.',
                 icon: 'warning',
                 showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#3085d6',
                 confirmButtonText: 'Yes, delete it!',
-                cancelButtonText: 'No, cancel!'
+                cancelButtonText: 'Cancel',
+                reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
-                    form.submit(); // Submit the form if the user confirmed the deletion
+                    // Find the form dynamically based on userId
+                    const form = document.getElementById(`delete-form-${userId}`);
+
+                    // Check if form exists and submit it
+                    if (form) {
+                        form.submit();
+                    }
                 }
             });
         }

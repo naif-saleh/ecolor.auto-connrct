@@ -79,6 +79,7 @@ class ReportController extends Controller
             ]);
         }
 
+        // Apply pagination after filters
         $reports = $query->paginate(20);
 
         // Calculate counts
@@ -101,6 +102,7 @@ class ReportController extends Controller
             'noAnswerCount'
         ));
     }
+
 
 
     // Export Auto Distributer AS CSV File...........................................................................................................
@@ -170,7 +172,7 @@ class ReportController extends Controller
         });
 
         $response->headers->set('Content-Type', 'text/csv');
-        $response->headers->set('Content-Disposition', 'attachment; filename="auto_distributor_report.csv"');
+        $response->headers->set('Content-Disposition', 'attachment; filename="auto_dailer_report.csv"');
 
         return $response;
     }
@@ -191,7 +193,7 @@ class ReportController extends Controller
         // Map filter values to database values
         $statusMap = [
             'answered' => ['Talking', 'Wexternalline'],
-            'no answer' => ['Wspecialmenu', 'no answer', 'Dialing', 'Routing'],
+            'no answer' => ['Wspecialmenu', 'no answer', 'Dialing', 'Routing', 'Initiating'],
         ];
 
         $query = AutoDistributerReport::query();
@@ -224,14 +226,14 @@ class ReportController extends Controller
                 \Carbon\Carbon::parse($dateTo)->endOfDay()
             ]);
         }
-        // Skip Initiating
-        // $query->where('status', '!=', 'Initiating');
+
+        // Apply pagination
         $reports = $query->paginate(20);
 
         // Calculate counts
         $totalCount = AutoDistributerReport::count(); // Total calls count
         $answeredCount = AutoDistributerReport::whereIn('status', ['Wextension', 'Wexternalline', "Talking"])->count();
-        $noAnswerCount = AutoDistributerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer', 'Routing','Initiating'])->count();
+        $noAnswerCount = AutoDistributerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer', 'Routing', 'Initiating'])->count();
 
         // Fetch distinct providers for the filter dropdown
         $providers = AutoDistributerReport::select('provider')->distinct()->get();
@@ -248,6 +250,7 @@ class ReportController extends Controller
             'noAnswerCount'
         ));
     }
+
 
 
 
