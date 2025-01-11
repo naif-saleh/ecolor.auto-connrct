@@ -9,7 +9,7 @@
                 <!-- Card Container -->
                 <div class="card shadow border-0">
                     <div class="card-header bg-gradient text-white text-center" style="background-color: #1a73e8;">
-                        <h3 class="mb-0">Auto Dailer Reports per Providers</h3>
+                        <h3 class="mb-0">Auto Distributor Reports per Providers</h3>
                     </div>
                     <div class="card-body">
                         <!-- Filter Form -->

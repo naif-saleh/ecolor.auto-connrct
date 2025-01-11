@@ -57,7 +57,7 @@
                     <span class="navbar-toggler-icon"></span>
                 </button>
 
-                @if (Auth::check() && (Auth::user()->isSuperUser() || Auth::user()->isAdmin()))
+
                     <div class="collapse navbar-collapse" id="navbarNav">
 
                         <ul class="navbar-nav me-auto mb-2 mb-lg-0"> <!-- Left-aligned links -->
@@ -78,35 +78,7 @@
 
 
                         </ul>
-                    @elseif (Auth::check() && Auth::user()->isManagerUser())
-                        <ul class="navbar-nav me-auto mb-2 mb-lg-0"> <!-- Left-aligned links -->
-
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('manager.dashboard') }}">Manager Statistics</a>
-                            </li>
-
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                    Reports
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="activityDropdown">
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('users.activity.report') }}">User
-                                            Activity</a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('auto_dailer.report') }}">Auto
-                                            Dailer</a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item" href="{{ route('auto_distributer.report') }}">Auto
-                                            Distributer</a>
-                                    </li>
-                                </ul>
-                            </li>
-                @endif
-
+                    
                 {{-- @if (Auth::check() && Auth::user()->isSuperUser())
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('users.index') }}">Users</a>

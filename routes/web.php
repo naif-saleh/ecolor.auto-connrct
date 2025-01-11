@@ -22,18 +22,19 @@ use App\Http\Controllers\AutoDistributorFileController;
 Route::get('/', function () {
     if (Auth::check()) {
         $user = Auth::user();
-         
+
 
         if ($user->isSuperUser() || $user->isAdmin()) {
-            return redirect('/auto-dailer/files');
+            return redirect()->route('autodailers.files.index');
         }
 
         if ($user->isManagerUser()) {
-            return view('reports.manager_dashboard');
+            return redirect()->route('manager.dashboard');
         }
     }
 
     return view('auth.login');
+
 });
 
 
@@ -131,6 +132,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('autodailers/files/{slug}/allow', [AutoDailerFileController::class, 'updateAllowStatus'])->name('autodailers.files.allow');
     // Download Example csv.............................................................................................................
     Route::get('/download-example-csv', [AutoDailerFileController::class, 'downloadExampleCsv'])->name('download.example.csv');
+
+
+
     //    Manager Dashboard........................................................................................................
     Route::get('manager/dashboard', [DashboardController::class, 'getCallManagerStatisticsAutoDailer'])->name('manager.dashboard');
 

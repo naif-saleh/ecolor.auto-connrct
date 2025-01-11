@@ -28,7 +28,7 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerate();
 
-        return redirect('/auto-dailer/files');
+        return redirect('/');
     }
 
     /**
@@ -42,6 +42,6 @@ class AuthenticatedSessionController extends Controller
 
         $request->session()->regenerateToken();
 
-        return redirect('/auto-dailer/files');
+        return redirect('/');
     }
 }

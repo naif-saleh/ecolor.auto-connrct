@@ -63,9 +63,9 @@
 
                         <ul class="navbar-nav me-auto mb-2 mb-lg-0"> <!-- Left-aligned links -->
 
-                            <li class="nav-item">
+                            {{-- <li class="nav-item">
                                 <a class="nav-link" href="{{ route('manager.dashboard') }}">Manager Statistics</a>
-                            </li>
+                            </li> --}}
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('autodailers.files.index') }}">Auto Dailer</a>
                             </li>
