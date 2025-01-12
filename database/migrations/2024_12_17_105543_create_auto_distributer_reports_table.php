@@ -18,6 +18,7 @@ return new class extends Migration
             $table->string('phone_number')->require();
             $table->string('provider')->nullable();
             $table->string('extension')->require();
+            $table->boolean('is_satisfied')->default(false);
             $table->timestamps();
         });
     }
