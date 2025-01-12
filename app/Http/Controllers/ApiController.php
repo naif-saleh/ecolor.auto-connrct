@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AutoDailerReport;
+use App\Models\AutoDistributerReport;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
@@ -20,19 +21,19 @@ class ApiController extends Controller
      * @return \Illuminate\Http\Response
      */
 
-    public function updateSatisfaction(Request $request)
+    public function autoDailerUpdateSatisfaction(Request $request)
     {
         // Validate the input to make sure it's a boolean value and 'call_id' is provided
         $validated = $request->validate([
-            'call_id' => 'required',
-            'is_satisfied' => 'required',
+            'mobile' => 'required',
+            'SERVICES_PROVIDED' => 'required',
         ]);
 
         // Extract the call_id from the validated data
-        $call_id = $validated['call_id'];
+        $mobile = $validated['mobile'];
 
         // Find the report by call_id
-        $report = AutoDailerReport::where('call_id', $call_id)->first();
+        $report = AutoDailerReport::where('call_id', $mobile)->first();
 
         // Check if the report exists
         if (!$report) {
@@ -40,11 +41,40 @@ class ApiController extends Controller
         }
 
         // Update the is_satisfied field
-        $report->is_satisfied = $validated['is_satisfied'];
+        $report->is_satisfied = $validated['SERVICES_PROVIDED'];
         $report->save();
 
         Log::info('Satisfaction status updated successfully to ' . $report->is_satisfied);
-        return response()->json(['message' => 'Satisfaction status updated successfully', 'is_satisfied' => $report->is_satisfied], Response::HTTP_OK);
+        return response()->json(['message' => 'ADailer:Satisfaction status updated successfully', 'is_satisfied' => $report->is_satisfied], Response::HTTP_OK);
+    }
+
+
+
+    public function autoDistributorUpdateSatisfaction(Request $request)
+    {
+        // Validate the input to make sure it's a boolean value and 'call_id' is provided
+        $validated = $request->validate([
+            'mobile' => 'required',
+            'SERVICES_PROVIDED' => 'required',
+        ]);
+
+        // Extract the call_id from the validated data
+        $mobile = $validated['mobile'];
+
+        // Find the report by call_id
+        $report = AutoDistributerReport::where('call_id', $mobile)->first();
+
+        // Check if the report exists
+        if (!$report) {
+            return response()->json(['message' => 'Report not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Update the is_satisfied field
+        $report->is_satisfied = $validated['SERVICES_PROVIDED'];
+        $report->save();
+
+        Log::info('Satisfaction status updated successfully to ' . $report->is_satisfied);
+        return response()->json(['message' => 'Adist:Satisfaction status updated successfully', 'is_satisfied' => $report->is_satisfied], Response::HTTP_OK);
     }
 
 

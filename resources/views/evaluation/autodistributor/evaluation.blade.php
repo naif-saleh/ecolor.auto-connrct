@@ -232,19 +232,19 @@
         }
     </style>
 @endsection
-@section('title', 'Auto Dailer | Evaluation')
+@section('title', 'Auto Distributors | Evaluation')
 @section('content')
     <div class="container">
         <!-- Page Header -->
         <div class="text-center mb-5">
-            <h2 class="fw-bold text-primary">Auto Dailer Evaluation</h2>
-            <p class="text-muted">View detailed evaluation for auto dailers' call activity.</p>
+            <h2 class="fw-bold text-primary">Auto Distributors Evaluation</h2>
+            <p class="text-muted">View detailed evaluation for auto distributors call activity.</p>
         </div>
 
         <!-- Filters Section -->
         <div class="mb-4">
             <div class="filter-buttons">
-                <a href="{{ route('autoDailer.evaluation.export', [
+                <a href="{{ route('autoDistributor.evaluation.export', [
                     'filter' => $filter,
                     'extension_from' => request('extension_from'),
                     'extension_to' => request('extension_to'),
@@ -256,21 +256,21 @@
                     <i class="fas fa-file-export me-2"></i> Export as CSV
                 </a>
 
-                <a href="{{ url('auto-dailer/evaluation') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
+                <a href="{{ url('auto-distributor/evaluation') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
                     <i class="fas fa-list me-1"></i> All
                 </a>
-                <a href="{{ url('auto-dailer/evaluation?filter=satisfied') }}"
+                <a href="{{ url('auto-distributor/evaluation?filter=satisfied') }}"
                     class="btn btn-modern-filter {{ $filter === 'satisfied' ? 'active' : '' }}">
                     <i class="fas fa-check-circle me-1"></i> Satisfied
                 </a>
-                <a href="{{ url('auto-dailer/evaluation?filter=unsatisfied') }}"
+                <a href="{{ url('auto-distributor/evaluation?filter=unsatisfied') }}"
                     class="btn btn-modern-filter {{ $filter === 'unsatisfied' ? 'active' : '' }}">
                     <i class="fas fa-times-circle me-1"></i> Unsatisfied
                 </a>
             </div>
 
             <!-- Filters Form -->
-            <form method="GET" action="{{ url('auto-dailer/evaluation') }}" class="filter-form">
+            <form method="GET" action="{{ url('auto-distributor/evaluation') }}" class="filter-form">
                 <input type="number" name="extension_from" class="form-modern" placeholder="Extension From"
                     value="{{ request('extension_from') }}">
                 <input type="number" name="extension_to" class="form-modern" placeholder="Extension To"

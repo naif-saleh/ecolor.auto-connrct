@@ -34,7 +34,6 @@ Route::get('/', function () {
     }
 
     return view('auth.login');
-
 });
 
 
@@ -153,10 +152,13 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 
     // Evaluation..............................................................................................................
+    // Auto Dailer
     Route::get('auto-dailer/evaluation', [ReportController::class, 'autoDailerEvaluation'])->name('autoDailer.evaluation');
     Route::get('auto-dailer/evaluation/export', [ReportController::class, 'exportAutoDailerEvaluation'])->name('autoDailer.evaluation.export');
 
-
+    // Auto Distributor
+    Route::get('auto-distributor/evaluation', [ReportController::class, 'AutoDistributorEvaluation'])->name('autoDistributor.evaluation');
+    Route::get('auto-distributor/evaluation/export', [ReportController::class, 'exportAutoDistributorEvaluation'])->name('autoDistributor.evaluation.export');
     // //    Manager Dashboard........................................................................................................
     // Route::get('manager/dashboard', [DashboardController::class, 'getCallManagerStatisticsAutoDailer'])->name('manager.dashboard');
 
