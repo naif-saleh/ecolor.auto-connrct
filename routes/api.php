@@ -2,32 +2,19 @@
 
 use Illuminate\Http\Request;
 use App\Http\Controllers\ApiController;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\FilesController;
-use App\Http\Controllers\SettingController;
+use Illuminate\Support\Facades\Route;
 
-Route::get('/files', [FilesController::class, 'index']);
-Route::get('/user', function (Request $request) {
+// Public Routes
+// Route::get('/', [FilesController::class, 'index']);
+
+// Authenticated Routes (using Sanctum for authentication)
+Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
-})->middleware('auth:sanctum');
 
-
-Route::middleware(['auth:sanctum'])->group(function () {
-    // Providers..............................................................................................................
-    Route::get('providers', [ApiController::class, 'getProviders']);
-    // Provider By Name.............................................................................................................
-    Route::get('providers/{name}', [ApiController::class, 'getProviderByName']);
-    // Settings............................................................................................................
-    Route::get('settings', [SettingController::class, 'getCfdApi']);
-    // all Auto Dailers.....................................................................................................
-    Route::get('auto-dailer ', [ApiController::class, 'autoDailer']);
-    // Auto Dailer Update State.............................................................................................
-    Route::post('auto-dailer', [ApiController::class, 'updateState']);
-    // all Auto Distributer.....................................................................................................
-    Route::get('auto-distributer', [ApiController::class, 'autoDistributer']);
-    // all Auto Distributer Update State.....................................................................................................
-    Route::post('auto-distributer', [ApiController::class, 'autoDistributerUpdateState']);
 });
 
-Route::middleware('auth:sanctum')->get('auto-dailer-call', [ApiController::class, 'autoDailer']);
-
+// API Routes (inside the 'api' middleware group)
+Route::middleware(['api'])->group(function () {
+    Route::post('auto-dailer/update-satisfaction', [ApiController::class, 'updateSatisfaction']);
+});

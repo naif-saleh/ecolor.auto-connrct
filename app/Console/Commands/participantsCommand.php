@@ -80,7 +80,7 @@ class participantsCommand extends Command
                     Log::warning("No participants data for extension {$ext_from}");
                     continue;
                 }
-
+                Log::info("participants Response: ".print_r($participants));
                 foreach ($participants as $participant_data) {
                     try {
                         // Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));

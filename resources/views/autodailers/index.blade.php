@@ -1,8 +1,8 @@
 @extends('layout.master')
-@section('title', 'Auto Dailer')
+@section('title', 'Auto Dialer')
 @section('content')
     <div class="container mt-5">
-        <h1 class="mb-4">Auto Dailers Files List</h1>
+        <h1 class="mb-4"><i class="bi bi-telephone"></i> Auto Dialers Files List</h1>
 
         <!-- Upload Button -->
         <form action="{{ route('autodailers.upload.csv') }}" method="POST" enctype="multipart/form-data"
@@ -14,7 +14,7 @@
 
                 <!-- Trigger link wrapped inside a label with the 'for' attribute -->
                 <label for="uploadButton" class="btn btn-secondary">
-                    <i class="bi bi-plus"></i>
+                    <i class="bi bi-plus"></i> Add File
                 </label>
 
                 <!-- Upload Button (Initially Hidden) -->
@@ -24,14 +24,15 @@
             </div>
 
             <!-- Example CSV Download Link -->
-            <a href="/example.csv" class="btn btn-info" download="example.csv">Example CSV Structure</a>
+            <a href="/example.csv" class="btn btn-info" download="example.csv">
+                <i class="bi bi-download"></i> Example CSV Structure
+            </a>
         </form>
-
 
         <div class="table-responsive shadow-sm rounded">
             @if ($files->isEmpty())
                 <div class="alert alert-info text-center" role="alert">
-                    No files available.
+                    <i class="bi bi-info-circle"></i> No files available.
                 </div>
             @else
                 <table class="table table-striped table-hover table-bordered">
@@ -63,27 +64,28 @@
                                                 onchange="this.form.submit()">
                                             <span id="statusText{{ $file->slug }}"
                                                 class="{{ $file->allow ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill' }}">
+                                                <i
+                                                    class="{{ $file->allow ? 'bi bi-check-circle' : 'bi bi-x-circle' }}"></i>
                                                 {{ $file->allow ? 'Active' : 'Inactive' }}
                                             </span>
                                         </div>
                                     </form>
 
-
                                     <div>
-
                                         <span
-                                            class="{{ $file->is_done ? 'badge rounded-pill text-bg-success' : 'badge rounded-pill text-bg-warning' }}">{{ $file->is_done ? 'All Numbers Called' : 'Not Called Yet' }}</span>
+                                            class="{{ $file->is_done ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill' }}">
+                                            <i
+                                                class="{{ $file->is_done ? 'bi bi-check-circle' : 'bi bi-exclamation-circle' }}"></i>
+                                            {{ $file->is_done ? 'All Numbers Called' : 'Not Called Yet' }}
+                                        </span>
                                     </div>
-
-
 
                                     <!-- View and Delete Buttons (moved to end) -->
                                     <div>
                                         <a href="{{ url('auto-dailer/download-processed-file', $file->id) }}"
-                                            class="btn btn-sm bg-primary mx-1">
+                                            class="btn btn-sm bg-primary mx-1" title="Download File">
                                             <i class="bi bi-download"></i>
                                         </a>
-
 
                                         <!-- View Button -->
                                         <a href="{{ route('autodailers.files.show', $file->slug) }}"
@@ -103,15 +105,12 @@
                                         </form>
                                     </div>
                                 </td>
-
-
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
             @endif
         </div>
-
 
         <!-- Pagination Controls -->
         <div class="d-flex justify-content-between">
@@ -125,7 +124,6 @@
     </div>
 @endsection
 
-
 {{-- upload file using ajax --}}
 {{-- Update Active or not using ajax --}}
 @section('scripts')
@@ -133,19 +131,19 @@
         const uploadButton = document.getElementById('uploadButton');
         const uploadLink = document.getElementById('uploadLink');
 
-    // Show SweetAlert loading when form is submitted
-    document.getElementById('uploadForm').addEventListener('submit', function(event) {
-        Swal.fire({
-            title: 'Uploading...',
-            text: 'Please wait while your file is being uploaded.',
-            icon: 'info',
-            allowOutsideClick: false,
-            showConfirmButton: false,
-            didOpen: () => {
-                Swal.showLoading();
-            }
+        // Show SweetAlert loading when form is submitted
+        document.getElementById('uploadForm').addEventListener('submit', function(event) {
+            Swal.fire({
+                title: 'Uploading...',
+                text: 'Please wait while your file is being uploaded.',
+                icon: 'info',
+                allowOutsideClick: false,
+                showConfirmButton: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
         });
-    });
 
         // Listen for changes in the file input
         uploadButton.addEventListener('change', function() {
@@ -156,7 +154,6 @@
                 uploadLink.style.display = 'none';
             }
         });
-
 
         // Delete Confirm
         function confirmDeleteAction(fileId) {

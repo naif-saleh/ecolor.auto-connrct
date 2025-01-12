@@ -25,7 +25,7 @@ Route::get('/', function () {
 
 
         if ($user->isSuperUser() || $user->isAdmin()) {
-            return redirect()->route('autodailers.files.index');
+            return redirect('/auto-dailer/files');
         }
 
         if ($user->isManagerUser()) {
@@ -132,9 +132,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('autodailers/files/{slug}/allow', [AutoDailerFileController::class, 'updateAllowStatus'])->name('autodailers.files.allow');
     // Download Example csv.............................................................................................................
     Route::get('/download-example-csv', [AutoDailerFileController::class, 'downloadExampleCsv'])->name('download.example.csv');
-
-
-
     //    Manager Dashboard........................................................................................................
     Route::get('manager/dashboard', [DashboardController::class, 'getCallManagerStatisticsAutoDailer'])->name('manager.dashboard');
 
@@ -152,6 +149,13 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/download-example-csv', [AutoDistributorFileController::class, 'downloadExampleCsv'])->name('download.example.csv');
     // Import All Users...................................................................................................................
     Route::get('auto-distributor/import-users', [AutoDistributorFileController::class, 'importAllUsers'])->name('distributor.import.users');
+
+
+
+    // Evaluation..............................................................................................................
+    Route::get('auto-dailer/evaluation', [ReportController::class, 'autoDailerEvaluation'])->name('autoDailer.evaluation');
+    Route::get('auto-dailer/evaluation/export', [ReportController::class, 'exportAutoDailerEvaluation'])->name('autoDailer.evaluation.export');
+
 
     // //    Manager Dashboard........................................................................................................
     // Route::get('manager/dashboard', [DashboardController::class, 'getCallManagerStatisticsAutoDailer'])->name('manager.dashboard');

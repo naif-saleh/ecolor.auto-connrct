@@ -14,6 +14,7 @@ class AutoDailerReport extends Model
         'provider',
         'extension',
         'phone_number',
+        'is_satisfied',
     ];
 
 

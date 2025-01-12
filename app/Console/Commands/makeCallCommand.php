@@ -76,7 +76,7 @@ class makeCallCommand extends Command
                         // Wait for the response before proceeding to the next call
                         if ($responseState->successful()) {
                             $responseData = $responseState->json();
-
+                            Log::info('Call Response: ' . print_r($responseData));
                             // Update or create report
                             AutoDailerReport::firstOrCreate([
                                 'call_id' => $responseData['result']['callid'],

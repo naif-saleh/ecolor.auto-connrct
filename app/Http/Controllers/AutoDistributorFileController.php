@@ -30,8 +30,8 @@ class AutoDistributorFileController extends Controller
 
     public function importAllUsers()
     {
-
         $token = $this->tokenService->getToken();
+
         try {
             $responseState = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
@@ -40,41 +40,42 @@ class AutoDistributorFileController extends Controller
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
 
-                // Check if the response contains the 'value' key and it's an array
                 if (isset($responseData['value']) && is_array($responseData['value'])) {
-                    foreach ($responseData['value'] as $data) {
-                        TrheeCxUserStatus::firstOrCreate([
-                            "user_id" => $data['Id'] ?? null,
-                            "firstName" => $data['FirstName'] ?? null,
-                            "lastName" => $data['LastName'] ?? null,
-                            "displayName" => $data['DisplayName'] ?? null,
-                            "email" => $data['EmailAddress'] ?? null,
-                            "isRegistred" => $data['IsRegistered'] ?? null,
-                            "QueueStatus" => $data['QueueStatus'] ?? null,
-                            "extension" => $data['Number'] ?? null,
-                            "status" => $data['CurrentProfileName'] ?? null,
+                    $apiUserIds = [];
 
-                        ]);
+                    foreach ($responseData['value'] as $data) {
+                        $apiUserIds[] = $data['Id'] ?? null;
+
+                        TrheeCxUserStatus::updateOrCreate(
+                            ['user_id' => $data['Id'] ?? null],
+                            [
+                                "firstName" => $data['FirstName'] ?? null,
+                                "lastName" => $data['LastName'] ?? null,
+                                "displayName" => $data['DisplayName'] ?? null,
+                                "email" => $data['EmailAddress'] ?? null,
+                                "isRegistred" => $data['IsRegistered'] ?? null,
+                                "QueueStatus" => $data['QueueStatus'] ?? null,
+                                "extension" => $data['Number'] ?? null,
+                                "status" => $data['CurrentProfileName'] ?? null,
+                            ]
+                        );
                     }
 
-
-                    // Redirect after successful import
-
+                    // Delete users not in the API response
+                    TrheeCxUserStatus::whereNotIn('user_id', $apiUserIds)->delete();
                 } else {
-                    // Log and redirect if 'value' key is missing or not an array
                     Log::info("No users found in the response.");
                 }
             } else {
-                // Log and redirect if the API response is unsuccessful
                 Log::info("Users cannot be imported!!");
             }
         } catch (\Exception $e) {
-            // Log the error and redirect
             Log::error('import: An error occurred: ' . $e->getMessage());
         }
 
-        return back()->with('success', 'All Users Imported Successfully');
+        return back()->with('success', 'Users Synchronized Successfully');
     }
+
 
 
 
