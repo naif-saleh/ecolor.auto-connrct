@@ -34,7 +34,7 @@ class ApiController extends Controller
 
 
         // Find the report by call_id
-        $report = Evaluation::firstOrCreate([
+        $report = Evaluation::create([
             'mobile' => $validated['mobile'],
             'is_satisfied' => $validated['SERVICES_PROVIDED'],
             'extension' => $validated['agent'],
