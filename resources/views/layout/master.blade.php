@@ -93,20 +93,11 @@
                                     </li>
                                 </ul>
                             </li>
-                            <li class="nav-item dropdown">
-                                <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button"
-                                    data-bs-toggle="dropdown" aria-expanded="false">
-                                    Evaluation
-                                </a>
-                                <ul class="dropdown-menu" aria-labelledby="activityDropdown">
+
                                     <li class="nav-item">
-                                        <a class="nav-link" href="{{ route('autoDailer.evaluation') }}">Auto Dailer</a>
+                                        <a class="nav-link" href="{{ route('evaluation') }}">Evaluation</a>
                                     </li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{{ route('autoDistributor.evaluation') }}">Auto Distributor</a>
-                                    </li>
-                                </ul>
-                            </li>
+
 
                             <li class="nav-item dropdown">
                                 <a class="nav-link dropdown-toggle" href="#" id="activityDropdown" role="button"

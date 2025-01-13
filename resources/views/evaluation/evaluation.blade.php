@@ -232,23 +232,20 @@
         }
     </style>
 @endsection
-@section('title', 'Auto Distributors | Evaluation')
+@section('title', 'Reports | Evaluation')
 @section('content')
     <div class="container">
         <!-- Page Header -->
         <div class="text-center mb-5">
-            <h2 class="fw-bold text-primary">Auto Distributors Evaluation</h2>
-            <p class="text-muted">View detailed evaluation for auto distributors call activity.</p>
+            <h2 class="fw-bold text-primary">Evaluation Calls</h2>
+            <p class="text-muted">View detailed evaluation for calls activity.</p>
         </div>
 
         <!-- Filters Section -->
         <div class="mb-4">
             <div class="filter-buttons">
-                <a href="{{ route('autoDistributor.evaluation.export', [
+                <a href="{{ route('evaluation.export', [
                     'filter' => $filter,
-                    'extension_from' => request('extension_from'),
-                    'extension_to' => request('extension_to'),
-                    'provider' => request('provider'),
                     'date_from' => request('date_from'),
                     'date_to' => request('date_to'),
                 ]) }}"
@@ -256,22 +253,22 @@
                     <i class="fas fa-file-export me-2"></i> Export as CSV
                 </a>
 
-                <a href="{{ url('auto-distributor/evaluation') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
+                <a href="{{ url('reports/evaluation') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
                     <i class="fas fa-list me-1"></i> All
                 </a>
-                <a href="{{ url('auto-distributor/evaluation?filter=satisfied') }}"
+                <a href="{{ url('reports/evaluation?filter=satisfied') }}"
                     class="btn btn-modern-filter {{ $filter === 'satisfied' ? 'active' : '' }}">
                     <i class="fas fa-check-circle me-1"></i> Satisfied
                 </a>
-                <a href="{{ url('auto-distributor/evaluation?filter=unsatisfied') }}"
+                <a href="{{ url('reports/evaluation?filter=unsatisfied') }}"
                     class="btn btn-modern-filter {{ $filter === 'unsatisfied' ? 'active' : '' }}">
                     <i class="fas fa-times-circle me-1"></i> Unsatisfied
                 </a>
             </div>
 
             <!-- Filters Form -->
-            <form method="GET" action="{{ url('auto-distributor/evaluation') }}" class="filter-form">
-                <input type="number" name="extension_from" class="form-modern" placeholder="Extension From"
+            <form method="GET" action="{{ url('reports/evaluation') }}" class="filter-form">
+                {{-- <input type="number" name="extension_from" class="form-modern" placeholder="Extension From"
                     value="{{ request('extension_from') }}">
                 <input type="number" name="extension_to" class="form-modern" placeholder="Extension To"
                     value="{{ request('extension_to') }}">
@@ -283,7 +280,7 @@
                             {{ $provider->provider }}
                         </option>
                     @endforeach
-                </select>
+                </select> --}}
                 <input type="date" name="date_from" class="form-modern" placeholder="From Date"
                     value="{{ request('date_from') }}">
                 <input type="date" name="date_to" class="form-modern" placeholder="To Date"
@@ -334,10 +331,8 @@
                     <table class="table table-hover align-middle text-center">
                         <thead class="bg-light-primary text-primary">
                             <tr>
-                                <th>#</th>
+                                <th>No</th>
                                 <th>Mobile</th>
-                                <th>Provider</th>
-                                <th>Extension</th>
                                 <th>Is Satisfied</th>
                                 <th>Called At - Day</th>
                                 <th>Called At - Time</th>
@@ -347,9 +342,7 @@
                             @forelse ($reports as $index => $report)
                                 <tr>
                                     <td>{{ $reports->firstItem() + $index }}</td>
-                                    <td>{{ $report->phone_number }}</td>
-                                    <td>{{ $report->provider }}</td>
-                                    <td>{{ $report->extension }}</td>
+                                    <td>{{ $report->mobile }}</td>
                                     <td>
                                         <span
                                             class="badge {{ $report->is_satisfied ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill' }}">

@@ -7,6 +7,7 @@ use App\Models\ActivityLog;
 use App\Models\UserActivityLog;
 use App\Models\AutoDailerReport;
 use App\Models\AutoDistributerReport;
+use App\Models\Evaluation;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
@@ -329,41 +330,40 @@ class ReportController extends Controller
 
 
     // Evaluation.................................................................................................................
-    // Auto Dailer
-    public function autoDailerEvaluation(Request $request)
+
+    public function Evaluation(Request $request)
     {
         // Retrieve filter parameters from the request (if any)
         $filter = $request->get('filter', null);
-        $extensionFrom = $request->get('extension_from', null);
-        $extensionTo = $request->get('extension_to', null);
-        $provider = $request->get('provider', null);
+        // $extensionFrom = $request->get('extension_from', null);
+        // $extensionTo = $request->get('extension_to', null);
         $dateFrom = $request->get('date_from', null);
         $dateTo = $request->get('date_to', null);
 
         // Query the AutoDailerReport model with filters
-        $query = AutoDailerReport::query();
+        $query = Evaluation::query();
 
         // Apply filters for 'is_satisfied' (use filter for 1 or 0)
         if ($filter) {
             if ($filter === 'satisfied') {
-                $query->where('is_satisfied', 1);
+                $query->where('is_satisfied', "YES");
             } elseif ($filter === 'unsatisfied') {
-                $query->where('is_satisfied', 0);
+                $query->where('is_satisfied', "NO");
             }
         }
 
         // Apply other filters if provided
-        if ($extensionFrom) {
-            $query->where('extension', '>=', $extensionFrom);
-        }
+        // if ($extensionFrom) {
+        //     $query->where('extension', '>=', $extensionFrom);
+        // }
 
-        if ($extensionTo) {
-            $query->where('extension', '<=', $extensionTo);
-        }
+        // if ($extensionTo) {
+        //     $query->where('extension', '<=', $extensionTo);
+        // }
 
-        if ($provider) {
-            $query->where('provider', $provider);
-        }
+        // if ($provider) {
+        //     $query->where('provider', $provider);
+        // }
 
         if ($dateFrom) {
             $query->whereDate('created_at', '>=', $dateFrom);
@@ -374,61 +374,60 @@ class ReportController extends Controller
         }
 
         // Paginate the results (if needed)
-        $reports = $query->paginate(10); // Adjust pagination as necessary
+        $reports = $query->paginate(100); // Adjust pagination as necessary
 
         // Get the total count of all reports
         $totalCount = AutoDailerReport::count();
-        $satisfiedCount = AutoDailerReport::where('is_satisfied', 1)->count();
-        $unsatisfiedCount = AutoDailerReport::where('is_satisfied', 0)->count();
+        $satisfiedCount = AutoDailerReport::where('is_satisfied', "YES")->count();
+        $unsatisfiedCount = AutoDailerReport::where('is_satisfied', "NO")->count();
 
-        // Get the providers list for the filter dropdown
-        $providers = AutoDailerReport::select('provider')->distinct()->get();
+        // // Get the providers list for the filter dropdown
+        // $providers = AutoDailerReport::select('provider')->distinct()->get();
 
         // Return the view with the reports and other data
-        return view('evaluation.autoDailer.evaluation', [
+        return view('evaluation.evaluation', [
             'reports' => $reports,
             'filter' => $filter,
             'totalCount' => $totalCount,
             'satisfiedCount' => $satisfiedCount,
             'unsatisfiedCount' => $unsatisfiedCount,
-            'providers' => $providers
         ]);
     }
 
-    public function exportAutoDailerEvaluation(Request $request)
+    public function exportEvaluation(Request $request)
     {
         // Retrieve filter parameters from the request (if any)
         $filter = $request->get('filter', null);
-        $extensionFrom = $request->get('extension_from', null);
-        $extensionTo = $request->get('extension_to', null);
-        $provider = $request->get('provider', null);
+        // $extensionFrom = $request->get('extension_from', null);
+        // $extensionTo = $request->get('extension_to', null);
+        // $provider = $request->get('provider', null);
         $dateFrom = $request->get('date_from', null);
         $dateTo = $request->get('date_to', null);
 
-        // Query the AutoDailerReport model with filters
-        $query = AutoDailerReport::query();
+        // Query the Evaluation model with filters
+        $query = Evaluation::query();
 
         // Apply filters for 'is_satisfied' (use filter for 1 or 0)
         if ($filter) {
             if ($filter === 'satisfied') {
-                $query->where('is_satisfied', 1);
+                $query->where('is_satisfied', "YES");
             } elseif ($filter === 'unsatisfied') {
-                $query->where('is_satisfied', 0);
+                $query->where('is_satisfied', "NO");
             }
         }
 
         // Apply other filters if provided
-        if ($extensionFrom) {
-            $query->where('extension', '>=', $extensionFrom);
-        }
+        // if ($extensionFrom) {
+        //     $query->where('extension', '>=', $extensionFrom);
+        // }
 
-        if ($extensionTo) {
-            $query->where('extension', '<=', $extensionTo);
-        }
+        // if ($extensionTo) {
+        //     $query->where('extension', '<=', $extensionTo);
+        // }
 
-        if ($provider) {
-            $query->where('provider', $provider);
-        }
+        // if ($provider) {
+        //     $query->where('provider', $provider);
+        // }
 
         if ($dateFrom) {
             $query->whereDate('created_at', '>=', $dateFrom);
@@ -442,7 +441,7 @@ class ReportController extends Controller
         $reports = $query->get();
 
         // Define the CSV file header
-        $headers = ['#', 'Mobile', 'Provider', 'Extension', 'Is Satisfied', 'Called At - Day', 'Called At - Time'];
+        $headers = ['#', 'Mobile',  'Is Satisfied', 'Called At - Date', 'Called At - Time'];
 
         // Create the CSV content
         $csvContent = [];
@@ -474,7 +473,7 @@ class ReportController extends Controller
         // Return the CSV response with the correct headers
         return response()->stream($callback, 200, [
             "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=auto_dailer_report.csv",
+            "Content-Disposition" => "attachment; filename=Evaluation.csv",
             "Cache-Control" => "no-store, no-cache, must-revalidate",
             "Cache-Control" => "post-check=0, pre-check=0",
             "Pragma" => "public"
@@ -482,156 +481,7 @@ class ReportController extends Controller
     }
 
 
-     // Evaluation.................................................................................................................
-    // Auto Dailer
-    public function AutoDistributorEvaluation(Request $request)
-    {
-        // Retrieve filter parameters from the request (if any)
-        $filter = $request->get('filter', null);
-        $extensionFrom = $request->get('extension_from', null);
-        $extensionTo = $request->get('extension_to', null);
-        $provider = $request->get('provider', null);
-        $dateFrom = $request->get('date_from', null);
-        $dateTo = $request->get('date_to', null);
 
-        // Query the AutoDailerReport model with filters
-        $query = AutoDistributerReport::query();
 
-        // Apply filters for 'is_satisfied' (use filter for 1 or 0)
-        if ($filter) {
-            if ($filter === 'satisfied') {
-                $query->where('is_satisfied', 1);
-            } elseif ($filter === 'unsatisfied') {
-                $query->where('is_satisfied', 0);
-            }
-        }
 
-        // Apply other filters if provided
-        if ($extensionFrom) {
-            $query->where('extension', '>=', $extensionFrom);
-        }
-
-        if ($extensionTo) {
-            $query->where('extension', '<=', $extensionTo);
-        }
-
-        if ($provider) {
-            $query->where('provider', $provider);
-        }
-
-        if ($dateFrom) {
-            $query->whereDate('created_at', '>=', $dateFrom);
-        }
-
-        if ($dateTo) {
-            $query->whereDate('created_at', '<=', $dateTo);
-        }
-
-        // Paginate the results (if needed)
-        $reports = $query->paginate(10); // Adjust pagination as necessary
-
-        // Get the total count of all reports
-        $totalCount = AutoDistributerReport::count();
-        $satisfiedCount = AutoDistributerReport::where('is_satisfied', 1)->count();
-        $unsatisfiedCount = AutoDistributerReport::where('is_satisfied', 0)->count();
-
-        // Get the providers list for the filter dropdown
-        $providers = AutoDistributerReport::select('provider')->distinct()->get();
-
-        // Return the view with the reports and other data
-        return view('evaluation.autodistributor.evaluation', [
-            'reports' => $reports,
-            'filter' => $filter,
-            'totalCount' => $totalCount,
-            'satisfiedCount' => $satisfiedCount,
-            'unsatisfiedCount' => $unsatisfiedCount,
-            'providers' => $providers
-        ]);
-    }
-
-    public function exportAutoDistributorEvaluation(Request $request)
-    {
-        // Retrieve filter parameters from the request (if any)
-        $filter = $request->get('filter', null);
-        $extensionFrom = $request->get('extension_from', null);
-        $extensionTo = $request->get('extension_to', null);
-        $provider = $request->get('provider', null);
-        $dateFrom = $request->get('date_from', null);
-        $dateTo = $request->get('date_to', null);
-
-        // Query the AutoDistributerReport model with filters
-        $query = AutoDistributerReport::query();
-
-        // Apply filters for 'is_satisfied' (use filter for 1 or 0)
-        if ($filter) {
-            if ($filter === 'satisfied') {
-                $query->where('is_satisfied', 1);
-            } elseif ($filter === 'unsatisfied') {
-                $query->where('is_satisfied', 0);
-            }
-        }
-
-        // Apply other filters if provided
-        if ($extensionFrom) {
-            $query->where('extension', '>=', $extensionFrom);
-        }
-
-        if ($extensionTo) {
-            $query->where('extension', '<=', $extensionTo);
-        }
-
-        if ($provider) {
-            $query->where('provider', $provider);
-        }
-
-        if ($dateFrom) {
-            $query->whereDate('created_at', '>=', $dateFrom);
-        }
-
-        if ($dateTo) {
-            $query->whereDate('created_at', '<=', $dateTo);
-        }
-
-        // Get the filtered results
-        $reports = $query->get();
-
-        // Define the CSV file header
-        $headers = ['#', 'Mobile', 'Provider', 'Extension', 'Is Satisfied', 'Called At - Day', 'Called At - Time'];
-
-        // Create the CSV content
-        $csvContent = [];
-
-        foreach ($reports as $index => $report) {
-            $csvContent[] = [
-                $index + 1,
-                $report->phone_number,
-                $report->provider,
-                $report->extension,
-                $report->is_satisfied ? 'Satisfied' : 'Unsatisfied',
-                $report->created_at->addHours(3)->format('Y-m-d'), // For Date
-                $report->created_at->addHours(3)->format('H:i:s') // For Time
-            ];
-        }
-
-        // Create the CSV response
-        $callback = function () use ($csvContent, $headers) {
-            $handle = fopen('php://output', 'w');
-            // Add the header to the CSV file
-            fputcsv($handle, $headers);
-            // Add the data rows
-            foreach ($csvContent as $row) {
-                fputcsv($handle, $row);
-            }
-            fclose($handle);
-        };
-
-        // Return the CSV response with the correct headers
-        return response()->stream($callback, 200, [
-            "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=auto_dailer_report.csv",
-            "Cache-Control" => "no-store, no-cache, must-revalidate",
-            "Cache-Control" => "post-check=0, pre-check=0",
-            "Pragma" => "public"
-        ]);
-    }
 }
