@@ -68,7 +68,7 @@ class MakeUserCallCommand extends Command
                         if ($feed->userStatus === "Available") {
                             $ext = $feed->extension;
                             $filter = "contains(Caller, '{$ext}')";
-                            $url = "https://ecolor.3cx.agency/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+                            $url = config('services.three_cx.api_url')."/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
                             // Fetch active calls from API
                             $activeCallsResponse = Http::withHeaders([

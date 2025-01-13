@@ -86,7 +86,7 @@ class participantsCommand extends Command
                         // Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));
 
                         $filter = "contains(Caller, '{$participant_data['dn']}')";
-                        $url = "https://ecolor.3cx.agency/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+                        $url = config('services.three_cx.api_url') ."/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
                         $activeCallsResponse = Http::withHeaders([
                             'Authorization' => 'Bearer ' . $token,

@@ -53,7 +53,7 @@ class UpdateUserStatusCommand extends Command
             // Fetch user data from 3CX API
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
-            ])->get("https://ecolor.3cx.agency/xapi/v1/Users");
+            ])->get(config('services.three_cx.api_url') ."/xapi/v1/Users");
 
             if ($response->successful()) {
                 $users = $response->json();
@@ -112,7 +112,7 @@ class UpdateUserStatusCommand extends Command
             // Fetch user data from 3CX API
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
-            ])->get("https://ecolor.3cx.agency/xapi/v1/Users");
+            ])->get(config('services.three_cx.api_url') ."/xapi/v1/Users");
 
             if ($response->successful()) {
                 $users = $response->json();

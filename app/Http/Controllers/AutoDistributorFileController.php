@@ -37,7 +37,7 @@ class AutoDistributorFileController extends Controller
             Log::info('Sending request to fetch users from the API.');
             $responseState = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
-            ])->get("https://ecolor.3cx.agency/xapi/v1/Users");
+            ])->get(config('services.three_cx.api_url')."/xapi/v1/Users");
 
             Log::info('Request sent, awaiting response.');
 
