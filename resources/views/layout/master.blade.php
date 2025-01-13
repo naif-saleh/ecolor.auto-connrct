@@ -49,7 +49,7 @@
     <div class="container py-5">
         <nav class="navbar navbar-expand-lg navbar-light bg-light">
             <div class="container-fluid">
-                <a class="navbar-brand fw-bold" href="/manager/dashboard">
+                <a class="navbar-brand fw-bold" href="/">
                     <img src="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
                         width="40" alt="">
                 </a>
