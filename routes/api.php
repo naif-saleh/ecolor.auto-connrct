@@ -16,6 +16,6 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 
 // API Routes (inside the 'api' middleware group)
 Route::middleware(['api'])->group(function () {
-    Route::post('auto-dailer/update-satisfaction', [ApiController::class, 'autoDailerUpdateSatisfaction']);
-    Route::post('auto-distributer/update-satisfaction', [ApiController::class, 'autoDistributorUpdateSatisfaction']);
+    Route::post('evaluation/', [ApiController::class, 'Evaluation']);
+
 });
