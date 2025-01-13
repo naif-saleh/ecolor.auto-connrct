@@ -211,7 +211,7 @@
         <!-- Page Header -->
         <div class="text-center mb-5">
             <h2 class="fw-bold text-primary">Auto Distributer Report</h2>
-            <p class="text-muted">View and manage detailed reports on call activity.</p>
+            {{-- <p class="text-muted">View and manage detailed reports on call activity.</p> --}}
         </div>
 
         <!-- Filters Section -->

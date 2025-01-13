@@ -201,7 +201,7 @@
     <div class="container my-5">
         <div class="text-center mb-4">
             <h2 class="fw-bold text-primary">Evaluation Calls Report</h2>
-            <p class="text-muted">Review the satisfaction levels from recent evaluations.</p>
+            {{-- <p class="text-muted">Review the satisfaction levels from recent evaluations.</p> --}}
         </div>
 
         <div class="mb-4">
@@ -209,7 +209,7 @@
             <div class="filter-buttons">
                 <!-- Export Button -->
                 <a href="{{ route('evaluation.export', ['filter' => $filter, 'date_from' => request('date_from'), 'date_to' => request('date_to')]) }}"
-                    class="btn btn-modern-export" id="download-autoDailer-csv-button">
+                    class="btn btn-modern-export" id="download-evaluation-csv-button">
                     <i class="fas fa-file-export me-2"></i> Export as CSV
                 </a>
 

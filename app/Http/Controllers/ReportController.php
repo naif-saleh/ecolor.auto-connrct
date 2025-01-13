@@ -439,10 +439,8 @@ class ReportController extends Controller
         foreach ($reports as $index => $report) {
             $csvContent[] = [
                 $index + 1,
-                $report->phone_number,
-                $report->provider,
-                $report->extension,
-                $report->is_satisfied ? 'Satisfied' : 'Unsatisfied',
+                $report->mobile,
+                $report->is_satisfied === 'YES' ? 'Satisfied' : 'Unsatisfied',
                 $report->created_at->addHours(3)->format('Y-m-d'), // For Date
                 $report->created_at->addHours(3)->format('H:i:s') // For Time
             ];
