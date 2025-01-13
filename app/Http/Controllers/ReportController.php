@@ -352,18 +352,7 @@ class ReportController extends Controller
             }
         }
 
-        // Apply other filters if provided
-        // if ($extensionFrom) {
-        //     $query->where('extension', '>=', $extensionFrom);
-        // }
 
-        // if ($extensionTo) {
-        //     $query->where('extension', '<=', $extensionTo);
-        // }
-
-        // if ($provider) {
-        //     $query->where('provider', $provider);
-        // }
 
         if ($dateFrom) {
             $query->whereDate('created_at', '>=', $dateFrom);
@@ -377,9 +366,9 @@ class ReportController extends Controller
         $reports = $query->paginate(100); // Adjust pagination as necessary
 
         // Get the total count of all reports
-        $totalCount = AutoDailerReport::count();
-        $satisfiedCount = AutoDailerReport::where('is_satisfied', "YES")->count();
-        $unsatisfiedCount = AutoDailerReport::where('is_satisfied', "NO")->count();
+        $totalCount = Evaluation::count();
+        $satisfiedCount = Evaluation::where('is_satisfied', "YES")->count();
+        $unsatisfiedCount = Evaluation::where('is_satisfied', "NO")->count();
 
         // // Get the providers list for the filter dropdown
         // $providers = AutoDailerReport::select('provider')->distinct()->get();

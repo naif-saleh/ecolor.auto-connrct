@@ -243,53 +243,44 @@
 
         <!-- Filters Section -->
         <div class="mb-4">
-            <div class="filter-buttons">
-                <a href="{{ route('evaluation.export', [
-                    'filter' => $filter,
-                    'date_from' => request('date_from'),
-                    'date_to' => request('date_to'),
-                ]) }}"
-                    class="btn btn-modern-export">
-                    <i class="fas fa-file-export me-2"></i> Export as CSV
-                </a>
-
-                <a href="{{ url('reports/evaluation') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
-                    <i class="fas fa-list me-1"></i> All
-                </a>
-                <a href="{{ url('reports/evaluation?filter=satisfied') }}"
-                    class="btn btn-modern-filter {{ $filter === 'satisfied' ? 'active' : '' }}">
-                    <i class="fas fa-check-circle me-1"></i> Satisfied
-                </a>
-                <a href="{{ url('reports/evaluation?filter=unsatisfied') }}"
-                    class="btn btn-modern-filter {{ $filter === 'unsatisfied' ? 'active' : '' }}">
-                    <i class="fas fa-times-circle me-1"></i> Unsatisfied
-                </a>
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <div class="btn-group">
+                    <a href="{{ route('evaluation.export', ['filter' => $filter, 'date_from' => request('date_from'), 'date_to' => request('date_to')]) }}"
+                        class="btn btn-outline-primary">
+                        <i class="fas fa-file-export me-2"></i> Export CSV
+                    </a>
+                    <a href="{{ url('reports/evaluation') }}"
+                        class="btn btn-outline-secondary {{ !$filter ? 'active' : '' }}">
+                        <i class="fas fa-list me-1"></i> All
+                    </a>
+                    <a href="{{ url('reports/evaluation?filter=satisfied') }}"
+                        class="btn btn-outline-success {{ $filter === 'satisfied' ? 'active' : '' }}">
+                        <i class="fas fa-check-circle me-1"></i> Satisfied
+                    </a>
+                    <a href="{{ url('reports/evaluation?filter=unsatisfied') }}"
+                        class="btn btn-outline-danger {{ $filter === 'unsatisfied' ? 'active' : '' }}">
+                        <i class="fas fa-times-circle me-1"></i> Unsatisfied
+                    </a>
+                </div>
             </div>
 
-            <!-- Filters Form -->
-            <form method="GET" action="{{ url('reports/evaluation') }}" class="filter-form">
-                {{-- <input type="number" name="extension_from" class="form-modern" placeholder="Extension From"
-                    value="{{ request('extension_from') }}">
-                <input type="number" name="extension_to" class="form-modern" placeholder="Extension To"
-                    value="{{ request('extension_to') }}">
-                <select name="provider" class="form-modern" onchange="this.form.submit()">
-                    <option value="">All Providers</option>
-                    @foreach ($providers as $provider)
-                        <option value="{{ $provider->provider }}"
-                            {{ request('provider') == $provider->provider ? 'selected' : '' }}>
-                            {{ $provider->provider }}
-                        </option>
-                    @endforeach
-                </select> --}}
-                <input type="date" name="date_from" class="form-modern" placeholder="From Date"
-                    value="{{ request('date_from') }}">
-                <input type="date" name="date_to" class="form-modern" placeholder="To Date"
-                    value="{{ request('date_to') }}">
-                <button type="submit" class="btn btn-modern-apply">
+            <form method="GET" action="{{ url('reports/evaluation') }}" class="d-flex align-items-end gap-2">
+                <div class="form-group mb-0">
+                    <label for="date_from" class="form-label">From Date</label>
+                    <input type="date" name="date_from" id="date_from" class="form-control"
+                        value="{{ request('date_from') }}">
+                </div>
+                <div class="form-group mb-0">
+                    <label for="date_to" class="form-label">To Date</label>
+                    <input type="date" name="date_to" id="date_to" class="form-control"
+                        value="{{ request('date_to') }}">
+                </div>
+                <button type="submit" class="btn btn-primary">
                     <i class="fas fa-filter me-2"></i> Apply
                 </button>
             </form>
         </div>
+
 
         <!-- Statistics -->
         <div class="row mb-5 text-center justify-content-center">
