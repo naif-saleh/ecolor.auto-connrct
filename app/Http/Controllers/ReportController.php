@@ -349,9 +349,10 @@ class ReportController extends Controller
                 $query->where('is_satisfied', "YES");
             } elseif ($filter === 'unsatisfied') {
                 $query->where('is_satisfied', "NO");
+            } elseif ($filter === 'today') {
+                $query->whereDate('created_at', now()->toDateString());
             }
         }
-
 
 
         if ($dateFrom) {
@@ -468,9 +469,4 @@ class ReportController extends Controller
             "Pragma" => "public"
         ]);
     }
-
-
-
-
-
 }

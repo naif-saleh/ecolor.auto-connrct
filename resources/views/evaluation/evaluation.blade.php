@@ -1,41 +1,24 @@
 @extends('layout.master')
+
 @section('style')
     <style>
-        /* General Styles */
-        body {
-            font-family: 'Arial', sans-serif;
-        }
-
-        .text-primary {
-            color: #0056b3;
-        }
-
-        .text-muted {
-            color: #6c757d;
-        }
-
-        .text-center {
-            text-align: center;
-        }
-
         /* Export Button */
         .btn-modern-export {
             background: linear-gradient(to right, #4caf50, #81c784);
             color: white;
             border: none;
             padding: 10px 20px;
-            border-radius: 50px;
-            font-weight: 600;
+            border-radius: 30px;
+            font-weight: bold;
             display: inline-flex;
             align-items: center;
             gap: 8px;
             transition: background 0.3s, box-shadow 0.3s;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
         }
 
         .btn-modern-export:hover {
             background: linear-gradient(to right, #388e3c, #66bb6a);
-            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
 
         /* Filter Buttons */
@@ -44,13 +27,10 @@
             color: #555;
             border: 1px solid #ddd;
             padding: 8px 16px;
-            border-radius: 50px;
+            border-radius: 20px;
             font-size: 0.9rem;
             font-weight: 500;
             transition: all 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
         }
 
         .btn-modern-filter:hover {
@@ -67,15 +47,12 @@
         /* Form Inputs and Dropdown */
         .form-modern {
             border: 1px solid #ddd;
-            border-radius: 50px;
+            border-radius: 20px;
             padding: 8px 16px;
             font-size: 0.9rem;
             background-color: #fff;
             box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
             transition: box-shadow 0.3s;
-            width: 100%;
-            max-width: 200px;
-            margin: 5px;
         }
 
         .form-modern:focus {
@@ -88,8 +65,8 @@
             background: linear-gradient(to right, #007bff, #0056b3);
             color: white;
             border: none;
-            padding: 12px 30px;
-            border-radius: 50px;
+            padding: 10px 20px;
+            border-radius: 30px;
             font-weight: bold;
             display: inline-flex;
             align-items: center;
@@ -99,7 +76,7 @@
 
         .btn-modern-apply:hover {
             background: linear-gradient(to right, #0056b3, #003580);
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
         }
 
         .btn-soft-primary {
@@ -114,13 +91,20 @@
             color: #fff;
         }
 
-        /* Card Styling */
+        /* Centering the statistics */
+        .row.mb-5.text-center.justify-content-center {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        /* Each card styling */
         .card {
-            border-radius: 16px;
+            border-radius: 12px;
             overflow: hidden;
             background-color: #f8f9fa;
             border: 1px solid #ddd;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
         }
 
         .card-body {
@@ -130,16 +114,14 @@
         .card h5 {
             font-size: 1.2rem;
             font-weight: 500;
-            color: #6c757d;
         }
 
         .card h3 {
             font-size: 2.5rem;
             font-weight: bold;
-            color: #007bff;
         }
 
-        /* Statistics Cards */
+        /* Specific color styling for the cards */
         .card .text-primary {
             color: #007bff;
         }
@@ -152,54 +134,32 @@
             color: #ffc107;
         }
 
-        /* Flexbox for Filters */
+        /* Flexbox for the first row */
         .filter-buttons {
             display: flex;
-            gap: 15px;
+            gap: 10px;
             align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
         }
 
-        .filter-buttons .btn {
-            margin: 0;
+        .filter-form {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
-        /* Table Styling */
-        .table-hover {
-            background-color: white;
-            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
-            border-radius: 12px;
+        /* Styling for the form buttons and filters */
+        .filter-buttons .btn,
+        .filter-form .form-modern,
+        .filter-form button {
+            margin: 5px;
         }
 
-        .table th,
-        .table td {
-            padding: 15px;
-            font-size: 0.95rem;
-            vertical-align: middle;
-        }
-
-        .table th {
-            background-color: #f1f3f4;
-            color: #007bff;
-        }
-
-        .table-striped tbody tr:nth-child(odd) {
-            background-color: #f9f9f9;
-        }
-
-        .badge {
-            padding: 8px 15px;
-            border-radius: 25px;
-            font-size: 0.85rem;
-        }
-
-        /* Pagination */
+        /* Custom Pagination Styles */
         .pagination {
-            margin-top: 20px;
+            margin-top: 10px;
             display: flex;
             justify-content: center;
-            gap: 10px;
+            gap: 5px;
         }
 
         .pagination .page-item {
@@ -207,16 +167,18 @@
         }
 
         .pagination .page-link {
-            padding: 10px 20px;
             border-radius: 50px;
-            border: 1px solid #ddd;
+            /* Rounded corners */
+            border: 1px solid #dee2e6;
+            /* Light border */
+            padding: 8px 16px;
             font-size: 14px;
-            color: #007bff;
-            transition: background-color 0.3s, color 0.3s;
+            transition: all 0.3s ease;
         }
 
         .pagination .page-link:hover {
             background-color: #007bff;
+            /* Blue background on hover */
             color: white;
         }
 
@@ -232,95 +194,92 @@
         }
     </style>
 @endsection
+
 @section('title', 'Reports | Evaluation')
+
 @section('content')
-    <div class="container">
-        <!-- Page Header -->
-        <div class="text-center mb-5">
-            <h2 class="fw-bold text-primary">Evaluation Calls</h2>
-            <p class="text-muted">View detailed evaluation for calls activity.</p>
+    <div class="container my-5">
+        <div class="text-center mb-4">
+            <h2 class="fw-bold text-primary">Evaluation Calls Report</h2>
+            <p class="text-muted">Review the satisfaction levels from recent evaluations.</p>
         </div>
 
-        <!-- Filters Section -->
         <div class="mb-4">
-            <div class="d-flex justify-content-between align-items-center mb-3">
-                <div class="btn-group">
-                    <a href="{{ route('evaluation.export', ['filter' => $filter, 'date_from' => request('date_from'), 'date_to' => request('date_to')]) }}"
-                        class="btn btn-outline-primary">
-                        <i class="fas fa-file-export me-2"></i> Export CSV
-                    </a>
-                    <a href="{{ url('reports/evaluation') }}"
-                        class="btn btn-outline-secondary {{ !$filter ? 'active' : '' }}">
-                        <i class="fas fa-list me-1"></i> All
-                    </a>
-                    <a href="{{ url('reports/evaluation?filter=satisfied') }}"
-                        class="btn btn-outline-success {{ $filter === 'satisfied' ? 'active' : '' }}">
-                        <i class="fas fa-check-circle me-1"></i> Satisfied
-                    </a>
-                    <a href="{{ url('reports/evaluation?filter=unsatisfied') }}"
-                        class="btn btn-outline-danger {{ $filter === 'unsatisfied' ? 'active' : '' }}">
-                        <i class="fas fa-times-circle me-1"></i> Unsatisfied
-                    </a>
-                </div>
+            <!-- First Line: Export and Filter Buttons -->
+            <div class="filter-buttons">
+                <!-- Export Button -->
+                <a href="{{ route('evaluation.export', ['filter' => $filter, 'date_from' => request('date_from'), 'date_to' => request('date_to')]) }}"
+                    class="btn btn-modern-export" id="download-autoDailer-csv-button">
+                    <i class="fas fa-file-export me-2"></i> Export as CSV
+                </a>
+
+                <!-- State Filters (All, Answered, No Answer, Today) -->
+                <a href="{{ url('reports/evaluation') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
+                    <i class="fas fa-list me-1"></i> All
+                </a>
+                <a href="{{ url('reports/evaluation?filter=satisfied') }}"
+                    class="btn btn-modern-filter {{ $filter === 'satisfied' ? 'active' : '' }}">
+                    <i class="fas fa-phone me-1"></i> Satisfied
+                </a>
+                <a href="{{ url('reports/evaluation?filter=unsatisfied') }}"
+                    class="btn btn-modern-filter {{ $filter === 'unsatisfied' ? 'active' : '' }}">
+                    <i class="fas fa-phone-slash me-1"></i> Unsatisfied
+                </a>
+                <a href="{{ url('reports/evaluation?filter=today') }}"
+                    class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}">
+                    <i class="fas fa-calendar-day me-1"></i> Today
+                </a>
             </div>
 
-            <form method="GET" action="{{ url('reports/evaluation') }}" class="d-flex align-items-end gap-2">
-                <div class="form-group mb-0">
-                    <label for="date_from" class="form-label">From Date</label>
-                    <input type="date" name="date_from" id="date_from" class="form-control"
-                        value="{{ request('date_from') }}">
-                </div>
-                <div class="form-group mb-0">
-                    <label for="date_to" class="form-label">To Date</label>
-                    <input type="date" name="date_to" id="date_to" class="form-control"
-                        value="{{ request('date_to') }}">
-                </div>
-                <button type="submit" class="btn btn-primary">
+            <!-- Second Line: Filters Form -->
+            <form method="GET" action="{{ url('reports/evaluation') }}" class="filter-form">
+
+
+                <!-- Date Filters -->
+                <input type="date" name="date_from" class="form-modern" placeholder="From Date"
+                    value="{{ request('date_from') }}">
+                <input type="date" name="date_to" class="form-modern" placeholder="To Date"
+                    value="{{ request('date_to') }}">
+
+                <!-- Apply Button -->
+                <button type="submit" class="btn btn-modern-apply">
                     <i class="fas fa-filter me-2"></i> Apply
                 </button>
             </form>
         </div>
 
-
-        <!-- Statistics -->
-        <div class="row mb-5 text-center justify-content-center">
-            <!-- Total Calls -->
-            <div class="col-md-3">
-                <div class="card shadow-sm border-0 text-center">
+        <div class="row text-center mb-5">
+            <div class="col-md-4">
+                <div class="card">
                     <div class="card-body">
                         <h5 class="text-primary">Total Calls</h5>
                         <h3 class="fw-bold">{{ $totalCount }}</h3>
                     </div>
                 </div>
             </div>
-
-            <!-- Satisfied Calls -->
-            <div class="col-md-3">
-                <div class="card shadow-sm border-0 text-center">
+            <div class="col-md-4">
+                <div class="card">
                     <div class="card-body">
                         <h5 class="text-success">Satisfied</h5>
                         <h3 class="fw-bold">{{ $satisfiedCount }}</h3>
                     </div>
                 </div>
             </div>
-
-            <!-- Unsatisfied Calls -->
-            <div class="col-md-3">
-                <div class="card shadow-sm border-0 text-center">
+            <div class="col-md-4">
+                <div class="card">
                     <div class="card-body">
-                        <h5 class="text-warning">Unsatisfied</h5>
+                        <h5 class="text-danger">Unsatisfied</h5>
                         <h3 class="fw-bold">{{ $unsatisfiedCount }}</h3>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Report Table -->
-        <div class="card shadow-sm border-0 rounded">
+        <div class="card">
             <div class="card-body">
                 <div class="table-responsive">
-                    <table class="table table-hover align-middle text-center">
-                        <thead class="bg-light-primary text-primary">
+                    <table class="table table-hover align-middle">
+                        <thead>
                             <tr>
                                 <th>No</th>
                                 <th>Mobile</th>
@@ -335,9 +294,8 @@
                                     <td>{{ $reports->firstItem() + $index }}</td>
                                     <td>{{ $report->mobile }}</td>
                                     <td>
-                                        <span
-                                            class="badge {{ $report->is_satisfied ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill' }}">
-                                            {{ $report->is_satisfied ? 'Satisfied' : 'Unsatisfied' }}
+                                        <span class="badge {{ $report->is_satisfied === 'YES' ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill' }}">
+                                            {{ $report->is_satisfied === 'YES' ? 'Satisfied' : 'Unsatisfied' }}
                                         </span>
                                     </td>
                                     <td>{{ $report->created_at->addHours(3)->format('Y-m-d') }}</td>
@@ -345,7 +303,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7">No reports found for the given filter.</td>
+                                    <td colspan="5">No reports found for the given filter.</td>
                                 </tr>
                             @endforelse
                         </tbody>
@@ -354,8 +312,7 @@
             </div>
         </div>
 
-        <!-- Pagination -->
-        <div class="d-flex justify-content-center">
+        <div class="pagination">
             {!! $reports->appends(request()->except('page'))->links('pagination::bootstrap-5') !!}
         </div>
     </div>
