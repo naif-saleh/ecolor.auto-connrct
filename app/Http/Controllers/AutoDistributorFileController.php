@@ -31,23 +31,34 @@ class AutoDistributorFileController extends Controller
     public function importAllUsers()
     {
         $token = $this->tokenService->getToken();
+        Log::info('Token retrieved successfully.');
 
         try {
+            Log::info('Sending request to fetch users from the API.');
             $responseState = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
             ])->get("https://ecolor.3cx.agency/xapi/v1/Users");
 
+            Log::info('Request sent, awaiting response.');
+
             if ($responseState->successful()) {
+                Log::info('API response received successfully.');
+
                 $responseData = $responseState->json();
+                Log::info('Response data decoded.', ['responseData' => $responseData]);
 
                 if (isset($responseData['value']) && is_array($responseData['value'])) {
                     $apiUserIds = [];
+                    Log::info('Processing user data.');
 
                     foreach ($responseData['value'] as $data) {
-                        $apiUserIds[] = $data['Id'] ?? null;
+                        $userId = $data['Id'] ?? null;
+                        $apiUserIds[] = $userId;
+
+                        Log::info('Updating or creating user.', ['userId' => $userId, 'userData' => $data]);
 
                         TrheeCxUserStatus::updateOrCreate(
-                            ['user_id' => $data['Id'] ?? null],
+                            ['user_id' => $userId],
                             [
                                 "firstName" => $data['FirstName'] ?? null,
                                 "lastName" => $data['LastName'] ?? null,
@@ -61,20 +72,22 @@ class AutoDistributorFileController extends Controller
                         );
                     }
 
-                    // Delete users not in the API response
+                    Log::info('Finished processing users, deleting users not in the API response.');
                     TrheeCxUserStatus::whereNotIn('user_id', $apiUserIds)->delete();
+                    Log::info('Unused users deleted successfully.');
                 } else {
-                    Log::info("No users found in the response.");
+                    Log::warning("No users found in the response or response data format is incorrect.");
                 }
             } else {
-                Log::info("Users cannot be imported!!");
+                Log::error("Failed to import users, response was not successful.", ['statusCode' => $responseState->status(), 'responseBody' => $responseState->body()]);
             }
         } catch (\Exception $e) {
-            Log::error('import: An error occurred: ' . $e->getMessage());
+            Log::error('An error occurred during user import.', ['error' => $e->getMessage()]);
         }
 
         return back()->with('success', 'Users Synchronized Successfully');
     }
+
 
 
 
