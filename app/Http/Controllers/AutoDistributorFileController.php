@@ -121,63 +121,65 @@ class AutoDistributorFileController extends Controller
         $data = array_map('str_getcsv', file($path));
 
         foreach ($data as $row) {
-            // Convert time fields
-            $localTime_form = Carbon::createFromFormat('H:i A', $row[3], $request->timezone);
-            $localTime_to = Carbon::createFromFormat('H:i A', $row[4], $request->timezone);
-
-            // Subtract the offset to align with UTC
-            $offsetInHours = $localTime_form->offsetHours;
-            $utcTime_from = $localTime_form->subHours($offsetInHours);
-            $utcTime_to = $localTime_to->subHours($offsetInHours);
-
-            // Format the UTC time to store in the database
-            $formattedTime_from = $utcTime_from->format('H:i:s');
-            $formattedTime_to = $utcTime_to->format('H:i:s');
-
-            // Convert date field to Y-m-d format
             try {
+                // Convert time fields
+                $localTime_form = Carbon::createFromFormat('h:i:s A', $row[3], $request->timezone);
+                $localTime_to = Carbon::createFromFormat('h:i:s A', $row[4], $request->timezone);
+
+                // Subtract the offset to align with UTC
+                $offsetInHours = $localTime_form->offsetHours;
+                $utcTime_from = $localTime_form->subHours($offsetInHours);
+                $utcTime_to = $localTime_to->subHours($offsetInHours);
+
+                // Format the UTC time to store in the database
+                $formattedTime_from = $utcTime_from->format('H:i:s');
+                $formattedTime_to = $utcTime_to->format('H:i:s');
+
+                // Convert date field to Y-m-d format
                 $formattedDate = Carbon::parse($row[5])->format('Y-m-d');
+
+                Log::info("Time From: " . $formattedTime_from . " | Time To: " . $formattedTime_to);
+
+                // Check if extension exists in ThreeCxUserStatus table
+                $userStatus = TrheeCxUserStatus::where('extension', $row[2])->first();
+
+                // If the user extension exists, store it in AutoDistributorUploadedData
+                if ($userStatus) {
+                    $csv_file = AutoDistributorUploadedData::create([
+                        'mobile' => $row[0],
+                        'user' => $row[1],
+                        'extension' => $row[2],
+                        'from' => $formattedTime_from,
+                        'to' => $formattedTime_to,
+                        'date' => $formattedDate,
+                        'userStatus' => $userStatus->status,
+                        'three_cx_user_id' => $userStatus->user_id,
+                        'uploaded_by' => Auth::id(),
+                        'file_id' => $uploadedFile->id,
+                    ]);
+
+                    // Active Log Report
+                    ActivityLog::create([
+                        'user_id' => Auth::id(),
+                        'operation' => 'import',
+                        'file_type' => '3cx all users',
+                        'file_name' => 'import users',
+                        'operation_time' => now(),
+                    ]);
+
+                    $csv_file->save();
+                } else {
+                    Log::warning('No user found with extension ' . $row[2]);
+                }
             } catch (\Exception $e) {
-                return back()->withErrors(['error' => 'Invalid date format in CSV file']);
-            }
-
-            Log::info("Time From: " . $formattedTime_from . " | Time To: " . $formattedTime_to);
-
-            // Check if extension exists in ThreeCxUserStatus table
-            $userStatus = TrheeCxUserStatus::where('extension', $row[2])->first();
-
-            // If the user extension exists, store it in AutoDistributorUploadedData
-            if ($userStatus) {
-                $csv_file = AutoDistributorUploadedData::create([
-                    'mobile' => $row[0],
-                    'user' => $row[1],
-                    'extension' => $row[2],
-                    'from' => $formattedTime_from,
-                    'to' => $formattedTime_to,
-                    'date' => $formattedDate, // Store formatted date
-                    'userStatus' => $userStatus->status,
-                    'three_cx_user_id' => $userStatus->user_id,
-                    'uploaded_by' => Auth::id(),
-                    'file_id' => $uploadedFile->id,
-                ]);
-
-                // Active Log Report
-                ActivityLog::create([
-                    'user_id' => Auth::id(),
-                    'operation' => 'import',
-                    'file_type' => '3cx all users',
-                    'file_name' => 'import users',
-                    'operation_time' => now(),
-                ]);
-
-                $csv_file->save();
-            } else {
-                Log::warning('No user found with extension ' . $row[2]);
+                Log::error('Error processing row: ' . $e->getMessage());
+                return back()->withErrors(['error' => 'There was an error processing the file.']);
             }
         }
 
         return back()->with('success', 'File uploaded and processed successfully');
     }
+
 
 
 
