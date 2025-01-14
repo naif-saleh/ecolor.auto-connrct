@@ -44,12 +44,12 @@ class MakeUserCallCommand extends Command
         $token = $this->tokenService->getToken();
         Log::info('MakeCallCommand executed at ' . now());
         $autoDailerFiles = AutoDistributorUploadedData::where('state', 'new')->take(10)
-        ->get();;
+            ->get();;
         $now = Carbon::now();
 
         foreach ($autoDailerFiles as $feed) {
-            Log::info('count of calls in each time: '. $autoDailerFiles->count());
-            // Calculate the time range by subtracting 2 hours from the given time
+            Log::info('count of calls in each time: ' . $autoDailerFiles->count());
+            // Calculate the time range by subtracting 3 hours from the given time
             $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHour(3);
             $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHour(3);
 
@@ -61,75 +61,88 @@ class MakeUserCallCommand extends Command
                 // The time is valid for this file_id, proceed with processing
                 Log::info('Processing file with ID ' . $feed->file->id);
 
-                // $providerFeeds = AutoDistributorUploadedData::
+                try {
+                    if ($feed->userStatus === "Available") {
+                        $ext = $feed->extension;
+                        $filter = "contains(Caller, '{$ext}')";
+                        $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
+                        // Fetch active calls from API
+                        $activeCallsResponse = Http::withHeaders([
+                            'Authorization' => 'Bearer ' . $token,
+                        ])->get($url);
 
-                    try {
-                        if ($feed->userStatus === "Available") {
-                            $ext = $feed->extension;
-                            $filter = "contains(Caller, '{$ext}')";
-                            $url = config('services.three_cx.api_url')."/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+                        if ($activeCallsResponse->failed()) {
+                            Log::error('ADist: Failed to fetch active calls for mobile ' . $feed->mobile . '. Response: ' . $activeCallsResponse->body());
+                            continue;
+                        }
 
-                            // Fetch active calls from API
-                            $activeCallsResponse = Http::withHeaders([
-                                'Authorization' => 'Bearer ' . $token,
-                            ])->get($url);
+                        if ($activeCallsResponse->successful()) {
+                            $activeCalls = $activeCallsResponse->json();
 
-                            if ($activeCallsResponse->failed()) {
-                                Log::error('ADist: Failed to fetch active calls for mobile ' . $feed->mobile . '. Response: ' . $activeCallsResponse->body());
-                                continue;
+                            if (!empty($activeCalls['value'])) {
+                                Log::info("Active calls detected for extension {$ext}. Skipping call for mobile {$feed->mobile}.");
+                                continue; // Skip this number if active calls exist
                             }
 
-                            if ($activeCallsResponse->successful()) {
-                                $activeCalls = $activeCallsResponse->json();
+                            // Fetch devices for the extension
+                            $dnDevices = Http::withHeaders([
+                                'Authorization' => 'Bearer ' . $token,
+                            ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices");
 
-                                if (!empty($activeCalls['value'])) {
-                                    Log::info("Active calls detected for extension {$ext}. Skipping call for mobile {$feed->mobile}.");
-                                    continue; // Skip this number if active calls exist
-                                }
+                            if ($dnDevices->successful()) {
+                                $devices = $dnDevices->json();
 
-                                // Proceed to make the call if no active calls are detected
-                                $responseState = Http::withHeaders([
-                                    'Authorization' => 'Bearer ' . $token,
-                                ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
-                                    'destination' => $feed->mobile,
-                                ]);
+                                // Filter the device where user_agent is '3CX Mobile Client'
+                                foreach ($devices as $device) {
+                                    if ($device['user_agent'] === '3CX Mobile Client') {
+                                        $responseState = Http::withHeaders([
+                                            'Authorization' => 'Bearer ' . $token,
+                                        ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices/{$device['device_id']}/makecall", [
+                                            'destination' => $feed->mobile,
+                                        ]);
 
-                                if ($responseState->successful()) {
-                                    $responseData = $responseState->json();
+                                        if ($responseState->successful()) {
+                                            $responseData = $responseState->json();
+                                            Log::info('Adist:ResponseUserCall: ' . print_r($responseData));
 
-                                    // Save the call report
-                                    $reports = AutoDistributerReport::firstOrCreate([
-                                        'call_id' => $responseData['result']['callid'],
-                                    ], [
-                                        'status' => "Initiating",
-                                        'provider' => $feed->user,
-                                        'extension' => $responseData['result']['dn'],
-                                        'phone_number' => $responseData['result']['party_caller_id'],
-                                    ]);
+                                            $reports = AutoDistributerReport::firstOrCreate([
+                                                'call_id' => $responseData['result']['callid'],
+                                            ], [
+                                                'status' => "Initiating",
+                                                'provider' => $feed->user,
+                                                'extension' => $responseData['result']['dn'],
+                                                'phone_number' => $responseData['result']['party_caller_id'],
+                                            ]);
 
-                                    $reports->save();
+                                            $reports->save();
 
-                                    $feed->update([
-                                        'state' => "Initiating",
-                                        'call_date' => Carbon::now(),
-                                        'call_id' => $responseData['result']['callid'],
-                                        'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
-                                    ]);
+                                            $feed->update([
+                                                'state' => "Initiating",
+                                                'call_date' => Carbon::now(),
+                                                'call_id' => $responseData['result']['callid'],
+                                                'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
+                                            ]);
 
-                                    Log::info('ADist: Call successfully made for mobile ' . $feed->mobile);
-                                } else {
-                                    Log::error('ADist: Failed to make call for mobile Number** ' . $feed->mobile . '. Response: ' . $responseState->body());
+                                            Log::info('ADist: Call successfully made for mobile ' . $feed->mobile);
+                                        } else {
+                                            Log::error('ADist: Failed to make call for mobile Number ' . $feed->mobile . '. Response: ' . $responseState->body());
+                                        }
+                                        break; // Exit loop after making the call
+                                    }
                                 }
                             } else {
-                                Log::error('ADist: Error fetching active calls for mobile ' . $feed->mobile);
+                                Log::error('ADist: Error fetching devices for extension ' . $ext);
                             }
                         } else {
-                            Log::error('ADist: Mobile is not available. Skipping call for mobile ' . $feed->mobile);
+                            Log::error('ADist: Error fetching active calls for mobile ' . $feed->mobile);
                         }
-                    } catch (\Exception $e) {
-                        Log::error('ADist: An error occurred: ' . $e->getMessage());
+                    } else {
+                        Log::error('ADist: Mobile is not available. Skipping call for mobile ' . $feed->mobile);
                     }
+                } catch (\Exception $e) {
+                    Log::error('ADist: An error occurred: ' . $e->getMessage());
+                }
 
 
                 // After processing all provider feeds, mark the file as done if all numbers are called
@@ -144,6 +157,7 @@ class MakeUserCallCommand extends Command
                 continue; // Skip this file and continue with the next one
             }
         }
+
 
 
 
