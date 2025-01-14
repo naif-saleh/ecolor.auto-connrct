@@ -54,8 +54,8 @@ class makeCallCommand extends Command
         $now = Carbon::now();
 
         foreach ($autoDailerFiles as $feed) {
-            $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHour(2);
-            $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHour(2);
+            $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHour(3);
+            $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHour(3);
             Log::info('From: ' . $from . "To: ".$to);
             if ($now > $from && $now < $to && $feed->file->allow == 1) {
                 Log::info('Processing file with ID ' . $feed->file->id);
