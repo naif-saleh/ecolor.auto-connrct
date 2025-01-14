@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\Log;
 
 class AutoDailerFileController extends Controller
 {
+
     public function uploadCsv(Request $request)
     {
         $request->validate([
@@ -33,17 +34,26 @@ class AutoDailerFileController extends Controller
             'user_id' => Auth::id(),
             'operation' => 'import File',
             'file_id' => $uploadedFile->id,
-            'file_type' => 'Auto-Dailer',
+            'file_type' => 'Auto-Distributor',
             'file_name' => $uploadedFile->file_name,
             'operation_time' => now(),
         ]);
 
         $path = $file->getRealPath();
-        $data = array_map('str_getcsv', file($path));
+        $fileContents = file_get_contents($path);
+        // Normalize line endings to UNIX format
+        $fileContents = str_replace("\r\n", "\n", $fileContents);
+
+        // Convert the file contents to an array of lines
+        $lines = explode("\n", $fileContents);
+        $data = array_map('str_getcsv', $lines);
 
         foreach ($data as $row) {
             try {
-                // Convert time fields, now including seconds in the format
+                // Trim all fields to avoid issues with extra spaces
+                $row = array_map('trim', $row);
+
+                // Convert time fields
                 $localTime_form = Carbon::createFromFormat('h:i:s A', $row[3], $request->timezone);
                 $localTime_to = Carbon::createFromFormat('h:i:s A', $row[4], $request->timezone);
 
@@ -59,8 +69,9 @@ class AutoDailerFileController extends Controller
                 // Convert date field to Y-m-d format
                 $formattedDate = Carbon::parse($row[5])->format('Y-m-d');
 
-                // Insert the data into the AutoDailerUploadedData table
-                AutoDailerUploadedData::create([
+                Log::info("Time From: " . $formattedTime_from . " | Time To: " . $formattedTime_to);
+
+                $csv_file =  AutoDailerUploadedData::create([
                     'mobile' => $row[0],
                     'provider' => $row[1],
                     'extension' => $row[2],
@@ -70,13 +81,82 @@ class AutoDailerFileController extends Controller
                     'uploaded_by' => Auth::id(),
                     'file_id' => $uploadedFile->id,
                 ]);
+
+                $csv_file->save();
             } catch (\Exception $e) {
-                return back()->withErrors(['error' => 'Error processing row: ' . $e->getMessage()]);
+                Log::error('Error processing row: ' . $e->getMessage());
+                return back()->withErrors(['error' => 'There was an error processing the file.']);
             }
         }
 
         return back()->with('success', 'File uploaded and processed successfully');
     }
+
+
+    // public function uploadCsv(Request $request)
+    // {
+    //     $request->validate([
+    //         'file' => 'required|mimes:csv,txt',
+    //     ]);
+
+    //     $file = $request->file('file');
+    //     $fileName = time() . '_' . $file->getClientOriginalName();
+    //     $file->storeAs('uploads', $fileName);
+
+    //     $uploadedFile = AutoDailerFile::create([
+    //         'file_name' => $fileName,
+    //         'uploaded_by' => Auth::id(),
+    //     ]);
+
+    //     // Active Log Report
+    //     ActivityLog::create([
+    //         'user_id' => Auth::id(),
+    //         'operation' => 'import File',
+    //         'file_id' => $uploadedFile->id,
+    //         'file_type' => 'Auto-Dailer',
+    //         'file_name' => $uploadedFile->file_name,
+    //         'operation_time' => now(),
+    //     ]);
+
+    //     $path = $file->getRealPath();
+    //     $data = array_map('str_getcsv', file($path));
+
+    //     foreach ($data as $row) {
+    //         try {
+    //             // Convert time fields, now including seconds in the format
+    //             $localTime_form = Carbon::createFromFormat('h:i:s A', $row[3], $request->timezone);
+    //             $localTime_to = Carbon::createFromFormat('h:i:s A', $row[4], $request->timezone);
+
+    //             // Subtract the offset to align with UTC
+    //             $offsetInHours = $localTime_form->offsetHours;
+    //             $utcTime_from = $localTime_form->subHours($offsetInHours);
+    //             $utcTime_to = $localTime_to->subHours($offsetInHours);
+
+    //             // Format the UTC time to store in the database
+    //             $formattedTime_from = $utcTime_from->format('H:i:s');
+    //             $formattedTime_to = $utcTime_to->format('H:i:s');
+
+    //             // Convert date field to Y-m-d format
+    //             $formattedDate = Carbon::parse($row[5])->format('Y-m-d');
+
+    //             // Insert the data into the AutoDailerUploadedData table
+    //             AutoDailerUploadedData::create([
+    //                 'mobile' => $row[0],
+    //                 'provider' => $row[1],
+    //                 'extension' => $row[2],
+    //                 'from' => $formattedTime_from,
+    //                 'to' => $formattedTime_to,
+    //                 'date' => $formattedDate,
+    //                 'uploaded_by' => Auth::id(),
+    //                 'file_id' => $uploadedFile->id,
+    //             ]);
+    //         } catch (\Exception $e) {
+    //             return back()->withErrors(['error' => 'Error processing row: ' . $e->getMessage()]);
+    //         }
+    //     }
+
+    //     return back()->with('success', 'File uploaded and processed successfully');
+    // }
 
 
 
