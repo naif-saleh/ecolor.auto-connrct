@@ -29,7 +29,7 @@ class DashboardController extends Controller
         $autoDailerUnanswered = AutoDailerReport::where('status', 'Dialing')->count();
 
         $autoDistributorAnswered = AutoDistributerReport::where('status', 'Talking')->count();
-        $autoDistributorUnanswered = AutoDistributerReport::where('status', 'Dialing')->count();
+        $autoDistributorUnanswered = AutoDistributerReport::where('status', 'Routing')->count();
 
         return view('reports.manager_dashboard', compact(
             'autoDailerAnswered',
