@@ -213,22 +213,23 @@
                     <i class="fas fa-file-export me-2"></i> Export as CSV
                 </a>
 
-                <!-- State Filters (All, Answered, No Answer, Today) -->
+                <!-- State Filters (All, Satisfied, Unsatisfied, Today) -->
                 <a href="{{ url('reports/evaluation') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
                     <i class="fas fa-list me-1"></i> All
                 </a>
                 <a href="{{ url('reports/evaluation?filter=satisfied') }}"
                     class="btn btn-modern-filter {{ $filter === 'satisfied' ? 'active' : '' }}">
-                    <i class="fas fa-phone me-1"></i> Satisfied
+                    <i class="fas fa-smile me-1"></i> Satisfied
                 </a>
                 <a href="{{ url('reports/evaluation?filter=unsatisfied') }}"
                     class="btn btn-modern-filter {{ $filter === 'unsatisfied' ? 'active' : '' }}">
-                    <i class="fas fa-phone-slash me-1"></i> Unsatisfied
+                    <i class="fas fa-frown me-1"></i> Unsatisfied
                 </a>
                 <a href="{{ url('reports/evaluation?filter=today') }}"
                     class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}">
                     <i class="fas fa-calendar-day me-1"></i> Today
                 </a>
+
             </div>
 
             <!-- Second Line: Filters Form -->
@@ -294,7 +295,8 @@
                                     <td>{{ $reports->firstItem() + $index }}</td>
                                     <td>{{ $report->mobile }}</td>
                                     <td>
-                                        <span class="badge {{ $report->is_satisfied === 'YES' ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill' }}">
+                                        <span
+                                            class="badge {{ $report->is_satisfied === 'YES' ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill' }}">
                                             {{ $report->is_satisfied === 'YES' ? 'Satisfied' : 'Unsatisfied' }}
                                         </span>
                                     </td>
