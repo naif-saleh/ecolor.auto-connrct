@@ -50,8 +50,8 @@ class MakeUserCallCommand extends Command
         foreach ($autoDailerFiles as $feed) {
             Log::info('count of calls in each time: '. $autoDailerFiles->count());
             // Calculate the time range by subtracting 2 hours from the given time
-            $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHour(2);
-            $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHour(2);
+            $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHour(3);
+            $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHour(3);
 
             // Check if the current time is within the range for this file_id
             Log::info('Current time: ' . $now);

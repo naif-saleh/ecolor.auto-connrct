@@ -76,7 +76,7 @@
                                             class="{{ $file->is_done ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill' }}">
                                             <i
                                                 class="{{ $file->is_done ? 'bi bi-check-circle' : 'bi bi-exclamation-circle' }}"></i>
-                                            {{ $file->is_done ? 'Done' : 'Calling...' }}
+                                            {{ $file->is_done ? 'All Numbers Called' : 'Not Called Yet' }}
                                         </span>
                                     </div>
 
