@@ -318,7 +318,7 @@
                                 <th>Mobile</th>
                                 <th>Provider</th>
                                 <th>Extension</th>
-                                <th>State</th>
+                                <th>Status</th>
                                 <th>Called At - Day</th>
                                 <th>Called At - Time</th>
                             </tr>
