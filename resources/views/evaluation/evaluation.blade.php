@@ -319,3 +319,58 @@
         </div>
     </div>
 @endsection
+
+
+@section('scripts')
+
+    <script>
+        document.getElementById('download-evaluation-csv-button').addEventListener('click', function(event) {
+            event.preventDefault(); // Prevent default action to manage it manually
+
+            const url = this.href;
+
+            Swal.fire({
+                title: 'Preparing your file...',
+                text: 'Please wait while we generate your CSV.',
+                icon: 'info',
+                showConfirmButton: false,
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Simulate file download process
+            fetch(url)
+                .then(response => {
+                    if (response.ok) {
+                        return response.blob();
+                    } else {
+                        throw new Error('Failed to download file');
+                    }
+                })
+                .then(blob => {
+                    const link = document.createElement('a');
+                    link.href = window.URL.createObjectURL(blob);
+                    link.download = "Evaluation Report";
+                    link.click();
+
+                    Swal.fire({
+                        title: 'Download Ready!',
+                        text: 'Your CSV file has been successfully downloaded.',
+                        icon: 'success',
+                        confirmButtonText: 'OK'
+                    });
+                })
+                .catch(error => {
+                    Swal.fire({
+                        title: 'Error',
+                        text: 'An error occurred while preparing your file. Please try again later.',
+                        icon: 'error',
+                        confirmButtonText: 'OK'
+                    });
+                });
+        });
+    </script>
+
+@endsection

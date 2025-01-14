@@ -13,7 +13,7 @@
             <div class="alert alert-success">{{ session('success') }}</div>
         @endif
 
-        <a href="{{ route('users.create') }}" class="btn btn-primary mb-3">Add New User</a>
+        <a href="{{ route('users.create') }}" class="btn btn-primary mb-3"><i class="bi bi-plus"></i> Add New User</a>
         <table class="table">
             <thead>
                 <tr>
