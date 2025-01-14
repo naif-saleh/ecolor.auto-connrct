@@ -319,7 +319,7 @@
                                 <th>Provider</th>
                                 <th>Extension</th>
                                 <th>Status</th>
-                                <th>Called At - Day</th>
+                                <th>Called At - Date</th>
                                 <th>Called At - Time</th>
                             </tr>
                         </thead>

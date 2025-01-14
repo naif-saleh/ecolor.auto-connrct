@@ -285,7 +285,7 @@
                                 <th>No</th>
                                 <th>Mobile</th>
                                 <th>Is Satisfied</th>
-                                <th>Called At - Day</th>
+                                <th>Called At - Date</th>
                                 <th>Called At - Time</th>
                             </tr>
                         </thead>
