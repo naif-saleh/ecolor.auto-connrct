@@ -42,41 +42,42 @@ class AutoDailerFileController extends Controller
         $data = array_map('str_getcsv', file($path));
 
         foreach ($data as $row) {
-            // Convert time fields
-            $localTime_form = Carbon::createFromFormat('H:i A', $row[3], $request->timezone);
-            $localTime_to = Carbon::createFromFormat('H:i A', $row[4], $request->timezone);
-
-            // Subtract the offset to align with UTC
-            $offsetInHours = $localTime_form->offsetHours;
-            $utcTime_from = $localTime_form->subHours($offsetInHours);
-            $utcTime_to = $localTime_to->subHours($offsetInHours);
-
-            // Format the UTC time to store in the database
-            $formattedTime_from = $utcTime_from->format('H:i:s');
-            $formattedTime_to = $utcTime_to->format('H:i:s');
-
-            // Convert date field to Y-m-d format
             try {
-                $formattedDate = Carbon::parse($row[5])->format('Y-m-d');
-            } catch (\Exception $e) {
-                return back()->withErrors(['error' => 'Invalid date format in CSV file']);
-            }
+                // Convert time fields, now including seconds in the format
+                $localTime_form = Carbon::createFromFormat('h:i:s A', $row[3], $request->timezone);
+                $localTime_to = Carbon::createFromFormat('h:i:s A', $row[4], $request->timezone);
 
-            // Insert the data into the AutoDailerUploadedData table
-            AutoDailerUploadedData::create([
-                'mobile' => $row[0],
-                'provider' => $row[1],
-                'extension' => $row[2],
-                'from' => $formattedTime_from,
-                'to' => $formattedTime_to,
-                'date' => $formattedDate,
-                'uploaded_by' => Auth::id(),
-                'file_id' => $uploadedFile->id,
-            ]);
+                // Subtract the offset to align with UTC
+                $offsetInHours = $localTime_form->offsetHours;
+                $utcTime_from = $localTime_form->subHours($offsetInHours);
+                $utcTime_to = $localTime_to->subHours($offsetInHours);
+
+                // Format the UTC time to store in the database
+                $formattedTime_from = $utcTime_from->format('H:i:s');
+                $formattedTime_to = $utcTime_to->format('H:i:s');
+
+                // Convert date field to Y-m-d format
+                $formattedDate = Carbon::parse($row[5])->format('Y-m-d');
+
+                // Insert the data into the AutoDailerUploadedData table
+                AutoDailerUploadedData::create([
+                    'mobile' => $row[0],
+                    'provider' => $row[1],
+                    'extension' => $row[2],
+                    'from' => $formattedTime_from,
+                    'to' => $formattedTime_to,
+                    'date' => $formattedDate,
+                    'uploaded_by' => Auth::id(),
+                    'file_id' => $uploadedFile->id,
+                ]);
+            } catch (\Exception $e) {
+                return back()->withErrors(['error' => 'Error processing row: ' . $e->getMessage()]);
+            }
         }
 
         return back()->with('success', 'File uploaded and processed successfully');
     }
+
 
 
     public function updateAllowStatus(Request $request, $slug)
