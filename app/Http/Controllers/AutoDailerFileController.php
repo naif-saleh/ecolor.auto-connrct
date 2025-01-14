@@ -28,8 +28,7 @@ class AutoDailerFileController extends Controller
             'uploaded_by' => Auth::id(),
         ]);
 
-
-        // Active Log Report...............................
+        // Active Log Report
         ActivityLog::create([
             'user_id' => Auth::id(),
             'operation' => 'import File',
@@ -42,32 +41,26 @@ class AutoDailerFileController extends Controller
         $path = $file->getRealPath();
         $data = array_map('str_getcsv', file($path));
 
-
-
-
-
         foreach ($data as $row) {
-            // Debugging: Check what the row values look like
-            // dd($row[3], $row[4]);
-
-            // Assuming the times are in 24-hour format (H:i)
-
+            // Convert time fields
             $localTime_form = Carbon::createFromFormat('H:i A', $row[3], $request->timezone);
             $localTime_to = Carbon::createFromFormat('H:i A', $row[4], $request->timezone);
-
 
             // Subtract the offset to align with UTC
             $offsetInHours = $localTime_form->offsetHours;
             $utcTime_from = $localTime_form->subHours($offsetInHours);
             $utcTime_to = $localTime_to->subHours($offsetInHours);
 
-            // Format the UTC time to store in the database (24-hour format)
+            // Format the UTC time to store in the database
             $formattedTime_from = $utcTime_from->format('H:i:s');
             $formattedTime_to = $utcTime_to->format('H:i:s');
 
-
-            Log::info("Time From: " . $formattedTime_from . " | Time To: " . $formattedTime_to);
-
+            // Convert date field to Y-m-d format
+            try {
+                $formattedDate = Carbon::parse($row[5])->format('Y-m-d');
+            } catch (\Exception $e) {
+                return back()->withErrors(['error' => 'Invalid date format in CSV file']);
+            }
 
             // Insert the data into the AutoDailerUploadedData table
             AutoDailerUploadedData::create([
@@ -76,16 +69,15 @@ class AutoDailerFileController extends Controller
                 'extension' => $row[2],
                 'from' => $formattedTime_from,
                 'to' => $formattedTime_to,
-                'date' => $row[5],
+                'date' => $formattedDate,
                 'uploaded_by' => Auth::id(),
                 'file_id' => $uploadedFile->id,
             ]);
         }
 
-
-
         return back()->with('success', 'File uploaded and processed successfully');
     }
+
 
     public function updateAllowStatus(Request $request, $slug)
     {
@@ -212,8 +204,8 @@ class AutoDailerFileController extends Controller
             fclose($file);
         };
 
-         // Active Log Report...............................
-         ActivityLog::create([
+        // Active Log Report...............................
+        ActivityLog::create([
             'user_id' => Auth::id(),
             'operation' => 'Download',
             'file_id' => $fileId,

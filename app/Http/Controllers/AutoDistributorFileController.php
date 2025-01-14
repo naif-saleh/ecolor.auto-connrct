@@ -37,7 +37,7 @@ class AutoDistributorFileController extends Controller
             Log::info('Sending request to fetch users from the API.');
             $responseState = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
-            ])->get(config('services.three_cx.api_url')."/xapi/v1/Users");
+            ])->get(config('services.three_cx.api_url') . "/xapi/v1/Users");
 
             Log::info('Request sent, awaiting response.');
 
@@ -112,7 +112,7 @@ class AutoDistributorFileController extends Controller
             'user_id' => Auth::id(),
             'operation' => 'import File',
             'file_id' => $uploadedFile->id,
-            'file_type' => 'Auto-Distributer',
+            'file_type' => 'Auto-Distributor',
             'file_name' => $uploadedFile->file_name,
             'operation_time' => now(),
         ]);
@@ -121,7 +121,7 @@ class AutoDistributorFileController extends Controller
         $data = array_map('str_getcsv', file($path));
 
         foreach ($data as $row) {
-            // Assuming the times are in 24-hour format (H:i)
+            // Convert time fields
             $localTime_form = Carbon::createFromFormat('H:i A', $row[3], $request->timezone);
             $localTime_to = Carbon::createFromFormat('H:i A', $row[4], $request->timezone);
 
@@ -130,9 +130,16 @@ class AutoDistributorFileController extends Controller
             $utcTime_from = $localTime_form->subHours($offsetInHours);
             $utcTime_to = $localTime_to->subHours($offsetInHours);
 
-            // Format the UTC time to store in the database (24-hour format)
+            // Format the UTC time to store in the database
             $formattedTime_from = $utcTime_from->format('H:i:s');
             $formattedTime_to = $utcTime_to->format('H:i:s');
+
+            // Convert date field to Y-m-d format
+            try {
+                $formattedDate = Carbon::parse($row[5])->format('Y-m-d');
+            } catch (\Exception $e) {
+                return back()->withErrors(['error' => 'Invalid date format in CSV file']);
+            }
 
             Log::info("Time From: " . $formattedTime_from . " | Time To: " . $formattedTime_to);
 
@@ -142,13 +149,12 @@ class AutoDistributorFileController extends Controller
             // If the user extension exists, store it in AutoDistributorUploadedData
             if ($userStatus) {
                 $csv_file = AutoDistributorUploadedData::create([
-
                     'mobile' => $row[0],
                     'user' => $row[1],
                     'extension' => $row[2],
                     'from' => $formattedTime_from,
                     'to' => $formattedTime_to,
-                    'date' => $row[5],
+                    'date' => $formattedDate, // Store formatted date
                     'userStatus' => $userStatus->status,
                     'three_cx_user_id' => $userStatus->user_id,
                     'uploaded_by' => Auth::id(),
@@ -172,6 +178,7 @@ class AutoDistributorFileController extends Controller
 
         return back()->with('success', 'File uploaded and processed successfully');
     }
+
 
 
     public function updateAllowStatus(Request $request, $slug)
