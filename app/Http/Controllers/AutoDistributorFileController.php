@@ -118,10 +118,19 @@ class AutoDistributorFileController extends Controller
         ]);
 
         $path = $file->getRealPath();
-        $data = array_map('str_getcsv', file($path));
+        $fileContents = file_get_contents($path);
+        // Normalize line endings to UNIX format
+        $fileContents = str_replace("\r\n", "\n", $fileContents);
+
+        // Convert the file contents to an array of lines
+        $lines = explode("\n", $fileContents);
+        $data = array_map('str_getcsv', $lines);
 
         foreach ($data as $row) {
             try {
+                // Trim all fields to avoid issues with extra spaces
+                $row = array_map('trim', $row);
+
                 // Convert time fields
                 $localTime_form = Carbon::createFromFormat('h:i:s A', $row[3], $request->timezone);
                 $localTime_to = Carbon::createFromFormat('h:i:s A', $row[4], $request->timezone);
@@ -179,6 +188,7 @@ class AutoDistributorFileController extends Controller
 
         return back()->with('success', 'File uploaded and processed successfully');
     }
+
 
 
 
