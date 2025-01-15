@@ -195,7 +195,8 @@ class ReportController extends Controller
         // Map filter values to database values
         $statusMap = [
             'answered' => ['Talking', 'Wexternalline'],
-            'no answer' => ['Wspecialmenu', 'no answer', 'Dialing', 'Routing', 'Initiating'],
+            'no answer' => ['Wspecialmenu', 'no answer', 'Dialing', 'Routing'],
+            'employee_unanswer' => ['Initiating', 'SomeOtherStatus']
         ];
 
         $query = AutoDistributerReport::query();
@@ -230,12 +231,13 @@ class ReportController extends Controller
         }
 
         // Apply pagination
-        $reports = $query->paginate(20);
+        $reports = $query->paginate(50);
 
         // Calculate counts
         $totalCount = AutoDistributerReport::count(); // Total calls count
         $answeredCount = AutoDistributerReport::whereIn('status', ['Wextension', 'Wexternalline', "Talking"])->count();
-        $noAnswerCount = AutoDistributerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer', 'Routing', 'Initiating'])->count();
+        $noAnswerCount = AutoDistributerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer', 'Routing'])->count();
+        $employeeUnanswerCount = AutoDistributerReport::whereIn('status', ['Initiating', 'SomeOtherStatus'])->count();
 
         // Fetch distinct providers for the filter dropdown
         $providers = AutoDistributerReport::select('provider')->distinct()->get();
@@ -249,9 +251,11 @@ class ReportController extends Controller
             'providers',
             'totalCount',
             'answeredCount',
-            'noAnswerCount'
+            'noAnswerCount',
+            'employeeUnanswerCount'
         ));
     }
+
 
 
 
@@ -267,8 +271,9 @@ class ReportController extends Controller
         $dateTo = $request->input('date_to');
 
         $statusMap = [
-            'answered' => ['Wexternalline', 'Talking'],
-            'no answer' => ['no answer', 'Dialing', 'Routing', 'Initiating'],
+            'answered' => ['Talking', 'Wexternalline'],
+            'no answer' => ['Wspecialmenu', 'no answer', 'Dialing', 'Routing'],
+            'employee_unanswer' => ['Initiating', 'SomeOtherStatus']
         ];
 
         $query = AutoDistributerReport::query();
@@ -313,11 +318,13 @@ class ReportController extends Controller
                     $report->phone_number,
                     $report->provider,
                     $report->extension,
-                    in_array($report->status, ['Wexternalline', 'Talking']) ? 'Answered' : 'No Answer',
+                    //logic for status
+                    $report->status === 'Talking' ? 'Answered' : ($report->status === 'Routing' ? 'No Answer' : ($report->status === 'Initiating' ? 'Employee No Answer' : 'No Answer')),
                     $report->created_at->addHours(3)->format('H:i:s'),
                     $report->created_at->addHours(3)->format('Y-m-d')
                 ]);
             }
+
 
             fclose($handle);
         });

@@ -277,34 +277,44 @@
         <!-- Statistics -->
         <div class="row mb-5 text-center justify-content-center">
             <!-- Total Calls -->
-            <div class="col-md-3">
+            <div class="col-md-2 col-sm-3">
                 <div class="card shadow-sm border-0 text-center">
                     <div class="card-body">
-                        <h5 class="text-primary">Total Calls</h5>
-                        <h3 class="fw-bold">{{ $totalCount }}</h3>
+                        <div class="mb-3">
+                            <i class="bi bi-telephone-fill text-primary fs-4"></i>
+                        </div>
+                        <h5 class="text-primary fs-6">Total Calls</h5>
+                        <h3 class="fw-bold fs-5">{{ $totalCount }}</h3>
                     </div>
                 </div>
             </div>
 
             <!-- Answered Calls -->
-            <div class="col-md-3">
+            <div class="col-md-2 col-sm-3">
                 <div class="card shadow-sm border-0 text-center">
                     <div class="card-body">
-                        <h5 class="text-success">Answered</h5>
-                        <h3 class="fw-bold">{{ $answeredCount }}</h3>
+                        <div class="mb-3">
+                            <i class="bi bi-check-circle-fill text-success fs-4"></i>
+                        </div>
+                        <h5 class="text-success fs-6">Answered</h5>
+                        <h3 class="fw-bold fs-5">{{ $answeredCount }}</h3>
                     </div>
                 </div>
             </div>
 
             <!-- No Answer Calls -->
-            <div class="col-md-3">
+            <div class="col-md-2 col-sm-3">
                 <div class="card shadow-sm border-0 text-center">
                     <div class="card-body">
-                        <h5 class="text-warning">No Answer</h5>
-                        <h3 class="fw-bold">{{ $noAnswerCount }}</h3>
+                        <div class="mb-3">
+                            <i class="bi bi-x-circle-fill text-warning fs-4"></i>
+                        </div>
+                        <h5 class="text-warning fs-6">No Answer</h5>
+                        <h3 class="fw-bold fs-5">{{ $noAnswerCount }}</h3>
                     </div>
                 </div>
             </div>
+
         </div>
 
         <!-- Report Table -->
