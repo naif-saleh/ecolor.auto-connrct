@@ -9,71 +9,77 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Carbon\Carbon;
-use App\Models\AutoDistributorUploadedData;
-use App\Models\AutoDistributerReport;
-use App\Services\TokenService;
+use App\Models\AutoDailerUploadedData;
+use App\Models\AutoDailerReport;
 
 class MakeCallJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $mobile;
-    protected $tokenService;
+    protected $feed;
+    protected $token;
 
-    public function __construct($mobile, TokenService $tokenService)
+    /**
+     * Create a new job instance.
+     *
+     * @param  $feed
+     * @param  string  $token
+     * @return void
+     */
+    public function __construct($feed, $token)
     {
-        $this->mobile = $mobile;
-        $this->tokenService = $tokenService;
+        $this->feed = $feed;
+        $this->token = $token;
     }
 
+    /**
+     * Execute the job.
+     *
+     * @return void
+     */
     public function handle()
     {
-        Log::info('Make Call Executed Now....');
         try {
-            $token = $this->tokenService->getToken();
-
-            if (empty($token)) {
-                Log::error('Token is empty or invalid');
-                return;
-            }
-
-            $ext = $this->mobile->extension;
-
             $responseState = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
-            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
-                'destination' => $this->mobile->mobile,
+                'Authorization' => 'Bearer ' . $this->token,
+            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$this->feed->extension}/makecall", [
+                'destination' => $this->feed->mobile,
             ]);
-
+            Log::info('Mobile: ' . $this->feed->mobile);
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
-
-                $reports = AutoDistributerReport::firstOrCreate([
+                AutoDailerReport::updateOrCreate(
+                    ['call_id' => $responseData['result']['callid']],
+                    [
+                        'status' => $responseData['result']['status'],
+                        'provider' => $this->feed->provider,
+                        'extension' => $responseData['result']['dn'],
+                        'phone_number' => $responseData['result']['party_caller_id'],
+                    ]
+                );
+                $this->feed->update([
+                    'state' => $responseData['result']['status'],
+                    'call_date' => now(),
                     'call_id' => $responseData['result']['callid'],
-                ], [
-                    'status' => "Initiating",
-                    'provider' => $this->mobile->user,
-                    'extension' => $responseData['result']['dn'],
-                    'phone_number' => $responseData['result']['party_caller_id'],
                 ]);
-
-                $reports->save();
-
-                $this->mobile->update([
-                    'state' => "Initiating",
-                    'call_date' => Carbon::now(),
-                    'call_id' => $responseData['result']['callid'],
-                    'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
-                ]);
-
-                Log::info('ADist: Call successfully made for mobile ' . $this->mobile->mobile);
             } else {
-                Log::error('ADist: Failed to make call for mobile Number** ' . $this->mobile->mobile . '. Response: ' . $responseState->body());
-                Log::error('ADist: Token: ' . $token);
+                Log::error('Failed to make call. Response: ' . $responseState->body());
             }
         } catch (\Exception $e) {
-            Log::error('Failed to make call for mobile ' . $this->mobile->mobile . ': ' . $e->getMessage());
+            Log::error('An error occurred: ' . $e->getMessage());
+        }
+
+
+
+        $allCalled = AutoDailerUploadedData::where('file_id', $this->feed->file->id)
+            ->where('state', 'new')
+            ->count() == 0;
+
+        if ($allCalled) {
+            $this->feed->file->update(['is_done' => true]);
+            Log::info('All numbers in file ' . $this->feed->file->slug . ' have been called. The file is marked as done.');
+        } else {
+            Log::info('Not all numbers in file ID ' . $this->feed->file->id . ' have been called.');
         }
     }
 }

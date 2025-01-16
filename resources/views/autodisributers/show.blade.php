@@ -3,50 +3,43 @@
 
 @section('style')
     <style>
-        /* Style the pagination container */
+        /* Custom Pagination Styles */
         .pagination {
-            border-radius: 0.375rem;
-            background-color: #f8f9fa;
-            padding: 10px;
+            margin-top: 10px;
             display: flex;
             justify-content: center;
-            margin-top: 20px;
+            gap: 5px;
         }
 
-        /* Customize the appearance of the pagination links */
+        .pagination .page-item {
+            margin: 0;
+        }
+
         .pagination .page-link {
-            color: #007bff;
-            margin: 0 5px;
-            padding: 10px 15px;
+            border-radius: 50px;
+            /* Rounded corners */
             border: 1px solid #dee2e6;
-            border-radius: 0.25rem;
+            /* Light border */
+            padding: 8px 16px;
+            font-size: 14px;
+            transition: all 0.3s ease;
         }
 
-        /* Change the color of the active page */
+        .pagination .page-link:hover {
+            background-color: #007bff;
+            /* Blue background on hover */
+            color: white;
+        }
+
         .pagination .page-item.active .page-link {
             background-color: #007bff;
             border-color: #007bff;
-            color: #fff;
+            color: white;
         }
 
-        /* Change the color for hovered links */
-        .pagination .page-item .page-link:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
-            color: #fff;
-        }
-
-        /* Disabled pagination links */
         .pagination .page-item.disabled .page-link {
+            background-color: #f8f9fa;
             color: #6c757d;
-            background-color: #e9ecef;
-            border-color: #dee2e6;
-        }
-
-        /* Aligning pagination info */
-        .pagination-info {
-            text-align: center;
-            margin-bottom: 15px;
         }
     </style>
 @endsection
@@ -95,39 +88,9 @@
                 </div>
 
                 <!-- Pagination Controls -->
-                <nav aria-label="Page navigation">
-                    <ul class="pagination">
-                        <!-- Previous Page Link -->
-                        @if ($uploadedData->onFirstPage())
-                            <li class="page-item disabled">
-                                <span class="page-link">Previous</span>
-                            </li>
-                        @else
-                            <li class="page-item">
-                                <a class="page-link" href="{{ $uploadedData->previousPageUrl() }}"
-                                    aria-label="Previous">Previous</a>
-                            </li>
-                        @endif
-
-                        <!-- Page Numbers -->
-                        @foreach ($uploadedData->getUrlRange(1, $uploadedData->lastPage()) as $page => $url)
-                            <li class="page-item {{ $uploadedData->currentPage() == $page ? 'active' : '' }}">
-                                <a class="page-link" href="{{ $url }}">{{ $page }}</a>
-                            </li>
-                        @endforeach
-
-                        <!-- Next Page Link -->
-                        @if ($uploadedData->hasMorePages())
-                            <li class="page-item">
-                                <a class="page-link" href="{{ $uploadedData->nextPageUrl() }}" aria-label="Next">Next</a>
-                            </li>
-                        @else
-                            <li class="page-item disabled">
-                                <span class="page-link">Next</span>
-                            </li>
-                        @endif
-                    </ul>
-                </nav>
+                <div>
+                    {!! $uploadedData->appends(request()->except('page'))->links('pagination::bootstrap-5') !!}
+                </div>
             </div>
         </div>
     </div>

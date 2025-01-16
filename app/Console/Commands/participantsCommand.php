@@ -110,6 +110,7 @@ class participantsCommand extends Command
                                     // Check if the call is in progress
                                     if ($call['Status'] === "Talking") { // Routing When Ringing
                                         AutoDailerReport::where('call_id', $call['Id'])->update(['status' => $call['Status']]);
+                                        AutoDailerUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
                                         Log::info("Updated status for call ID {$call['Id']} to ".$call['Status']);
                                     }
                                 } else {
