@@ -34,7 +34,7 @@ class AutoDailerFileController extends Controller
             'user_id' => Auth::id(),
             'operation' => 'import File',
             'file_id' => $uploadedFile->id,
-            'file_type' => 'Auto-Distributor',
+            'file_type' => 'Auto-Dailer',
             'file_name' => $uploadedFile->file_name,
             'operation_time' => now(),
         ]);

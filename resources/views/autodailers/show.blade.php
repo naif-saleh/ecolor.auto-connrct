@@ -2,26 +2,42 @@
 @section('title', 'Auto Dailer | Uploaded CSVs')
 @section('style')
     <style>
-        /* Add some custom spacing between the pagination controls and the table */
+        /* Custom Pagination Styles */
         .pagination {
-            border-radius: 0.375rem;
-            background-color: #f8f9fa;
+            margin-top: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 5px;
         }
 
-        /* Change the color of the active page */
+        .pagination .page-item {
+            margin: 0;
+        }
+
+        .pagination .page-link {
+            border-radius: 50px;
+            /* Rounded corners */
+            border: 1px solid #dee2e6;
+            /* Light border */
+            padding: 8px 16px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .pagination .page-link:hover {
+            background-color: #007bff;
+            /* Blue background on hover */
+            color: white;
+        }
+
         .pagination .page-item.active .page-link {
             background-color: #007bff;
             border-color: #007bff;
+            color: white;
         }
 
-        /* Change the color for the hovered links */
-        .pagination .page-item .page-link:hover {
-            background-color: #0056b3;
-            border-color: #0056b3;
-        }
-
-        /* Remove the bottom margin for pagination */
         .pagination .page-item.disabled .page-link {
+            background-color: #f8f9fa;
             color: #6c757d;
         }
     </style>
@@ -75,42 +91,10 @@
                     </div>
 
                     <!-- Pagination Controls -->
-                    <div>
-                        <nav aria-label="Page navigation">
-                            <ul class="pagination justify-content-end mb-0">
-                                <!-- Previous Page Link -->
-                                @if ($uploadedData->onFirstPage())
-                                    <li class="page-item disabled">
-                                        <span class="page-link">Previous</span>
-                                    </li>
-                                @else
-                                    <li class="page-item">
-                                        <a class="page-link" href="{{ $uploadedData->previousPageUrl() }}"
-                                            aria-label="Previous">Previous</a>
-                                    </li>
-                                @endif
-
-                                <!-- Page Numbers -->
-                                @foreach ($uploadedData->getUrlRange(1, $uploadedData->lastPage()) as $page => $url)
-                                    <li class="page-item {{ $uploadedData->currentPage() == $page ? 'active' : '' }}">
-                                        <a class="page-link" href="{{ $url }}">{{ $page }}</a>
-                                    </li>
-                                @endforeach
-
-                                <!-- Next Page Link -->
-                                @if ($uploadedData->hasMorePages())
-                                    <li class="page-item">
-                                        <a class="page-link" href="{{ $uploadedData->nextPageUrl() }}"
-                                            aria-label="Next">Next</a>
-                                    </li>
-                                @else
-                                    <li class="page-item disabled">
-                                        <span class="page-link">Next</span>
-                                    </li>
-                                @endif
-                            </ul>
-                        </nav>
+                     <div class="d-flex justify-content-center">
+                        {!! $uploadedData->appends(request()->except('page'))->links('pagination::bootstrap-5') !!}
                     </div>
+
                 </div>
 
             </div>
