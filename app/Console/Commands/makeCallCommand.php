@@ -59,8 +59,48 @@ class makeCallCommand extends Command
              if (now()->between($from, $to) && $feed->file->allow == 1) {
                  Log::info('Dispatching MakeCallJob for file ID ' . $feed->file->id);
 
-                 // Dispatch the job
-                 MakeCallJob::dispatch($feed, $token);
+                 try {
+                    $responseState = Http::withHeaders([
+                        'Authorization' => 'Bearer ' . $token,
+                    ])->post(config('services.three_cx.api_url') . "/callcontrol/{$feed->extension}/makecall", [
+                        'destination' => $feed->mobile,
+                    ]);
+                    Log::info('Mobile: ' . $feed->mobile);
+                    if ($responseState->successful()) {
+                        $responseData = $responseState->json();
+                        AutoDailerReport::updateOrCreate(
+                            ['call_id' => $responseData['result']['callid']],
+                            [
+                                'status' => $responseData['result']['status'],
+                                'provider' => $feed->provider,
+                                'extension' => $responseData['result']['dn'],
+                                'phone_number' => $responseData['result']['party_caller_id'],
+                            ]
+                        );
+                        $feed->update([
+                            'state' => $responseData['result']['status'],
+                            'call_date' => now(),
+                            'call_id' => $responseData['result']['callid'],
+                        ]);
+                    } else {
+                        Log::error('Failed to make call. Response: ' . $responseState->body());
+                    }
+                } catch (\Exception $e) {
+                    Log::error('An error occurred: ' . $e->getMessage());
+                }
+
+
+
+                $allCalled = AutoDailerUploadedData::where('file_id', $feed->file->id)
+                    ->where('state', 'new')
+                    ->count() == 0;
+
+                if ($allCalled) {
+                    $feed->file->update(['is_done' => true]);
+                    Log::info('All numbers in file ' . $feed->file->slug . ' have been called. The file is marked as done.');
+                } else {
+                    Log::info('Not all numbers in file ID ' . $feed->file->id . ' have been called.');
+                }
              } else {
                  Log::info('Time not within range for file ID ' . $feed->file->id);
              }
