@@ -16,6 +16,7 @@ class AutoDistributerReport extends Model
         'provider',
         'extension',
         'phone_number',
+        'duration_time',
     ];
 
     public function providerFeed()

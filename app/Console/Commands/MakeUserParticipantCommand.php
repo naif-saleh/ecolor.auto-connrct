@@ -8,8 +8,7 @@ use Carbon\Carbon;
 use App\Models\AutoDistributorUploadedData;
 use App\Models\AutoDistributerReport;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Cache;
-
+use DateTime;
 use App\Services\TokenService;
 
 
@@ -91,32 +90,29 @@ class MakeUserParticipantCommand extends Command
                         ])->get($url);
 
                         if ($activeCallsResponse->successful()) {
-                            // Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));
                             $activeCalls = $activeCallsResponse->json();
-                            //Log::debug("Active Calls: " . print_r($participant_data, true));
                             Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
-
-
-                            // Iterate through all active calls to find matching callId
                             foreach ($activeCalls['value'] as $call) {
-                                // Check if the call contains the required information
-                                // Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
-                                if (isset($call['Id']) && isset($call['Status'])) {
-                                    // Log the status to track each call's behavior
+                                if (isset($call['Id']) && isset($call['Status']) && isset($call['EstablishedAt']) && isset($call['ServerNow'])) {
                                     Log::info("Processing Call ID {$call['Id']} with status {$call['Status']}");
 
-                                    // Check if the call is in progress
-                                    if ($call['Status'] === "Talking" || $call['Status'] === "Routing") { // Routing When Ringing
-                                        AutoDistributerReport::where('call_id', $call['Id'])->update(['status' => $call['Status']]);
-                                        AutoDistributorUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
-                                        Log::info("Updated status for call ID {$call['Id']} to " . $call['Status']);
-                                    } else {
-                                        AutoDistributorUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
-                                        AutoDistributerReport::where('call_id', $call['Id'])->update(['status' => $call['Status']]);
-                                        Log::info("Updated status for call ID {$call['Id']} to " . $call['Status']);
-                                    }
+                                    // Calculate call duration
+                                    $establishedAt = new DateTime($call['EstablishedAt']);
+                                    $serverNow = new DateTime($call['ServerNow']);
+                                    $interval = $establishedAt->diff($serverNow);
+                                    $durationTime = $interval->format('%H:%I:%S'); // Format duration as HH:MM:SS
+
+                                    // Update call status and duration_time
+                                    AutoDistributerReport::where('call_id', $call['Id'])->update([
+                                        'status' => $call['Status'],
+                                        'duration_time' => $durationTime
+                                    ]);
+
+                                    AutoDistributorUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
+
+                                    Log::info("Updated status and duration_time for call ID {$call['Id']} to " . $call['Status'] . ", duration: " . $durationTime);
                                 } else {
-                                    Log::warning("Call missing 'Id' or 'Status' for participant DN {$participant_data['dn']}. Call Data: " . print_r($call, true));
+                                    Log::warning("Call missing required fields for participant DN {$participant_data['dn']}. Call Data: " . print_r($call, true));
                                 }
                             }
                         } else {
