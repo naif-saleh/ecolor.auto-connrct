@@ -1,10 +1,8 @@
-@section('title', 'Auto Distributor | File')
 @extends('layout.master')
+@section('title', 'Auto Distributor | File')
+
 @section('style')
     <style>
-        /* Add some custom spacing between the pagination controls and the table */
-        <style>
-
         /* Style the pagination container */
         .pagination {
             border-radius: 0.375rem;
@@ -51,13 +49,6 @@
             margin-bottom: 15px;
         }
     </style>
-
-    </style>
-@endsection
-
-
-@section('style')
-    @include('partials.pagination-style') <!-- Assuming pagination-style contains the above CSS -->
 @endsection
 
 @section('content')
