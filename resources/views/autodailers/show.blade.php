@@ -1,5 +1,6 @@
 @extends('layout.master')
-@section('title', 'Auto Dailer | Uploaded CSVs')
+@section('title', 'Auto Dialer | Uploaded CSVs')
+
 @section('style')
     <style>
         /* Custom Pagination Styles */
@@ -42,7 +43,7 @@
         }
     </style>
 @endsection
-@section('title', 'Auto Dailer | File')
+
 @section('content')
     <div class="container mt-5">
         <h1 class="mb-4">Data for File: {{ $file->file_name }}</h1>
@@ -56,11 +57,10 @@
                             <th>Mobile</th>
                             <th>Provider</th>
                             <th>Extension</th>
-                            <th>status</th>
+                            <th>Status</th>
                             <th>From</th>
                             <th>To</th>
                             <th>Date</th>
-
                         </tr>
                     </thead>
                     <tbody>
@@ -73,16 +73,15 @@
                                 <td>{{ $row->from }}</td>
                                 <td>{{ $row->to }}</td>
                                 <td>{{ $row->date }}</td>
-
                             </tr>
                         @endforeach
                     </tbody>
                 </table>
 
                 <!-- Pagination Links -->
-                <div class="d-flex justify-content-between align-items-center mt-4">
+                <div class="d-flex flex-column align-items-center mt-4">
                     <!-- Pagination Info -->
-                    <div>
+                    <div class="mb-2">
                         <span class="text-muted">Showing
                             <strong>{{ $uploadedData->firstItem() }}</strong> to
                             <strong>{{ $uploadedData->lastItem() }}</strong> of
@@ -91,12 +90,10 @@
                     </div>
 
                     <!-- Pagination Controls -->
-                     <div class="d-flex justify-content-center">
+                    <div>
                         {!! $uploadedData->appends(request()->except('page'))->links('pagination::bootstrap-5') !!}
                     </div>
-
                 </div>
-
             </div>
         </div>
     </div>
