@@ -80,7 +80,7 @@ class MakeCallJob implements ShouldQueue
                     $reports = AutoDailerReport::firstOrCreate([
                         'call_id' => $responseData['result']['callid'],
                     ], [
-                        'status' => "Initiating",
+                        'status' => $responseData['result']['status'],
                         'provider' => $this->feed->user,
                         'extension' => $responseData['result']['dn'],
                         'phone_number' => $responseData['result']['party_caller_id'],
@@ -89,7 +89,7 @@ class MakeCallJob implements ShouldQueue
                     $reports->save();
 
                     $this->feed->update([
-                        'state' => "Initiating",
+                        'state' => $responseData['result']['status'],
                         'call_date' => Carbon::now(),
                         'call_id' => $responseData['result']['callid'],
                         'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
