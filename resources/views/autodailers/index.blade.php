@@ -82,6 +82,7 @@
 
                                     <!-- View and Delete Buttons (moved to end) -->
                                     <div>
+                                        <!-- Download Button -->
                                         <a href="{{ url('auto-dailer/download-processed-file', $file->id) }}"
                                             class="btn btn-sm bg-primary mx-1" title="Download File">
                                             <i class="bi bi-download"></i>
@@ -92,6 +93,15 @@
                                             class="btn btn-info btn-sm mx-1" title="View File">
                                             <i class="bi bi-eye"></i>
                                         </a>
+
+
+                                        <!-- Edit Time & Date Modal -->
+                                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                            data-bs-target="#editFileModal">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+
+
 
                                         <!-- Delete Button -->
                                         <form action="{{ route('autodailer.delete', $file->slug) }}" method="POST"
@@ -104,8 +114,60 @@
                                             </button>
                                         </form>
                                     </div>
+
                                 </td>
                             </tr>
+
+
+                            {{-- pop-up edit file --}}
+                            <!-- Bootstrap Modal -->
+                            <!-- Modal -->
+                            <div class="modal fade" id="editFileModal" tabindex="-1" aria-labelledby="editFileModalLabel"
+                                aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editFileModalLabel">Update Time & Date</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+
+                                        <div class="modal-body">
+                                            <form method="POST" action="{{ route('autoDailer.update', $file->id) }}">
+                                                @csrf
+                                                @method('PUT')
+
+                                                <!-- Hidden input to pass file_id -->
+                                                <input type="hidden" name="file_id" value="{{ $file->id }}">
+
+                                                <div class="mb-3">
+                                                    <label for="from" class="form-label">From:</label>
+                                                    <input type="time" class="form-control" name="from"
+                                                        value="{{ old('from', $file->from) }}" required>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label for="to" class="form-label">To:</label>
+                                                    <input type="time" class="form-control" name="to"
+                                                        value="{{ old('to', $file->to) }}" required>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label for="date" class="form-label">Date:</label>
+                                                    <input type="date" class="form-control" name="date"
+                                                        value="{{ old('date', $file->date) }}" required>
+                                                </div>
+
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary"
+                                                        data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-primary">Update</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         @endforeach
                     </tbody>
                 </table>
@@ -122,6 +184,12 @@
             </div>
         </div>
     </div>
+
+
+
+
+
+
 @endsection
 
 {{-- upload file using ajax --}}
@@ -173,4 +241,8 @@
             });
         }
     </script>
+
+
+
+
 @endsection

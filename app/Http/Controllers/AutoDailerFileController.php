@@ -92,6 +92,37 @@ class AutoDailerFileController extends Controller
         return back()->with('success', 'File uploaded and processed successfully');
     }
 
+    // public function edit($slug)
+    // {
+    //     $file = AutoDailerFile::where('slug', $slug)->firstOrFail();
+    //     return view('autodailers.edit', compact('file'));
+    // }
+
+
+    public function updateAutoDailer(Request $request, $id)
+    {
+         $request->validate([
+            'from' => 'required',
+            'to' => 'required',
+            'date' => 'required',
+        ]);
+
+        // Find the file by slug
+
+
+            // Update all records for the given file ID
+            AutoDailerUploadedData::where('file_id',$id)->update([
+                'from' => $request->from,
+                'to' => $request->to,
+                'date' => $request->date,
+            ]);
+
+            return redirect()->back()->with('success', 'Time and Date updated successfully for all records.');
+
+    }
+
+
+
 
     // public function uploadCsv(Request $request)
     // {

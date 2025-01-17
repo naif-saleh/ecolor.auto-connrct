@@ -190,6 +190,26 @@ class AutoDistributorFileController extends Controller
     }
 
 
+    public function updateAutoDistributor(Request $request, $id)
+    {
+        $request->validate([
+            'from' => 'required',
+            'to' => 'required',
+            'date' => 'required',
+        ]);
+
+        // Find the file by slug
+
+
+        // Update all records for the given file ID
+        AutoDistributorUploadedData::where('file_id', $id)->update([
+            'from' => $request->from,
+            'to' => $request->to,
+            'date' => $request->date,
+        ]);
+
+        return redirect()->back()->with('success', 'Time and Date updated successfully for all records.');
+    }
 
 
 

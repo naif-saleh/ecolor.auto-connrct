@@ -75,12 +75,12 @@
                                                 id="allowSwitch{{ $file->slug }}" name="allow"
                                                 {{ $file->allow ? 'checked' : '' }} data-file-id="{{ $file->slug }}"
                                                 onchange="this.form.submit()">
-                                                <span id="statusText{{ $file->slug }}"
-                                                    class="{{ $file->allow ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill' }}">
-                                                    <i
-                                                        class="{{ $file->allow ? 'bi bi-check-circle' : 'bi bi-x-circle' }}"></i>
-                                                    {{ $file->allow ? 'Active' : 'Inactive' }}
-                                                </span>
+                                            <span id="statusText{{ $file->slug }}"
+                                                class="{{ $file->allow ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill' }}">
+                                                <i
+                                                    class="{{ $file->allow ? 'bi bi-check-circle' : 'bi bi-x-circle' }}"></i>
+                                                {{ $file->allow ? 'Active' : 'Inactive' }}
+                                            </span>
                                         </div>
                                     </form>
 
@@ -106,6 +106,12 @@
                                             <i class="bi bi-eye"></i>
                                         </a>
 
+                                        <!-- Edit Time & Date Modal -->
+                                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                            data-bs-target="#editFileModal">
+                                            <i class="bi bi-pencil"></i>
+                                        </button>
+
                                         <form action="{{ route('distributor.delete', $file->slug) }}" method="POST"
                                             style="display: inline;" id="deleteForm{{ $file->id }}">
                                             @csrf
@@ -118,6 +124,56 @@
                                     </div>
                                 </td>
                             </tr>
+
+                            {{-- pop-up edit file --}}
+                            <!-- Bootstrap Modal -->
+                            <!-- Modal -->
+                            <div class="modal fade" id="editFileModal" tabindex="-1" aria-labelledby="editFileModalLabel"
+                                aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="editFileModalLabel">Update Time & Date</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal"
+                                                aria-label="Close"></button>
+                                        </div>
+
+                                        <div class="modal-body">
+                                            <form method="POST" action="{{ route('distributor.update', $file->id) }}">
+                                                @csrf
+                                                @method('PUT')
+
+                                                <!-- Hidden input to pass file_id -->
+                                                <input type="hidden" name="file_id" value="{{ $file->id }}">
+
+                                                <div class="mb-3">
+                                                    <label for="from" class="form-label">From:</label>
+                                                    <input type="time" class="form-control" name="from"
+                                                        value="{{ old('from', $file->from) }}" required>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label for="to" class="form-label">To:</label>
+                                                    <input type="time" class="form-control" name="to"
+                                                        value="{{ old('to', $file->to) }}" required>
+                                                </div>
+
+                                                <div class="mb-3">
+                                                    <label for="date" class="form-label">Date:</label>
+                                                    <input type="date" class="form-control" name="date"
+                                                        value="{{ old('date', $file->date) }}" required>
+                                                </div>
+
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary"
+                                                        data-bs-dismiss="modal">Cancel</button>
+                                                    <button type="submit" class="btn btn-primary">Update</button>
+                                                </div>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         @endforeach
                     </tbody>
                 </table>

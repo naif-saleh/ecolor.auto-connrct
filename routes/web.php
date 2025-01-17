@@ -125,6 +125,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('auto-dailer/files/{slug}', [AutoDailerFileController::class, 'show'])->name('autodailers.files.show');
     Route::post('auto-dailer/upload-csv', [AutoDailerFileController::class, 'uploadCsv'])->name('autodailers.upload.csv');
     Route::delete('/autodailer-file/{id}', [AutoDailerFileController::class, 'deleteFile'])->name('autodailer.delete');
+    Route::get('/auto-dailer/{slug}/edit', [AutoDailerFileController::class, 'edit'])->name('autodailer.edit');
+    Route::put('/auto-dailer/{id}', [AutoDailerFileController::class, 'updateAutoDailer'])->name('autoDailer.update');
+
     // download File....................................................................................................................
     Route::get('auto-dailer/download-processed-file/{fileId}', [AutoDailerFileController::class, 'downloadUploadedFile'])->name('autodailers.download.processed.files');
     // Update value if file done or not.................................................................................................
@@ -142,6 +145,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('auto-distributor/upload-csv', [AutoDistributorFileController::class, 'uploadCsv'])->name('distributor.upload.csv');
     Route::delete('auto-distributor-file/{id}', [AutoDistributorFileController::class, 'deleteFile'])->name('distributor.delete');
     Route::get('/download-processed-file/{fileId}', [AutoDistributorFileController::class, 'downloadUploadedFile'])->name('distributor.download.processed.file');
+    Route::put('/auto-distributor/{id}', [AutoDistributorFileController::class, 'updateAutoDistributor'])->name('distributor.update');
+
     // Update value if file done or not.................................................................................................
     Route::post('auto-distributor/files/{slug}/allow', [AutoDistributorFileController::class, 'updateAllowStatus'])->name('distributor.files.allow');
     // Download Example csv.............................................................................................................
