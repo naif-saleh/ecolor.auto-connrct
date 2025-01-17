@@ -50,7 +50,7 @@ class makeCallCommand extends Command
         $token = $this->tokenService->getToken();
         Log::info('MakeCallCommand executed at ' . now());
 
-        $autoDailerFiles = AutoDailerUploadedData::where('state', 'new')->take(20)->get();
+        $autoDailerFiles = AutoDailerUploadedData::where('state', 'new')->get();
 
         foreach ($autoDailerFiles as $feed) {
             $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHour(3);
@@ -99,7 +99,7 @@ class makeCallCommand extends Command
                                 'call_id' => $responseData['result']['callid'],
                             ], [
                                 'status' => $responseData['result']['status'],
-                                'provider' => $feed->user,
+                                'provider' => $feed->provider,
                                 'extension' => $responseData['result']['dn'],
                                 'phone_number' => $responseData['result']['party_caller_id'],
                             ]);
