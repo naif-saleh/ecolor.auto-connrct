@@ -2,7 +2,7 @@
 @section('title', 'Auto Dialer')
 @section('content')
     <div class="container mt-5">
-        <h1 class="mb-4"><i class="bi bi-telephone"></i> Auto Dialers Files List</h1>
+        <h1 class="mb-4"><i class="bi bi-telephone"></i> Auto Dialers Files Lists</h1>
 
         <!-- Upload Button -->
         <form action="{{ route('autodailers.upload.csv') }}" method="POST" enctype="multipart/form-data"
