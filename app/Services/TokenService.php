@@ -23,15 +23,38 @@ class TokenService
      * Get the token, either from cache or by generating a new one.
      */
     public function getToken()
-    {
-        $cachedToken = Cache::get('three_cx_token');
-        if ($cachedToken) {
-            Log::info('Using cached token.');
-            return $cachedToken;
-        }
+{
+    $cachedToken = Cache::get('three_cx_token');
 
-        return $this->generateToken();
+    if ($cachedToken && !$this->isTokenExpired()) {
+        Log::info('Using cached token.');
+        return $cachedToken;
     }
+
+    // Prevent multiple simultaneous token refreshes
+    return Cache::lock('three_cx_token_lock', 10)->get(function () {
+        return $this->generateToken();
+    });
+}
+
+    // public function getToken()
+    // {
+    //     $cachedToken = Cache::get('three_cx_token');
+
+    //     if ($cachedToken && !$this->isTokenExpired()) {
+    //         Log::info('Using cached token.');
+    //         return $cachedToken;
+    //     }
+
+    //     Log::info('Cached token expired or missing, generating a new one.');
+    //     return $this->generateToken();
+    // }
+
+    private function isTokenExpired()
+    {
+        return Cache::has('three_cx_token_expires') ? now()->greaterThan(Cache::get('three_cx_token_expires')) : true;
+    }
+
 
     /**
      * Generate a new token and cache it.
