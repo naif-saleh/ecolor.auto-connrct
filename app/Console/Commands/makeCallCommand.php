@@ -113,15 +113,15 @@ class makeCallCommand extends Command
                                 'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
                             ]);
 
-                            Log::info('ADist: Call successfully made for mobile ' . $feed->mobile);
+                            Log::info('ADailer: Call successfully made for mobile ' . $feed->mobile);
                         } else {
-                            Log::error('ADist: Failed to make call for mobile Number ' . $feed->mobile . '. Response: ' . $responseState->body());
+                            Log::error('ADailer: Failed to make call for mobile Number ' . $feed->mobile . '. Response: ' . $responseState->body());
                         }
                     // } else {
-                    //     Log::error('ADist: Error fetching active calls for mobile ' . $feed->mobile);
+                    //     Log::error('ADailer: Error fetching active calls for mobile ' . $feed->mobile);
                     // }
                 } catch (\Exception $e) {
-                    Log::error('ADist: An error occurred: ' . $e->getMessage());
+                    Log::error('ADailer: An error occurred: ' . $e->getMessage());
                 }
                 $allCalled = AutoDailerUploadedData::where('file_id', $feed->file->id)->where('state', 'new')->count() == 0;
                 if ($allCalled) {
