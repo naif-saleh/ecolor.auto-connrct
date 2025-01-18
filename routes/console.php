@@ -9,9 +9,9 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote')->hourly();
 
 
-Schedule::command('app:make-call-command')->everySecond()->withoutOverlapping();
-Schedule::command('app:participants-command')->everySecond()->withoutOverlapping();
-Schedule::command('app:make-user-call-command')->everySecond()->withoutOverlapping();
-Schedule::command('app:make-user-participant-command')->everySecond()->withoutOverlapping();
-Schedule::command('app:update-user-status-command')->everySecond()->withoutOverlapping();
+Schedule::command('app:make-call-command')->everySecond();
+Schedule::command('app:participants-command')->everySecond();
+Schedule::command('app:make-user-call-command')->everySecond();
+Schedule::command('app:make-user-participant-command')->everySecond();
+Schedule::command('app:update-user-status-command')->everySecond();
 
