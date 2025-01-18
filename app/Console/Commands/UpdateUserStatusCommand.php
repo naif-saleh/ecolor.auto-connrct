@@ -42,17 +42,10 @@ class UpdateUserStatusCommand extends Command
     {
         // $token = Cache::get('three_cx_token'); // Assuming you store the token in cache
 
-        $token = $this->tokenService->getToken();
-        Log::info("tokenServices: UpdateUserStatusCommand" . $token );
-
-        if (!$token) {
-            Log::error('ADist: 3CX token not found in cache.');
-            $this->error('3CX token not found. Ensure it is cached before running the command.');
-            return;
-        }
-
         try {
             // Fetch user data from 3CX API
+            $token = $this->tokenService->getToken();
+            Log::info("tokenServices: UpdateUserStatusCommand" . $token );
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
             ])->get(config('services.three_cx.api_url') ."/xapi/v1/Users");

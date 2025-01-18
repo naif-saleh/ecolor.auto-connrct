@@ -41,9 +41,8 @@ class MakeUserCallCommand extends Command
      */
     public function handle()
     {
-        $token = $this->tokenService->getToken();
-        Log::info("tokenServices: MakeUserCallCommand" . $token );
-        Log::info('MakeUserCallCommand executed at ' . now());
+    
+
         $autoDailerFiles = AutoDistributorUploadedData::where('state','new')->orderBy('created_at', 'desc')->get();
 
 
@@ -70,6 +69,8 @@ class MakeUserCallCommand extends Command
                         $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
                         // Fetch active calls from API
+                        $token = $this->tokenService->getToken();
+                        Log::info("tokenServices: MakeUserCallCommand" . $token );
                         $activeCallsResponse = Http::withHeaders([
                             'Authorization' => 'Bearer ' . $token,
                         ])->get($url);

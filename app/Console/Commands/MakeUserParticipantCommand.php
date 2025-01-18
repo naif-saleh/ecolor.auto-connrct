@@ -42,13 +42,6 @@ class MakeUserParticipantCommand extends Command
         Log::info('participantsCommand executed at ' . now());
 
         // $token = Cache::get('three_cx_token');
-        $token = $this->tokenService->getToken();
-        Log::info("tokenServices: MakeUserParticipantCommand" . $token );
-
-        if (!$token) {
-            Log::error('3CX token not found in cache');
-            return;
-        }
 
         $providersFeeds = AutoDistributorUploadedData::whereDate('created_at', Carbon::today())->get();
 
@@ -56,6 +49,8 @@ class MakeUserParticipantCommand extends Command
             $ext_from = $feed->extension;
 
             try {
+                $token = $this->tokenService->getToken();
+                Log::info("tokenServices: MakeUserParticipantCommand" . $token );
                 // Fetch participants for the extension
                 $responseState = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token,
