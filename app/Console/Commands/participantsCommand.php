@@ -55,6 +55,7 @@ class participantsCommand extends Command
 
             try {
                 // Fetch participants for the extension
+                Log::info("tokenServices: inside  participantsCommand" . $token );
                 $responseState = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token,
                 ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
