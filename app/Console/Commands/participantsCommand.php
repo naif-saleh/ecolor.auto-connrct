@@ -46,12 +46,7 @@ class participantsCommand extends Command
 
        // $token = Cache::get('three_cx_token');
        $token = $this->tokenService->getToken();
-        Log::error("participantsCommand token new-token" . $token );
-
-        if (!$token) {
-            Log::error('3CX token not found in cache');
-            return;
-        }
+       Log::error("tokenServices: participantsCommand" . $token );
 
         $providersFeeds = AutoDailerUploadedData::whereDate('created_at', Carbon::today())->get();
 

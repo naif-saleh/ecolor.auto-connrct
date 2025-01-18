@@ -26,7 +26,7 @@ class TokenService
     {
         $cachedToken = Cache::get('three_cx_token');
         if ($cachedToken) {
-            Log::info('Using cached token.');
+            Log::info('tokenServices: Using cached token.');
             return $cachedToken;
         }
 
@@ -38,6 +38,7 @@ class TokenService
      */
     protected function generateToken()
     {
+        Log::info('tokenServices: generate new Token');
         try {
             $response = Http::asForm()->post($this->authUrl, [
                 'grant_type' => 'client_credentials',
@@ -52,13 +53,13 @@ class TokenService
                 // Cache the token with its expiration time
                 Cache::put('three_cx_token', $token, now()->addSeconds($expiresIn - 60)); // Cache with a buffer
 
-                Log::info('Token generated and cached successfully.');
+                Log::info('tokenServices: Token generated and cached successfully.');
                 return $token;
             } else {
-                Log::error('Failed to generate token: ' . $response->body());
+                Log::error('tokenServices: Failed to generate token: ' . $response->body());
             }
         } catch (\Exception $e) {
-            Log::error('Error generating token: ' . $e->getMessage());
+            Log::error('tokenServices: Error generating token: ' . $e->getMessage());
         }
 
         return null; // Return null if token generation fails
