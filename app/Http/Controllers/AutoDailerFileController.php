@@ -107,24 +107,22 @@ class AutoDailerFileController extends Controller
             'date' => 'required',
         ]);
 
-        // Get the update values once
+        // Prepare the update data
         $updateData = [
             'from' => $request->from,
             'to' => $request->to,
             'date' => $request->date,
         ];
 
-        // Process the update in smaller chunks (5000 records per batch)
+        // Process updates in batches of 5000 rows
         AutoDailerUploadedData::where('file_id', $id)->chunkById(5000, function ($records) use ($updateData) {
-            // Get the IDs of the records in the chunk
-            $ids = $records->pluck('id')->toArray();
-
-            // Bulk update all records in the current chunk
-            AutoDailerUploadedData::whereIn('id', $ids)->update($updateData);
+            $ids = $records->pluck('id')->toArray(); // Get IDs of the current batch
+            AutoDailerUploadedData::whereIn('id', $ids)->update($updateData); // Bulk update
         });
 
-        return redirect()->back()->with('success', 'Time and Date update is processing in batches.');
+        return redirect()->back()->with('success', 'Time and Date updated successfully for all records.');
     }
+
 
 
 
