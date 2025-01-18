@@ -45,8 +45,7 @@ class participantsCommand extends Command
         Log::info('participantsCommand executed at ' . now());
 
        // $token = Cache::get('three_cx_token');
-       $token = $this->tokenService->getToken();
-       Log::info("tokenServices: participantsCommand" . $token );
+
 
         $providersFeeds = AutoDailerUploadedData::whereDate('created_at', Carbon::today())->get();
 
@@ -55,7 +54,8 @@ class participantsCommand extends Command
 
             try {
                 // Fetch participants for the extension
-                Log::info("tokenServices: inside  participantsCommand" . $token );
+                $token = $this->tokenService->getToken();
+                Log::info("tokenServices: participantsCommand" . $token );
                 $responseState = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token,
                 ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
