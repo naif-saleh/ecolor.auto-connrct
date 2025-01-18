@@ -125,7 +125,7 @@ class participantsCommand extends Command
                     }
                 }
             } catch (\Exception $e) {
-                Log::error("Error fetching participants for provider {$ext_from}: " . $e->getMessage());
+                Log::error("Error fetching participants forcc provider {$ext_from}: " . $e->getMessage());
             }
         }
     }
