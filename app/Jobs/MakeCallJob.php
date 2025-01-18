@@ -59,10 +59,10 @@ class MakeCallJob implements ShouldQueue
             if ($activeCallsResponse->successful()) {
                 $activeCalls = $activeCallsResponse->json();
 
-                // if (!empty($activeCalls['value'])) {
-                //     Log::info("Active calls detected for extension {$ext}. Skipping call for mobile {$this->feed->mobile}.");
-                //     return; // Skip this number if active calls exist
-                // }
+                if (!empty($activeCalls['value'])) {
+                    Log::info("Active calls detected for extension {$ext}. Skipping call for mobile {$this->feed->mobile}.");
+                    return; // Skip this number if active calls exist
+                }
 
 
 
@@ -108,7 +108,7 @@ class MakeCallJob implements ShouldQueue
 
         $allCalled = AutoDailerUploadedData::where('file_id', $this->feed->file->id)->where('state', 'new')->count() == 0;
                 if ($allCalled) {
-                    $this->feed->file->update(['is_done' => true]);
+                   $this->feed->file->update(['is_done' => true]);
                     Log::info('All numbers in file ' . $this->feed->file->slug . ' have been called. The file is marked as done.');
                 }
 
