@@ -61,29 +61,6 @@ class makeCallCommand extends Command
                 try {
 
                     $ext = $feed->extension;
-                    // $filter = "contains(Caller, '{$ext}')";
-                    // $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
-
-                    // // Fetch active calls from API
-                    // $activeCallsResponse = Http::withHeaders([
-                    //     'Authorization' => 'Bearer ' . $token,
-                    // ])->get($url);
-
-                    // if ($activeCallsResponse->failed()) {
-                    //     Log::error('ADist: Failed to fetch active calls for mobile ' . $feed->mobile . '. Response: ' . $activeCallsResponse->body());
-                    //     return;
-                    // }
-
-                    // if ($activeCallsResponse->successful()) {
-                    //     $activeCalls = $activeCallsResponse->json();
-
-                        // if (!empty($activeCalls['value'])) {
-                        //     Log::info("Active calls detected for extension {$ext}. Skipping call for mobile {$feed->mobile}.");
-                        //     return; // Skip this number if active calls exist
-                        // }
-
-
-
 
                         $responseState = Http::withHeaders([
                             'Authorization' => 'Bearer ' . $token,
@@ -93,7 +70,7 @@ class makeCallCommand extends Command
 
                         if ($responseState->successful()) {
                             $responseData = $responseState->json();
-                            Log::info('Adist:ResponseUserCall: ' . print_r($responseData));
+                            Log::info('ADailer:ResponseUserCall: ' . print_r($responseData));
 
                             $reports = AutoDailerReport::firstOrCreate([
                                 'call_id' => $responseData['result']['callid'],
