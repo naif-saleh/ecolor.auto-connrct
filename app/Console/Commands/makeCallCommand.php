@@ -77,10 +77,10 @@ class makeCallCommand extends Command
                     if ($activeCallsResponse->successful()) {
                         $activeCalls = $activeCallsResponse->json();
 
-                        if (!empty($activeCalls['value'])) {
-                            Log::info("Active calls detected for extension {$ext}. Skipping call for mobile {$feed->mobile}.");
-                            return; // Skip this number if active calls exist
-                        }
+                        // if (!empty($activeCalls['value'])) {
+                        //     Log::info("Active calls detected for extension {$ext}. Skipping call for mobile {$feed->mobile}.");
+                        //     return; // Skip this number if active calls exist
+                        // }
 
 
 
