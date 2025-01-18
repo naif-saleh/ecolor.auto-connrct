@@ -43,8 +43,7 @@ class MakeUserParticipantCommand extends Command
 
         // $token = Cache::get('three_cx_token');
         $token = $this->tokenService->getToken();
-        Log::error("tokenServices: MakeUserParticipantCommand" . $token );
-        Log::error("participantsCommand token " . $token);
+        Log::info("tokenServices: MakeUserParticipantCommand" . $token );
 
         if (!$token) {
             Log::error('3CX token not found in cache');

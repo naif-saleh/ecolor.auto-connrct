@@ -43,7 +43,8 @@ class UpdateUserStatusCommand extends Command
         // $token = Cache::get('three_cx_token'); // Assuming you store the token in cache
 
         $token = $this->tokenService->getToken();
-        Log::error("tokenServices: UpdateUserStatusCommand" . $token );
+        Log::info("tokenServices: UpdateUserStatusCommand" . $token );
+
         if (!$token) {
             Log::error('ADist: 3CX token not found in cache.');
             $this->error('3CX token not found. Ensure it is cached before running the command.');

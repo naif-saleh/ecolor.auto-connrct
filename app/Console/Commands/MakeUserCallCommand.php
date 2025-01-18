@@ -42,7 +42,7 @@ class MakeUserCallCommand extends Command
     public function handle()
     {
         $token = $this->tokenService->getToken();
-        Log::error("tokenServices: MakeUserCallCommand" . $token );
+        Log::info("tokenServices: MakeUserCallCommand" . $token );
         Log::info('MakeUserCallCommand executed at ' . now());
         $autoDailerFiles = AutoDistributorUploadedData::where('state','new')->orderBy('created_at', 'desc')->get();
 

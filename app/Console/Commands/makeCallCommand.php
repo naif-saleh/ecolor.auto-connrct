@@ -48,7 +48,7 @@ class makeCallCommand extends Command
     public function handle()
     {
         $token = $this->tokenService->getToken();
-        Log::error("tokenServices: makeCallCommand" . $token );
+        Log::info("tokenServices: makeCallCommand" . $token );
         Log::info('MakeCallCommand executed at ' . now());
 
         $autoDailerFiles = AutoDailerUploadedData::where('state', 'new')->get();
