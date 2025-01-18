@@ -61,21 +61,21 @@ class makeCallCommand extends Command
                 try {
 
                     $ext = $feed->extension;
-                    $filter = "contains(Caller, '{$ext}')";
-                    $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+                    // $filter = "contains(Caller, '{$ext}')";
+                    // $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
-                    // Fetch active calls from API
-                    $activeCallsResponse = Http::withHeaders([
-                        'Authorization' => 'Bearer ' . $token,
-                    ])->get($url);
+                    // // Fetch active calls from API
+                    // $activeCallsResponse = Http::withHeaders([
+                    //     'Authorization' => 'Bearer ' . $token,
+                    // ])->get($url);
 
-                    if ($activeCallsResponse->failed()) {
-                        Log::error('ADist: Failed to fetch active calls for mobile ' . $feed->mobile . '. Response: ' . $activeCallsResponse->body());
-                        return;
-                    }
+                    // if ($activeCallsResponse->failed()) {
+                    //     Log::error('ADist: Failed to fetch active calls for mobile ' . $feed->mobile . '. Response: ' . $activeCallsResponse->body());
+                    //     return;
+                    // }
 
-                    if ($activeCallsResponse->successful()) {
-                        $activeCalls = $activeCallsResponse->json();
+                    // if ($activeCallsResponse->successful()) {
+                    //     $activeCalls = $activeCallsResponse->json();
 
                         // if (!empty($activeCalls['value'])) {
                         //     Log::info("Active calls detected for extension {$ext}. Skipping call for mobile {$feed->mobile}.");
@@ -117,9 +117,9 @@ class makeCallCommand extends Command
                         } else {
                             Log::error('ADist: Failed to make call for mobile Number ' . $feed->mobile . '. Response: ' . $responseState->body());
                         }
-                    } else {
-                        Log::error('ADist: Error fetching active calls for mobile ' . $feed->mobile);
-                    }
+                    // } else {
+                    //     Log::error('ADist: Error fetching active calls for mobile ' . $feed->mobile);
+                    // }
                 } catch (\Exception $e) {
                     Log::error('ADist: An error occurred: ' . $e->getMessage());
                 }
