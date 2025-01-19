@@ -94,105 +94,130 @@ class AutoDistributorFileController extends Controller
 
     public function uploadCsv(Request $request)
     {
+        // Validate file input
+        Log::info('File upload started. Validating input...');
         $request->validate([
             'file' => 'required|mimes:csv,txt',
         ]);
+        Log::info('File validation passed.');
 
+        // Handle file upload
         $file = $request->file('file');
         $fileName = time() . '_' . $file->getClientOriginalName();
+        Log::info('Storing file: ' . $fileName);
         $file->storeAs('uploads', $fileName);
 
-        $uploadedFile = AutoDistributorFile::create([
-            'file_name' => $fileName,
-            'uploaded_by' => Auth::id(),
-        ]);
-
-        // Active Log Report
-        ActivityLog::create([
-            'user_id' => Auth::id(),
-            'operation' => 'import File',
-            'file_id' => $uploadedFile->id,
-            'file_type' => 'Auto-Distributor',
-            'file_name' => $uploadedFile->file_name,
-            'operation_time' => now(),
-        ]);
-
+        // Read and process file content
         $path = $file->getRealPath();
+        Log::info('Reading file content from: ' . $path);
         $fileContents = file_get_contents($path);
-        // Normalize line endings to UNIX format
-        $fileContents = str_replace("\r\n", "\n", $fileContents);
+        $fileContents = str_replace("\r\n", "\n", $fileContents); // Normalize line endings
 
-        // Convert the file contents to an array of lines
+        // Split content into rows
         $lines = explode("\n", $fileContents);
         $data = array_map('str_getcsv', $lines);
 
-        foreach ($data as $row) {
-            try {
-                // Trim all fields to avoid issues with extra spaces
-                $row = array_map('trim', $row);
+        // Check for valid file contents
+        if (count($data) < 2) {
+            Log::error('The file appears to be empty or has no valid rows.');
+            return back()->withErrors(['error' => 'The file appears to be empty or has no valid rows.']);
+        }
+        Log::info('File contains data. Processing the file...');
 
-                // Convert time fields
-                $localTime_form = Carbon::createFromFormat('h:i:s A', $row[3], $request->timezone);
-                $localTime_to = Carbon::createFromFormat('h:i:s A', $row[4], $request->timezone);
+        // Extract the first data row to get date, from, and to values
+        $firstDataRow = $data[1]; // Assuming row 0 is headers, row 1 is first data row
 
-                // Subtract the offset to align with UTC
-                $offsetInHours = $localTime_form->offsetHours;
-                $utcTime_from = $localTime_form->subHours($offsetInHours);
-                $utcTime_to = $localTime_to->subHours($offsetInHours);
-
-                // Format the UTC time to store in the database
-                $formattedTime_from = $utcTime_from->format('H:i:s');
-                $formattedTime_to = $utcTime_to->format('H:i:s');
-
-                // Convert date field to Y-m-d format
-                $formattedDate = Carbon::parse($row[5])->format('Y-m-d');
-
-                Log::info("Time From: " . $formattedTime_from . " | Time To: " . $formattedTime_to);
-
-                // Check if extension exists in ThreeCxUserStatus table
-                $userStatus = TrheeCxUserStatus::where('extension', $row[2])->first();
-
-                // If the user extension exists, store it in AutoDistributorUploadedData
-                if ($userStatus) {
-                    $csv_file = AutoDistributorUploadedData::create([
-                        'mobile' => $row[0],
-                        'user' => $row[1],
-                        'extension' => $row[2],
-                        'from' => $formattedTime_from,
-                        'to' => $formattedTime_to,
-                        'date' => $formattedDate,
-                        'userStatus' => $userStatus->status,
-                        'three_cx_user_id' => $userStatus->user_id,
-                        'uploaded_by' => Auth::id(),
-                        'file_id' => $uploadedFile->id,
-                    ]);
-
-                    // Active Log Report
-                    ActivityLog::create([
-                        'user_id' => Auth::id(),
-                        'operation' => 'import',
-                        'file_type' => '3cx all users',
-                        'file_name' => 'import users',
-                        'operation_time' => now(),
-                    ]);
-
-                    $csv_file->save();
-                } else {
-                    Log::warning('No user found with extension ' . $row[2]);
-                }
-            } catch (\Exception $e) {
-                Log::error('Error processing row: ' . $e->getMessage());
-                return back()->withErrors(['error' => 'There was an error processing the file.']);
-            }
+        // Ensure required columns exist in the first row
+        if (count($firstDataRow) < 6) {
+            Log::error('Missing required columns (from, to, date).');
+            return back()->withErrors(['error' => 'Missing required columns (from, to, date).']);
         }
 
-        return back()->with('success', 'File uploaded and processed successfully');
+        try {
+            // Convert time fields safely, assuming 12-hour format in CSV
+            Log::info('Converting time fields...');
+            $utcTime_from = Carbon::createFromFormat('h:i:s A', $firstDataRow[3])->format('H:i:s');
+            $utcTime_to = Carbon::createFromFormat('h:i:s A', $firstDataRow[4])->format('H:i:s');
+            $formattedDate = Carbon::parse($firstDataRow[5])->format('Y-m-d');
+             // Create a SINGLE AutoDistributorFile entry for this upload
+            Log::info('Creating AutoDistributorFile entry...');
+            $uploadedFile = AutoDistributorFile::create([
+                'file_name' => $fileName,
+                'from' => $utcTime_from,
+                'to' => $utcTime_to,
+                'date' => $formattedDate,
+                'uploaded_by' => Auth::id(),
+            ]);
+            Log::info('AutoDistributorFile entry created with ID: ' . $uploadedFile->id);
+
+            // Get all extensions from the CSV to fetch user statuses in bulk
+            $extensions = array_column(array_slice($data, 1), 2);
+            $userStatuses = TrheeCxUserStatus::whereIn('extension', $extensions)->get()->keyBy('extension');
+
+            // Prepare batch insert array
+            $insertData = [];
+
+            // Process ALL rows (skipping the header)
+            foreach ($data as $index => $row) {
+                if ($index == 0) continue; // Skip header row
+
+                // Ensure row has sufficient columns
+                if (count($row) < 3) {
+                    Log::warning('Skipping row due to missing columns: ' . json_encode($row));
+                    continue;
+                }
+
+                // Find user status using preloaded data
+                $userStatus = $userStatuses[$row[2]] ?? null;
+
+                // Ensure user status exists
+                if (!$userStatus) {
+                    Log::warning('User status not found for extension: ' . $row[2]);
+                    continue;
+                }
+
+                // Add to batch insert array
+                $insertData[] = [
+                    'mobile' => $row[0],
+                    'user' => $row[1],
+                    'extension' => $row[2],
+                    'userStatus' => $userStatus->status,
+                    'three_cx_user_id' => $userStatus->user_id,
+                    'uploaded_by' => Auth::id(),
+                    'file_id' => $uploadedFile->id,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
+
+                Log::info('Prepared data for mobile: ' . $row[0] . ' extension: ' . $row[2]);
+            }
+
+            // Batch insert for better performance
+            if (!empty($insertData)) {
+                AutoDistributorUploadedData::insert($insertData);
+                Log::info('Inserted ' . count($insertData) . ' records successfully.');
+            } else {
+                Log::warning('No valid records found for insertion.');
+            }
+
+            Log::info('File uploaded and processed successfully.');
+            return back()->with('success', 'File uploaded and processed successfully.');
+        } catch (\Exception $e) {
+            // Log the error with exception details
+            Log::error("Error processing file: " . $e->getMessage());
+            Log::error("Error Details: " . $e->getTraceAsString());
+            return back()->withErrors(['error' => 'There was an error processing the file.']);
+        }
     }
+
+
+
 
 
     public function updateAutoDistributor(Request $request, $id)
     {
         $request->validate([
+            'file_name' => 'required',
             'from' => 'required',
             'to' => 'required',
             'date' => 'required',
@@ -202,7 +227,8 @@ class AutoDistributorFileController extends Controller
 
 
         // Update all records for the given file ID
-        AutoDistributorUploadedData::where('file_id', $id)->update([
+        AutoDistributorFile::where('id', $id)->update([
+            'file_name' => $request->file_name,
             'from' => $request->from,
             'to' => $request->to,
             'date' => $request->date,
@@ -330,9 +356,9 @@ class AutoDistributorFileController extends Controller
                     $row->mobile,
                     $row->user,
                     $row->extension,
-                    $row->from,
-                    $row->to,
-                    $row->date,
+                    $row->file->from,
+                    $row->file->to,
+                    $row->file->date,
                     $row->uploader_name // Add the uploader's name
                 ]);
             }

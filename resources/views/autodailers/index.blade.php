@@ -2,7 +2,7 @@
 @section('title', 'Auto Dialer')
 @section('content')
     <div class="container mt-5">
-        <h1 class="mb-4"><i class="bi bi-telephone"></i> Auto Dialers Files Lists</h1>
+        <h1 class="mb-4"><i class="bi bi-telephone"></i> Auto Dialers Files List</h1>
 
         <!-- Upload Button -->
         <form action="{{ route('autodailers.upload.csv') }}" method="POST" enctype="multipart/form-data"
@@ -14,19 +14,25 @@
 
                 <!-- Trigger link wrapped inside a label with the 'for' attribute -->
                 <label for="uploadButton" class="btn btn-secondary">
-                    <i class="bi bi-plus"></i> Add File
+                    <i class="bi bi-plus"></i> Select File
                 </label>
 
                 <!-- Upload Button (Initially Hidden) -->
                 <button type="submit" id="uploadLink" class="btn btn-success" style="display: none;">
-                    <i class="bi bi-upload"></i> Upload New File
+                    <i class="bi bi-upload"></i> Upload File
                 </button>
             </div>
 
-            <!-- Example CSV Download Link -->
-            <a href="/example.csv" class="btn btn-info" download="example.csv">
-                <i class="bi bi-download"></i> Example CSV Structure
-            </a>
+            <div>
+                <!-- Example CSV Download Link -->
+                <a href="/autodailer.csv" class="btn btn-info" download="example.csv">
+                    <i class="bi bi-download"></i> Auto Dailer File - Demo
+                </a>
+                {{-- <!-- All Providers -->
+            <a href="{{route('autodailers.providers')}}" class="btn btn-primary" >
+                <i class="bi bi-downloa"></i> Providers
+            </a> --}}
+            </div>
         </form>
 
         <div class="table-responsive shadow-sm rounded">
@@ -39,9 +45,11 @@
                     <thead class="thead-dark">
                         <tr>
                             <th>File Name</th>
-                            <th>Uploaded By</th>
+                            <th>From</th>
+                            <th>To</th>
                             <th>Date</th>
-                            <th>Time</th>
+                            <th>Uploaded At</th>
+                            <th>Uploaded By</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
@@ -49,9 +57,11 @@
                         @foreach ($files as $file)
                             <tr>
                                 <td>{{ $file->file_name }}</td>
+                                <td>{{ $file->from }}</td>
+                                <td>{{ $file->to }}</td>
+                                <td>{{ $file->date }}</td> <!-- For Date -->
+                                <td>{{ $file->created_at->addHours(3) }}</td> <!-- For Time -->
                                 <td>{{ $file->user->name ?? 'Unknown' }}</td>
-                                <td>{{ $file->created_at->addHours(3)->format('Y-m-d') }}</td> <!-- For Date -->
-                                <td>{{ $file->created_at->addHours(3)->format('H:i:s') }}</td> <!-- For Time -->
                                 <td class="d-flex justify-content-between">
                                     <!-- Switch for Allow (moved to start) -->
                                     <form action="{{ route('autodailers.files.allow', $file->slug) }}" method="POST"
@@ -95,12 +105,11 @@
                                         </a>
 
 
-                                        <!-- Edit Time & Date Modal -->
-                                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
+                                        <!-- Edit Button (Opens Modal) -->
+                                        <button type="button" class="btn btn-warning btn-sm mx-1" data-bs-toggle="modal"
                                             data-bs-target="#editFileModal">
                                             <i class="bi bi-pencil"></i>
                                         </button>
-
 
 
                                         <!-- Delete Button -->
@@ -119,9 +128,6 @@
                             </tr>
 
 
-                            {{-- pop-up edit file --}}
-                            <!-- Bootstrap Modal -->
-                            <!-- Modal -->
                             <div class="modal fade" id="editFileModal" tabindex="-1" aria-labelledby="editFileModalLabel"
                                 aria-hidden="true">
                                 <div class="modal-dialog">
@@ -133,29 +139,31 @@
                                         </div>
 
                                         <div class="modal-body">
-                                            <form method="POST" action="{{ route('autoDailer.update', $file->id) }}">
+                                            <form action="{{route('autoDailer.update' , $file->id)}}" method="POST">
                                                 @csrf
                                                 @method('PUT')
-
-                                                <!-- Hidden input to pass file_id -->
-                                                <input type="hidden" name="file_id" value="{{ $file->id }}">
-
+                                                <input type="hidden" value="{{$file->id}}">
+                                                <div class="mb-3">
+                                                    <label for="file_name" class="form-label">File Name:</label>
+                                                    <input type="text" class="form-control" name="file_name" id="file_name"
+                                                    value="{{ old('file_name', $file->file_name) }}" required>
+                                                </div>
                                                 <div class="mb-3">
                                                     <label for="from" class="form-label">From:</label>
-                                                    <input type="time" class="form-control" name="from"
-                                                        value="{{ old('from', $file->from) }}" required>
+                                                    <input type="time" class="form-control" name="from" id="editFrom"
+                                                    value="{{ old('file_name', $file->from) }}"  required>
                                                 </div>
 
                                                 <div class="mb-3">
                                                     <label for="to" class="form-label">To:</label>
-                                                    <input type="time" class="form-control" name="to"
-                                                        value="{{ old('to', $file->to) }}" required>
+                                                    <input type="time" class="form-control" name="to" id="editTo"
+                                                    value="{{ old('file_name', $file->to) }}" required>
                                                 </div>
 
                                                 <div class="mb-3">
                                                     <label for="date" class="form-label">Date:</label>
                                                     <input type="date" class="form-control" name="date"
-                                                        value="{{ old('date', $file->date) }}" required>
+                                                    value="{{ old('file_name', $file->date) }}" id="editDate" required>
                                                 </div>
 
                                                 <div class="modal-footer">
@@ -186,7 +194,9 @@
     </div>
 
 
-
+    {{-- pop-up edit file --}}
+    <!-- Bootstrap Modal -->
+    <!-- Edit Time & Date Modal -->
 
 
 

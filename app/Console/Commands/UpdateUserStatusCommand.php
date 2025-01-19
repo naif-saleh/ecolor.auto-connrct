@@ -11,7 +11,6 @@ use Illuminate\Support\Facades\Cache;
 use App\Services\TokenService;
 
 
-
 class UpdateUserStatusCommand extends Command
 {
     /**
@@ -42,14 +41,11 @@ class UpdateUserStatusCommand extends Command
     {
         // $token = Cache::get('three_cx_token'); // Assuming you store the token in cache
 
-        $token = $this->tokenService->getToken();
-        if (!$token) {
-            Log::error('ADist: 3CX token not found in cache.');
-            $this->error('3CX token not found. Ensure it is cached before running the command.');
-            return;
-        }
+
+
 
         try {
+            $token = $this->tokenService->getToken();
             // Fetch user data from 3CX API
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,

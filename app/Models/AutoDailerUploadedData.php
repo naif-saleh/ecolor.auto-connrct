@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AutoDailerUploadedData extends Model
 {
-    protected $fillable = ['mobile', 'provider', 'extension', 'from', 'to', 'date', 'uploaded_by', 'state', 'file_id', 'call_date', 'call_id' ];
+    protected $fillable = ['mobile', 'provider', 'extension', 'uploaded_by', 'state', 'file_id', 'call_date', 'call_id' ];
 
 
     public function file(){
@@ -20,5 +20,5 @@ class AutoDailerUploadedData extends Model
     public function user(){
         return $this->belongsTo(User::class, 'uploaded_by');
     }
-    
+
 }

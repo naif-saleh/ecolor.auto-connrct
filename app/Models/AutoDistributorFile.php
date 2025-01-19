@@ -7,7 +7,7 @@ use Illuminate\Support\Str;
 
 class AutoDistributorFile extends Model
 {
-    protected $fillable = ['file_name', 'slug', 'is_done', 'uploaded_by'];
+    protected $fillable = ['file_name', 'slug', 'allow', 'is_done', 'uploaded_by', 'from', 'to', 'date'];
 
     public function user()
     {

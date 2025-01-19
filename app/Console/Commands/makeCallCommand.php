@@ -47,25 +47,30 @@ class makeCallCommand extends Command
 
     public function handle()
     {
-        $token = $this->tokenService->getToken();
         Log::info('MakeCallCommand executed at ' . now());
 
-        $autoDailerFiles = AutoDailerUploadedData::where('state', 'new')->get();
+        $autoDailerFiles = AutoDailerFile::all();
 
         foreach ($autoDailerFiles as $feed) {
-            $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHour(3);
-            $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHour(3);
+            // Create from and to date objects adjusted by -3 hours
+            $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHours(3);
+            $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHours(3);
 
-            if (now()->between($from, $to) && $feed->file->allow == 1) {
-                Log::info('Dispatching MakeCallJob for file ID ' . $feed->file->id);
-                try {
+            // Check if the current time is within the range and the file is allowed
+            if (now()->between($from, $to) && $feed->allow == 1) {
+                Log::info('******TIME IN*******Time is within range for file ID ' . $feed->id);
 
-                    $ext = $feed->extension;
+                $data = AutoDailerUploadedData::where('file_id', $feed->id)->where('state', 'new')->get();
+                foreach ($data as $feedData) {
+
+                    try {
+                        $token = $this->tokenService->getToken();
+                        $ext = $feedData->extension;
 
                         $responseState = Http::withHeaders([
                             'Authorization' => 'Bearer ' . $token,
                         ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
-                            'destination' => $feed->mobile,
+                            'destination' => $feedData->mobile,
                         ]);
 
                         if ($responseState->successful()) {
@@ -76,38 +81,36 @@ class makeCallCommand extends Command
                                 'call_id' => $responseData['result']['callid'],
                             ], [
                                 'status' => $responseData['result']['status'],
-                                'provider' => $feed->provider,
+                                'provider' => $feedData->provider,
                                 'extension' => $responseData['result']['dn'],
                                 'phone_number' => $responseData['result']['party_caller_id'],
                             ]);
 
                             $reports->save();
 
-                            $feed->update([
-                                'state' => $responseData['result']['status'],
+                            $feedData->update([
+                                'state' => "Routing",
                                 'call_date' => Carbon::now(),
                                 'call_id' => $responseData['result']['callid'],
                                 'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
                             ]);
 
-                            Log::info('ADailer: Call successfully made for mobile ' . $feed->mobile);
+                            Log::info('ADailer: Call successfully made for mobile ' . $feedData->mobile);
                         } else {
-                            Log::error('ADailer: Failed to make call for mobile Number ' . $feed->mobile . '. Response: ' . $responseState->body());
+                            Log::error('ADailer: Failed to make call for mobile Number ' . $feedData->mobile . '. Response: ' . $responseState->body());
                         }
-                    // } else {
-                    //     Log::error('ADailer: Error fetching active calls for mobile ' . $feed->mobile);
-                    // }
-                } catch (\Exception $e) {
-                    Log::error('ADailer: An error occurred: ' . $e->getMessage());
+
+                    } catch (\Exception $e) {
+                        Log::error('ADailer: An error occurred: ' . $e->getMessage());
+                    }
+                    $allCalled = AutoDailerUploadedData::where('file_id', $feedData->file->id)->where('state', 'new')->count() == 0;
+                    if ($allCalled) {
+                        $feedData->file->update(['is_done' => true]);
+                        Log::info('All numbers in file ' . $feedData->file->slug . ' have been called. The file is marked as done.');
+                    }
                 }
-                $allCalled = AutoDailerUploadedData::where('file_id', $feed->file->id)->where('state', 'new')->count() == 0;
-                if ($allCalled) {
-                    $feed->file->update(['is_done' => true]);
-                    Log::info('All numbers in file ' . $feed->file->slug . ' have been called. The file is marked as done.');
-                }
-                // MakeCallJob::dispatch($feed, $token);
             } else {
-                Log::info('Time not within range for file ID ' . $feed->file->id);
+                Log::info('******TIME OUT*******Time is not within range for file ID ' . $feed->id);
             }
         }
     }

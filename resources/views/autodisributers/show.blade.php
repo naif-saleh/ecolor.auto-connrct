@@ -58,9 +58,7 @@
                             <th>User</th>
                             <th>Extension</th>
                             <th>Status</th>
-                            <th>From</th>
-                            <th>To</th>
-                            <th>Date</th>
+
                         </tr>
                     </thead>
                     <tbody>
@@ -70,9 +68,7 @@
                                 <td>{{ $row->user }}</td>
                                 <td>{{ $row->extension }}</td>
                                 <td>{{ $row->state }}</td>
-                                <td>{{ $row->from }}</td>
-                                <td>{{ $row->to }}</td>
-                                <td>{{ $row->date }}</td>
+                                
                             </tr>
                         @endforeach
                     </tbody>

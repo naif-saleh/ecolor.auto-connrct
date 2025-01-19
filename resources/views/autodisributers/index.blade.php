@@ -21,7 +21,7 @@
 
                 <!-- Upload Button (Initially Hidden) -->
                 <button type="submit" id="uploadLink" class="btn btn-success" style="display: none;">
-                    <i class="bi bi-upload"></i> Upload New File
+                    <i class="bi bi-upload"></i> Upload File
                 </button>
             </div>
 
@@ -35,8 +35,8 @@
                     <a href="{{ route('distributor.import.users') }}" class="btn btn-warning" id="importUsersButton">
                         <i class="bi bi-arrow-repeat"></i> Resynchronize Users
                     </a>
-                    <a href="/example.csv" class="btn btn-info" download="example.csv">
-                        <i class="bi bi-file-earmark-text"></i> Example CSV Structure
+                    <a href="/autodistributor.csv" class="btn btn-info" download="example.csv">
+                        <i class="bi bi-file-earmark-text"></i> Auto Distributor - Demo
                     </a>
                 @endif
             </div>
@@ -49,24 +49,29 @@
                 </div>
             @else
                 <table class="table table-striped table-hover table-bordered">
-                    <thead class="thead-dark">
+                    <thead class="table-dark">
                         <tr>
                             <th><i class="bi bi-file-earmark"></i> File Name</th>
-                            <th><i class="bi bi-person"></i> Uploaded By</th>
+                            <th><i class="bi bi-clock"></i> From</th>
+                            <th><i class="bi bi-clock"></i> To</th>
                             <th><i class="bi bi-calendar"></i> Date</th>
-                            <th><i class="bi bi-clock"></i> Time</th>
+                            <th><i class="bi bi-calendar"></i> Uploaded At</th>
+                            <th><i class="bi bi-person"></i> Uploaded By</th>
                             <th><i class="bi bi-gear"></i> Actions</th>
+
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($files as $file)
                             <tr>
                                 <td>{{ $file->file_name }}</td>
+                                <td>{{ $file->from }}</td>
+                                <td>{{ $file->to }}</td>
+                                <td>{{ $file->date }}</td>
+                                <td>{{ $file->created_at->addHours(3)->format('Y-m-d H:i:s') }}</td>
                                 <td>{{ $file->user->name ?? 'Unknown' }}</td>
-                                <td>{{ $file->created_at->addHours(3)->format('Y-m-d') }}</td>
-                                <td>{{ $file->created_at->addHours(3)->format('H:i:s') }}</td>
                                 <td class="d-flex justify-content-between">
-                                    <!-- Switch for Allow -->
+                                    <!-- Switch for Allow (moved to start) -->
                                     <form action="{{ route('distributor.files.allow', $file->slug) }}" method="POST"
                                         id="allowForm{{ $file->slug }}">
                                         @csrf
@@ -75,12 +80,12 @@
                                                 id="allowSwitch{{ $file->slug }}" name="allow"
                                                 {{ $file->allow ? 'checked' : '' }} data-file-id="{{ $file->slug }}"
                                                 onchange="this.form.submit()">
-                                            <span id="statusText{{ $file->slug }}"
-                                                class="{{ $file->allow ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill' }}">
+                                            <span
+                                                class="badge {{ $file->allow ? 'bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill' }}">
                                                 <i
-                                                    class="{{ $file->allow ? 'bi bi-check-circle' : 'bi bi-x-circle' }}"></i>
-                                                {{ $file->allow ? 'Active' : 'Inactive' }}
+                                                    class="bi {{ $file->allow ? 'bi-check-circle-fill' : 'bi-x-circle-fill' }}"></i>
                                             </span>
+
                                         </div>
                                     </form>
 
@@ -91,27 +96,31 @@
                                                 class="{{ $file->is_done ? 'bi bi-check-circle' : 'bi bi-exclamation-circle' }}"></i>
                                             {{ $file->is_done ? 'All Numbers Called' : 'Not Called Yet' }}
                                         </span>
-
                                     </div>
 
-                                    <!-- View and Delete Buttons -->
+                                    <!-- View and Delete Buttons (moved to end) -->
                                     <div>
+                                        <!-- Download Button -->
                                         <a href="{{ route('distributor.download.processed.file', $file->id) }}"
-                                            class="btn btn-sm bg-primary mx-1" id="downloadLink{{ $file->id }}">
+                                            class="btn btn-sm bg-primary mx-1" title="Download File">
                                             <i class="bi bi-download"></i>
                                         </a>
 
+                                        <!-- View Button -->
                                         <a href="{{ route('distributor.files.show', $file->slug) }}"
                                             class="btn btn-info btn-sm mx-1" title="View File">
                                             <i class="bi bi-eye"></i>
                                         </a>
 
-                                        <!-- Edit Time & Date Modal -->
-                                        <button type="button" class="btn btn-warning btn-sm" data-bs-toggle="modal"
-                                            data-bs-target="#editFileModal">
+
+                                        <!-- Edit Button (Opens Modal) -->
+                                        <button type="button" class="btn btn-warning btn-sm mx-1" data-bs-toggle="modal"
+                                            data-bs-target="#editFileModal{{ $file->id }}">
                                             <i class="bi bi-pencil"></i>
                                         </button>
 
+
+                                        <!-- Delete Button -->
                                         <form action="{{ route('distributor.delete', $file->slug) }}" method="POST"
                                             style="display: inline;" id="deleteForm{{ $file->id }}">
                                             @csrf
@@ -122,30 +131,32 @@
                                             </button>
                                         </form>
                                     </div>
+
                                 </td>
                             </tr>
 
-                            {{-- pop-up edit file --}}
-                            <!-- Bootstrap Modal -->
-                            <!-- Modal -->
-                            <div class="modal fade" id="editFileModal" tabindex="-1" aria-labelledby="editFileModalLabel"
-                                aria-hidden="true">
+                            <!-- Edit File Modal -->
+                            <div class="modal fade" id="editFileModal{{ $file->id }}" tabindex="-1"
+                                aria-labelledby="editFileModalLabel{{ $file->id }}" aria-hidden="true">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title" id="editFileModalLabel">Update Time & Date</h5>
+                                            <h5 class="modal-title">Update Time & Date</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                 aria-label="Close"></button>
                                         </div>
-
                                         <div class="modal-body">
                                             <form method="POST" action="{{ route('distributor.update', $file->id) }}">
                                                 @csrf
                                                 @method('PUT')
 
-                                                <!-- Hidden input to pass file_id -->
                                                 <input type="hidden" name="file_id" value="{{ $file->id }}">
 
+                                                <div class="mb-3">
+                                                    <label for="file_name" class="form-label">File Name:</label>
+                                                    <input type="text" class="form-control" name="file_name"
+                                                        value="{{ old('file_name', $file->file_name) }}" required>
+                                                </div>
                                                 <div class="mb-3">
                                                     <label for="from" class="form-label">From:</label>
                                                     <input type="time" class="form-control" name="from"
@@ -177,6 +188,7 @@
                         @endforeach
                     </tbody>
                 </table>
+
             @endif
         </div>
 

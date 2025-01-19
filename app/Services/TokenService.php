@@ -50,7 +50,7 @@ class TokenService
                 $expiresIn = $response['expires_in'] ?? 3600; // Default to 1 hour if not provided
 
                 // Cache the token with its expiration time
-                Cache::put('three_cx_token', $token, now()->addSeconds($expiresIn - 60)); // Cache with a buffer
+                Cache::put('three_cx_token', $token, now()->addSeconds($expiresIn)); // Cache with a buffer
 
                 Log::info('Token generated and cached successfully.');
                 return $token;

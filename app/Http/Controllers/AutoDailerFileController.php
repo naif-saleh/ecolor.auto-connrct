@@ -24,175 +24,120 @@ class AutoDailerFileController extends Controller
         $fileName = time() . '_' . $file->getClientOriginalName();
         $file->storeAs('uploads', $fileName);
 
-        $uploadedFile = AutoDailerFile::create([
-            'file_name' => $fileName,
-            'uploaded_by' => Auth::id(),
-        ]);
-
-        // Active Log Report
-        ActivityLog::create([
-            'user_id' => Auth::id(),
-            'operation' => 'import File',
-            'file_id' => $uploadedFile->id,
-            'file_type' => 'Auto-Dailer',
-            'file_name' => $uploadedFile->file_name,
-            'operation_time' => now(),
-        ]);
-
         $path = $file->getRealPath();
         $fileContents = file_get_contents($path);
-        // Normalize line endings to UNIX format
-        $fileContents = str_replace("\r\n", "\n", $fileContents);
+        $fileContents = str_replace("\r\n", "\n", $fileContents); // Normalize line endings
 
-        // Convert the file contents to an array of lines
         $lines = explode("\n", $fileContents);
         $data = array_map('str_getcsv', $lines);
 
-        foreach ($data as $row) {
-            try {
-                // Trim all fields to avoid issues with extra spaces
-                $row = array_map('trim', $row);
+        if (count($data) < 2) {
+            return back()->withErrors(['error' => 'The file appears to be empty or has no valid rows.']);
+        }
 
-                // Convert time fields
-                $localTime_form = Carbon::createFromFormat('h:i:s A', $row[3], $request->timezone);
-                $localTime_to = Carbon::createFromFormat('h:i:s A', $row[4], $request->timezone);
+        try {
+            // Extract `from`, `to`, and `date` from the SECOND row (first data row)
+            $firstDataRow = $data[1]; // Assuming row 0 is headers, row 1 is first data row
 
-                // Subtract the offset to align with UTC
-                $offsetInHours = $localTime_form->offsetHours;
-                $utcTime_from = $localTime_form->subHours($offsetInHours);
-                $utcTime_to = $localTime_to->subHours($offsetInHours);
+            if (count($firstDataRow) < 6) {
+                return back()->withErrors(['error' => 'Missing required columns (from, to, date).']);
+            }
 
-                // Format the UTC time to store in the database
-                $formattedTime_from = $utcTime_from->format('H:i:s');
-                $formattedTime_to = $utcTime_to->format('H:i:s');
+            // Convert time fields
+            $utcTime_from = Carbon::createFromFormat('h:i:s A', $firstDataRow[3])->format('H:i:s');
+            $utcTime_to = Carbon::createFromFormat('h:i:s A', $firstDataRow[4])->format('H:i:s');
+            $formattedDate = Carbon::parse($firstDataRow[5])->format('Y-m-d');
 
-                // Convert date field to Y-m-d format
-                $formattedDate = Carbon::parse($row[5])->format('Y-m-d');
+            // Create a SINGLE `AutoDailerFile` entry for this file upload
+            $uploadedFile = AutoDailerFile::create([
+                'file_name' => $fileName,
+                'from' => $utcTime_from,
+                'to' => $utcTime_to,
+                'date' => $formattedDate,
+                'uploaded_by' => Auth::id(),
+            ]);
 
-                Log::info("Time From: " . $formattedTime_from . " | Time To: " . $formattedTime_to);
+            Log::info('AutoDailerFile created with ID: ' . $uploadedFile->id);
 
-                $csv_file =  AutoDailerUploadedData::create([
+            // Process ALL rows (skipping the header)
+            foreach ($data as $index => $row) {
+                if ($index == 0) continue; // Skip header row
+
+                if (count($row) < 3) {
+                    Log::warning('Skipping row due to missing columns: ' . json_encode($row));
+                    continue;
+                }
+
+                AutoDailerUploadedData::create([
                     'mobile' => $row[0],
                     'provider' => $row[1],
                     'extension' => $row[2],
-                    'from' => $formattedTime_from,
-                    'to' => $formattedTime_to,
-                    'date' => $formattedDate,
                     'uploaded_by' => Auth::id(),
                     'file_id' => $uploadedFile->id,
                 ]);
 
-                $csv_file->save();
-            } catch (\Exception $e) {
-                Log::error('Error processing row: ' . $e->getMessage());
-                return back()->withErrors(['error' => 'There was an error processing the file.']);
+                Log::info('Uploaded data for mobile: ' . $row[0] . ', extension: ' . $row[2]);
             }
-        }
 
-        return back()->with('success', 'File uploaded and processed successfully');
+            return back()->with('success', 'File uploaded and processed successfully.');
+        } catch (\Exception $e) {
+            Log::error("Error processing file: " . $e->getMessage());
+            Log::error("Error Details: " . $e->getTraceAsString());
+            return back()->withErrors(['error' => 'There was an error processing the file.']);
+        }
     }
 
-    // public function edit($slug)
+
+
+    // public function providers()
     // {
-    //     $file = AutoDailerFile::where('slug', $slug)->firstOrFail();
-    //     return view('autodailers.edit', compact('file'));
+    //     // Retrieve all uploaded data with the associated file information
+    //     $uploadedData = AutoDailerUploadedData::with('file')->get();
+
+
+    //     return view('autodailers.providers', compact('uploadedData'));
     // }
+
+
 
 
     public function updateAutoDailer(Request $request, $id)
     {
+        // Validate the request inputs
         $request->validate([
-            'from' => 'required',
-            'to' => 'required',
-            'date' => 'required',
+            'file_name' => 'required',
+            'from' => 'required|date_format:H:i',
+            'to' => 'required|date_format:H:i',
+            'date' => 'required|date_format:Y-m-d',
         ]);
 
-        // Prepare the update data
-        $updateData = [
-            'from' => $request->from,
-            'to' => $request->to,
-            'date' => $request->date,
-        ];
-        $count = AutoDailerUploadedData::count();
-        dd($count);
-        // Process updates in batches of 5000 rows
-        AutoDailerUploadedData::where('file_id', $id)->chunkById(5000, function ($records) use ($updateData) {
-            $ids = $records->pluck('id')->toArray(); // Get IDs of the current batch
-            AutoDailerUploadedData::whereIn('id', $ids)->update($updateData); // Bulk update
-        });
+        // Check the input data before updating
+        $file_name = $request->input('file_name');
+        $from = $request->input('from');
+        $to = $request->input('to');
+        $date = $request->input('date');
 
-        return redirect()->back()->with('success', 'Time and Date updated successfully for all records.');
+        // Debugging: Log the input values to see what you're getting
+        Log::info("Updating Auto Dialer File: ID=$id, from=$from, to=$to, date=$date");
+        Log::info($id);
+
+        // Now proceed with the update
+        $file = AutoDailerFile::find($id);
+        if ($file) {
+            $file->update([
+                'file_name' => $file_name,
+                'from' => $from,
+                'to' => $to,
+                'date' => $date,
+            ]);
+        }
+
+        return redirect()->back()->with('success', 'Time and Date updated successfully.');
     }
 
 
 
 
-
-
-    // public function uploadCsv(Request $request)
-    // {
-    //     $request->validate([
-    //         'file' => 'required|mimes:csv,txt',
-    //     ]);
-
-    //     $file = $request->file('file');
-    //     $fileName = time() . '_' . $file->getClientOriginalName();
-    //     $file->storeAs('uploads', $fileName);
-
-    //     $uploadedFile = AutoDailerFile::create([
-    //         'file_name' => $fileName,
-    //         'uploaded_by' => Auth::id(),
-    //     ]);
-
-    //     // Active Log Report
-    //     ActivityLog::create([
-    //         'user_id' => Auth::id(),
-    //         'operation' => 'import File',
-    //         'file_id' => $uploadedFile->id,
-    //         'file_type' => 'Auto-Dailer',
-    //         'file_name' => $uploadedFile->file_name,
-    //         'operation_time' => now(),
-    //     ]);
-
-    //     $path = $file->getRealPath();
-    //     $data = array_map('str_getcsv', file($path));
-
-    //     foreach ($data as $row) {
-    //         try {
-    //             // Convert time fields, now including seconds in the format
-    //             $localTime_form = Carbon::createFromFormat('h:i:s A', $row[3], $request->timezone);
-    //             $localTime_to = Carbon::createFromFormat('h:i:s A', $row[4], $request->timezone);
-
-    //             // Subtract the offset to align with UTC
-    //             $offsetInHours = $localTime_form->offsetHours;
-    //             $utcTime_from = $localTime_form->subHours($offsetInHours);
-    //             $utcTime_to = $localTime_to->subHours($offsetInHours);
-
-    //             // Format the UTC time to store in the database
-    //             $formattedTime_from = $utcTime_from->format('H:i:s');
-    //             $formattedTime_to = $utcTime_to->format('H:i:s');
-
-    //             // Convert date field to Y-m-d format
-    //             $formattedDate = Carbon::parse($row[5])->format('Y-m-d');
-
-    //             // Insert the data into the AutoDailerUploadedData table
-    //             AutoDailerUploadedData::create([
-    //                 'mobile' => $row[0],
-    //                 'provider' => $row[1],
-    //                 'extension' => $row[2],
-    //                 'from' => $formattedTime_from,
-    //                 'to' => $formattedTime_to,
-    //                 'date' => $formattedDate,
-    //                 'uploaded_by' => Auth::id(),
-    //                 'file_id' => $uploadedFile->id,
-    //             ]);
-    //         } catch (\Exception $e) {
-    //             return back()->withErrors(['error' => 'Error processing row: ' . $e->getMessage()]);
-    //         }
-    //     }
-
-    //     return back()->with('success', 'File uploaded and processed successfully');
-    // }
 
 
 
@@ -311,9 +256,9 @@ class AutoDailerFileController extends Controller
                     $row->mobile,
                     $row->provider,
                     $row->extension,
-                    $row->from,
-                    $row->to,
-                    $row->date,
+                    $row->file->from,
+                    $row->file->to,
+                    $row->file->date,
                     $row->uploader_name // Add the uploader's name
                 ]);
             }

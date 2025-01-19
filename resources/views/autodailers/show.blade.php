@@ -54,25 +54,21 @@
                 <table class="table table-striped table-bordered">
                     <thead class="thead-dark">
                         <tr>
+                            {{-- <th>Call_id</th> --}}
                             <th>Mobile</th>
                             <th>Provider</th>
                             <th>Extension</th>
                             <th>Status</th>
-                            <th>From</th>
-                            <th>To</th>
-                            <th>Date</th>
                         </tr>
                     </thead>
                     <tbody>
                         @foreach ($uploadedData as $row)
                             <tr>
+                                {{-- <td>{{ $row->call_id }}</td> --}}
                                 <td>{{ $row->mobile }}</td>
                                 <td>{{ $row->provider }}</td>
                                 <td>{{ $row->extension }}</td>
                                 <td>{{ $row->state }}</td>
-                                <td>{{ $row->from }}</td>
-                                <td>{{ $row->to }}</td>
-                                <td>{{ $row->date }}</td>
                             </tr>
                         @endforeach
                     </tbody>
