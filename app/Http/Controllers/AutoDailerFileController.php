@@ -113,7 +113,8 @@ class AutoDailerFileController extends Controller
             'to' => $request->to,
             'date' => $request->date,
         ];
-
+        $count = AutoDailerUploadedData::where('file_id', $id)->count();
+        dd($count);
         // Process updates in batches of 5000 rows
         AutoDailerUploadedData::where('file_id', $id)->chunkById(5000, function ($records) use ($updateData) {
             $ids = $records->pluck('id')->toArray(); // Get IDs of the current batch
