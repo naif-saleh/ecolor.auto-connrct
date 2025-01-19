@@ -44,13 +44,13 @@
                 <table class="table table-striped table-hover table-bordered">
                     <thead class="thead-dark">
                         <tr>
-                            <th>File Name</th>
-                            <th>From</th>
-                            <th>To</th>
-                            <th>Date</th>
-                            <th>Uploaded At</th>
-                            <th>Uploaded By</th>
-                            <th>Actions</th>
+                            <th><i class="bi bi-file-earmark"></i> File Name</th>
+                            <th><i class="bi bi-clock"></i> From</th>
+                            <th><i class="bi bi-clock"></i> To</th>
+                            <th><i class="bi bi-calendar"></i> Date</th>
+                            <th><i class="bi bi-calendar"></i> Uploaded At</th>
+                            <th><i class="bi bi-person"></i> Uploaded By</th>
+                            <th><i class="bi bi-gear"></i> Actions</th>
                         </tr>
                     </thead>
                     <tbody>
