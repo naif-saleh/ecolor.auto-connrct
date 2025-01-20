@@ -45,7 +45,7 @@ class AutoDistributorFileController extends Controller
             $threeCxLiveUsers = []; // Default empty array if request fails
         }
 
-        Log::info('Live Users: ' . print_r($threeCxLiveUsers, true));
+        // Log::info('Live Users: ' . print_r($threeCxLiveUsers, true));
         // $numbersCount =  AutoDistributorUploadedData::where('file_id', $files->file->id)->where('state', 'new')->count();
         return view('autodisributers.index', compact('files', 'threeCxUsers', 'threeCxLiveUsers'));
     }
