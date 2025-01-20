@@ -70,7 +70,7 @@ class makeCallCommand extends Command
             if (now()->between($from, $to) && $feed->allow == 1) {
                 Log::info("
                             \t        -----------------------------------------------------------------------
-                            \t\t\t\t********** Auto Dialer Error **********\n
+                            \t\t\t\t********** Auto Dialer Time **********\n
                             \t\t\t⏰✅ TIME IN: File ID " . $feed->id . " is within range ✅ ⏰
                             \t        -----------------------------------------------------------------------
                         ");
@@ -156,8 +156,8 @@ class makeCallCommand extends Command
             } else {
                 Log::info("
                             \t        -----------------------------------------------------------------------
-                            \t\t\t\t********** Auto Dialer Error **********\n
-                            \t\t\t    ⏰❌ TIME OUT: File ID " . $feed->id . " is NOT within range ❌ ⏰
+                            \t\t\t\t********** Auto Dialer Time **********\n
+                            \t\t\t    ⏰❌ TIME OUT: File ID " . $feed->id . " is NOT within range ❌⏰
                             \t        -----------------------------------------------------------------------
                         ");
 

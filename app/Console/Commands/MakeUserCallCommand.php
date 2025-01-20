@@ -60,7 +60,7 @@ class MakeUserCallCommand extends Command
             if (now()->between($from, $to) && $feed->allow == 1) {
                 Log::info("
                 \t        -----------------------------------------------------------------------
-                \t\t\t\t********** Auto Distributor Error **********\n
+                \t\t\t\t********** Auto Distributor Time **********\n
                 \t\t\t⏰✅ TIME IN: File ID " . $feed->id . " is within range ✅ ⏰
                 \t        -----------------------------------------------------------------------
             ");
@@ -200,8 +200,8 @@ class MakeUserCallCommand extends Command
             } else {
                 Log::info("
                             \t        -----------------------------------------------------------------------
-                            \t\t\t\t********** Auto Distributor Error **********\n
-                            \t\t\t     ⏰❌ TIME OUT: File ID " . $feed->id . " is NOT within range ❌ ⏰
+                            \t\t\t\t********** Auto Distributor Time **********\n
+                            \t\t\t     ⏰❌ TIME OUT: File ID " . $feed->id . " is NOT within range ❌⏰
                             \t        -----------------------------------------------------------------------
                         ");
             }

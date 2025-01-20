@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('provider')->nullable();
             $table->string('extension')->require();
             $table->boolean('is_satisfied')->default(false);
+            $table->string('duration_time')->nullable();
             $table->timestamps();
         });
     }
