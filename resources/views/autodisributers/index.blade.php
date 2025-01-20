@@ -26,15 +26,17 @@
             </div>
 
             <div>
-                <a id="openModalButton" class="btn btn-primary">
-                    Stop User
-                </a>
+
                 @if ($threeCxUsers->count() == 0)
                     <a href="{{ route('distributor.import.users') }}" class="btn btn-warning" id="importUsersButton">
                         <i class="bi bi-arrow-repeat"></i> Synchronize Users
                     </a>
                 @endif
                 @if ($threeCxUsers->count() != 0)
+                    <a id="openModalButton" class="btn btn-danger">
+                        <i class="fas fa-phone-slash"></i> Stop Calls
+                    </a>
+
                     <a href="{{ route('distributor.import.users') }}" class="btn btn-warning" id="importUsersButton">
                         <i class="bi bi-arrow-repeat"></i> Resynchronize Users
                     </a>
@@ -100,7 +102,7 @@
                                         </div>
                                     </div>
 
-                                     
+
                                 </form>
                             </div>
                         </div>
@@ -407,7 +409,7 @@
             checkbox.addEventListener('change', function() {
                 let userId = this.getAttribute('data-user-id');
                 let newStatus = this.checked ? 'Available' :
-                'Away'; // Update status based on checkbox state
+                    'Out of office'; // Update status based on checkbox state
 
                 // Send the PATCH request
                 fetch('/update-users-status', {
