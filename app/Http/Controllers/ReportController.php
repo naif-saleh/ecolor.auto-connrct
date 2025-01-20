@@ -375,12 +375,10 @@ class ReportController extends Controller
     {
         // Retrieve filter parameters from the request (if any)
         $filter = $request->get('filter', null);
-        // $extensionFrom = $request->get('extension_from', null);
-        // $extensionTo = $request->get('extension_to', null);
         $dateFrom = $request->get('date_from', null);
         $dateTo = $request->get('date_to', null);
 
-        // Query the AutoDailerReport model with filters
+        // Query the Evaluation model with filters
         $query = Evaluation::query();
 
         // Apply filters for 'is_satisfied' (use filter for 1 or 0)
@@ -390,10 +388,9 @@ class ReportController extends Controller
             } elseif ($filter === 'unsatisfied') {
                 $query->where('is_satisfied', "NO");
             } elseif ($filter === 'today') {
-                $query->whereDate('created_at', now()->toDateString());
+                $query->whereDate('created_at', now()->toDateString()); // Filter for today
             }
         }
-
 
         if ($dateFrom) {
             $query->whereDate('created_at', '>=', $dateFrom);
@@ -404,15 +401,12 @@ class ReportController extends Controller
         }
 
         // Paginate the results (if needed)
-        $reports = $query->paginate(100); // Adjust pagination as necessary
+        $reports = $query->paginate(100);
 
-        // Get the total count of all reports
-        $totalCount = Evaluation::count();
-        $satisfiedCount = Evaluation::where('is_satisfied', "YES")->count();
-        $unsatisfiedCount = Evaluation::where('is_satisfied', "NO")->count();
-
-        // // Get the providers list for the filter dropdown
-        // $providers = AutoDailerReport::select('provider')->distinct()->get();
+        // Calculate statistics based on the current filters (including 'today')
+        $totalCount = $query->count();
+        $satisfiedCount = $query->where('is_satisfied', "YES")->count();
+        $unsatisfiedCount = $query->where('is_satisfied', "NO")->count();
 
         // Return the view with the reports and other data
         return view('evaluation.evaluation', [
@@ -423,6 +417,7 @@ class ReportController extends Controller
             'unsatisfiedCount' => $unsatisfiedCount,
         ]);
     }
+
 
     public function exportEvaluation(Request $request)
     {
