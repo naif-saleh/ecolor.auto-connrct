@@ -47,7 +47,17 @@ class makeCallCommand extends Command
 
     public function handle()
     {
-        Log::info('MakeCallCommand executed at ' . now());
+        Log::info("
+                    \t-----------------------------------------------------------------------
+                    \t\t\t********** Auto Dialer **********\n
+                    \t-----------------------------------------------------------------------
+                    \t| 📞 ✅ MakeCallCommand executed at " . now() . "               |
+                    \t-----------------------------------------------------------------------
+                ");
+
+
+
+
 
         $autoDailerFiles = AutoDailerFile::all();
 
@@ -58,7 +68,13 @@ class makeCallCommand extends Command
 
             // Check if the current time is within the range and the file is allowed
             if (now()->between($from, $to) && $feed->allow == 1) {
-                Log::info('******TIME IN*******Time is within range for file ID ' . $feed->id);
+                Log::info("
+                            \t        -----------------------------------------------------------------------
+                            \t\t\t\t********** Auto Dialer Error **********\n
+                            \t\t\t⏰✅ TIME IN: File ID " . $feed->id . " is within range ✅ ⏰
+                            \t        -----------------------------------------------------------------------
+                        ");
+
 
                 $data = AutoDailerUploadedData::where('file_id', $feed->id)->where('state', 'new')->get();
                 foreach ($data as $feedData) {
@@ -75,7 +91,13 @@ class makeCallCommand extends Command
 
                         if ($responseState->successful()) {
                             $responseData = $responseState->json();
-                            Log::info('ADailer:ResponseUserCall: ' . print_r($responseData));
+                            Log::info("
+                                        \t********** Auto Dialer Response Call **********
+                                        \tResponse Data:
+                                        \t" . print_r($responseData, true) . "
+                                        \t***********************************************
+                                     ");
+
 
                             $reports = AutoDailerReport::firstOrCreate([
                                 'call_id' => $responseData['result']['callid'],
@@ -95,22 +117,50 @@ class makeCallCommand extends Command
                                 'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
                             ]);
 
-                            Log::info('ADailer: Call successfully made for mobile ' . $feedData->mobile);
+                            Log::info("
+                                        \t📞 *_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_ 📞
+                                        \t|        ✅ Auto Dialer Called Successfully for Mobile: " . $feedData->mobile . " |
+                                        \t📞 *_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_ 📞
+                                    ");
                         } else {
-                            Log::error('ADailer: Failed to make call for mobile Number ' . $feedData->mobile . '. Response: ' . $responseState->body());
+                            Log::error("
+                            \t❌ 🚨🚨🚨 ERROR: Auto Dialer Failed 🚨🚨🚨 ❌
+                            \t| 🔴 Failed to make call for Mobile Number: " . $feedData->mobile . " |
+                            \t| 🔄 Response: " . $responseState->body() . " |
+                            \t❌ 🚨🚨🚨 ERROR: Auto Dialer Failed 🚨🚨🚨 ❌
+                            ");
                         }
-
                     } catch (\Exception $e) {
-                        Log::error('ADailer: An error occurred: ' . $e->getMessage());
+                                        Log::error("
+                                                    \t-----------------------------------------------------------------------
+                                                    \t\t\t\t********** Auto Dialer Error **********
+                                                    \t-----------------------------------------------------------------------
+                                                    \t| ❌ Error occurred in Auto Dialer: " . $e->getMessage() . " |
+                                                    \t-----------------------------------------------------------------------
+                                            ");
+
                     }
                     $allCalled = AutoDailerUploadedData::where('file_id', $feedData->file->id)->where('state', 'new')->count() == 0;
                     if ($allCalled) {
                         $feedData->file->update(['is_done' => true]);
-                        Log::info('All numbers in file ' . $feedData->file->slug . ' have been called. The file is marked as done.');
+                        Log::info("
+                                    \t        -----------------------------------------------------------------------
+                                    \t\t\t\t********** Auto Dailer **********\n
+                                    \t✅✅✅ All Numbers Called ✅✅✅
+                                    \t| File: " . $feedData->file->slug . " |
+                                    \t| Status: The file is marked as 'Done' |
+                                    \t✅✅✅ All Numbers Called ✅✅✅
+                                ");
                     }
                 }
             } else {
-                Log::info('******TIME OUT*******Time is not within range for file ID ' . $feed->id);
+                Log::info("
+                            \t        -----------------------------------------------------------------------
+                            \t\t\t\t********** Auto Dialer Error **********\n
+                            \t\t\t    ⏰❌ TIME OUT: File ID " . $feed->id . " is NOT within range ❌ ⏰
+                            \t        -----------------------------------------------------------------------
+                        ");
+
             }
         }
     }

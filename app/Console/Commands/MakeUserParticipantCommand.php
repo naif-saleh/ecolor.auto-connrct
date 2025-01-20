@@ -39,7 +39,13 @@ class MakeUserParticipantCommand extends Command
      */
     public function handle()
     {
-        Log::info('participantsCommand executed at ' . now());
+        Log::info("
+                    \t-----------------------------------------------------------------------
+                    \t\t\t********** Auto Distributor **********\n
+                    \t-----------------------------------------------------------------------
+                    \t| 📞 ✅ PartisipantCommand executed at " . now() . "            |
+                    \t-----------------------------------------------------------------------
+                ");
 
         // $token = Cache::get('three_cx_token');
 
@@ -53,7 +59,7 @@ class MakeUserParticipantCommand extends Command
 
             try {
                 $token = $this->tokenService->getToken();
-                Log::error("participantsCommand token " . $token);
+                // Log::error("participantsCommand token " . $token);
                 // Fetch participants for the extension
                 $responseState = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token,
@@ -64,16 +70,19 @@ class MakeUserParticipantCommand extends Command
                     Log::info('participantsCommand:  Response Status Code: ' . $responseState->status());
                     Log::info('participantsCommand:  Full Response: ' . print_r($responseState, TRUE));
                     Log::info('participantsCommand: Headers: ' . json_encode($responseState->headers()));
-
-
                     continue;
                 }
 
                 $participants = $responseState->json();
 
                 if (empty($participants)) {
-                    Log::warning("No User participants data for extension {$ext_from}");
-                    continue;
+                    Log::warning("
+                    \t-----------------------------------------------------------------------
+                    \t\t********** Auto Distributor Warning **********\n
+                    \t-----------------------------------------------------------------------
+                    \t ⚠️  No participantsCommand for {$ext_from}
+                    \t-----------------------------------------------------------------------
+            ");                    continue;
                 }
 
                 foreach ($participants as $participant_data) {
@@ -89,8 +98,13 @@ class MakeUserParticipantCommand extends Command
 
                         if ($activeCallsResponse->successful()) {
                             $activeCalls = $activeCallsResponse->json();
-                            Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
-                            foreach ($activeCalls['value'] as $call) {
+                            Log::info("
+                            \t********** Auto Distributor Response Participant Active Call **********
+                            \tResponse Data:
+                            \t" . print_r($activeCalls, true) . "
+                            \t******************************************************************
+                         ");
+                         foreach ($activeCalls['value'] as $call) {
                                 if (isset($call['Id']) && isset($call['Status']) && isset($call['EstablishedAt']) && isset($call['ServerNow'])) {
                                     Log::info("Processing Call ID {$call['Id']} with status {$call['Status']}");
 
@@ -98,7 +112,7 @@ class MakeUserParticipantCommand extends Command
                                     $establishedAt = new DateTime($call['EstablishedAt']);
                                     $serverNow = new DateTime($call['ServerNow']);
                                     $interval = $establishedAt->diff($serverNow);
-                                    $durationTime = $interval->format('%H:%I:%S'); // Format duration as HH:MM:SS
+                                    $durationTime = $interval->format('%H:%I:%S');
 
                                     // Update call status and duration_time
                                     AutoDistributerReport::where('call_id', $call['Id'])->update([
@@ -108,20 +122,32 @@ class MakeUserParticipantCommand extends Command
 
                                     AutoDistributorUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
 
-                                    Log::info("Updated status and duration_time for call ID {$call['Id']} to " . $call['Status'] . ", duration: " . $durationTime);
-                                } else {
-                                    Log::warning("Call missing required fields for participant DN {$participant_data['dn']}. Call Data: " . print_r($call, true));
-                                }
+                                    Log::info("
+                                    \t-----------------------------------------------------------------------
+                                    \t\t********** Auto Distributor Call Status Updated **********
+                                    \t-----------------------------------------------------------------------
+                                    \t| ✅ Updated status for Call ID {$call['Id']} to: {$call['Status']} |
+                                    \t-----------------------------------------------------------------------
+                            ");
+                         } else {
+                            Log::warning("
+                            \t-----------------------------------------------------------------------
+                            \t\t********** Auto Distributor Warning **********
+                            \t-----------------------------------------------------------------------
+                            \t| ⚠️ Call missing 'Id' or 'Status' for participant DN {$participant_data['dn']} |
+                            \t| Call Data: " . print_r($call, true) . " |
+                            \t-----------------------------------------------------------------------
+                    ");                                }
                             }
                         } else {
-                            Log::error('Failed to fetch active calls. Response: ' . $activeCallsResponse->body());
+                            Log::error('Auto Distributor Error: ❌ Failed to fetch active calls. Response: ' . $activeCallsResponse->body());
                         }
                     } catch (\Exception $e) {
-                        Log::error('Failed to process participant data for call ID ' . ($participant_data['callid'] ?? 'N/A') . ': ' . $e->getMessage());
+                        Log::error('Auto Distributor Error: ❌ Failed to process participant data for call ID ' . ($participant_data['callid'] ?? 'N/A') . ': ' . $e->getMessage());
                     }
                 }
             } catch (\Exception $e) {
-                Log::error("Error fetching participants for provider {$ext_from}: " . $e->getMessage());
+                Log::error("Auto Distributor Error: ❌ Failed participants for provider {$ext_from}: " . $e->getMessage());
             }
         }
     }

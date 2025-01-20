@@ -224,6 +224,7 @@
                     <i class="fas fa-file-export me-2"></i> Export as CSV
                 </a>
 
+
                 <!-- State Filters (All, Answered, No Answer, Today) -->
                 <a href="{{ url('auto-distributer-report') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
                     <i class="fas fa-list me-1"></i> All
@@ -236,14 +237,15 @@
                     class="btn btn-modern-filter {{ $filter === 'no answer' ? 'active' : '' }}">
                     <i class="fas fa-phone-slash me-1"></i> No Answer
                 </a>
-                <a href="{{ url('auto-distributer-report?filter=today') }}"
-                    class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}">
-                    <i class="fas fa-calendar-day me-1"></i> Today
-                </a>
                 <a href="{{ url('auto-distributer-report?filter=employee_unanswer') }}"
                     class="btn btn-modern-filter {{ $filter === 'employee_unanswer' ? 'active' : '' }}">
                     <i class="fas fa-user-times me-1"></i> Employee Unanswer
                 </a>
+                <a href="{{ url('auto-distributer-report?filter=today') }}"
+                    class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}">
+                    <i class="fas fa-calendar-day me-1"></i> Today
+                </a>
+
             </div>
 
             <!-- Second Line: Filters Form -->
@@ -278,60 +280,46 @@
             </form>
         </div>
 
-        <!-- Statistics -->
+        <!-- Statistics section -->
         <div class="row mb-5 text-center justify-content-center">
-            <!-- Total Calls -->
             <div class="col-md-2 col-sm-3">
-                <div class="card shadow-sm border-0 text-center">
+                <div class="card shadow-sm border-0">
                     <div class="card-body">
-                        <div class="mb-3">
-                            <i class="bi bi-telephone-fill text-primary fs-4"></i>
-                        </div>
-                        <h5 class="text-primary fs-6">Total Calls</h5>
-                        <h3 class="fw-bold fs-5">{{ $totalCount }}</h3>
+                        <h5 class="text-center text-primary fs-6">Total Calls</h5>
+                        <h3 class="fw-bold fs-5 text-center">{{ $filter === 'today' ? $todayTotalCount : $totalCount }}
+                        </h3>
                     </div>
                 </div>
             </div>
-
-            <!-- Answered Calls -->
             <div class="col-md-2 col-sm-3">
-                <div class="card shadow-sm border-0 text-center">
+                <div class="card shadow-sm border-0">
                     <div class="card-body">
-                        <div class="mb-3">
-                            <i class="bi bi-check-circle-fill text-success fs-4"></i>
-                        </div>
-                        <h5 class="text-success fs-6">Answered</h5>
-                        <h3 class="fw-bold fs-5">{{ $answeredCount }}</h3>
+                        <h5 class="text-center text-success fs-6">Answered</h5>
+                        <h3 class="fw-bold fs-5 text-center">
+                            {{ $filter === 'today' ? $todayAnsweredCount : $answeredCount }}</h3>
                     </div>
                 </div>
             </div>
-
-            <!-- No Answer Calls -->
             <div class="col-md-2 col-sm-3">
-                <div class="card shadow-sm border-0 text-center">
+                <div class="card shadow-sm border-0">
                     <div class="card-body">
-                        <div class="mb-3">
-                            <i class="bi bi-x-circle-fill text-warning fs-4"></i>
-                        </div>
-                        <h5 class="text-warning fs-6">No Answer</h5>
-                        <h3 class="fw-bold fs-5">{{ $noAnswerCount }}</h3>
+                        <h5 class="text-center text-warning fs-6">No Answer</h5>
+                        <h3 class="fw-bold fs-5 text-center">
+                            {{ $filter === 'today' ? $todayNoAnswerCount : $noAnswerCount }}</h3>
                     </div>
                 </div>
             </div>
-
-            <!-- Employee Unanswer Calls -->
             <div class="col-md-2 col-sm-3">
-                <div class="card shadow-sm border-0 text-center">
+                <div class="card shadow-sm border-0">
                     <div class="card-body">
-                        <div class="mb-3">
-                            <i class="bi bi-person-x-fill text-danger fs-4"></i>
-                        </div>
-                        <h5 class="text-danger fs-6">Employee</h5>
-                        <h3 class="fw-bold fs-5">{{ $employeeUnanswerCount }}</h3>
+                        <h5 class="text-center text-danger fs-6">Emp - Unanswered</h5>
+                        <h3 class="fw-bold fs-5 text-center">
+                            {{ $filter === 'today' ? $todayEmployeeUnanswerCount : $employeeUnanswerCount }}</h3>
                     </div>
                 </div>
             </div>
         </div>
+
 
 
 

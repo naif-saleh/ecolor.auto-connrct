@@ -42,7 +42,13 @@ class MakeUserCallCommand extends Command
     public function handle()
     {
 
-        Log::info('MakeUserCallCommand executed at ' . now());
+        Log::info("
+                    \t-----------------------------------------------------------------------
+                    \t\t\t********** Auto Distributor **********\n
+                    \t-----------------------------------------------------------------------
+                    \t| 📞 ✅ MakeCallCommand executed at " . now() . "               |
+                    \t-----------------------------------------------------------------------
+                ");
         $autoDailerFiles = AutoDistributorFile::all();
 
         foreach ($autoDailerFiles as $feed) {
@@ -52,7 +58,12 @@ class MakeUserCallCommand extends Command
 
             // Check if the current time is within the range and the file is allowed
             if (now()->between($from, $to) && $feed->allow == 1) {
-                Log::info('******TIME IN*******Time is within range for file ID ' . $feed->id);
+                Log::info("
+                \t        -----------------------------------------------------------------------
+                \t\t\t\t********** Auto Distributor Error **********\n
+                \t\t\t⏰✅ TIME IN: File ID " . $feed->id . " is within range ✅ ⏰
+                \t        -----------------------------------------------------------------------
+            ");
 
                 $data = AutoDistributorUploadedData::where('file_id', $feed->id)->where('state', 'new')->get();
                 foreach ($data as $feedData) {
@@ -70,7 +81,7 @@ class MakeUserCallCommand extends Command
                             ])->get($url);
 
                             if ($activeCallsResponse->failed()) {
-                                Log::error('ADist: Failed to fetch active calls for mobile ' . $feedData->mobile . '. Response: ' . $activeCallsResponse->body());
+                                Log::error('Auto Distributor Error: ❌ Failed to fetch active calls for mobile ' . $feedData->mobile . '. Response: ' . $activeCallsResponse->body());
                                 continue;
                             }
 
@@ -78,7 +89,14 @@ class MakeUserCallCommand extends Command
                                 $activeCalls = $activeCallsResponse->json();
 
                                 if (!empty($activeCalls['value'])) {
-                                    Log::info("Active calls detected for extension {$ext}. Skipping call for mobile {$feedData->mobile}.");
+                                    Log::info("
+                                                \t-----------------------------------------------------------------------
+                                                \t\t\t\t********** Auto Distributor Notification **********
+                                                \t-----------------------------------------------------------------------
+                                                \t| 🚫 Busy: Active call detected for extension {$ext}. Skipping call for mobile {$feedData->mobile}. |
+                                                \t-----------------------------------------------------------------------
+                                            ");
+
                                     continue; // Skip this number if active calls exist
                                 }
 
@@ -101,7 +119,12 @@ class MakeUserCallCommand extends Command
 
                                             if ($responseState->successful()) {
                                                 $responseData = $responseState->json();
-                                                Log::info('Adist:ResponseUserCall: ' . print_r($responseData));
+                                                Log::info("
+                                        \t********** Auto Distributor Response Call **********
+                                        \tResponse Data:
+                                        \t" . print_r($responseData, true) . "
+                                        \t***************************************************
+                                     ");
 
                                                 $reports = AutoDistributerReport::firstOrCreate([
                                                     'call_id' => $responseData['result']['callid'],
@@ -121,24 +144,41 @@ class MakeUserCallCommand extends Command
                                                     'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
                                                 ]);
 
-                                                Log::info('ADist: Call successfully made for mobile ' . $feedData->mobile);
+                                                Log::info("
+                                        \t📞 *_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_ 📞
+                                        \t|        ✅ Auto Distributor Called Successfully for Mobile: " . $feedData->mobile . " |
+                                        \t📞 *_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_ 📞
+                                    ");
                                             } else {
-                                                Log::error('ADist: Failed to make call for mobile Number ' . $feedData->mobile . '. Response: ' . $responseState->body());
+                                                Log::error("
+                                                \t❌ 🚨🚨🚨 ERROR: Auto Distributor Failed 🚨🚨🚨 ❌
+                                                \t| 🔴 Failed to make call for Mobile Number: " . $feedData->mobile . " |
+                                                \t| 🔄 Response: " . $responseState->body() . " |
+                                                \t❌ 🚨🚨🚨 ERROR: Auto Distributor Failed 🚨🚨🚨 ❌
+                                                ");
                                             }
                                             break; // Exit loop after making the call
                                         }
                                     }
                                 } else {
-                                    Log::error('ADist: Error fetching devices for extension ' . $ext);
+                                    Log::error('Auto Distributor Error: ❌ Error fetching devices for extension ' . $ext);
                                 }
                             } else {
-                                Log::error('ADist: Error fetching active calls for mobile ' . $feedData->mobile);
+                                Log::error('Auto Distributor Error: ❌ Error fetching active calls for mobile ' . $feedData->mobile);
+
                             }
                         } else {
-                            Log::error('ADist: Mobile is not available. Skipping call for mobile ' . $feedData->mobile);
+                            Log::error('Auto Distributor Error: 📵 Mobile is not available. Skipping call for mobile ' . $feedData->mobile);
+
                         }
                     } catch (\Exception $e) {
-                        Log::error('ADist: An error occurred: ' . $e->getMessage());
+                        Log::error("
+                        \t-----------------------------------------------------------------------
+                        \t\t\t\t********** Auto Distributor Error **********
+                        \t-----------------------------------------------------------------------
+                        \t| ❌ Error occurred in Auto Dialer: " . $e->getMessage() . " |
+                        \t-----------------------------------------------------------------------
+                ");
                     }
 
 
@@ -146,12 +186,24 @@ class MakeUserCallCommand extends Command
                     $allCalled = AutoDistributorUploadedData::where('file_id', $feedData->file->id)->where('state', 'new')->count() == 0;
                     if ($allCalled) {
                         $feedData->file->update(['is_done' => true]);
-                        Log::info('All numbers in file ' . $feedData->file->slug . ' have been called. The file is marked as done.');
+                        Log::info("
+                                    \t        -----------------------------------------------------------------------
+                                    \t\t\t\t********** Auto Distributor **********\n
+                                    \t✅✅✅ All Numbers Called ✅✅✅
+                                    \t| File: " . $feedData->file->slug . " |
+                                    \t| Status: The file is marked as 'Done' |
+                                    \t✅✅✅ All Numbers Called ✅✅✅
+                                ");
                     }
 
                 }
             } else {
-                Log::info('******TIME OUT*******Time is not within range for file ID ' . $feed->id);
+                Log::info("
+                            \t        -----------------------------------------------------------------------
+                            \t\t\t\t********** Auto Distributor Error **********\n
+                            \t\t\t     ⏰❌ TIME OUT: File ID " . $feed->id . " is NOT within range ❌ ⏰
+                            \t        -----------------------------------------------------------------------
+                        ");
             }
         }
     }
