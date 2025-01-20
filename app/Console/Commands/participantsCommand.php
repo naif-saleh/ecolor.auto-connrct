@@ -99,7 +99,7 @@ class participantsCommand extends Command
                 foreach ($participants as $participant_data) {
                     try {
                         // Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));
-
+                        $token = $this->tokenService->getToken();
                         $filter = "contains(Caller, '{$participant_data['dn']}')";
                         $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 

@@ -150,6 +150,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('auto-distributor-file/{id}', [AutoDistributorFileController::class, 'deleteFile'])->name('distributor.delete');
     Route::get('/download-processed-file/{fileId}', [AutoDistributorFileController::class, 'downloadUploadedFile'])->name('distributor.download.processed.file');
     Route::put('/auto-distributor/{id}', [AutoDistributorFileController::class, 'updateAutoDistributor'])->name('distributor.update');
+    Route::patch('/update-users-status', [AutoDistributorFileController::class, 'updateMultipleStatus'])->name('distributor.updateUsersStatus');
 
     // Update value if file done or not.................................................................................................
     Route::post('auto-distributor/files/{slug}/allow', [AutoDistributorFileController::class, 'updateAllowStatus'])->name('distributor.files.allow');

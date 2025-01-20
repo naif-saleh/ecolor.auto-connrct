@@ -172,7 +172,7 @@ class MakeUserCallCommand extends Command
 
                             }
                         } else {
-                            Log::error('Auto Distributor Error: 📵 Mobile is not available. Skipping call for mobile ' . $feedData->mobile);
+                            Log::error('Auto Distributor Error: 📵 Employee is not available. Skipping call for mobile ' . $feedData->mobile);
 
                         }
                     } catch (\Exception $e) {

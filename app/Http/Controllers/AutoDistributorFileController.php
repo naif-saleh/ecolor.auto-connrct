@@ -28,6 +28,30 @@ class AutoDistributorFileController extends Controller
     }
 
 
+
+    public function index()
+    {
+        $token = $this->tokenService->getToken();
+        $files = AutoDistributorFile::paginate(20);
+        $threeCxUsers = TrheeCxUserStatus::all();
+        $responseState = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->get(config('services.three_cx.api_url') . "/xapi/v1/Users");
+
+        if ($responseState->successful()) {
+            $data = $responseState->json();
+            $threeCxLiveUsers = $data['value'] ?? []; // Extract 'value' safely
+        } else {
+            $threeCxLiveUsers = []; // Default empty array if request fails
+        }
+
+        Log::info('Live Users: ' . print_r($threeCxLiveUsers, true));
+        // $numbersCount =  AutoDistributorUploadedData::where('file_id', $files->file->id)->where('state', 'new')->count();
+        return view('autodisributers.index', compact('files', 'threeCxUsers', 'threeCxLiveUsers'));
+    }
+
+
+
     public function importAllUsers()
     {
         $token = $this->tokenService->getToken();
@@ -89,6 +113,45 @@ class AutoDistributorFileController extends Controller
     }
 
 
+    public function updateMultipleStatus(Request $request)
+    {
+        $token = $this->tokenService->getToken();
+        $users = $request->input('users');
+        $responses = [];
+
+        foreach ($users as $userId => $newStatus) {
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type' => 'application/json',
+            ])->patch(config('services.three_cx.api_url')."/xapi/v1/Users({$userId})", [
+                'CurrentProfileName' => $newStatus
+            ]);
+
+            // Log the response status code and body for debugging
+            Log::info("Updating User {$userId} to {$newStatus}", [
+                'response_status' => $response->status(),
+                'response_body' => $response->body(),
+            ]);
+
+            // Check if the response is successful
+            if ($response->successful()) {
+                $responses[$userId] = true;
+            } else {
+                Log::error("Error updating User {$userId}", [
+                    'response_status' => $response->status(),
+                    'response_body' => $response->body(),
+                ]);
+                $responses[$userId] = false;
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'responses' => $responses
+        ]);
+    }
+
+
 
 
 
@@ -139,7 +202,7 @@ class AutoDistributorFileController extends Controller
             $utcTime_from = Carbon::createFromFormat('h:i:s A', $firstDataRow[3])->format('H:i:s');
             $utcTime_to = Carbon::createFromFormat('h:i:s A', $firstDataRow[4])->format('H:i:s');
             $formattedDate = Carbon::parse($firstDataRow[5])->format('Y-m-d');
-             // Create a SINGLE AutoDistributorFile entry for this upload
+            // Create a SINGLE AutoDistributorFile entry for this upload
             Log::info('Creating AutoDistributorFile entry...');
             $uploadedFile = AutoDistributorFile::create([
                 'file_name' => $fileName,
@@ -262,14 +325,6 @@ class AutoDistributorFileController extends Controller
 
 
 
-
-    public function index()
-    {
-        $files = AutoDistributorFile::paginate(20);
-        $threeCxUsers = TrheeCxUserStatus::all();
-        // $numbersCount =  AutoDistributorUploadedData::where('file_id', $files->file->id)->where('state', 'new')->count();
-        return view('autodisributers.index', compact('files', 'threeCxUsers'));
-    }
 
     public function show($slug)
     {
