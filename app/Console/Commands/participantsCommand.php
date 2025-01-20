@@ -42,9 +42,16 @@ class participantsCommand extends Command
      */
     public function handle()
     {
-        Log::info('participantsCommand executed at ' . now());
+        Log::info("
+                    \t-----------------------------------------------------------------------
+                    \t\t\t********** Auto Dialer **********\n
+                    \t-----------------------------------------------------------------------
+                    \t| 📞 ✅ PartisipantCommand executed at " . now() . "            |
+                    \t-----------------------------------------------------------------------
+                ");
 
-       // $token = Cache::get('three_cx_token');
+        // $token = Cache::get('three_cx_token');
+
 
 
         $providersFeeds = AutoDailerUploadedData::whereDate('created_at', Carbon::today())->get();
@@ -53,6 +60,8 @@ class participantsCommand extends Command
             $ext_from = $feed->extension;
 
             try {
+                $token = $this->tokenService->getToken();
+                // Log::error("participantsCommand token new-token" . $token );
                 // Fetch participants for the extension
                 $token = $this->tokenService->getToken();
                 Log::info("tokenServices: participantsCommand" . $token );
@@ -65,24 +74,34 @@ class participantsCommand extends Command
                     Log::info('participantsCommand:  Response Status Code: ' . $responseState->status());
                     Log::info('participantsCommand:  Full Response: ' . print_r($responseState, TRUE));
                     Log::info('participantsCommand: Headers: ' . json_encode($responseState->headers()));
-
-
                     continue;
                 }
 
                 $participants = $responseState->json();
 
                 if (empty($participants)) {
-                    Log::warning("No participants data for extension {$ext_from}");
+                    Log::warning("
+                                \t-----------------------------------------------------------------------
+                                \t\t********** Auto Dialer Warning **********\n
+                                \t-----------------------------------------------------------------------
+                                \t ⚠️  No participantsCommand for {$ext_from}
+                                \t-----------------------------------------------------------------------
+                        ");
+
                     continue;
                 }
-                Log::info("participants Response: ".print_r($participants));
+                Log::info("
+                                        \t********** Auto Dialer Response Participants **********
+                                        \tResponse Data:
+                                        \t" . print_r($participants, true) . "
+                                        \t***********************************************
+                                     ");
                 foreach ($participants as $participant_data) {
                     try {
                         // Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));
 
                         $filter = "contains(Caller, '{$participant_data['dn']}')";
-                        $url = config('services.three_cx.api_url') ."/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+                        $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
                         $activeCallsResponse = Http::withHeaders([
                             'Authorization' => 'Bearer ' . $token,
@@ -92,36 +111,59 @@ class participantsCommand extends Command
                             // Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));
                             $activeCalls = $activeCallsResponse->json();
                             //Log::debug("Active Calls: " . print_r($participant_data, true));
-                            Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
-
+                            Log::info("
+                            \t********** Auto Dialer Response Participant Active Call **********
+                            \tResponse Data:
+                            \t" . print_r($activeCalls, true) . "
+                            \t******************************************************************
+                         ");
 
                             // Iterate through all active calls to find matching callId
                             foreach ($activeCalls['value'] as $call) {
                                 // Check if the call contains the required information
-                               // Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
+                                // Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
                                 if (isset($call['Id']) && isset($call['Status'])) {
                                     // Log the status to track each call's behavior
-                                    Log::info("Processing Call ID {$call['Id']} with status {$call['Status']}");
+                                    Log::info("
+                                    \t-----------------------------------------------------------------------
+                                    \t\t********** Auto Dialer Processing Call **********
+                                    \t-----------------------------------------------------------------------
+                                    \t| 📞 Processing Call ID {$call['Id']} with status: {$call['Status']} |
+                                    \t-----------------------------------------------------------------------
+                            ");
 
                                     // Check if the call is in progress
                                     if ($call['Status'] === "Talking" || $call['Status'] === "Routing") { // Routing When Ringing
                                         AutoDailerReport::where('call_id', $call['Id'])->update(['status' => $call['Status']]);
                                         AutoDailerUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
-                                        Log::info("Updated status for call ID {$call['Id']} to ".$call['Status']);
+                                        Log::info("
+                                                    \t-----------------------------------------------------------------------
+                                                    \t\t********** Auto Dialer Call Status Updated **********
+                                                    \t-----------------------------------------------------------------------
+                                                    \t| ✅ Updated status for Call ID {$call['Id']} to: {$call['Status']} |
+                                                    \t-----------------------------------------------------------------------
+                                            ");
                                     }
                                 } else {
-                                    Log::warning("Call missing 'Id' or 'Status' for participant DN {$participant_data['dn']}. Call Data: " . print_r($call, true));
+                                    Log::warning("
+                                    \t-----------------------------------------------------------------------
+                                    \t\t********** Auto Dialer Warning **********
+                                    \t-----------------------------------------------------------------------
+                                    \t| ⚠️ Call missing 'Id' or 'Status' for participant DN {$participant_data['dn']} |
+                                    \t| Call Data: " . print_r($call, true) . " |
+                                    \t-----------------------------------------------------------------------
+                            ");
                                 }
                             }
                         } else {
-                            Log::error('Failed to fetch active calls. Response: ' . $activeCallsResponse->body());
+                            Log::error('Auto Dailer Error: ❌ Failed to fetch active calls. Response: ' . $activeCallsResponse->body());
                         }
                     } catch (\Exception $e) {
-                        Log::error('Failed to process participant data for call ID ' . ($participant_data['callid'] ?? 'N/A') . ': ' . $e->getMessage());
+                        Log::error('Auto Dailer Error: ❌ Failed to process participant data for call ID ' . ($participant_data['callid'] ?? 'N/A') . ': ' . $e->getMessage());
                     }
                 }
             } catch (\Exception $e) {
-                Log::error("Error fetching participants forcc provider {$ext_from}: " . $e->getMessage());
+                Log::error("Auto Dailer Error: ❌ Failed fetching participants forcc provider {$ext_from}: " . $e->getMessage());
             }
         }
     }

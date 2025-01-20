@@ -41,32 +41,40 @@ class MakeUserCallCommand extends Command
      */
     public function handle()
     {
-    
 
         $autoDailerFiles = AutoDistributorUploadedData::where('state','new')->orderBy('created_at', 'desc')->get();
-
-
-        $now = Carbon::now();
+        Log::info("
+                    \t-----------------------------------------------------------------------
+                    \t\t\t********** Auto Distributor **********\n
+                    \t-----------------------------------------------------------------------
+                    \t| 📞 ✅ MakeCallCommand executed at " . now() . "               |
+                    \t-----------------------------------------------------------------------
+                ");
+        $autoDailerFiles = AutoDistributorFile::all();
 
         foreach ($autoDailerFiles as $feed) {
-            Log::info('count of calls in each time: ' . $autoDailerFiles->count());
-            // Calculate the time range by subtracting 3 hours from the given time
-            $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHour(3);
-            $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHour(3);
+            // Create from and to date objects adjusted by -3 hours
+            $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHours(3);
+            $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHours(3);
 
-            // Check if the current time is within the range for this file_id
-            Log::info('Current time: ' . $now);
-            Log::info('Time range for file ID ' . $feed->file->id . ' From: ' . $from . ' To: ' . $to);
+            // Check if the current time is within the range and the file is allowed
+            if (now()->between($from, $to) && $feed->allow == 1) {
+                Log::info("
+                \t        -----------------------------------------------------------------------
+                \t\t\t\t********** Auto Distributor Time **********\n
+                \t\t\t⏰✅ TIME IN: File ID " . $feed->id . " is within range ✅ ⏰
+                \t        -----------------------------------------------------------------------
+            ");
 
-            if ($now > $from && $now < $to && $feed->file->allow == 1) {
-                // The time is valid for this file_id, proceed with processing
-                Log::info('Processing file with ID ' . $feed->file->id);
+                $data = AutoDistributorUploadedData::where('file_id', $feed->id)->where('state', 'new')->get();
+                foreach ($data as $feedData) {
 
-                try {
-                    if ($feed->userStatus === "Available") {
-                        $ext = $feed->extension;
-                        $filter = "contains(Caller, '{$ext}')";
-                        $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+                    try {
+                        $token = $this->tokenService->getToken();
+                        if ($feedData->userStatus === "Available") {
+                            $ext = $feedData->extension;
+                            $filter = "contains(Caller, '{$ext}')";
+                            $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
                         // Fetch active calls from API
                         $token = $this->tokenService->getToken();
@@ -75,94 +83,132 @@ class MakeUserCallCommand extends Command
                             'Authorization' => 'Bearer ' . $token,
                         ])->get($url);
 
-                        if ($activeCallsResponse->failed()) {
-                            Log::error('ADist: Failed to fetch active calls for mobile ' . $feed->mobile . '. Response: ' . $activeCallsResponse->body());
-                            continue;
-                        }
 
-                        if ($activeCallsResponse->successful()) {
-                            $activeCalls = $activeCallsResponse->json();
-
-                            if (!empty($activeCalls['value'])) {
-                                Log::info("Active calls detected for extension {$ext}. Skipping call for mobile {$feed->mobile}.");
-                                continue; // Skip this number if active calls exist
+                            if ($activeCallsResponse->failed()) {
+                                Log::error('Auto Distributor Error: ❌ Failed to fetch active calls for mobile ' . $feedData->mobile . '. Response: ' . $activeCallsResponse->body());
+                                continue;
                             }
 
-                            // Fetch devices for the extension
-                            $dnDevices = Http::withHeaders([
-                                'Authorization' => 'Bearer ' . $token,
-                            ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices");
+                            if ($activeCallsResponse->successful()) {
+                                $activeCalls = $activeCallsResponse->json();
 
-                            if ($dnDevices->successful()) {
-                                $devices = $dnDevices->json();
+                                if (!empty($activeCalls['value'])) {
+                                    Log::info("
+                                                \t-----------------------------------------------------------------------
+                                                \t\t\t\t********** Auto Distributor Notification **********
+                                                \t-----------------------------------------------------------------------
+                                                \t| 🚫 Busy: Active call detected for extension {$ext}. Skipping call for mobile {$feedData->mobile}. |
+                                                \t-----------------------------------------------------------------------
+                                            ");
 
-                                // Filter the device where user_agent is '3CX Mobile Client'
-                                foreach ($devices as $device) {
-                                    if ($device['user_agent'] === '3CX Mobile Client') {
-                                        $responseState = Http::withHeaders([
-                                            'Authorization' => 'Bearer ' . $token,
-                                        ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices/{$device['device_id']}/makecall", [
-                                            'destination' => $feed->mobile,
-                                        ]);
+                                    continue; // Skip this number if active calls exist
+                                }
 
-                                        if ($responseState->successful()) {
-                                            $responseData = $responseState->json();
-                                            Log::info('Adist:ResponseUserCall: ' . print_r($responseData));
+                                // Fetch devices for the extension
+                                $dnDevices = Http::withHeaders([
+                                    'Authorization' => 'Bearer ' . $token,
+                                ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices");
 
-                                            $reports = AutoDistributerReport::firstOrCreate([
-                                                'call_id' => $responseData['result']['callid'],
-                                            ], [
-                                                'status' => "Initiating",
-                                                'provider' => $feed->user,
-                                                'extension' => $responseData['result']['dn'],
-                                                'phone_number' => $responseData['result']['party_caller_id'],
+                                if ($dnDevices->successful()) {
+                                    $devices = $dnDevices->json();
+
+                                    // Filter the device where user_agent is '3CX Mobile Client'
+                                    foreach ($devices as $device) {
+                                        if ($device['user_agent'] === '3CX Mobile Client') {
+                                            $responseState = Http::withHeaders([
+                                                'Authorization' => 'Bearer ' . $token,
+                                            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices/{$device['device_id']}/makecall", [
+                                                'destination' => $feedData->mobile,
                                             ]);
 
-                                            $reports->save();
+                                            if ($responseState->successful()) {
+                                                $responseData = $responseState->json();
+                                                Log::info("
+                                        \t********** Auto Distributor Response Call **********
+                                        \tResponse Data:
+                                        \t" . print_r($responseData, true) . "
+                                        \t***************************************************
+                                     ");
 
-                                            $feed->update([
-                                                'state' => "Initiating",
-                                                'call_date' => Carbon::now(),
-                                                'call_id' => $responseData['result']['callid'],
-                                                'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
-                                            ]);
+                                                $reports = AutoDistributerReport::firstOrCreate([
+                                                    'call_id' => $responseData['result']['callid'],
+                                                ], [
+                                                    'status' => "Initiating",
+                                                    'provider' => $feedData->user,
+                                                    'extension' => $responseData['result']['dn'],
+                                                    'phone_number' => $responseData['result']['party_caller_id'],
+                                                ]);
 
-                                            Log::info('ADist: Call successfully made for mobile ' . $feed->mobile);
-                                        } else {
-                                            Log::error('ADist: Failed to make call for mobile Number ' . $feed->mobile . '. Response: ' . $responseState->body());
+                                                $reports->save();
+
+                                                $feedData->update([
+                                                    'state' => "Initiating",
+                                                    'call_date' => Carbon::now(),
+                                                    'call_id' => $responseData['result']['callid'],
+                                                    'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
+                                                ]);
+
+                                                Log::info("
+                                        \t📞 *_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_ 📞
+                                        \t|        ✅ Auto Distributor Called Successfully for Mobile: " . $feedData->mobile . " |
+                                        \t📞 *_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_ 📞
+                                    ");
+                                            } else {
+                                                Log::error("
+                                                \t❌ 🚨🚨🚨 ERROR: Auto Distributor Failed 🚨🚨🚨 ❌
+                                                \t| 🔴 Failed to make call for Mobile Number: " . $feedData->mobile . " |
+                                                \t| 🔄 Response: " . $responseState->body() . " |
+                                                \t❌ 🚨🚨🚨 ERROR: Auto Distributor Failed 🚨🚨🚨 ❌
+                                                ");
+                                            }
+                                            break; // Exit loop after making the call
                                         }
-                                        break; // Exit loop after making the call
                                     }
+                                } else {
+                                    Log::error('Auto Distributor Error: ❌ Error fetching devices for extension ' . $ext);
                                 }
                             } else {
-                                Log::error('ADist: Error fetching devices for extension ' . $ext);
+                                Log::error('Auto Distributor Error: ❌ Error fetching active calls for mobile ' . $feedData->mobile);
+
                             }
                         } else {
-                            Log::error('ADist: Error fetching active calls for mobile ' . $feed->mobile);
+                            Log::error('Auto Distributor Error: 📵 Mobile is not available. Skipping call for mobile ' . $feedData->mobile);
+
                         }
-                    } else {
-                        Log::error('ADist: Mobile is not available. Skipping call for mobile ' . $feed->mobile);
+                    } catch (\Exception $e) {
+                        Log::error("
+                        \t-----------------------------------------------------------------------
+                        \t\t\t\t********** Auto Distributor Error **********
+                        \t-----------------------------------------------------------------------
+                        \t| ❌ Error occurred in Auto Dialer: " . $e->getMessage() . " |
+                        \t-----------------------------------------------------------------------
+                ");
                     }
-                } catch (\Exception $e) {
-                    Log::error('ADist: An error occurred: ' . $e->getMessage());
-                }
 
 
-                // After processing all provider feeds, mark the file as done if all numbers are called
-                $allCalled = AutoDistributorUploadedData::where('file_id', $feed->file->id)->where('state', 'new')->count() == 0;
-                if ($allCalled) {
-                    $feed->file->update(['is_done' => true]);
-                    Log::info('All numbers in file ' . $feed->file->slug . ' have been called. The file is marked as done.');
+                    // After processing all provider feeds, mark the file as done if all numbers are called
+                    $allCalled = AutoDistributorUploadedData::where('file_id', $feedData->file->id)->where('state', 'new')->count() == 0;
+                    if ($allCalled) {
+                        $feedData->file->update(['is_done' => true]);
+                        Log::info("
+                                    \t        -----------------------------------------------------------------------
+                                    \t\t\t\t********** Auto Distributor **********\n
+                                    \t✅✅✅ All Numbers Called ✅✅✅
+                                    \t| File: " . $feedData->file->slug . " |
+                                    \t| Status: The file is marked as 'Done' |
+                                    \t✅✅✅ All Numbers Called ✅✅✅
+                                ");
+                    }
+
                 }
             } else {
-                // If the time is not valid, skip the file and log it
-                Log::info('The current time is not within the specified range for file ID ' . $feed->file->id);
-                continue; // Skip this file and continue with the next one
+                Log::info("
+                            \t        -----------------------------------------------------------------------
+                            \t\t\t\t********** Auto Distributor Time **********\n
+                            \t\t\t     ⏰❌ TIME OUT: File ID " . $feed->id . " is NOT within range ❌⏰
+                            \t        -----------------------------------------------------------------------
+                        ");
             }
         }
-
     }
-
-
-
 }

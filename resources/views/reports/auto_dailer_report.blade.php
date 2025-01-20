@@ -240,6 +240,7 @@
                     class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}">
                     <i class="fas fa-calendar-day me-1"></i> Today
                 </a>
+
             </div>
 
             <!-- Second Line: Filters Form -->
@@ -257,7 +258,6 @@
                         <option value="{{ $provider->provider }}"
                             {{ request('provider') == $provider->provider ? 'selected' : '' }}>
                             {{ $provider->provider->name ?? $provider->provider }}
-
                         </option>
                     @endforeach
                 </select>
@@ -275,7 +275,7 @@
             </form>
         </div>
 
-        <!-- Statistics -->
+        <!-- Statistics Section -->
         <div class="row mb-5 text-center justify-content-center">
             <!-- Total Calls -->
             <div class="col-md-2 col-sm-3">
@@ -285,7 +285,7 @@
                             <i class="bi bi-telephone-fill text-primary fs-4"></i>
                         </div>
                         <h5 class="text-primary fs-6">Total Calls</h5>
-                        <h3 class="fw-bold fs-5">{{ $totalCount }}</h3>
+                        <h3 class="fw-bold fs-5">{{ $filter === 'today' ? $todayTotalCount : $totalCount }}</h3>
                     </div>
                 </div>
             </div>
@@ -298,7 +298,7 @@
                             <i class="bi bi-check-circle-fill text-success fs-4"></i>
                         </div>
                         <h5 class="text-success fs-6">Answered</h5>
-                        <h3 class="fw-bold fs-5">{{ $answeredCount }}</h3>
+                        <h3 class="fw-bold fs-5">{{ $filter === 'today' ? $todayAnsweredCount : $answeredCount }}</h3>
                     </div>
                 </div>
             </div>
@@ -311,12 +311,12 @@
                             <i class="bi bi-x-circle-fill text-warning fs-4"></i>
                         </div>
                         <h5 class="text-warning fs-6">No Answer</h5>
-                        <h3 class="fw-bold fs-5">{{ $noAnswerCount }}</h3>
+                        <h3 class="fw-bold fs-5">{{ $filter === 'today' ? $todayNoAnswerCount : $noAnswerCount }}</h3>
                     </div>
                 </div>
             </div>
-
         </div>
+
 
         <!-- Report Table -->
         <div class="card shadow-sm border-0 rounded">

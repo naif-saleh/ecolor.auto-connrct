@@ -16,9 +16,6 @@ return new class extends Migration
             $table->string('mobile');
             $table->string('provider');
             $table->string('extension')->nullable();
-            $table->time('from');
-            $table->time('to');
-            $table->date('date');
             $table->string('state')->default('new');
             $table->string('call_date')->nullable();
             $table->string('call_id')->nullable();

@@ -122,7 +122,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
     // AutoDailer..........................................................................................................................
     Route::get('auto-dailer/files', [AutoDailerFileController::class, 'index'])->name('autodailers.files.index');
-    Route::get('auto-dailer/files/{slug}', [AutoDailerFileController::class, 'show'])->name('autodailers.files.show');
+    Route::get('autodailers/providers', [AutoDailerFileController::class, 'providers'])->name('autodailers.providers');
+    Route::get('autodailers/files/show/{slug}', [AutoDailerFileController::class, 'showFile'])->name('autodailers.files.show');
+    Route::put('autodailers/files/update/{slug}', [AutoDailerFileController::class, 'updateFile'])->name('autodailers.files.update');
+    Route::delete('autodailers/files/delete/{slug}', [AutoDailerFileController::class, 'deleteFile'])->name('autodailers.files.delete');
+    Route::get('autodailers/files/{slug}', [AutoDailerFileController::class, 'show'])->name('autodailers.files.show');
     Route::post('auto-dailer/upload-csv', [AutoDailerFileController::class, 'uploadCsv'])->name('autodailers.upload.csv');
     Route::delete('/autodailer-file/{id}', [AutoDailerFileController::class, 'deleteFile'])->name('autodailer.delete');
     Route::get('/auto-dailer/{slug}/edit', [AutoDailerFileController::class, 'edit'])->name('autodailer.edit');

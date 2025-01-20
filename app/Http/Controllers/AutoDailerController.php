@@ -127,13 +127,13 @@ class AutoDailerController extends Controller
 
 
     // Show details of a specific uploaded file.....................................................................................................
-    public function show($id)
-    {
-        $file = AutoDailer::findOrFail($id);
-        $autodailerData = $file->autodailerData()->paginate(1000);
+    // public function show($id)
+    // {
+    //     $file = AutoDailer::findOrFail($id);
+    //     $autodailerData = $file->autodailerData()->paginate(1000);
 
-        return view('autodailers.show', compact('file', 'autodailerData'));
-    }
+    //     return view('autodailers.show', compact('file', 'autodailerData'));
+    // }
 
 
     // Delete a file................................................................................................................................

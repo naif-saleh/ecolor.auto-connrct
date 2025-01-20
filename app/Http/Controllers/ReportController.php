@@ -70,6 +70,10 @@ class ReportController extends Controller
         // Apply provider filter
         if ($provider) {
             $query->where('provider', $provider);
+            // Apply additional filter if "answered" is selected
+            if ($filter === 'answered') {
+                $query->whereIn('status', $statusMap['answered']);
+            }
         }
 
         // Apply date range filter
@@ -88,6 +92,15 @@ class ReportController extends Controller
         $answeredCount = AutoDailerReport::whereIn('status', ['Wextension', 'Wexternalline', "Talking"])->count();
         $noAnswerCount = AutoDailerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer'])->count();
 
+        // Calculate counts for "Today"
+        $todayTotalCount = AutoDailerReport::whereDate('created_at', now()->toDateString())->count();
+        $todayAnsweredCount = AutoDailerReport::whereDate('created_at', now()->toDateString())
+            ->whereIn('status', ['Wextension', 'Wexternalline', "Talking"])
+            ->count();
+        $todayNoAnswerCount = AutoDailerReport::whereDate('created_at', now()->toDateString())
+            ->whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer'])
+            ->count();
+
         // Fetch distinct providers for the filter dropdown
         $providers = AutoDailerReport::select('provider')->distinct()->get();
 
@@ -100,9 +113,14 @@ class ReportController extends Controller
             'providers',
             'totalCount',
             'answeredCount',
-            'noAnswerCount'
+            'noAnswerCount',
+            'todayTotalCount',
+            'todayAnsweredCount',
+            'todayNoAnswerCount'
         ));
     }
+
+
 
 
 
@@ -233,11 +251,20 @@ class ReportController extends Controller
         // Apply pagination
         $reports = $query->paginate(50);
 
-        // Calculate counts
-        $totalCount = AutoDistributerReport::count(); // Total calls count
+        // Calculate counts for overall report
+        $totalCount = AutoDistributerReport::count();
         $answeredCount = AutoDistributerReport::whereIn('status', ['Wextension', 'Wexternalline', "Talking"])->count();
         $noAnswerCount = AutoDistributerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer', 'Routing'])->count();
         $employeeUnanswerCount = AutoDistributerReport::whereIn('status', ['Initiating', 'SomeOtherStatus'])->count();
+
+        // Calculate counts for "Today" (based on today's date)
+        $todayTotalCount = AutoDistributerReport::whereDate('created_at', now()->toDateString())->count();
+        $todayAnsweredCount = AutoDistributerReport::whereDate('created_at', now()->toDateString())
+            ->whereIn('status', ['Wextension', 'Wexternalline', "Talking"])->count();
+        $todayNoAnswerCount = AutoDistributerReport::whereDate('created_at', now()->toDateString())
+            ->whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer', 'Routing'])->count();
+        $todayEmployeeUnanswerCount = AutoDistributerReport::whereDate('created_at', now()->toDateString())
+            ->whereIn('status', ['Initiating', 'SomeOtherStatus'])->count();
 
         // Fetch distinct providers for the filter dropdown
         $providers = AutoDistributerReport::select('provider')->distinct()->get();
@@ -252,9 +279,15 @@ class ReportController extends Controller
             'totalCount',
             'answeredCount',
             'noAnswerCount',
-            'employeeUnanswerCount'
+            'employeeUnanswerCount',
+            'todayTotalCount',
+            'todayAnsweredCount',
+            'todayNoAnswerCount',
+            'todayEmployeeUnanswerCount'
         ));
     }
+
+
 
 
 

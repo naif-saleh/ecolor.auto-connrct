@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class AutoDistributorUploadedData extends Model
 {
-    protected $fillable = ['mobile', 'user', 'extension', 'userStatus', 'from', 'to', 'date', 'uploaded_by', 'state', 'file_id', 'call_date', 'call_id', 'three_cx_user_id' ];
+    protected $fillable = ['mobile', 'user', 'extension', 'userStatus', 'uploaded_by', 'state', 'file_id', 'call_date', 'call_id', 'three_cx_user_id' ];
 
 
     public function file(){
