@@ -214,7 +214,8 @@
                 </a>
 
                 <!-- State Filters (All, Satisfied, Unsatisfied, Today) -->
-                <a href="{{ url('reports/evaluation') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
+                <a href="{{ url('reports/evaluation?filter=all') }}"
+                    class="btn btn-modern-filter {{ $filter === 'all' ? 'active' : '' }}">
                     <i class="fas fa-list me-1"></i> All
                 </a>
                 <a href="{{ url('reports/evaluation?filter=satisfied') }}"
@@ -229,6 +230,7 @@
                     class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}">
                     <i class="fas fa-calendar-day me-1"></i> Today
                 </a>
+
 
             </div>
 

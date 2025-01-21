@@ -225,7 +225,7 @@
                 </a>
 
                 <!-- State Filters (All, Answered, No Answer, Today) -->
-                <a href="{{ url('auto-dailer-report') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
+                <a href="{{ url('auto-dailer-report?filter=all') }}" class="btn btn-modern-filter {{ $filter === 'all' ? 'active' : '' }}">
                     <i class="fas fa-list me-1"></i> All
                 </a>
                 <a href="{{ url('auto-dailer-report?filter=answered') }}"
