@@ -33,9 +33,9 @@
                     </a>
                 @endif
                 @if ($threeCxUsers->count() != 0)
-                    {{-- <a id="openModalButton" class="btn btn-danger">
+                    <a id="openModalButton" class="btn btn-danger">
                         <i class="fas fa-phone-slash"></i> Stop Calls
-                    </a> --}}
+                    </a>
 
                     <a href="{{ route('distributor.import.users') }}" class="btn btn-warning" id="importUsersButton">
                         <i class="bi bi-arrow-repeat"></i> Resynchronize Users
@@ -47,9 +47,9 @@
 
 
 
-                <div>
+                 <div>
                     <!-- Modal -->
-                    {{-- <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel"
+                     <div class="modal fade" id="userModal" tabindex="-1" aria-labelledby="userModalLabel"
                         aria-hidden="true">
                         <div class="modal-dialog modal-lg">
                             <div class="modal-content border-0 rounded-3 shadow-lg">
@@ -106,8 +106,8 @@
                                 </form>
                             </div>
                         </div>
-                    </div> --}}
-                </div>
+                    </div>
+                 </div>
 
 
             </div>

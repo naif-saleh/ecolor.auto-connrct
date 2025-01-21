@@ -34,20 +34,20 @@ class AutoDistributorFileController extends Controller
         $token = $this->tokenService->getToken();
         $files = AutoDistributorFile::paginate(20);
         $threeCxUsers = TrheeCxUserStatus::all();
-        // $responseState = Http::withHeaders([
-        //     'Authorization' => 'Bearer ' . $token,
-        // ])->get(config('services.three_cx.api_url') . "/xapi/v1/Users");
+        $responseState = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $token,
+        ])->get(config('services.three_cx.api_url') . "/xapi/v1/Users");
 
-        // if ($responseState->successful()) {
-        //     $data = $responseState->json();
-        //     $threeCxLiveUsers = $data['value'] ?? []; // Extract 'value' safely
-        // } else {
-        //     $threeCxLiveUsers = []; // Default empty array if request fails
-        // }
+        if ($responseState->successful()) {
+            $data = $responseState->json();
+            $threeCxLiveUsers = $data['value'] ?? []; // Extract 'value' safely
+        } else {
+            $threeCxLiveUsers = []; // Default empty array if request fails
+        }
 
         // Log::info('Live Users: ' . print_r($threeCxLiveUsers, true));
         // $numbersCount =  AutoDistributorUploadedData::where('file_id', $files->file->id)->where('state', 'new')->count();
-        return view('autodisributers.index', compact('files', 'threeCxUsers'));
+        return view('autodisributers.index', compact('files', 'threeCxUsers', 'threeCxLiveUsers'));
     }
 
 
