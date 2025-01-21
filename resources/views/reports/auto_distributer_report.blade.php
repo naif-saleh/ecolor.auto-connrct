@@ -226,9 +226,10 @@
 
 
                 <!-- State Filters (All, Answered, No Answer, Today) -->
-                <a href="{{ url('auto-distributer-report') }}" class="btn btn-modern-filter {{ !$filter ? 'active' : '' }}">
+                <a href="{{ url('auto-distributer-report?filter=all') }}" class="btn btn-modern-filter {{ $filter === 'all' ? 'active' : '' }}">
                     <i class="fas fa-list me-1"></i> All
                 </a>
+
                 <a href="{{ url('auto-distributer-report?filter=answered') }}"
                     class="btn btn-modern-filter {{ $filter === 'answered' ? 'active' : '' }}">
                     <i class="fas fa-phone me-1"></i> Answered

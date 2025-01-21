@@ -36,7 +36,7 @@ class ReportController extends Controller
 
     public function AutoDailerReports(Request $request)
     {
-        $filter = $request->input('filter');
+        $filter = $request->input('filter', 'today'); // Default to "today"
         $extensionFrom = $request->input('extension_from');
         $extensionTo = $request->input('extension_to');
         $provider = $request->input('provider');
@@ -51,10 +51,12 @@ class ReportController extends Controller
 
         $query = AutoDailerReport::query();
 
-        // Apply status filter
+        // Apply status filter (default to today)
         if ($filter === 'today') {
+            // Filter by today's date
             $query->whereDate('created_at', now()->toDateString());
-        } elseif ($filter && isset($statusMap[$filter])) {
+        } elseif ($filter === 'all') {
+        } elseif (isset($statusMap[$filter])) {
             $query->whereIn('status', $statusMap[$filter]);
         }
 
@@ -70,10 +72,6 @@ class ReportController extends Controller
         // Apply provider filter
         if ($provider) {
             $query->where('provider', $provider);
-            // Apply additional filter if "answered" is selected
-            if ($filter === 'answered') {
-                $query->whereIn('status', $statusMap['answered']);
-            }
         }
 
         // Apply date range filter
@@ -87,8 +85,8 @@ class ReportController extends Controller
         // Apply pagination after filters
         $reports = $query->paginate(20);
 
-        // Calculate counts
-        $totalCount = AutoDailerReport::count(); // Total calls count
+        // Calculate counts for overall report
+        $totalCount = AutoDailerReport::count();
         $answeredCount = AutoDailerReport::whereIn('status', ['Wextension', 'Wexternalline', "Talking"])->count();
         $noAnswerCount = AutoDailerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer'])->count();
 
@@ -119,6 +117,8 @@ class ReportController extends Controller
             'todayNoAnswerCount'
         ));
     }
+
+
 
 
 
@@ -203,7 +203,7 @@ class ReportController extends Controller
     // display Auto Distributer Report...........................................................................................................
     public function AutoDistributerReports(Request $request)
     {
-        $filter = $request->input('filter');
+        $filter = $request->input('filter', 'today'); // Default to 'today' filter
         $extensionFrom = $request->input('extension_from');
         $extensionTo = $request->input('extension_to');
         $provider = $request->input('provider');
@@ -219,10 +219,12 @@ class ReportController extends Controller
 
         $query = AutoDistributerReport::query();
 
-        // Apply status filter
-        if ($filter === 'today') {
+        // Apply status filter (default to today)
+        if ($filter === 'today' || !$request->has('filter')) {
             $query->whereDate('created_at', now()->toDateString());
-        } elseif ($filter && isset($statusMap[$filter])) {
+        } elseif ($filter === 'all') {
+            // No filtering by date or status for 'All'
+        } elseif (isset($statusMap[$filter])) {
             $query->whereIn('status', $statusMap[$filter]);
         }
 
@@ -230,7 +232,6 @@ class ReportController extends Controller
         if ($extensionFrom) {
             $query->where('extension', '>=', $extensionFrom);
         }
-
         if ($extensionTo) {
             $query->where('extension', '<=', $extensionTo);
         }
@@ -257,7 +258,7 @@ class ReportController extends Controller
         $noAnswerCount = AutoDistributerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer', 'Routing'])->count();
         $employeeUnanswerCount = AutoDistributerReport::whereIn('status', ['Initiating', 'SomeOtherStatus'])->count();
 
-        // Calculate counts for "Today" (based on today's date)
+        // Calculate counts for "Today" (default view)
         $todayTotalCount = AutoDistributerReport::whereDate('created_at', now()->toDateString())->count();
         $todayAnsweredCount = AutoDistributerReport::whereDate('created_at', now()->toDateString())
             ->whereIn('status', ['Wextension', 'Wexternalline', "Talking"])->count();
@@ -286,6 +287,8 @@ class ReportController extends Controller
             'todayEmployeeUnanswerCount'
         ));
     }
+
+
 
 
 
@@ -373,8 +376,8 @@ class ReportController extends Controller
 
     public function Evaluation(Request $request)
     {
-        // Retrieve filter parameters from the request (if any)
-        $filter = $request->get('filter', null);
+        // Retrieve filter parameters from the request (default to 'today')
+        $filter = $request->get('filter', 'today'); // Default to 'today'
         $dateFrom = $request->get('date_from', null);
         $dateTo = $request->get('date_to', null);
 
@@ -382,14 +385,12 @@ class ReportController extends Controller
         $query = Evaluation::query();
 
         // Apply filters for 'is_satisfied' (use filter for 1 or 0)
-        if ($filter) {
-            if ($filter === 'satisfied') {
-                $query->where('is_satisfied', "YES");
-            } elseif ($filter === 'unsatisfied') {
-                $query->where('is_satisfied', "NO");
-            } elseif ($filter === 'today') {
-                $query->whereDate('created_at', now()->toDateString()); // Filter for today
-            }
+        if ($filter === 'satisfied') {
+            $query->where('is_satisfied', "YES");
+        } elseif ($filter === 'unsatisfied') {
+            $query->where('is_satisfied', "NO");
+        } elseif ($filter === 'today') {
+            $query->whereDate('created_at', now()->toDateString()); // Default to today
         }
 
         if ($dateFrom) {
@@ -400,15 +401,16 @@ class ReportController extends Controller
             $query->whereDate('created_at', '<=', $dateTo);
         }
 
-        // Paginate the results (if needed)
+        // Paginate the results
         $reports = $query->paginate(100);
 
-        // Calculate statistics based on the current filters (including 'today')
-        $totalCount = $query->count();
-        $satisfiedCount = $query->where('is_satisfied', "YES")->count();
-        $unsatisfiedCount = $query->where('is_satisfied', "NO")->count();
+        // Calculate statistics
+        $totalCount = (clone $query)->count();
+        $satisfiedCount = (clone $query)->where('is_satisfied', "YES")->count();
+        $unsatisfiedCount = (clone $query)->where('is_satisfied', "NO")->count();
 
-        // Return the view with the reports and other data
+
+        // Return the view with data
         return view('evaluation.evaluation', [
             'reports' => $reports,
             'filter' => $filter,
@@ -417,6 +419,7 @@ class ReportController extends Controller
             'unsatisfiedCount' => $unsatisfiedCount,
         ]);
     }
+
 
 
     public function exportEvaluation(Request $request)
