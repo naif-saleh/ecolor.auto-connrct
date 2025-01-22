@@ -139,10 +139,10 @@
                                         </div>
 
                                         <div class="modal-body">
-                                            <form action="{{route('autoDailer.update' , $file->id)}}" method="POST">
+                                            <form action="{{route('autoDailer.update' , $file->slug)}}" method="POST">
                                                 @csrf
                                                 @method('PUT')
-                                                <input type="hidden" value="{{$file->id}}">
+                                                <input type="hidden" value="{{$file->slug}}">
                                                 <div class="mb-3">
                                                     <label for="file_name" class="form-label">File Name:</label>
                                                     <input type="text" class="form-control" name="file_name" id="file_name"

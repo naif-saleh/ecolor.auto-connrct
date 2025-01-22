@@ -16,6 +16,7 @@ class AutoDailerFileController extends Controller
 
     public function uploadCsv(Request $request)
     {
+        // Validate file input
         $request->validate([
             'file' => 'required|mimes:csv,txt',
         ]);
@@ -25,28 +26,36 @@ class AutoDailerFileController extends Controller
         $file->storeAs('uploads', $fileName);
 
         $path = $file->getRealPath();
-        $fileContents = file_get_contents($path);
-        $fileContents = str_replace("\r\n", "\n", $fileContents); // Normalize line endings
-
-        $lines = explode("\n", $fileContents);
-        $data = array_map('str_getcsv', $lines);
-
-        if (count($data) < 2) {
-            return back()->withErrors(['error' => 'The file appears to be empty or has no valid rows.']);
-        }
 
         try {
-            // Extract `from`, `to`, and `date` from the SECOND row (first data row)
-            $firstDataRow = $data[1]; // Assuming row 0 is headers, row 1 is first data row
+            // Open the file for reading
+            if (($handle = fopen($path, 'r')) === false) {
+                return back()->withErrors(['error' => 'Unable to open the file for reading.']);
+            }
 
-            if (count($firstDataRow) < 6) {
-                return back()->withErrors(['error' => 'Missing required columns (from, to, date).']);
+            // Read the header row
+            $header = fgetcsv($handle);
+            if ($header === false || count($header) < 6) {
+                fclose($handle);
+                return back()->withErrors(['error' => 'The file is missing required columns (from, to, date).']);
+            }
+
+            // Read the first data row to extract `from`, `to`, and `date`
+            $firstDataRow = fgetcsv($handle);
+            if ($firstDataRow === false || count($firstDataRow) < 6) {
+                fclose($handle);
+                return back()->withErrors(['error' => 'The file does not contain valid data rows.']);
             }
 
             // Convert time fields
-            $utcTime_from = Carbon::createFromFormat('h:i:s A', $firstDataRow[3])->format('H:i:s');
-            $utcTime_to = Carbon::createFromFormat('h:i:s A', $firstDataRow[4])->format('H:i:s');
-            $formattedDate = Carbon::parse($firstDataRow[5])->format('Y-m-d');
+            try {
+                $utcTime_from = Carbon::createFromFormat('h:i:s A', $firstDataRow[3])->format('H:i:s');
+                $utcTime_to = Carbon::createFromFormat('h:i:s A', $firstDataRow[4])->format('H:i:s');
+                $formattedDate = Carbon::parse($firstDataRow[5])->format('Y-m-d');
+            } catch (\Exception $e) {
+                fclose($handle);
+                return back()->withErrors(['error' => 'Invalid date or time format in the file.']);
+            }
 
             // Create a SINGLE `AutoDailerFile` entry for this file upload
             $uploadedFile = AutoDailerFile::create([
@@ -59,25 +68,39 @@ class AutoDailerFileController extends Controller
 
             Log::info('AutoDailerFile created with ID: ' . $uploadedFile->id);
 
-            // Process ALL rows (skipping the header)
-            foreach ($data as $index => $row) {
-                if ($index == 0) continue; // Skip header row
-
+            // Process the remaining rows
+            $insertData = [];
+            while (($row = fgetcsv($handle)) !== false) {
+                // Skip rows with insufficient columns
                 if (count($row) < 3) {
                     Log::warning('Skipping row due to missing columns: ' . json_encode($row));
                     continue;
                 }
 
-                AutoDailerUploadedData::create([
+                // Add data to the batch insert array
+                $insertData[] = [
                     'mobile' => $row[0],
                     'provider' => $row[1],
                     'extension' => $row[2],
                     'uploaded_by' => Auth::id(),
                     'file_id' => $uploadedFile->id,
-                ]);
+                ];
 
-                Log::info('Uploaded data for mobile: ' . $row[0] . ', extension: ' . $row[2]);
+                // Insert in batches of 1000 for memory efficiency
+                if (count($insertData) >= 1000) {
+                    AutoDailerUploadedData::insert($insertData);
+                    Log::info('Inserted 1000 records successfully.');
+                    $insertData = []; // Clear the batch array
+                }
             }
+
+            // Insert any remaining rows
+            if (!empty($insertData)) {
+                AutoDailerUploadedData::insert($insertData);
+                Log::info('Inserted remaining ' . count($insertData) . ' records successfully.');
+            }
+
+            fclose($handle);
 
             return back()->with('success', 'File uploaded and processed successfully.');
         } catch (\Exception $e) {
@@ -89,20 +112,11 @@ class AutoDailerFileController extends Controller
 
 
 
-    // public function providers()
-    // {
-    //     // Retrieve all uploaded data with the associated file information
-    //     $uploadedData = AutoDailerUploadedData::with('file')->get();
 
-
-    //     return view('autodailers.providers', compact('uploadedData'));
-    // }
-
-
-
-
-    public function updateAutoDailer(Request $request, $id)
+    public function updateAutoDailer(Request $request, $slug)
     {
+
+
         // Validate the request inputs
         $request->validate([
             'file_name' => 'required',
@@ -118,12 +132,12 @@ class AutoDailerFileController extends Controller
         $date = $request->input('date');
 
         // Debugging: Log the input values to see what you're getting
-        Log::info("Updating Auto Dialer File: ID=$id, from=$from, to=$to, date=$date");
-        Log::info($id);
+        Log::info("Updating Auto Dialer File: slug=$slug, from=$from, to=$to, date=$date");
+        Log::info($slug);
 
         // Now proceed with the update
-        $file = AutoDailerFile::find($id);
-        if ($file) {
+        $file = AutoDailerFile::where('slug',$slug);
+         if ($file) {
             $file->update([
                 'file_name' => $file_name,
                 'from' => $from,
@@ -176,9 +190,9 @@ class AutoDailerFileController extends Controller
         $file = AutoDailerFile::where('slug', $slug)->firstOrFail();
 
         // Check if the file exists
-        if (!Storage::exists('uploads/' . $file->file_name)) {
-            abort(404, 'File not found.');
-        }
+        // if (!Storage::exists('uploads/' . $file->file_name)) {
+        //     abort(404, 'File not found.');
+        // }
 
         // Get the file contents using the Storage facade
         $fileContents = Storage::get('uploads/' . $file->file_name);
