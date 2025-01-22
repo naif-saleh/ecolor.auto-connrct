@@ -172,40 +172,6 @@
     @yield('scripts')
     @stack('scripts')
 
-    {{-- Java Script --}}
-    {{-- <script>
-        // Enable AJAX for the switch toggle
-        document.getElementById('allowSwitch{{ $file->id }}').addEventListener('change', function() {
-            let fileId = this.getAttribute('data-file-id');
-            let checked = this.checked ? 1 : 0; // Determine the state of the switch
-
-            // AJAX request to update the 'allow' field
-            fetch("{{ route('autodailers.files.allow', '') }}/" + fileId, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute(
-                            'content')
-                    },
-                    body: JSON.stringify({
-                        allow: checked
-                    })
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Optionally update the label text after the switch is toggled
-                        document.querySelector(`#allowSwitch${fileId} + label`).innerText = checked ?
-                            'Allowed' : 'Disallowed';
-                    } else {
-                        alert('Error updating the file status.');
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                });
-        });
-    </script> --}}
     <script>
         // Delete Alert...................................................................................................
         function confirmDelete(extensionId) {

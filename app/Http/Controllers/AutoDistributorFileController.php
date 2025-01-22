@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 use App\Models\TrheeCxUserStatus;
 use Illuminate\Support\Facades\Http;
 use App\Services\TokenService;
-
+use Illuminate\Support\Facades\DB;
 
 
 
@@ -123,7 +123,7 @@ class AutoDistributorFileController extends Controller
             $response = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
                 'Content-Type' => 'application/json',
-            ])->patch(config('services.three_cx.api_url')."/xapi/v1/Users({$userId})", [
+            ])->patch(config('services.three_cx.api_url') . "/xapi/v1/Users({$userId})", [
                 'CurrentProfileName' => $newStatus
             ]);
 
@@ -199,9 +199,24 @@ class AutoDistributorFileController extends Controller
         try {
             // Convert time fields safely, assuming 12-hour format in CSV
             Log::info('Converting time fields...');
-            $utcTime_from = Carbon::createFromFormat('h:i:s A', $firstDataRow[3])->format('H:i:s');
-            $utcTime_to = Carbon::createFromFormat('h:i:s A', $firstDataRow[4])->format('H:i:s');
-            $formattedDate = Carbon::parse($firstDataRow[5])->format('Y-m-d');
+
+            // Ensure the time format is valid, add try-catch for potential conversion issues
+            try {
+                $utcTime_from = Carbon::createFromFormat('h:i:s A', $firstDataRow[3])->format('H:i:s');
+                $utcTime_to = Carbon::createFromFormat('h:i:s A', $firstDataRow[4])->format('H:i:s');
+            } catch (\Exception $e) {
+                Log::error('Time format conversion error: ' . $e->getMessage());
+                return back()->withErrors(['error' => 'Invalid time format in the file.']);
+            }
+
+            // Ensure the date format is valid, also wrap in try-catch for error handling
+            try {
+                $formattedDate = Carbon::parse($firstDataRow[5])->format('Y-m-d');
+            } catch (\Exception $e) {
+                Log::error('Date format conversion error: ' . $e->getMessage());
+                return back()->withErrors(['error' => 'Invalid date format in the file.']);
+            }
+
             // Create a SINGLE AutoDistributorFile entry for this upload
             Log::info('Creating AutoDistributorFile entry...');
             $uploadedFile = AutoDistributorFile::create([
@@ -213,30 +228,24 @@ class AutoDistributorFileController extends Controller
             ]);
             Log::info('AutoDistributorFile entry created with ID: ' . $uploadedFile->id);
 
-            // Get all extensions from the CSV to fetch user statuses in bulk
-            $extensions = array_column(array_slice($data, 1), 2);
-            $userStatuses = TrheeCxUserStatus::whereIn('extension', $extensions)->get()->keyBy('extension');
-
             // Prepare batch insert array
             $insertData = [];
 
-            // Process ALL rows (skipping the header)
+            // Process the CSV rows (skipping the header)
             foreach ($data as $index => $row) {
                 if ($index == 0) continue; // Skip header row
 
-                // Ensure row has sufficient columns
+                // Ensure row has sufficient columns (at least 3: mobile, user, extension)
                 if (count($row) < 3) {
-                    Log::warning('Skipping row due to missing columns: ' . json_encode($row));
-                    continue;
+                    Log::warning('Skipping row due to insufficient columns: ' . json_encode($row));
+                    $uploadedFile->delete(); // Rollback file upload on error
+                    return back()->with(['wrong' => 'Ensure that no row is empty in the file.']);
                 }
 
-                // Find user status using preloaded data
-                $userStatus = $userStatuses[$row[2]] ?? null;
-
-                // Ensure user status exists
-                if (!$userStatus) {
-                    Log::warning('User status not found for extension: ' . $row[2]);
-                    continue;
+                // Validate that the required columns have no empty values
+                if (empty($row[0]) || empty($row[1]) || empty($row[2])) {
+                    $uploadedFile->delete(); // Rollback file upload on error
+                    return back()->with(['wrong' => 'Ensure that no row is empty in the file.']);
                 }
 
                 // Add to batch insert array
@@ -244,12 +253,8 @@ class AutoDistributorFileController extends Controller
                     'mobile' => $row[0],
                     'user' => $row[1],
                     'extension' => $row[2],
-                    'userStatus' => $userStatus->status,
-                    'three_cx_user_id' => $userStatus->user_id,
                     'uploaded_by' => Auth::id(),
                     'file_id' => $uploadedFile->id,
-                    'created_at' => now(),
-                    'updated_at' => now(),
                 ];
 
                 Log::info('Prepared data for mobile: ' . $row[0] . ' extension: ' . $row[2]);
@@ -257,8 +262,22 @@ class AutoDistributorFileController extends Controller
 
             // Batch insert for better performance
             if (!empty($insertData)) {
-                AutoDistributorUploadedData::insert($insertData);
-                Log::info('Inserted ' . count($insertData) . ' records successfully.');
+                // Use a transaction for better error handling
+                DB::beginTransaction();
+
+                try {
+                    // Log the data before inserting for debugging
+                    Log::info('Inserting the following data: ' . json_encode($insertData));
+
+                    AutoDistributorUploadedData::insert($insertData);
+                    DB::commit();
+                    Log::info('Inserted ' . count($insertData) . ' records successfully.');
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    Log::error("Error inserting records: " . $e->getMessage());
+                    Log::error("Error details: " . $e->getTraceAsString());
+                    return back()->withErrors(['error' => 'Failed to insert records into the database.']);
+                }
             } else {
                 Log::warning('No valid records found for insertion.');
             }
