@@ -420,9 +420,9 @@ class AutoDistributorFileController extends Controller
         $file = AutoDistributorFile::where('slug', $slug)->firstOrFail();
 
         // Check if the file exists
-        if (!Storage::exists('uploads/' . $file->file_name)) {
-            abort(404, 'File not found.');
-        }
+        // if (!Storage::exists('uploads/' . $file->file_name)) {
+        //     abort(404, 'File not found.');
+        // }
 
         // Get the file contents using the Storage facade
         $fileContents = Storage::get('uploads/' . $file->file_name);
