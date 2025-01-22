@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 
 
 
+
 class AutoDistributorFileController extends Controller
 {
     protected $tokenService;
@@ -229,10 +230,46 @@ class AutoDistributorFileController extends Controller
         // Prepare batch insert array
         $insertData = [];
         $rowCount = 0;
+        $extensions = [];
+        rewind($handle); // Rewind the file pointer to the beginning of the file
+        fgetcsv($handle); // Skip the header row
 
+        // Extract all extensions into an array for bulk fetching
+        while (($row = fgetcsv($handle)) !== false) {
+            if (isset($row[2])) {
+                $extensions[] = $row[2]; // Collect extensions
+            }
+        }
+
+        // Remove duplicates to reduce unnecessary queries
+        $extensions = array_unique($extensions);
+
+        // Fetch all user statuses in bulk
+        Log::info('Fetching user statuses for extensions...');
+        $userStatuses = TrheeCxUserStatus::whereIn('extension', $extensions)->get()->keyBy('extension');
+
+        if ($userStatuses->isEmpty()) {
+            Log::error('No valid user statuses found for provided extensions.');
+            fclose($handle);
+            return back()->withErrors(['error' => 'No valid user statuses found for the provided extensions.']);
+        }
+
+        // Reset the file pointer again to process rows
+        rewind($handle);
+        fgetcsv($handle); // Skip the header row
         // Process the CSV rows (starting from second row since first is header)
         while (($row = fgetcsv($handle)) !== false) {
             $rowCount++;
+
+            // Check if the extension exists in the user statuses
+            $userStatus = $userStatuses[$row[2]] ?? null;
+
+            if (!$userStatus) {
+                Log::warning('User status not found for extension: ' . $row[2]);
+                $uploadedFile->delete(); // Rollback file upload on error
+                fclose($handle);
+                return back()->with(['wrong' => 'No user with extension ' . $row[2] . ' in your system.']);
+            }
 
             // Ensure row has sufficient columns (at least 3: mobile, user, extension)
             if (count($row) < 3) {
@@ -254,6 +291,8 @@ class AutoDistributorFileController extends Controller
                 'mobile' => $row[0],
                 'user' => $row[1],
                 'extension' => $row[2],
+                'userStatus' => $userStatus->status,
+                'three_cx_user_id' => $userStatus->user_id,
                 'uploaded_by' => Auth::id(),
                 'file_id' => $uploadedFile->id,
             ];
@@ -262,13 +301,10 @@ class AutoDistributorFileController extends Controller
 
             // Batch insert every 1000 rows to prevent memory overflow
             if (count($insertData) >= 1000) {
-                // Use a transaction for better error handling
                 DB::beginTransaction();
 
                 try {
-                    // Log the data before inserting for debugging
                     Log::info('Inserting the following data: ' . json_encode($insertData));
-
                     AutoDistributorUploadedData::insert($insertData);
                     DB::commit();
                     Log::info('Inserted ' . count($insertData) . ' records successfully.');
@@ -281,6 +317,27 @@ class AutoDistributorFileController extends Controller
                 }
             }
         }
+
+        // Insert remaining rows if any
+        if (!empty($insertData)) {
+            DB::beginTransaction();
+
+            try {
+                AutoDistributorUploadedData::insert($insertData);
+                DB::commit();
+                Log::info('Inserted ' . count($insertData) . ' records successfully.');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error("Error inserting records: " . $e->getMessage());
+                fclose($handle);
+                return back()->withErrors(['error' => 'Failed to insert remaining records into the database.']);
+            }
+        }
+
+        fclose($handle);
+
+        Log::info('File uploaded and processed successfully.');
+        return back()->with('success', 'File uploaded and processed successfully.');
 
         // Insert remaining rows if any
         if (!empty($insertData)) {
