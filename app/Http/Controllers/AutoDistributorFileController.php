@@ -170,98 +170,98 @@ class AutoDistributorFileController extends Controller
         Log::info('Storing file: ' . $fileName);
         $file->storeAs('uploads', $fileName);
 
-        // Read and process file content
+        // Open file for reading
         $path = $file->getRealPath();
         Log::info('Reading file content from: ' . $path);
-        $fileContents = file_get_contents($path);
-        $fileContents = str_replace("\r\n", "\n", $fileContents); // Normalize line endings
 
-        // Split content into rows
-        $lines = explode("\n", $fileContents);
-        $data = array_map('str_getcsv', $lines);
-
-        // Check for valid file contents
-        if (count($data) < 2) {
-            Log::error('The file appears to be empty or has no valid rows.');
-            return back()->withErrors(['error' => 'The file appears to be empty or has no valid rows.']);
+        $handle = fopen($path, 'r');
+        if (!$handle) {
+            Log::error('Failed to open file.');
+            return back()->withErrors(['error' => 'Failed to open the file.']);
         }
-        Log::info('File contains data. Processing the file...');
+
+        // Read header
+        $header = fgetcsv($handle);
+        if (!$header || count($header) < 6) {
+            Log::error('The file does not contain valid headers.');
+            fclose($handle);
+            return back()->withErrors(['error' => 'Invalid file headers.']);
+        }
 
         // Extract the first data row to get date, from, and to values
-        $firstDataRow = $data[1]; // Assuming row 0 is headers, row 1 is first data row
-
-        // Ensure required columns exist in the first row
+        $firstDataRow = fgetcsv($handle); // Read the first data row
         if (count($firstDataRow) < 6) {
             Log::error('Missing required columns (from, to, date).');
+            fclose($handle);
             return back()->withErrors(['error' => 'Missing required columns (from, to, date).']);
         }
 
+        // Convert time fields safely, assuming 12-hour format in CSV
+        Log::info('Converting time fields...');
         try {
-            // Convert time fields safely, assuming 12-hour format in CSV
-            Log::info('Converting time fields...');
+            $utcTime_from = Carbon::createFromFormat('h:i:s A', $firstDataRow[3])->format('H:i:s');
+            $utcTime_to = Carbon::createFromFormat('h:i:s A', $firstDataRow[4])->format('H:i:s');
+        } catch (\Exception $e) {
+            Log::error('Time format conversion error: ' . $e->getMessage());
+            fclose($handle);
+            return back()->withErrors(['error' => 'Invalid time format in the file.']);
+        }
 
-            // Ensure the time format is valid, add try-catch for potential conversion issues
-            try {
-                $utcTime_from = Carbon::createFromFormat('h:i:s A', $firstDataRow[3])->format('H:i:s');
-                $utcTime_to = Carbon::createFromFormat('h:i:s A', $firstDataRow[4])->format('H:i:s');
-            } catch (\Exception $e) {
-                Log::error('Time format conversion error: ' . $e->getMessage());
-                return back()->withErrors(['error' => 'Invalid time format in the file.']);
+        try {
+            $formattedDate = Carbon::parse($firstDataRow[5])->format('Y-m-d');
+        } catch (\Exception $e) {
+            Log::error('Date format conversion error: ' . $e->getMessage());
+            fclose($handle);
+            return back()->withErrors(['error' => 'Invalid date format in the file.']);
+        }
+
+        // Create a SINGLE AutoDistributorFile entry for this upload
+        Log::info('Creating AutoDistributorFile entry...');
+        $uploadedFile = AutoDistributorFile::create([
+            'file_name' => $fileName,
+            'from' => $utcTime_from,
+            'to' => $utcTime_to,
+            'date' => $formattedDate,
+            'uploaded_by' => Auth::id(),
+        ]);
+        Log::info('AutoDistributorFile entry created with ID: ' . $uploadedFile->id);
+
+        // Prepare batch insert array
+        $insertData = [];
+        $rowCount = 0;
+
+        // Process the CSV rows (starting from second row since first is header)
+        while (($row = fgetcsv($handle)) !== false) {
+            $rowCount++;
+
+            // Ensure row has sufficient columns (at least 3: mobile, user, extension)
+            if (count($row) < 3) {
+                Log::warning('Skipping row due to insufficient columns: ' . json_encode($row));
+                $uploadedFile->delete(); // Rollback file upload on error
+                fclose($handle);
+                return back()->with(['wrong' => 'Ensure that no row is empty in the file.']);
             }
 
-            // Ensure the date format is valid, also wrap in try-catch for error handling
-            try {
-                $formattedDate = Carbon::parse($firstDataRow[5])->format('Y-m-d');
-            } catch (\Exception $e) {
-                Log::error('Date format conversion error: ' . $e->getMessage());
-                return back()->withErrors(['error' => 'Invalid date format in the file.']);
+            // Validate that the required columns have no empty values
+            if (empty($row[0]) || empty($row[1]) || empty($row[2])) {
+                $uploadedFile->delete(); // Rollback file upload on error
+                fclose($handle);
+                return back()->with(['wrong' => 'Ensure that no row is empty in the file.']);
             }
 
-            // Create a SINGLE AutoDistributorFile entry for this upload
-            Log::info('Creating AutoDistributorFile entry...');
-            $uploadedFile = AutoDistributorFile::create([
-                'file_name' => $fileName,
-                'from' => $utcTime_from,
-                'to' => $utcTime_to,
-                'date' => $formattedDate,
+            // Add to batch insert array
+            $insertData[] = [
+                'mobile' => $row[0],
+                'user' => $row[1],
+                'extension' => $row[2],
                 'uploaded_by' => Auth::id(),
-            ]);
-            Log::info('AutoDistributorFile entry created with ID: ' . $uploadedFile->id);
+                'file_id' => $uploadedFile->id,
+            ];
 
-            // Prepare batch insert array
-            $insertData = [];
+            Log::info('Prepared data for mobile: ' . $row[0] . ' extension: ' . $row[2]);
 
-            // Process the CSV rows (skipping the header)
-            foreach ($data as $index => $row) {
-                if ($index == 0) continue; // Skip header row
-
-                // Ensure row has sufficient columns (at least 3: mobile, user, extension)
-                if (count($row) < 3) {
-                    Log::warning('Skipping row due to insufficient columns: ' . json_encode($row));
-                    $uploadedFile->delete(); // Rollback file upload on error
-                    return back()->with(['wrong' => 'Ensure that no row is empty in the file.']);
-                }
-
-                // Validate that the required columns have no empty values
-                if (empty($row[0]) || empty($row[1]) || empty($row[2])) {
-                    $uploadedFile->delete(); // Rollback file upload on error
-                    return back()->with(['wrong' => 'Ensure that no row is empty in the file.']);
-                }
-
-                // Add to batch insert array
-                $insertData[] = [
-                    'mobile' => $row[0],
-                    'user' => $row[1],
-                    'extension' => $row[2],
-                    'uploaded_by' => Auth::id(),
-                    'file_id' => $uploadedFile->id,
-                ];
-
-                Log::info('Prepared data for mobile: ' . $row[0] . ' extension: ' . $row[2]);
-            }
-
-            // Batch insert for better performance
-            if (!empty($insertData)) {
+            // Batch insert every 1000 rows to prevent memory overflow
+            if (count($insertData) >= 1000) {
                 // Use a transaction for better error handling
                 DB::beginTransaction();
 
@@ -272,25 +272,38 @@ class AutoDistributorFileController extends Controller
                     AutoDistributorUploadedData::insert($insertData);
                     DB::commit();
                     Log::info('Inserted ' . count($insertData) . ' records successfully.');
+                    $insertData = []; // Reset batch data
                 } catch (\Exception $e) {
                     DB::rollBack();
                     Log::error("Error inserting records: " . $e->getMessage());
-                    Log::error("Error details: " . $e->getTraceAsString());
+                    fclose($handle);
                     return back()->withErrors(['error' => 'Failed to insert records into the database.']);
                 }
-            } else {
-                Log::warning('No valid records found for insertion.');
             }
-
-            Log::info('File uploaded and processed successfully.');
-            return back()->with('success', 'File uploaded and processed successfully.');
-        } catch (\Exception $e) {
-            // Log the error with exception details
-            Log::error("Error processing file: " . $e->getMessage());
-            Log::error("Error Details: " . $e->getTraceAsString());
-            return back()->withErrors(['error' => 'There was an error processing the file.']);
         }
+
+        // Insert remaining rows if any
+        if (!empty($insertData)) {
+            DB::beginTransaction();
+
+            try {
+                AutoDistributorUploadedData::insert($insertData);
+                DB::commit();
+                Log::info('Inserted ' . count($insertData) . ' records successfully.');
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error("Error inserting records: " . $e->getMessage());
+                fclose($handle);
+                return back()->withErrors(['error' => 'Failed to insert remaining records into the database.']);
+            }
+        }
+
+        fclose($handle);
+
+        Log::info('File uploaded and processed successfully.');
+        return back()->with('success', 'File uploaded and processed successfully.');
     }
+
 
 
 
