@@ -30,21 +30,23 @@ class AutoDailerFileController extends Controller
         try {
             // Open the file for reading
             if (($handle = fopen($path, 'r')) === false) {
-                return back()->withErrors(['error' => 'Unable to open the file for reading.']);
+                return back()->with(['wrong' => 'Unable to open the file for reading.']);
             }
 
             // Read the header row
             $header = fgetcsv($handle);
             if ($header === false || count($header) < 6) {
                 fclose($handle);
-                return back()->withErrors(['error' => 'The file is missing required columns (from, to, date).']);
+                return back()->with([
+                    'wrong' => 'Ensure that you entered all rows and followed the format in 📁 Auto Dailer - Demo 📁 file.',
+                ]);
             }
 
             // Read the first data row to extract `from`, `to`, and `date`
             $firstDataRow = fgetcsv($handle);
             if ($firstDataRow === false || count($firstDataRow) < 6) {
                 fclose($handle);
-                return back()->withErrors(['error' => 'The file does not contain valid data rows.']);
+                return back()->with(['wrong' => 'Can not extract time-from , time-to and date']);
             }
 
             // Time Format Handling
@@ -85,13 +87,7 @@ class AutoDailerFileController extends Controller
                 if (!$utcTime_from || !$utcTime_to) {
                     return back()->with(
                         'wrong',
-                        'Invalid time format in the file. Please try one of these time formats:
-                        {
-                            08:00:00 AM
-                            08:00 AM
-                            08:00:00
-                            08:00
-                        }'
+                        'Invalid time format in the file. Please try one of these time formats:{ 08:00:00 AM, 08:00 AM, 08:00:00, 08:00, 08:00AM, 8:00AM }'
                     );
                 }
             } catch (\Exception $e) {
@@ -130,18 +126,7 @@ class AutoDailerFileController extends Controller
                     // If no format matches, return the error message to the user
                     return back()->with(
                         'wrong',
-                        'Invalid date format in the file. Please try one of these date formats:
-                        {
-                            2025-01-19
-                            2025/01/19
-                            19/01/2025
-                            01/19/2025
-                            19-01-2025
-                            01-19-2025
-                            19.01.2025
-                            19 Jan 2025
-                            19 January 2025
-                        }'
+                        'Invalid date format in the file. Please try one of these date formats:{ 2025-01-19, 2025/01/19, 19/01/2025, 01/19/2025, 19-01-2025, 01-19-2025, 19.01.2025, 19 Jan 2025, 19 January 2025 }'
                     );
                 }
             } catch (\Exception $e) {
@@ -149,7 +134,7 @@ class AutoDailerFileController extends Controller
                 fclose($handle);
 
                 // Return a generic error message
-                return back()->withErrors(['error' => 'Failed to process the date. Please check the file.']);
+                return back()->with(['wrong' => 'Failed to process the date. Please check the file.']);
             }
 
 

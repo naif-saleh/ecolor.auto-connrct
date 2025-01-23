@@ -235,13 +235,7 @@ class AutoDistributorFileController extends Controller
             if (!$utcTime_from || !$utcTime_to) {
                 return back()->with(
                     'wrong',
-                    'Invalid time format in the file. Please try one of these time formats:
-                    {
-                        08:00:00 AM
-                        08:00 AM
-                        08:00:00
-                        08:00
-                    }'
+                    'Invalid time format in the file. Please try one of these time formats:{ 08:00:00 AM, 08:00 AM, 08:00:00, 08:00, 08:00AM, 8:00AM }'
                 );
             }
         } catch (\Exception $e) {
@@ -281,18 +275,7 @@ class AutoDistributorFileController extends Controller
             if (!$formattedDate) {
                 return back()->with(
                     'wrong',
-                    'Invalid date format in the file. Please try one of these date formats:
-                    {
-                        2025-01-19
-                        2025/01/19
-                        19/01/2025
-                        01/19/2025
-                        19-01-2025
-                        01-19-2025
-                        19.01.2025
-                        19 Jan 2025
-                        19 January 2025
-                    }'
+                    'Invalid date format in the file. Please try one of these date formats:{ 2025-01-19, 2025/01/19, 19/01/2025, 01/19/2025, 19-01-2025, 01-19-2025, 19.01.2025, 19 Jan 2025, 19 January 2025 }'
                 );
             }
         } catch (\Exception $e) {
@@ -339,7 +322,7 @@ class AutoDistributorFileController extends Controller
             Log::error('No valid user statuses found for provided extensions.');
             $uploadedFile->delete();
             fclose($handle);
-            return back()->withErrors(['wrong' => 'No valid user statuses found for the provided extensions.']);
+            return back()->with(['wrong' => 'No valid user statuses found for the provided extensions.']);
         }
 
         // Reset the file pointer again to process rows
@@ -401,7 +384,7 @@ class AutoDistributorFileController extends Controller
                     DB::rollBack();
                     Log::error("Error inserting records: " . $e->getMessage());
                     fclose($handle);
-                    return back()->withErrors(['error' => 'Failed to insert records into the database.']);
+                    return back()->with(['wrong' => 'Failed to insert records into the database.']);
                 }
             }
         }
@@ -418,7 +401,7 @@ class AutoDistributorFileController extends Controller
                 DB::rollBack();
                 Log::error("Error inserting records: " . $e->getMessage());
                 fclose($handle);
-                return back()->withErrors(['error' => 'Failed to insert remaining records into the database.']);
+                return back()->with(['wrong' => 'Failed to insert remaining records into the database.']);
             }
         }
 
@@ -439,7 +422,7 @@ class AutoDistributorFileController extends Controller
                 DB::rollBack();
                 Log::error("Error inserting records: " . $e->getMessage());
                 fclose($handle);
-                return back()->withErrors(['error' => 'Failed to insert remaining records into the database.']);
+                return back()->withErrors(['wrong' => 'Failed to insert remaining records into the database.']);
             }
         }
 
