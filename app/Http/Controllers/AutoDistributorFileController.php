@@ -298,6 +298,7 @@ class AutoDistributorFileController extends Controller
         Log::info('AutoDistributorFile entry created with ID: ' . $uploadedFile->id);
 
         // Prepare batch insert array
+        $seenMobiles = [];
         $insertData = [];
         $rowCount = 0;
         $extensions = [];
@@ -356,6 +357,24 @@ class AutoDistributorFileController extends Controller
                 fclose($handle);
                 return back()->with(['wrong' => 'Ensure that no row is empty in the file.']);
             }
+
+            // Check if $row[0] contains only numbers
+            if (!ctype_digit($row[0])) {
+                Log::warning('Skipping row due to non-numeric mobile number: ' . json_encode($row));
+                $uploadedFile->delete();
+                return back()->with(['wrong' => 'Mobile should only be numbers: ' . $row[0]]);
+            }
+
+            // Check for duplicate mobile number
+            if (in_array($row[0], $seenMobiles)) {
+                Log::warning('Skipping row due to duplicate mobile number: ' . json_encode($row));
+                $uploadedFile->delete();
+                return back()->with(['wrong' => 'Mobile is duplicated: ' . $row[0]]);
+                continue; // Skip this row
+            }
+
+            // Add the mobile number to the seen array
+            $seenMobiles[] = $row[0];
 
             // Add to batch insert array
             $insertData[] = [

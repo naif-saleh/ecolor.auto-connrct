@@ -152,12 +152,33 @@ class AutoDailerFileController extends Controller
 
             // Process the remaining rows
             $insertData = [];
+            $seenMobiles = []; // Array to track seen mobile numbers
+
             while (($row = fgetcsv($handle)) !== false) {
                 // Skip rows with insufficient columns
                 if (count($row) < 3) {
                     Log::warning('Skipping row due to missing columns: ' . json_encode($row));
-                    continue;
+                    $uploadedFile->delete();
+                    return back()->with(['wrong' => 'Ensure That all rows are entered']);
                 }
+
+                // Check if $row[0] contains only numbers
+                if (!ctype_digit($row[0])) {
+                    Log::warning('Skipping row due to non-numeric mobile number: ' . json_encode($row));
+                    $uploadedFile->delete();
+                    return back()->with(['wrong' => 'Mobile should only be numbers: '.$row[0]]);
+                }
+
+                // Check for duplicate mobile number
+                if (in_array($row[0], $seenMobiles)) {
+                    Log::warning('Skipping row due to duplicate mobile number: ' . json_encode($row));
+                    $uploadedFile->delete();
+                    return back()->with(['wrong' => 'Mobile is duplicated: '.$row[0]]);
+                    continue; // Skip this row
+                }
+
+                // Add the mobile number to the seen array
+                $seenMobiles[] = $row[0];
 
                 // Add data to the batch insert array
                 $insertData[] = [
@@ -175,6 +196,9 @@ class AutoDailerFileController extends Controller
                     $insertData = []; // Clear the batch array
                 }
             }
+
+
+
 
             // Insert any remaining rows
             if (!empty($insertData)) {
