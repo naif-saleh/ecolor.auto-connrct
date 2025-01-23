@@ -47,15 +47,112 @@ class AutoDailerFileController extends Controller
                 return back()->withErrors(['error' => 'The file does not contain valid data rows.']);
             }
 
-            // Convert time fields
+            // Time Format Handling
+            Log::info('Converting time fields...');
             try {
-                $utcTime_from = Carbon::createFromFormat('h:i:s A', $firstDataRow[3])->format('H:i:s');
-                $utcTime_to = Carbon::createFromFormat('h:i:s A', $firstDataRow[4])->format('H:i:s');
-                $formattedDate = Carbon::parse($firstDataRow[5])->format('Y-m-d');
+                // Possible time formats
+                $timeFormats = [
+                    'h:i:s A',   // 08:00:00 AM
+                    'h:i A',     // 08:00 AM
+                    'H:i:s',     // 08:00:00
+                    'H:i',       // 08:00
+                ];
+
+                Log::info('Converting time fields...');
+                $utcTime_from = null;
+                $utcTime_to = null;
+
+                // Attempt to parse `from` time
+                foreach ($timeFormats as $format) {
+                    try {
+                        $utcTime_from = Carbon::createFromFormat($format, $firstDataRow[3])->format('H:i:s');
+                        break; // Stop once a valid format is found
+                    } catch (\Exception $e) {
+                        // Continue trying the next format
+                    }
+                }
+
+                // Attempt to parse `to` time
+                foreach ($timeFormats as $format) {
+                    try {
+                        $utcTime_to = Carbon::createFromFormat($format, $firstDataRow[4])->format('H:i:s');
+                        break; // Stop once a valid format is found
+                    } catch (\Exception $e) {
+                        // Continue trying the next format
+                    }
+                }
+
+                if (!$utcTime_from || !$utcTime_to) {
+                    return back()->with(
+                        'wrong',
+                        'Invalid time format in the file. Please try one of these time formats:
+                        {
+                            08:00:00 AM
+                            08:00 AM
+                            08:00:00
+                            08:00
+                        }'
+                    );
+                }
             } catch (\Exception $e) {
+                Log::error('Time format conversion error: ' . $e->getMessage());
                 fclose($handle);
-                return back()->withErrors(['error' => 'Invalid date or time format in the file.']);
             }
+
+
+            // Date Format Handling
+            try {
+                // Possible date formats
+                $dateFormats = [
+                    'Y-m-d',       // 2025-01-19
+                    'Y/m/d',       // 2025/01/19
+                    'd/m/Y',       // 19/01/2025
+                    'm/d/Y',       // 01/19/2025
+                    'd-m-Y',       // 19-01-2025
+                    'm-d-Y',       // 01-19-2025
+                    'd.m.Y',       // 19.01.2025
+                    'd M Y',       // 19 Jan 2025
+                    'd F Y',       // 19 January 2025
+                ];
+
+                $formattedDate = null;
+
+                foreach ($dateFormats as $format) {
+                    try {
+                        $formattedDate = Carbon::createFromFormat($format, $firstDataRow[5])->format('Y-m-d');
+                        break; // Stop checking once a valid format is found
+                    } catch (\Exception $e) {
+                        // Continue trying the next format
+                    }
+                }
+
+                if (!$formattedDate) {
+                    // If no format matches, return the error message to the user
+                    return back()->with(
+                        'wrong',
+                        'Invalid date format in the file. Please try one of these date formats:
+                        {
+                            2025-01-19
+                            2025/01/19
+                            19/01/2025
+                            01/19/2025
+                            19-01-2025
+                            01-19-2025
+                            19.01.2025
+                            19 Jan 2025
+                            19 January 2025
+                        }'
+                    );
+                }
+            } catch (\Exception $e) {
+                Log::error('Date format conversion error: ' . $e->getMessage());
+                fclose($handle);
+
+                // Return a generic error message
+                return back()->withErrors(['error' => 'Failed to process the date. Please check the file.']);
+            }
+
+
 
             // Create a SINGLE `AutoDailerFile` entry for this file upload
             $uploadedFile = AutoDailerFile::create([
@@ -136,8 +233,8 @@ class AutoDailerFileController extends Controller
         Log::info($slug);
 
         // Now proceed with the update
-        $file = AutoDailerFile::where('slug',$slug);
-         if ($file) {
+        $file = AutoDailerFile::where('slug', $slug);
+        if ($file) {
             $file->update([
                 'file_name' => $file_name,
                 'from' => $from,

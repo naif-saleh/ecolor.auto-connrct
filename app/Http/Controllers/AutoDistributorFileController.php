@@ -197,24 +197,111 @@ class AutoDistributorFileController extends Controller
             return back()->withErrors(['error' => 'Missing required columns (from, to, date).']);
         }
 
-        // Convert time fields safely, assuming 12-hour format in CSV
+        // Time Format Handling
         Log::info('Converting time fields...');
         try {
-            $utcTime_from = Carbon::createFromFormat('h:i:s A', $firstDataRow[3])->format('H:i:s');
-            $utcTime_to = Carbon::createFromFormat('h:i:s A', $firstDataRow[4])->format('H:i:s');
+            // Possible time formats
+            $timeFormats = [
+                'h:i:s A',   // 08:00:00 AM
+                'h:i A',     // 08:00 AM
+                'H:i:s',     // 08:00:00
+                'H:i',       // 08:00
+            ];
+
+            Log::info('Converting time fields...');
+            $utcTime_from = null;
+            $utcTime_to = null;
+
+            // Attempt to parse `from` time
+            foreach ($timeFormats as $format) {
+                try {
+                    $utcTime_from = Carbon::createFromFormat($format, $firstDataRow[3])->format('H:i:s');
+                    break; // Stop once a valid format is found
+                } catch (\Exception $e) {
+                    // Continue trying the next format
+                }
+            }
+
+            // Attempt to parse `to` time
+            foreach ($timeFormats as $format) {
+                try {
+                    $utcTime_to = Carbon::createFromFormat($format, $firstDataRow[4])->format('H:i:s');
+                    break; // Stop once a valid format is found
+                } catch (\Exception $e) {
+                    // Continue trying the next format
+                }
+            }
+
+            if (!$utcTime_from || !$utcTime_to) {
+                return back()->with(
+                    'wrong',
+                    'Invalid time format in the file. Please try one of these time formats:
+                    {
+                        08:00:00 AM
+                        08:00 AM
+                        08:00:00
+                        08:00
+                    }'
+                );
+            }
         } catch (\Exception $e) {
             Log::error('Time format conversion error: ' . $e->getMessage());
             fclose($handle);
             return back()->withErrors(['error' => 'Invalid time format in the file.']);
         }
 
+        // Date Format Handling
         try {
-            $formattedDate = Carbon::parse($firstDataRow[5])->format('Y-m-d');
+            // Possible date formats
+            $dateFormats = [
+                'Y-m-d',       // 2025-01-19
+                'Y/m/d',       // 2025/01/19
+                'd/m/Y',       // 19/01/2025
+                'm/d/Y',       // 01/19/2025
+                'd-m-Y',       // 19-01-2025
+                'm-d-Y',       // 01-19-2025
+                'd.m.Y',       // 19.01.2025
+                'M d, Y',      // Jan 19, 2025
+                'd M Y',       // 19 Jan 2025
+                'F d, Y',      // January 19, 2025
+                'd F Y',       // 19 January 2025
+            ];
+
+            $formattedDate = null;
+
+            foreach ($dateFormats as $format) {
+                try {
+                    $formattedDate = Carbon::createFromFormat($format, $firstDataRow[5])->format('Y-m-d');
+                    break; // Stop checking once a valid format is found
+                } catch (\Exception $e) {
+                    // Continue trying the next format
+                }
+            }
+
+            if (!$formattedDate) {
+                return back()->with(
+                    'wrong',
+                    'Invalid date format in the file. Please try one of these date formats:
+                    {
+                        2025-01-19
+                        2025/01/19
+                        19/01/2025
+                        01/19/2025
+                        19-01-2025
+                        01-19-2025
+                        19.01.2025
+                        19 Jan 2025
+                        19 January 2025
+                    }'
+                );
+            }
         } catch (\Exception $e) {
             Log::error('Date format conversion error: ' . $e->getMessage());
             fclose($handle);
-            return back()->withErrors(['error' => 'Invalid date format in the file.']);
+            return back()->withErrors(['wrong' => 'Invalid date format in the file.']);
         }
+
+
 
         // Create a SINGLE AutoDistributorFile entry for this upload
         Log::info('Creating AutoDistributorFile entry...');
@@ -250,8 +337,9 @@ class AutoDistributorFileController extends Controller
 
         if ($userStatuses->isEmpty()) {
             Log::error('No valid user statuses found for provided extensions.');
+            $uploadedFile->delete();
             fclose($handle);
-            return back()->withErrors(['error' => 'No valid user statuses found for the provided extensions.']);
+            return back()->withErrors(['wrong' => 'No valid user statuses found for the provided extensions.']);
         }
 
         // Reset the file pointer again to process rows
