@@ -31,6 +31,11 @@ Route::get('/', function () {
         if ($user->isManagerUser()) {
             return redirect()->route('manager.dashboard');
         }
+
+        if ($user->isUser()) {
+            return redirect()->route('evaluation');
+        }
+
     }
 
     return view('auth.login');
