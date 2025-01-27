@@ -52,14 +52,14 @@ class MakeUserParticipantCommand extends Command
 
 
 
-        $providersFeeds = AutoDistributorUploadedData::whereDate('created_at', Carbon::today())->get();
+        $providersFeeds = AutoDistributorUploadedData::all();
 
         foreach ($providersFeeds as $feed) {
             $ext_from = $feed->extension;
 
             try {
                 $token = $this->tokenService->getToken();
-                // Log::error("participantsCommand token " . $token);
+                Log::error("participantsCommand token " . $token);
                 // Fetch participants for the extension
                 $responseState = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token,
@@ -129,7 +129,7 @@ class MakeUserParticipantCommand extends Command
                                         ]);
                                     }
 
-                                    // Update the status in another table
+                                    // Update the status in AutoDistributorUploadedData
                                     AutoDistributorUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
 
                                     Log::info("

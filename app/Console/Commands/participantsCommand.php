@@ -55,7 +55,7 @@ class participantsCommand extends Command
 
 
 
-        $providersFeeds = AutoDailerUploadedData::whereDate('created_at', Carbon::today())->get();
+        $providersFeeds = AutoDailerUploadedData::all();
 
         foreach ($providersFeeds as $feed) {
             $ext_from = $feed->extension;
