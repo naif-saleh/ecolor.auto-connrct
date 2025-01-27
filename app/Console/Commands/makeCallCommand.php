@@ -60,7 +60,7 @@ class makeCallCommand extends Command
 
 
 
-        $autoDailerFiles = AutoDailerFile::where('allow', 1)->paginate(10);
+        $autoDailerFiles = AutoDailerFile::all();
 
 
         foreach ($autoDailerFiles as $feed) {

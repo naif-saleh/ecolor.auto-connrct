@@ -50,7 +50,7 @@ class MakeUserCallCommand extends Command
                     \t| 📞 ✅ MakeCallCommand executed at " . now() . "               |
                     \t-----------------------------------------------------------------------
                 ");
-        $autoDailerFiles = AutoDistributorFile::where('allow', 1)->paginate(10);
+        $autoDailerFiles = AutoDistributorFile::all();
 
         foreach ($autoDailerFiles as $feed) {
             // Create from and to date objects adjusted by -3 hours
