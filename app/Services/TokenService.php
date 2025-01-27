@@ -26,6 +26,7 @@ class TokenService
     {
         $cachedToken = Cache::get('three_cx_token');
 
+
         if ($cachedToken) {
             Log::info('tokenServices: Using cached token.');
             return $cachedToken;
@@ -35,6 +36,12 @@ class TokenService
         //     Log::info('Using cached token.');
         //     return $cachedToken;
         // }
+
+        if ($cachedToken) {
+            Log::info('Using cached token.');
+            return $cachedToken;
+        }
+
 
 
         return $this->generateToken();
