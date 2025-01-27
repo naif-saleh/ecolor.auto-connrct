@@ -49,7 +49,7 @@ class MakeUserCallCommand extends Command
                     \t| 📞 ✅ MakeCallCommand executed at " . now() . "               |
                     \t-----------------------------------------------------------------------
                 ");
-        $autoDailerFiles = AutoDistributorFile::where('allow', 1)->paginate(50);
+        $autoDailerFiles = AutoDistributorFile::where('allow', 1)->paginate(10);
 
         foreach ($autoDailerFiles as $feed) {
             // Create from and to date objects adjusted by -3 hours
@@ -65,7 +65,7 @@ class MakeUserCallCommand extends Command
                 \t        -----------------------------------------------------------------------
             ");
 
-                $data = AutoDistributorUploadedData::where('file_id', $feed->id)->where('state', 'new')->get();
+                $data = AutoDistributorUploadedData::where('file_id', $feed->id)->where('state', 'new')->paginate(50);
                 foreach ($data as $feedData) {
 
                     try {

@@ -59,7 +59,7 @@ class makeCallCommand extends Command
 
 
 
-        $autoDailerFiles = AutoDailerFile::where('allow', 1)->paginate(50);
+        $autoDailerFiles = AutoDailerFile::where('allow', 1)->paginate(10);
 
 
         foreach ($autoDailerFiles as $feed) {
@@ -77,7 +77,7 @@ class makeCallCommand extends Command
                         ");
 
 
-                $data = AutoDailerUploadedData::where('file_id', $feed->id)->where('state', 'new')->get();
+                $data = AutoDailerUploadedData::where('file_id', $feed->id)->where('state', 'new')->paginate(50);
                 foreach ($data as $feedData) {
 
                     try {
