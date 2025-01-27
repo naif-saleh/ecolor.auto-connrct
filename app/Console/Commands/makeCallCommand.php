@@ -59,7 +59,8 @@ class makeCallCommand extends Command
 
 
 
-        $autoDailerFiles = AutoDailerFile::all();
+        $autoDailerFiles = AutoDailerFile::where('allow', 1)->paginate(50);
+
 
         foreach ($autoDailerFiles as $feed) {
             // Create from and to date objects adjusted by -3 hours
@@ -131,14 +132,13 @@ class makeCallCommand extends Command
                             ");
                         }
                     } catch (\Exception $e) {
-                                        Log::error("
+                        Log::error("
                                                     \t-----------------------------------------------------------------------
                                                     \t\t\t\t********** Auto Dialer Error **********
                                                     \t-----------------------------------------------------------------------
                                                     \t| ❌ Error occurred in Auto Dialer: " . $e->getMessage() . " |
                                                     \t-----------------------------------------------------------------------
                                             ");
-
                     }
                     $allCalled = AutoDailerUploadedData::where('file_id', $feedData->file->id)->where('state', 'new')->count() == 0;
                     if ($allCalled) {
@@ -160,7 +160,6 @@ class makeCallCommand extends Command
                             \t\t\t    ⏰❌ TIME OUT: File ID " . $feed->id . " is NOT within range ❌⏰
                             \t        -----------------------------------------------------------------------
                         ");
-
             }
         }
     }

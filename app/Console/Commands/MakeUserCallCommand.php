@@ -49,7 +49,7 @@ class MakeUserCallCommand extends Command
                     \t| 📞 ✅ MakeCallCommand executed at " . now() . "               |
                     \t-----------------------------------------------------------------------
                 ");
-        $autoDailerFiles = AutoDistributorFile::all();
+        $autoDailerFiles = AutoDistributorFile::where('allow', 1)->paginate(50);
 
         foreach ($autoDailerFiles as $feed) {
             // Create from and to date objects adjusted by -3 hours
@@ -165,11 +165,9 @@ class MakeUserCallCommand extends Command
                                 }
                             } else {
                                 Log::error('Auto Distributor Error: ❌ Error fetching active calls for mobile ' . $feedData->mobile);
-
                             }
                         } else {
                             Log::error('Auto Distributor Error: 📵 Employee is not available. Skipping call for mobile ' . $feedData->mobile);
-
                         }
                     } catch (\Exception $e) {
                         Log::error("
@@ -195,7 +193,6 @@ class MakeUserCallCommand extends Command
                                     \t✅✅✅ All Numbers Called ✅✅✅
                                 ");
                     }
-
                 }
             } else {
                 Log::info("
