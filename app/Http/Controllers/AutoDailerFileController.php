@@ -24,11 +24,10 @@ class AutoDailerFileController extends Controller
         $file = $request->file('file');
         $fileName = time() . '_' . $file->getClientOriginalName();
         $file->storeAs('uploads', $fileName);
-
         $path = $file->getRealPath();
 
         try {
-            // Open the file for reading
+            // Open the file
             if (($handle = fopen($path, 'r')) === false) {
                 return back()->with(['wrong' => 'Unable to open the file for reading.']);
             }
@@ -42,104 +41,55 @@ class AutoDailerFileController extends Controller
                 ]);
             }
 
-            // Read the first data row to extract `from`, `to`, and `date`
+            // Read the first data row
             $firstDataRow = fgetcsv($handle);
             if ($firstDataRow === false || count($firstDataRow) < 6) {
                 fclose($handle);
-                return back()->with(['wrong' => 'Can not extract time-from , time-to and date']);
+                return back()->with(['wrong' => 'Cannot extract time-from, time-to, and date.']);
             }
 
             // Time Format Handling
-            Log::info('Converting time fields...');
-            try {
-                // Possible time formats
-                $timeFormats = [
-                    'h:i:s A',   // 08:00:00 AM
-                    'h:i A',     // 08:00 AM
-                    'H:i:s',     // 08:00:00
-                    'H:i',       // 08:00
-                ];
+            $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
+            $utcTime_from = null;
+            $utcTime_to = null;
 
-                Log::info('Converting time fields...');
-                $utcTime_from = null;
-                $utcTime_to = null;
-
-                // Attempt to parse `from` time
-                foreach ($timeFormats as $format) {
-                    try {
-                        $utcTime_from = Carbon::createFromFormat($format, $firstDataRow[3])->format('H:i:s');
-                        break; // Stop once a valid format is found
-                    } catch (\Exception $e) {
-                        // Continue trying the next format
-                    }
+            foreach ($timeFormats as $format) {
+                try {
+                    $utcTime_from = Carbon::createFromFormat($format, $firstDataRow[3])->format('H:i:s');
+                    break;
+                } catch (\Exception $e) {
                 }
-
-                // Attempt to parse `to` time
-                foreach ($timeFormats as $format) {
-                    try {
-                        $utcTime_to = Carbon::createFromFormat($format, $firstDataRow[4])->format('H:i:s');
-                        break; // Stop once a valid format is found
-                    } catch (\Exception $e) {
-                        // Continue trying the next format
-                    }
-                }
-
-                if (!$utcTime_from || !$utcTime_to) {
-                    return back()->with(
-                        'wrong',
-                        'Invalid time format in the file. Please try one of these time formats:{ 08:00:00 AM, 08:00 AM, 08:00:00, 08:00, 08:00AM, 8:00AM }'
-                    );
-                }
-            } catch (\Exception $e) {
-                Log::error('Time format conversion error: ' . $e->getMessage());
-                fclose($handle);
             }
 
+            foreach ($timeFormats as $format) {
+                try {
+                    $utcTime_to = Carbon::createFromFormat($format, $firstDataRow[4])->format('H:i:s');
+                    break;
+                } catch (\Exception $e) {
+                }
+            }
+
+            if (!$utcTime_from || !$utcTime_to) {
+                return back()->with('wrong', 'Invalid time format in the file. Please use one of these: { 08:00:00 AM, 08:00 AM, 08:00:00, 08:00, 08:00AM, 8:00AM }');
+            }
 
             // Date Format Handling
-            try {
-                // Possible date formats
-                $dateFormats = [
-                    'Y-m-d',       // 2025-01-19
-                    'Y/m/d',       // 2025/01/19
-                    'd/m/Y',       // 19/01/2025
-                    'm/d/Y',       // 01/19/2025
-                    'd-m-Y',       // 19-01-2025
-                    'm-d-Y',       // 01-19-2025
-                    'd.m.Y',       // 19.01.2025
-                    'd M Y',       // 19 Jan 2025
-                    'd F Y',       // 19 January 2025
-                ];
+            $dateFormats = ['Y-m-d', 'Y/m/d', 'd/m/Y', 'm/d/Y', 'd-m-Y', 'm-d-Y', 'd.m.Y', 'd M Y', 'd F Y'];
+            $formattedDate = null;
 
-                $formattedDate = null;
-
-                foreach ($dateFormats as $format) {
-                    try {
-                        $formattedDate = Carbon::createFromFormat($format, $firstDataRow[5])->format('Y-m-d');
-                        break; // Stop checking once a valid format is found
-                    } catch (\Exception $e) {
-                        // Continue trying the next format
-                    }
+            foreach ($dateFormats as $format) {
+                try {
+                    $formattedDate = Carbon::createFromFormat($format, $firstDataRow[5])->format('Y-m-d');
+                    break;
+                } catch (\Exception $e) {
                 }
-
-                if (!$formattedDate) {
-                    // If no format matches, return the error message to the user
-                    return back()->with(
-                        'wrong',
-                        'Invalid date format in the file. Please try one of these date formats:{ 2025-01-19, 2025/01/19, 19/01/2025, 01/19/2025, 19-01-2025, 01-19-2025, 19.01.2025, 19 Jan 2025, 19 January 2025 }'
-                    );
-                }
-            } catch (\Exception $e) {
-                Log::error('Date format conversion error: ' . $e->getMessage());
-                fclose($handle);
-
-                // Return a generic error message
-                return back()->with(['wrong' => 'Failed to process the date. Please check the file.']);
             }
 
+            if (!$formattedDate) {
+                return back()->with('wrong', 'Invalid date format in the file. Please use one of these: { 2025-01-19, 2025/01/19, 19/01/2025, 01/19/2025, 19-01-2025, 01-19-2025, 19.01.2025, 19 Jan 2025, 19 January 2025 }');
+            }
 
-
-            // Create a SINGLE `AutoDailerFile` entry for this file upload
+            // Create an `AutoDailerFile` entry
             $uploadedFile = AutoDailerFile::create([
                 'file_name' => $fileName,
                 'from' => $utcTime_from,
@@ -148,39 +98,45 @@ class AutoDailerFileController extends Controller
                 'uploaded_by' => Auth::id(),
             ]);
 
-            Log::info('AutoDailerFile created with ID: ' . $uploadedFile->id);
+            // Process the first data row manually
+            $insertData = [];
+            $seenMobiles = [];
+            $duplicateMobiles = [];
+
+            // Add the first data row to the insert array
+            $insertData[] = [
+                'mobile' => $firstDataRow[0],
+                'provider' => $firstDataRow[1],
+                'extension' => $firstDataRow[2],
+                'uploaded_by' => Auth::id(),
+                'file_id' => $uploadedFile->id,
+            ];
+            $seenMobiles[$firstDataRow[0]] = true;
 
             // Process the remaining rows
-            $insertData = [];
-            $seenMobiles = []; // Array to track seen mobile numbers
-
             while (($row = fgetcsv($handle)) !== false) {
-                // Skip rows with insufficient columns
-                if (count($row) < 3) {
+                if (count($row) < 6) {
                     Log::warning('Skipping row due to missing columns: ' . json_encode($row));
                     $uploadedFile->delete();
-                    return back()->with(['wrong' => 'Ensure That all rows are entered']);
+                    return back()->with(['wrong' => 'Ensure that all rows are entered.']);
                 }
 
-                // Check if $row[0] contains only numbers
+                // Validate mobile number format
                 if (!ctype_digit($row[0])) {
                     Log::warning('Skipping row due to non-numeric mobile number: ' . json_encode($row));
                     $uploadedFile->delete();
-                    return back()->with(['wrong' => 'Mobile should only be numbers: '.$row[0]]);
+                    return back()->with(['wrong' => 'Mobile should only be numbers: ' . $row[0]]);
                 }
 
-                // Check for duplicate mobile number
-                if (in_array($row[0], $seenMobiles)) {
-                    Log::warning('Skipping row due to duplicate mobile number: ' . json_encode($row));
-                    $uploadedFile->delete();
-                    return back()->with(['wrong' => 'Mobile is duplicated: '.$row[0]]);
+                // Check for duplicate mobile numbers
+                if (isset($seenMobiles[$row[0]])) {
+                    $duplicateMobiles[] = $row[0];
                     continue; // Skip this row
                 }
 
-                // Add the mobile number to the seen array
-                $seenMobiles[] = $row[0];
+                $seenMobiles[$row[0]] = true;
 
-                // Add data to the batch insert array
+                // Add to batch insert array
                 $insertData[] = [
                     'mobile' => $row[0],
                     'provider' => $row[1],
@@ -189,24 +145,27 @@ class AutoDailerFileController extends Controller
                     'file_id' => $uploadedFile->id,
                 ];
 
-                // Insert in batches of 1000 for memory efficiency
+                // Insert in batches of 1000
                 if (count($insertData) >= 1000) {
                     AutoDailerUploadedData::insert($insertData);
                     Log::info('Inserted 1000 records successfully.');
-                    $insertData = []; // Clear the batch array
+                    $insertData = [];
                 }
             }
 
-
-
-
-            // Insert any remaining rows
+            // Insert remaining rows
             if (!empty($insertData)) {
                 AutoDailerUploadedData::insert($insertData);
                 Log::info('Inserted remaining ' . count($insertData) . ' records successfully.');
             }
 
             fclose($handle);
+
+            // If there are duplicate numbers, return them as an error message
+            if (!empty($duplicateMobiles)) {
+                $uploadedFile->delete();
+                return back()->with(['wrong' => 'Duplicate mobile number /s found: ' . implode(', ', $duplicateMobiles)]);
+            }
 
             return back()->with('success', 'File uploaded and processed successfully.');
         } catch (\Exception $e) {
@@ -219,40 +178,31 @@ class AutoDailerFileController extends Controller
 
 
 
-    public function updateAutoDailer(Request $request, $slug)
+
+
+    public function updateAutoDailer(Request $request, $id)
     {
 
 
-        // Validate the request inputs
         $request->validate([
             'file_name' => 'required',
-            'from' => 'required|date_format:H:i',
-            'to' => 'required|date_format:H:i',
-            'date' => 'required|date_format:Y-m-d',
+            'from' => 'required',
+            'to' => 'required',
+            'date' => 'required',
         ]);
 
-        // Check the input data before updating
-        $file_name = $request->input('file_name');
-        $from = $request->input('from');
-        $to = $request->input('to');
-        $date = $request->input('date');
+        // Find the file by slug
 
-        // Debugging: Log the input values to see what you're getting
-        Log::info("Updating Auto Dialer File: slug=$slug, from=$from, to=$to, date=$date");
-        Log::info($slug);
 
-        // Now proceed with the update
-        $file = AutoDailerFile::where('slug', $slug);
-        if ($file) {
-            $file->update([
-                'file_name' => $file_name,
-                'from' => $from,
-                'to' => $to,
-                'date' => $date,
-            ]);
-        }
+        // Update all records for the given file ID
+        AutoDailerFile::where('id', $id)->update([
+            'file_name' => $request->file_name,
+            'from' => $request->from,
+            'to' => $request->to,
+            'date' => $request->date,
+        ]);
 
-        return redirect()->back()->with('success', 'Time and Date updated successfully.');
+        return redirect()->back()->with('success', 'Time and Date updated successfully for all records.');
     }
 
 

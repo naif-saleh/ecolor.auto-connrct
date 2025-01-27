@@ -135,7 +135,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('auto-dailer/upload-csv', [AutoDailerFileController::class, 'uploadCsv'])->name('autodailers.upload.csv');
     Route::delete('/autodailer-file/{id}', [AutoDailerFileController::class, 'deleteFile'])->name('autodailer.delete');
     // Route::get('/auto-dailer/{slug}/edit', [AutoDailerFileController::class, 'edit'])->name('autodailer.edit');
-    Route::put('/auto-dailer/{slug}', [AutoDailerFileController::class, 'updateAutoDailer'])->name('autoDailer.update');
+    Route::put('/auto-dailer/{id}', [AutoDailerFileController::class, 'updateAutoDailer'])->name('autoDailer.update');
 
     // download File....................................................................................................................
     Route::get('auto-dailer/download-processed-file/{fileId}', [AutoDailerFileController::class, 'downloadUploadedFile'])->name('autodailers.download.processed.files');
