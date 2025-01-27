@@ -77,12 +77,13 @@ class MakeUserParticipantCommand extends Command
 
                 if (empty($participants)) {
                     Log::warning("
-                    \t-----------------------------------------------------------------------
-                    \t\t********** Auto Distributor Warning **********\n
-                    \t-----------------------------------------------------------------------
-                    \t ⚠️  No participantsCommand for {$ext_from}
-                    \t-----------------------------------------------------------------------
-            ");                    continue;
+                                    \t-----------------------------------------------------------------------
+                                    \t\t********** Auto Distributor Warning **********\n
+                                    \t-----------------------------------------------------------------------
+                                    \t ⚠️  No participantsCommand for {$ext_from}
+                                    \t-----------------------------------------------------------------------
+                            ");
+                    continue;
                 }
 
                 foreach ($participants as $participant_data) {
@@ -99,45 +100,55 @@ class MakeUserParticipantCommand extends Command
                         if ($activeCallsResponse->successful()) {
                             $activeCalls = $activeCallsResponse->json();
                             Log::info("
-                            \t********** Auto Distributor Response Participant Active Call **********
-                            \tResponse Data:
-                            \t" . print_r($activeCalls, true) . "
-                            \t******************************************************************
-                         ");
-                         foreach ($activeCalls['value'] as $call) {
+                                        \t********** Auto Distributor Response Participant Active Call **********
+                                        \tResponse Data:
+                                        \t" . print_r($activeCalls, true) . "
+                                        \t******************************************************************
+                                    ");
+                            foreach ($activeCalls['value'] as $call) {
                                 if (isset($call['Id']) && isset($call['Status']) && isset($call['EstablishedAt']) && isset($call['ServerNow'])) {
                                     Log::info("Processing Call ID {$call['Id']} with status {$call['Status']}");
 
-                                    // Calculate call duration
-                                    $establishedAt = new DateTime($call['EstablishedAt']);
-                                    $serverNow = new DateTime($call['ServerNow']);
-                                    $interval = $establishedAt->diff($serverNow);
-                                    $durationTime = $interval->format('%H:%I:%S');
+                                    // Only calculate duration if the call is in 'Talking' status
+                                    if ($call['Status'] === 'Talking') {
+                                        // Calculate call duration
+                                        $establishedAt = new DateTime($call['EstablishedAt']);
+                                        $serverNow = new DateTime($call['ServerNow']);
+                                        $interval = $establishedAt->diff($serverNow);
+                                        $durationTime = $interval->format('%H:%I:%S');
 
-                                    // Update call status and duration_time
-                                    AutoDistributerReport::where('call_id', $call['Id'])->update([
-                                        'status' => $call['Status'],
-                                        'duration_time' => $durationTime
-                                    ]);
+                                        // Update call status and duration_time
+                                        AutoDistributerReport::where('call_id', $call['Id'])->update([
+                                            'status' => $call['Status'],
+                                            'duration_time' => $durationTime
+                                        ]);
+                                    } else {
+                                        // If not in 'Talking' status, update only the status
+                                        AutoDistributerReport::where('call_id', $call['Id'])->update([
+                                            'status' => $call['Status']
+                                        ]);
+                                    }
 
+                                    // Update the status in another table
                                     AutoDistributorUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
 
                                     Log::info("
-                                    \t-----------------------------------------------------------------------
-                                    \t\t********** Auto Distributor Call Status Updated **********
-                                    \t-----------------------------------------------------------------------
-                                    \t| ✅ Updated status for Call ID {$call['Id']} to: {$call['Status']} |
-                                    \t-----------------------------------------------------------------------
-                            ");
-                         } else {
-                            Log::warning("
-                            \t-----------------------------------------------------------------------
-                            \t\t********** Auto Distributor Warning **********
-                            \t-----------------------------------------------------------------------
-                            \t| ⚠️ Call missing 'Id' or 'Status' for participant DN {$participant_data['dn']} |
-                            \t| Call Data: " . print_r($call, true) . " |
-                            \t-----------------------------------------------------------------------
-                    ");                                }
+                                                \t-----------------------------------------------------------------------
+                                                \t\t********** Auto Distributor Call Status Updated **********
+                                                \t-----------------------------------------------------------------------
+                                                \t| ✅ Updated status for Call ID {$call['Id']} to: {$call['Status']} |
+                                                \t-----------------------------------------------------------------------
+                                                ");
+                                } else {
+                                    // Log a warning for calls missing necessary data
+                                    Log::warning("
+                                                \t-----------------------------------------------------------------------
+                                                \t\t********** Auto Distributor Warning **********
+                                                \t-----------------------------------------------------------------------
+                                                \t| ⚠️ Call missing 'Id', 'Status', or other required fields for Call Data: " . print_r($call, true) . " |
+                                                \t-----------------------------------------------------------------------
+                                                ");
+                                }
                             }
                         } else {
                             Log::error('Auto Distributor Error: ❌ Failed to fetch active calls. Response: ' . $activeCallsResponse->body());
