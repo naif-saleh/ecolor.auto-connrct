@@ -56,10 +56,14 @@ class MakeUserParticipantCommand extends Command
             try {
                 $token = $this->tokenService->getToken();
 
+
                 Log::info("tokenServices: MakeUserParticipantCommand" . $token );
                 // Log::error("participantsCommand token " . $token);
 
                 Log::error("participantsCommand token " . $token);
+
+
+                // Log::error("participantsCommand token " . $token);
 
                 // Fetch participants for the extension
                 $responseState = Http::withHeaders([

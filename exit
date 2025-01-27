@@ -1,0 +1,275 @@
+[33mcommit 41ecf52085e00feccabaa74d7d4250c913952561[m[33m ([m[1;36mHEAD -> [m[1;32mmain[m[33m)[m
+Merge: 012a429 d156959
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Mon Jan 27 11:05:03 2025 +0100
+
+    add duration
+
+[33mcommit d156959b89d221da6522033ad296c785bc2271c7[m[33m ([m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Mon Jan 27 12:02:06 2025 +0200
+
+    add duration time
+
+[33mcommit 5e58801af4f0b68f361b1f2866888300a285fde5[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Mon Jan 27 11:04:18 2025 +0200
+
+    fix log isseu
+
+[33mcommit 012a4296f1c6899d48bec6629a85e914e9cc663b[m
+Merge: a66b066 e7b4d8a
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Mon Jan 27 09:26:17 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit e7b4d8ae67fd365840b8405d6a96fa2a9df1c0e7[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Mon Jan 27 10:25:02 2025 +0200
+
+    fix log isseu
+
+[33mcommit a66b066952fdfca1800db771b4f3be744dbc6f4f[m
+Merge: dc38976 f66d992
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Sun Jan 26 12:18:31 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit f66d992db7c84aafcc6f08e8cf307e6065a0e959[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Sun Jan 26 13:17:17 2025 +0200
+
+    fix user route
+
+[33mcommit dc389765b8cfe592b01538c9626331278bb3536d[m
+Merge: efe3a71 b4396d1
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Thu Jan 23 14:45:50 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit b4396d195af63d82bb74cfa7698173ebab66a14d[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Thu Jan 23 15:45:38 2025 +0200
+
+    make back-up command
+
+[33mcommit de58cdf38e892dc86216439887b5cdb030af4743[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Thu Jan 23 13:47:05 2025 +0200
+
+    make back-up command
+
+[33mcommit efe3a71b8c8b319a125901a064774a5b949c29bb[m
+Merge: 7d9f746 3d62d6c
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Thu Jan 23 12:12:46 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit 3d62d6cd1bb674550bc1b349a0e0db53af0ac616[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Thu Jan 23 13:12:35 2025 +0200
+
+    fix validation for date and time
+
+[33mcommit 7d9f746c710ab5f0951e4dd11b2ca18b5fb97669[m
+Merge: 4ffd432 a6db66f
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Thu Jan 23 09:58:30 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit a6db66fcfd9000023bdc3f233e0c95e35a316ecb[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Thu Jan 23 10:58:11 2025 +0200
+
+    Any Date or Time Format can be Acceptable
+
+[33mcommit 4ffd4329b623f2046f9db502b67ee61b81cf4e36[m
+Merge: 00c9729 e709a11
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Wed Jan 22 15:46:24 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit e709a1116118ae6bb7b56bcbc5b3295882004380[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Wed Jan 22 16:46:15 2025 +0200
+
+    update
+
+[33mcommit 00c97295756a8db05b7cc9003a52fd84ab8e71c6[m
+Merge: 8881a37 fb75032
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Wed Jan 22 15:20:46 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit fb750325f94f8fd3c80b6cf8d4134d0d45b10455[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Wed Jan 22 16:20:38 2025 +0200
+
+    update
+
+[33mcommit 8881a37c7c317fbdcf0644f85d4acf3f4ef38224[m
+Merge: 16c5069 19fa499
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Wed Jan 22 15:05:34 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit 19fa4991aa225e1b3f9b8b54a80d894a8f5740d4[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Wed Jan 22 16:05:24 2025 +0200
+
+    update
+
+[33mcommit 16c5069def9dbc43c1e728ec2d5eb38c6c2d9e24[m
+Merge: a3e130d aa0e83e
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Wed Jan 22 14:58:39 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit a3e130d4d58a478c03dcf27857cf9b0dab4905e1[m
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Wed Jan 22 14:58:29 2025 +0100
+
+    updates
+
+[33mcommit aa0e83eb784237ac57cb1deffb948e569f104df6[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Wed Jan 22 15:57:26 2025 +0200
+
+    update
+
+[33mcommit 43524e7eb39dc941c7510f6db9a75accf4eb0fbf[m
+Merge: b72d5e2 e19166f
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Tue Jan 21 12:33:57 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit e19166f20ddbf01cbca74716d9e1231f18e56d6e[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Tue Jan 21 13:33:24 2025 +0200
+
+    update
+
+[33mcommit b72d5e2f35d7ebc9877a85c7ad0de5198b21b88d[m
+Merge: f5c3ab2 675a882
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Tue Jan 21 11:39:19 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit 675a882c8d65c870ca876547893c281a86b6e4f5[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Tue Jan 21 12:39:07 2025 +0200
+
+    update
+
+[33mcommit f5c3ab2c84e1437c0ab4771e6b5c5c4e9dfdcad4[m
+Merge: 3bfb4c0 383e3cc
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Tue Jan 21 10:58:24 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit 383e3cca254f7a364bf2333f4c3f217680719745[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Tue Jan 21 11:58:11 2025 +0200
+
+    update
+
+[33mcommit 3bfb4c08d08b6785e91046cef643ea69e3015eff[m
+Merge: d535810 cad90b0
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Mon Jan 20 16:50:39 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit cad90b04599762a60fec34ceb8450b9ab3d3e489[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Mon Jan 20 17:50:31 2025 +0200
+
+    update
+
+[33mcommit d53581099160c1cac0046ad911cc5a0a3d08a656[m
+Merge: bbe574f e4d52b6
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Mon Jan 20 16:44:02 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit e4d52b6f8624690ee5ce0e2fe6dd4971ead8897c[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Mon Jan 20 17:43:50 2025 +0200
+
+    update
+
+[33mcommit bbe574f34d2344718fc548462283b56f62c19a59[m
+Merge: d4a9496 39253f0
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Mon Jan 20 16:24:37 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit 39253f0f35f2e2e1892107289ae6db454bf3cda8[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Mon Jan 20 17:24:30 2025 +0200
+
+    update
+
+[33mcommit d4a9496104fdcbc28fdd66a4a8a4f266270abdab[m
+Merge: 622c1ec 43d9e85
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Mon Jan 20 16:15:08 2025 +0100
+
+    Merge branch 'main' of github.com:ecolor122/autoconnect
+
+[33mcommit 43d9e856abd0b188d809f61fc36b009000959547[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Mon Jan 20 17:12:31 2025 +0200
+
+    update
+
+[33mcommit 622c1ecfb58f94d0ef2dc461295ad9e696a72da9[m
+Merge: 16ee9d3 a613d4f
+Author: root <root@vmi1682096.contaboserver.net>
+Date:   Mon Jan 20 13:40:31 2025 +0100
+
+    fix conflict
+
+[33mcommit a613d4f40efa337f37374adc5967d78908bc93cb[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Mon Jan 20 14:25:14 2025 +0200
+
+    wide Updating...
+
+[33mcommit 23b6209c38db16a14c1556e8092917aa79791446[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Mon Jan 20 12:32:19 2025 +0200
+
+    wide Updating...
+
+[33mcommit d42d6e9ce324384f8be33d146e3a7bd8e88506a2[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Sun Jan 19 17:06:38 2025 +0200
+
+    wide Updating...
+
+[33mcommit 5e5cea8ee1dedf3d993333da38ec512f172cbbe3[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Sun Jan 19 17:03:34 2025 +0200
+
+    wide Updating...
+
+[33mcommit e704bec79d988355bf01674bb2aee75d6655e8eb[m
+Author: naif-saleh <naif.saleh.code@gmail.com>
+Date:   Sun Jan 19 09:58:12 2025 +0200
+
+    qu
