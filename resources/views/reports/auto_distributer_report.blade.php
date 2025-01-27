@@ -385,7 +385,7 @@
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="7">No reports found for the given filter.</td>
+                                    <td colspan="7">No reports found for the given filter</td>
                                 </tr>
                             @endforelse
                         </tbody>
