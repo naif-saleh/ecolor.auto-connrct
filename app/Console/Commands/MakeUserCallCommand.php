@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-
 use App\Models\AutoDistributorUploadedData;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -10,37 +9,24 @@ use Carbon\Carbon;
 use App\Models\AutoDistributerReport;
 use Illuminate\Support\Facades\Http;
 use App\Models\AutoDistributorFile;
-use App\Jobs\MakeCallJob;
 use App\Services\TokenService;
 
 class MakeUserCallCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'app:make-user-call-command';
-    protected $threeCXTokenService;
+    protected $description = 'Handles automated user calls';
     protected $tokenService;
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
-    protected $description = 'Command description';
 
     public function __construct(TokenService $tokenService)
     {
-        parent::__construct(); // This is required
+        parent::__construct();
         $this->tokenService = $tokenService;
     }
 
-    /**
-     * Execute the console command.
-     */
     public function handle()
     {
+        Log::info("\n\t---------------- Auto Distributor ----------------\n\t✅ MakeCallCommand executed at " . now() . "\n\t------------------------------------------------");
+
 
         $autoDailerFiles = AutoDistributorUploadedData::where('state','new')->orderBy('created_at', 'desc')->get();
         Log::info("
@@ -52,29 +38,28 @@ class MakeUserCallCommand extends Command
                 ");
         $autoDailerFiles = AutoDistributorFile::all();
 
+        $autoDailerFiles = AutoDistributorFile::where('allow', 1)->get();
+
+
         foreach ($autoDailerFiles as $feed) {
-            // Create from and to date objects adjusted by -3 hours
-            $from = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->from)->subHours(3);
-            $to = Carbon::createFromFormat('Y-m-d H:i:s', $feed->date . ' ' . $feed->to)->subHours(3);
+            $from = Carbon::parse("{$feed->date} {$feed->from}")->subHours(3);
+            $to = Carbon::parse("{$feed->date} {$feed->to}")->subHours(3);
 
-            // Check if the current time is within the range and the file is allowed
-            if (now()->between($from, $to) && $feed->allow == 1) {
-                Log::info("
-                \t        -----------------------------------------------------------------------
-                \t\t\t\t********** Auto Distributor Time **********\n
-                \t\t\t⏰✅ TIME IN: File ID " . $feed->id . " is within range ✅ ⏰
-                \t        -----------------------------------------------------------------------
-            ");
+            if (!now()->between($from, $to)) {
+                Log::info("⏰❌ TIME OUT: File ID {$feed->id} is NOT within range");
+                continue;
+            }
 
-                $data = AutoDistributorUploadedData::where('file_id', $feed->id)->where('state', 'new')->paginate(50);
-                foreach ($data as $feedData) {
+            Log::info("⏰✅ TIME IN: Processing File ID {$feed->id}");
 
-                    try {
-                        $token = $this->tokenService->getToken();
-                        if ($feedData->userStatus === "Available") {
-                            $ext = $feedData->extension;
-                            $filter = "contains(Caller, '{$ext}')";
-                            $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+            $data = AutoDistributorUploadedData::where('file_id', $feed->id)->where('state', 'new')->paginate(50);
+            foreach ($data as $feedData) {
+                try {
+                    if ($feedData->userStatus !== "Available") {
+                        Log::error("📵 Employee not available. Skipping call for mobile {$feedData->mobile}");
+                        continue;
+                    }
+
 
                         // Fetch active calls from API
                         $token = $this->tokenService->getToken();
@@ -83,128 +68,64 @@ class MakeUserCallCommand extends Command
                             'Authorization' => 'Bearer ' . $token,
                         ])->get($url);
 
+                    $token = $this->tokenService->getToken();
+                    $ext = $feedData->extension;
 
-                            if ($activeCallsResponse->failed()) {
-                                Log::error('Auto Distributor Error: ❌ Failed to fetch active calls for mobile ' . $feedData->mobile . '. Response: ' . $activeCallsResponse->body());
-                                continue;
-                            }
 
-                            if ($activeCallsResponse->successful()) {
-                                $activeCalls = $activeCallsResponse->json();
+                    $activeCalls = Http::withHeaders(['Authorization' => "Bearer $token"])
+                        ->get(config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode("contains(Caller, '$ext')"))
+                        ->json();
 
-                                if (!empty($activeCalls['value'])) {
-                                    Log::info("
-                                                \t-----------------------------------------------------------------------
-                                                \t\t\t\t********** Auto Distributor Notification **********
-                                                \t-----------------------------------------------------------------------
-                                                \t| 🚫 Busy: Active call detected for extension {$ext}. Skipping call for mobile {$feedData->mobile}. |
-                                                \t-----------------------------------------------------------------------
-                                            ");
+                    if (!empty($activeCalls['value'])) {
+                        Log::info("🚫 Busy: Active call detected for extension {$ext}. Skipping {$feedData->mobile}");
+                        continue;
+                    }
 
-                                    continue; // Skip this number if active calls exist
-                                }
+                    $devices = Http::withHeaders(['Authorization' => "Bearer $token"])
+                        ->get(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices")
+                        ->json();
 
-                                // Fetch devices for the extension
-                                $dnDevices = Http::withHeaders([
-                                    'Authorization' => 'Bearer ' . $token,
-                                ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices");
+                    foreach ($devices as $device) {
+                        if ($device['user_agent'] === '3CX Mobile Client') {
+                            $responseState = Http::withHeaders(['Authorization' => "Bearer $token"])
+                                ->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices/{$device['device_id']}/makecall", [
+                                    'destination' => $feedData->mobile,
+                                ]);
 
-                                if ($dnDevices->successful()) {
-                                    $devices = $dnDevices->json();
+                            if ($responseState->successful()) {
+                                $responseData = $responseState->json();
+                                Log::info("📞✅ Successfully called {$feedData->mobile}", $responseData);
 
-                                    // Filter the device where user_agent is '3CX Mobile Client'
-                                    foreach ($devices as $device) {
-                                        if ($device['user_agent'] === '3CX Mobile Client') {
-                                            $responseState = Http::withHeaders([
-                                                'Authorization' => 'Bearer ' . $token,
-                                            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices/{$device['device_id']}/makecall", [
-                                                'destination' => $feedData->mobile,
-                                            ]);
+                                AutoDistributerReport::updateOrCreate(
+                                    ['call_id' => $responseData['result']['callid']],
+                                    [
+                                        'status' => "Initiating",
+                                        'provider' => $feedData->user,
+                                        'extension' => $responseData['result']['dn'],
+                                        'phone_number' => $responseData['result']['party_caller_id'],
+                                    ]
+                                );
 
-                                            if ($responseState->successful()) {
-                                                $responseData = $responseState->json();
-                                                Log::info("
-                                        \t********** Auto Distributor Response Call **********
-                                        \tResponse Data:
-                                        \t" . print_r($responseData, true) . "
-                                        \t***************************************************
-                                     ");
-
-                                                $reports = AutoDistributerReport::firstOrCreate([
-                                                    'call_id' => $responseData['result']['callid'],
-                                                ], [
-                                                    'status' => "Initiating",
-                                                    'provider' => $feedData->user,
-                                                    'extension' => $responseData['result']['dn'],
-                                                    'phone_number' => $responseData['result']['party_caller_id'],
-                                                ]);
-
-                                                $reports->save();
-
-                                                $feedData->update([
-                                                    'state' => "Initiating",
-                                                    'call_date' => Carbon::now(),
-                                                    'call_id' => $responseData['result']['callid'],
-                                                    'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
-                                                ]);
-
-                                                Log::info("
-                                        \t📞 *_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_ 📞
-                                        \t|        ✅ Auto Distributor Called Successfully for Mobile: " . $feedData->mobile . " |
-                                        \t📞 *_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_ 📞
-                                    ");
-                                            } else {
-                                                Log::error("
-                                                \t❌ 🚨🚨🚨 ERROR: Auto Distributor Failed 🚨🚨🚨 ❌
-                                                \t| 🔴 Failed to make call for Mobile Number: " . $feedData->mobile . " |
-                                                \t| 🔄 Response: " . $responseState->body() . " |
-                                                \t❌ 🚨🚨🚨 ERROR: Auto Distributor Failed 🚨🚨🚨 ❌
-                                                ");
-                                            }
-                                            break; // Exit loop after making the call
-                                        }
-                                    }
-                                } else {
-                                    Log::error('Auto Distributor Error: ❌ Error fetching devices for extension ' . $ext);
-                                }
+                                $feedData->update([
+                                    'state' => "Initiating",
+                                    'call_date' => now(),
+                                    'call_id' => $responseData['result']['callid'],
+                                    'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
+                                ]);
                             } else {
-                                Log::error('Auto Distributor Error: ❌ Error fetching active calls for mobile ' . $feedData->mobile);
+                                Log::error("❌ Failed to make call for {$feedData->mobile}", [$responseState->body()]);
                             }
-                        } else {
-                            Log::error('Auto Distributor Error: 📵 Employee is not available. Skipping call for mobile ' . $feedData->mobile);
+                            break;
                         }
-                    } catch (\Exception $e) {
-                        Log::error("
-                        \t-----------------------------------------------------------------------
-                        \t\t\t\t********** Auto Distributor Error **********
-                        \t-----------------------------------------------------------------------
-                        \t| ❌ Error occurred in Auto Dialer: " . $e->getMessage() . " |
-                        \t-----------------------------------------------------------------------
-                ");
                     }
-
-
-                    // After processing all provider feeds, mark the file as done if all numbers are called
-                    $allCalled = AutoDistributorUploadedData::where('file_id', $feedData->file->id)->where('state', 'new')->count() == 0;
-                    if ($allCalled) {
-                        $feedData->file->update(['is_done' => true]);
-                        Log::info("
-                                    \t        -----------------------------------------------------------------------
-                                    \t\t\t\t********** Auto Distributor **********\n
-                                    \t✅✅✅ All Numbers Called ✅✅✅
-                                    \t| File: " . $feedData->file->slug . " |
-                                    \t| Status: The file is marked as 'Done' |
-                                    \t✅✅✅ All Numbers Called ✅✅✅
-                                ");
-                    }
+                } catch (\Exception $e) {
+                    Log::error("❌ Error in Auto Dialer: " . $e->getMessage());
                 }
-            } else {
-                Log::info("
-                            \t        -----------------------------------------------------------------------
-                            \t\t\t\t********** Auto Distributor Time **********\n
-                            \t\t\t     ⏰❌ TIME OUT: File ID " . $feed->id . " is NOT within range ❌⏰
-                            \t        -----------------------------------------------------------------------
-                        ");
+            }
+
+            if (!AutoDistributorUploadedData::where('file_id', $feed->id)->where('state', 'new')->exists()) {
+                $feed->update(['is_done' => true]);
+                Log::info("✅✅✅ All Numbers Called for File: {$feed->slug}");
             }
         }
     }
