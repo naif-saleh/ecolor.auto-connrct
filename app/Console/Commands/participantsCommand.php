@@ -52,9 +52,6 @@ class participantsCommand extends Command
 
         // $token = Cache::get('three_cx_token');
 
-
-
-
         $providersFeeds = AutoDailerUploadedData::whereDate('created_at', Carbon::today())->get();
 
         foreach ($providersFeeds as $feed) {
@@ -64,18 +61,11 @@ class participantsCommand extends Command
                 $token = $this->tokenService->getToken();
                 // Log::error("participantsCommand token new-token" . $token );
                 // Fetch participants for the extension
+
+
                 $responseState = Http::withHeaders([
                     'Authorization' => 'Bearer ' . $token,
                 ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
-
-                if (!$responseState->successful()) {
-                    Log::error("participantsCommand Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
-                    Log::info('participantsCommand:  Response Status Code: ' . $responseState->status());
-                    Log::info('participantsCommand:  Full Response: ' . print_r($responseState, TRUE));
-                    Log::info('participantsCommand: Headers: ' . json_encode($responseState->headers()));
-                    continue;
-                }
-
                 $participants = $responseState->json();
 
                 if (empty($participants)) {
@@ -89,6 +79,15 @@ class participantsCommand extends Command
 
                     continue;
                 }
+
+                if (!$responseState->successful()) {
+                    Log::error("participantsCommand Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
+                    Log::info('participantsCommand:  Response Status Code: ' . $responseState->status());
+                    // Log::info('participantsCommand:  Full Response: ' . print_r($responseState, TRUE));
+                    // Log::info('participantsCommand: Headers: ' . json_encode($responseState->headers()));
+                    continue;
+                }
+
                 Log::info("
                                         \t********** Auto Dialer Response Participants **********
                                         \tResponse Data:
