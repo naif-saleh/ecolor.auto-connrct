@@ -25,11 +25,13 @@ class MakeCallJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct($feedData, TokenService $tokenService)
-    {
-        $this->feedData = $feedData;
-        $this->tokenService = $tokenService;
-    }
+
+
+public function __construct($feedData, TokenService $tokenService)
+{
+    $this->feedData = $feedData;
+    $this->tokenService = $tokenService;
+}
 
     /**
      * Execute the job.
@@ -39,7 +41,7 @@ class MakeCallJob implements ShouldQueue
         try {
             $token = $this->tokenService->getToken();
             $ext = $this->feedData->extension;
-
+            Log::info($token);
             $responseState = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
             ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [

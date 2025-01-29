@@ -10,7 +10,7 @@ use App\Models\AutoDailerReport;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
 use App\Models\AutoDailerUploadedData;
-
+use DateTime;
 use App\Services\TokenService;
 
 
@@ -78,7 +78,6 @@ class participantsCommand extends Command
                     foreach ($participants as $participant_data) {
                         try {
                             Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
-                            $token = $this->tokenService->getToken();
                             $filter = "contains(Caller, '{$participant_data['dn']}')";
                             $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
@@ -91,17 +90,34 @@ class participantsCommand extends Command
                                 Log::info("✅ Active Calls Response: " . print_r($activeCalls, true));
 
                                 foreach ($activeCalls['value'] as $call) {
-                                    if (isset($call['Id'], $call['Status'])) {
-                                        Log::info("📞 Processing Call ID {$call['Id']} with status: {$call['Status']}");
+                                    if ($call['Status'] === 'Talking') {
+                                        $establishedAt = new DateTime($call['EstablishedAt']);
+                                        $serverNow = new DateTime($call['ServerNow']);
+                                        $interval = $establishedAt->diff($serverNow);
+                                        $durationTime = $interval->format('%H:%I:%S');
 
-                                        if ($call['Status'] === "Talking" || $call['Status'] === "Routing") {
-                                            AutoDailerReport::where('call_id', $call['Id'])->update(['status' => $call['Status']]);
-                                            AutoDailerUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
-                                            Log::info("✅ Updated status for Call ID {$call['Id']} to: {$call['Status']}");
-                                        }
+                                        AutoDailerReport::where('call_id', $call['Id'])->update([
+                                            'status' => $call['Status'],
+                                            'duration_time' => $durationTime
+                                        ]);
                                     } else {
-                                        Log::warning("⚠️ Missing 'Id' or 'Status' for participant DN {$participant_data['dn']} | Call Data: " . json_encode($call));
+                                        AutoDailerReport::where('call_id', $call['Id'])->update([
+                                            'status' => $call['Status']
+                                        ]);
+                                        AutoDailerUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
+                                        Log::info("✅ Updated status for Call ID {$call['Id']} to: {$call['Status']}");
                                     }
+                                    // if (isset($call['Id'], $call['Status'])) {
+                                    //     Log::info("📞 Processing Call ID {$call['Id']} with status: {$call['Status']}");
+
+                                    //     if ($call['Status'] === "Talking" || $call['Status'] === "Routing") {
+                                    //         AutoDailerReport::where('call_id', $call['Id'])->update(['status' => $call['Status']]);
+                                    //         AutoDailerUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
+                                    //         Log::info("✅ Updated status for Call ID {$call['Id']} to: {$call['Status']}");
+                                    //     }
+                                    // } else {
+                                    //     Log::warning("⚠️ Missing 'Id' or 'Status' for participant DN {$participant_data['dn']} | Call Data: " . json_encode($call));
+                                    // }
                                 }
                             } else {
                                 Log::error("❌ Failed to fetch active calls. Response: " . $activeCallsResponse->body());

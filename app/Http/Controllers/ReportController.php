@@ -173,7 +173,7 @@ class ReportController extends Controller
             $handle = fopen('php://output', 'w');
 
             // Write the CSV header
-            fputcsv($handle, ['Mobile', 'Provider', 'Extension', 'State', 'Time', 'Date']);
+            fputcsv($handle, ['Mobile', 'Provider', 'Extension', 'State', 'Duration', 'Time', 'Date']);
 
             // Write each report row
             foreach ($reports as $report) {
@@ -182,6 +182,7 @@ class ReportController extends Controller
                     $report->provider,
                     $report->extension,
                     in_array($report->status, ['Wexternalline', 'Talking']) ? 'Answered' : 'No Answer',
+                    $report->duration_time ? $report->duration_time : '-',
                     $report->created_at->addHours(3)->format('H:i:s'),
                     $report->created_at->addHours(3)->format('Y-m-d')
                 ]);
@@ -346,7 +347,7 @@ class ReportController extends Controller
             $handle = fopen('php://output', 'w');
 
             // Write the CSV header
-            fputcsv($handle, ['Mobile', 'Provider', 'Extension', 'State', 'Time', 'Date']);
+            fputcsv($handle, ['Mobile', 'Provider', 'Extension', 'State', 'duration', 'Time', 'Date']);
 
             // Write each report row
             foreach ($reports as $report) {
@@ -356,6 +357,7 @@ class ReportController extends Controller
                     $report->extension,
                     //logic for status
                     $report->status === 'Talking' ? 'Answered' : ($report->status === 'Routing' ? 'No Answer' : ($report->status === 'Initiating' ? 'Employee No Answer' : 'No Answer')),
+                    $report->duration_time ? $report->duration_time : '-',
                     $report->created_at->addHours(3)->format('H:i:s'),
                     $report->created_at->addHours(3)->format('Y-m-d')
                 ]);

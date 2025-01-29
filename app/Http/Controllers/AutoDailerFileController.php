@@ -46,95 +46,77 @@ class AutoDailerFileController extends Controller
             $firstDataRow = fgetcsv($handle);
             if ($firstDataRow === false || count($firstDataRow) < 6) {
                 fclose($handle);
-                return back()->with(['wrong' => 'Can not extract time-from , time-to and date']);
+                return back()->with(['wrong' => 'Can not extract time-from, time-to and date']);
             }
 
             // Time Format Handling
             Log::info('Converting time fields...');
-            try {
-                // Possible time formats
-                $timeFormats = [
-                    'h:i:s A',   // 08:00:00 AM
-                    'h:i A',     // 08:00 AM
-                    'H:i:s',     // 08:00:00
-                    'H:i',       // 08:00
-                ];
+            $timeFormats = [
+                'h:i:s A',   // 08:00:00 AM
+                'h:i A',     // 08:00 AM
+                'H:i:s',     // 08:00:00
+                'H:i',       // 08:00
+            ];
 
-                Log::info('Converting time fields...');
-                $utcTime_from = null;
-                $utcTime_to = null;
+            $utcTime_from = null;
+            $utcTime_to = null;
 
-                // Attempt to parse `from` time
-                foreach ($timeFormats as $format) {
-                    try {
-                        $utcTime_from = Carbon::createFromFormat($format, $firstDataRow[3])->format('H:i:s');
-                        break; // Stop once a valid format is found
-                    } catch (\Exception $e) {
-                        // Continue trying the next format
-                    }
+            // Attempt to parse `from` time
+            foreach ($timeFormats as $format) {
+                try {
+                    $utcTime_from = Carbon::createFromFormat($format, $firstDataRow[3])->format('H:i:s');
+                    break; // Stop once a valid format is found
+                } catch (\Exception $e) {
+                    // Continue trying the next format
                 }
-
-                // Attempt to parse `to` time
-                foreach ($timeFormats as $format) {
-                    try {
-                        $utcTime_to = Carbon::createFromFormat($format, $firstDataRow[4])->format('H:i:s');
-                        break; // Stop once a valid format is found
-                    } catch (\Exception $e) {
-                        // Continue trying the next format
-                    }
-                }
-
-                if (!$utcTime_from || !$utcTime_to) {
-                    return back()->with(
-                        'wrong',
-                        'Invalid time format in the file. Please try one of these time formats:{ 08:00:00 AM, 08:00 AM, 08:00:00, 08:00, 08:00AM, 8:00AM }'
-                    );
-                }
-            } catch (\Exception $e) {
-                Log::error('Time format conversion error: ' . $e->getMessage());
-                fclose($handle);
             }
 
+            // Attempt to parse `to` time
+            foreach ($timeFormats as $format) {
+                try {
+                    $utcTime_to = Carbon::createFromFormat($format, $firstDataRow[4])->format('H:i:s');
+                    break; // Stop once a valid format is found
+                } catch (\Exception $e) {
+                    // Continue trying the next format
+                }
+            }
+
+            if (!$utcTime_from || !$utcTime_to) {
+                return back()->with(
+                    'wrong',
+                    'Invalid time format in the file. Please try one of these time formats:{ 08:00:00 AM, 08:00 AM, 08:00:00, 08:00, 08:00AM, 8:00AM }'
+                );
+            }
 
             // Date Format Handling
-            try {
-                // Possible date formats
-                $dateFormats = [
-                    'Y-m-d',       // 2025-01-19
-                    'Y/m/d',       // 2025/01/19
-                    'd/m/Y',       // 19/01/2025
-                    'm/d/Y',       // 01/19/2025
-                    'd-m-Y',       // 19-01-2025
-                    'm-d-Y',       // 01-19-2025
-                    'd.m.Y',       // 19.01.2025
-                    'd M Y',       // 19 Jan 2025
-                    'd F Y',       // 19 January 2025
-                ];
+            $dateFormats = [
+                'Y-m-d',       // 2025-01-19
+                'Y/m/d',       // 2025/01/19
+                'd/m/Y',       // 19/01/2025
+                'm/d/Y',       // 01/19/2025
+                'd-m-Y',       // 19-01-2025
+                'm-d-Y',       // 01-19-2025
+                'd.m.Y',       // 19.01.2025
+                'd M Y',       // 19 Jan 2025
+                'd F Y',       // 19 January 2025
+            ];
 
-                $formattedDate = null;
+            $formattedDate = null;
 
-                foreach ($dateFormats as $format) {
-                    try {
-                        $formattedDate = Carbon::createFromFormat($format, $firstDataRow[5])->format('Y-m-d');
-                        break; // Stop checking once a valid format is found
-                    } catch (\Exception $e) {
-                        // Continue trying the next format
-                    }
+            foreach ($dateFormats as $format) {
+                try {
+                    $formattedDate = Carbon::createFromFormat($format, $firstDataRow[5])->format('Y-m-d');
+                    break; // Stop checking once a valid format is found
+                } catch (\Exception $e) {
+                    // Continue trying the next format
                 }
+            }
 
-                if (!$formattedDate) {
-                    // If no format matches, return the error message to the user
-                    return back()->with(
-                        'wrong',
-                        'Invalid date format in the file. Please try one of these date formats:{ 2025-01-19, 2025/01/19, 19/01/2025, 01/19/2025, 19-01-2025, 01-19-2025, 19.01.2025, 19 Jan 2025, 19 January 2025 }'
-                    );
-                }
-            } catch (\Exception $e) {
-                Log::error('Date format conversion error: ' . $e->getMessage());
-                fclose($handle);
-
-                // Return a generic error message
-                return back()->with(['wrong' => 'Failed to process the date. Please check the file.']);
+            if (!$formattedDate) {
+                return back()->with(
+                    'wrong',
+                    'Invalid date format in the file. Please try one of these date formats:{ 2025-01-19, 2025/01/19, 19/01/2025, 01/19/2025, 19-01-2025, 01-19-2025, 19.01.2025, 19 Jan 2025, 19 January 2025 }'
+                );
             }
 
             // Create a SINGLE `AutoDailerFile` entry for this file upload
@@ -149,39 +131,29 @@ class AutoDailerFileController extends Controller
             Log::info('AutoDailerFile created with ID: ' . $uploadedFile->id);
 
             // Process the remaining rows (skip the header)
+            $wrongNumbers = [];
+            $duplicateNumbers = [];
             $insertData = [];
             $seenMobiles = []; // Array to track seen mobile numbers
 
-            // Add the first data row to the insert data
-            $insertData[] = [
-                'mobile' => $firstDataRow[0],
-                'provider' => $firstDataRow[1],
-                'extension' => $firstDataRow[2],
-                'uploaded_by' => Auth::id(),
-                'file_id' => $uploadedFile->id,
-            ];
-
-            // Process the rest of the rows
             while (($row = fgetcsv($handle)) !== false) {
                 // Skip rows with insufficient columns
                 if (count($row) < 3) {
                     Log::warning('Skipping row due to missing columns: ' . json_encode($row));
-                    $uploadedFile->delete();
-                    return back()->with(['wrong' => 'Ensure That all rows are entered']);
+                    continue; // Continue processing, don’t exit the loop
                 }
 
                 // Check if $row[0] contains only numbers
                 if (!ctype_digit($row[0])) {
+                    $wrongNumbers[] = $row[0]; // Collect invalid numbers
                     Log::warning('Skipping row due to non-numeric mobile number: ' . json_encode($row));
-                    $uploadedFile->delete();
-                    return back()->with(['wrong' => 'Mobile should only be numbers: ' . $row[0]]);
+                    continue; // Skip this row, but continue processing
                 }
 
                 // Check for duplicate mobile number
                 if (in_array($row[0], $seenMobiles)) {
+                    $duplicateNumbers[] = $row[0]; // Collect duplicate numbers
                     Log::warning('Skipping row due to duplicate mobile number: ' . json_encode($row));
-                    $uploadedFile->delete();
-                    return back()->with(['wrong' => 'Mobile is duplicated: ' . $row[0]]);
                     continue; // Skip this row
                 }
 
@@ -201,25 +173,37 @@ class AutoDailerFileController extends Controller
                 if (count($insertData) >= 1000) {
                     AutoDailerUploadedData::insert($insertData);
                     Log::info('Inserted 1000 records successfully.');
-                    $insertData = []; // Clear the batch array
+                    $insertData = []; // Clear batch array
                 }
             }
 
-            // Insert any remaining rows
+            // Insert remaining records (if any)
             if (!empty($insertData)) {
                 AutoDailerUploadedData::insert($insertData);
-                Log::info('Inserted remaining ' . count($insertData) . ' records successfully.');
+                Log::info('Inserted remaining records successfully.');
             }
 
-            fclose($handle);
+            // Collect errors and return after processing all rows
+            $errorMessages = [];
+            if (!empty($wrongNumbers)) {
+                $errorMessages[] = 'These numbers were skipped because mobile must be only numbers: {' . implode(', ', $wrongNumbers) . ' }';
+            }
+            if (!empty($duplicateNumbers)) {
+                $errorMessages[] = 'These numbers were skipped because they are duplicates: {' . implode(', ', $duplicateNumbers) . ' }';
+            }
 
-            return back()->with('success', 'File uploaded and processed successfully.');
+            if (!empty($errorMessages)) {
+                return back()->with(['wrong' => implode(' | ', $errorMessages)]);
+            } else {
+                return back()->with(['success' => 'File uploaded successfully!']);
+            }
         } catch (\Exception $e) {
             Log::error("Error processing file: " . $e->getMessage());
             Log::error("Error Details: " . $e->getTraceAsString());
             return back()->withErrors(['error' => 'There was an error processing the file.']);
         }
     }
+
 
 
 

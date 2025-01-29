@@ -50,6 +50,7 @@ class makeCallCommand extends Command
                     \t-----------------------------------------------------------------------
                 ");
 
+        $token = $this->tokenService;
         AutoDailerFile::chunk(100, function ($autoDailerFiles) {
             foreach ($autoDailerFiles as $feed) {
                 $from = Carbon::parse("{$feed->date} {$feed->from}")->subHours(3);
@@ -68,7 +69,8 @@ class makeCallCommand extends Command
                         ->chunk(50, function ($dataBatch) use ($feed) {
                             foreach ($dataBatch as $feedData) {
                                 try {
-                                    dispatch(new MakeCallJob($feedData, $this->tokenService));
+                                    $token = $this->tokenService;
+                                    dispatch(new MakeCallJob($feedData, $token));
 
                                     Log::info("
                                         \t📞 *_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_*_ 📞

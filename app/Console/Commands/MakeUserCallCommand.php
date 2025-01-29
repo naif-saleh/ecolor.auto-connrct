@@ -49,6 +49,7 @@ class MakeUserCallCommand extends Command
                     \t| 📞 ✅ MakeCallCommand executed at " . now() . "               |
                     \t-----------------------------------------------------------------------
                 ");
+                 
         $autoDailerFiles = AutoDistributorFile::all();
 
         foreach ($autoDailerFiles as $feed) {
@@ -67,7 +68,7 @@ class MakeUserCallCommand extends Command
 
                 AutoDistributorUploadedData::where('file_id', $feed->id)
                     ->where('state', 'new')
-                    ->chunk(100, function ($dataChunk) { // Process in chunks of 50
+                    ->chunk(100, function ($dataChunk) {
                         foreach ($dataChunk as $feedData) {
                             try {
                                 $token = $this->tokenService->getToken();
