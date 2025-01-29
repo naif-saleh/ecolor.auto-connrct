@@ -80,7 +80,7 @@ class makeCallCommand extends Command
                                         \t-----------------------------------------------------------------------
                                         \t\t\t\t********** Auto Dialer Error **********
                                         \t-----------------------------------------------------------------------
-                                        \t| ❌ Error occurred in Auto Dialer: " . $e->getMessage() . " |
+                                        \t| ❌ Error occurred in Auto Diale:" . $e->getMessage() . " |
                                         \t-----------------------------------------------------------------------
                                     ");
                                 }
