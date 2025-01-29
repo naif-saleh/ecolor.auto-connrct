@@ -378,7 +378,8 @@
                                             {{ ucfirst($status) }}
                                         </span>
                                     </td>
-                                    <td>{{$report->duration_time ?$report->duration_time : '-'}}</td>
+
+                                    <td>{{$report->duration_time ? $report->duration_time : '-'}}</td>0
                                     <td>{{ $report->created_at->addHours(3)->format('Y-m-d') }}</td> <!-- For Date -->
                                     <td>{{ $report->created_at->addHours(3)->format('H:i:s') }}</td> <!-- For Time -->
 

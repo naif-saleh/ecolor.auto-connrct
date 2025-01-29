@@ -41,7 +41,7 @@ class AutoDailerFileController extends Controller
                 ]);
             }
 
-            // Read the first data row
+
             $firstDataRow = fgetcsv($handle);
             if ($firstDataRow === false || count($firstDataRow) < 6) {
                 fclose($handle);
@@ -85,11 +85,7 @@ class AutoDailerFileController extends Controller
                 }
             }
 
-            if (!$formattedDate) {
-                return back()->with('wrong', 'Invalid date format in the file. Please use one of these: { 2025-01-19, 2025/01/19, 19/01/2025, 01/19/2025, 19-01-2025, 01-19-2025, 19.01.2025, 19 Jan 2025, 19 January 2025 }');
-            }
 
-            // Create an `AutoDailerFile` entry
             $uploadedFile = AutoDailerFile::create([
                 'file_name' => $fileName,
                 'from' => $utcTime_from,
@@ -113,7 +109,22 @@ class AutoDailerFileController extends Controller
             ];
             $seenMobiles[$firstDataRow[0]] = true;
 
-            // Process the remaining rows
+
+            // Process the remaining rows (skip the header)
+            $insertData = [];
+            $seenMobiles = []; // Array to track seen mobile numbers
+
+            // Add the first data row to the insert data
+            $insertData[] = [
+                'mobile' => $firstDataRow[0],
+                'provider' => $firstDataRow[1],
+                'extension' => $firstDataRow[2],
+                'uploaded_by' => Auth::id(),
+                'file_id' => $uploadedFile->id,
+            ];
+
+            // Process the rest of the rows
+
             while (($row = fgetcsv($handle)) !== false) {
                 if (count($row) < 6) {
                     Log::warning('Skipping row due to missing columns: ' . json_encode($row));
@@ -128,9 +139,12 @@ class AutoDailerFileController extends Controller
                     return back()->with(['wrong' => 'Mobile should only be numbers: ' . $row[0]]);
                 }
 
-                // Check for duplicate mobile numbers
-                if (isset($seenMobiles[$row[0]])) {
-                    $duplicateMobiles[] = $row[0];
+
+                // Check for duplicate mobile number
+                if (in_array($row[0], $seenMobiles)) {
+                    Log::warning('Skipping row due to duplicate mobile number: ' . json_encode($row));
+                    $uploadedFile->delete();
+                    return back()->with(['wrong' => 'Mobile is duplicated: ' . $row[0]]);
                     continue; // Skip this row
                 }
 
@@ -153,7 +167,7 @@ class AutoDailerFileController extends Controller
                 }
             }
 
-            // Insert remaining rows
+
             if (!empty($insertData)) {
                 AutoDailerUploadedData::insert($insertData);
                 Log::info('Inserted remaining ' . count($insertData) . ' records successfully.');
@@ -180,7 +194,8 @@ class AutoDailerFileController extends Controller
 
 
 
-    public function updateAutoDailer(Request $request, $id)
+    public function updateAutoDailer(Request $request, $slug)
+
     {
 
 
