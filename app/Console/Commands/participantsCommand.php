@@ -43,179 +43,79 @@ class participantsCommand extends Command
     public function handle()
     {
         Log::info("
-                    \t-----------------------------------------------------------------------
-                    \t\t\t********** Auto Dialer **********\n
-                    \t-----------------------------------------------------------------------
-                    \t| 📞 ✅ PartisipantCommand executed at " . now() . "            |
-                    \t-----------------------------------------------------------------------
-                ");
+        \t-----------------------------------------------------------------------
+        \t\t\t********** Auto Dialer **********\n
+        \t-----------------------------------------------------------------------
+        \t| 📞 ✅ ParticipantCommand executed at " . now() . "            |
+        \t-----------------------------------------------------------------------
+    ");
 
-        // $token = Cache::get('three_cx_token');
+        AutoDailerUploadedData::chunk(100, function ($providersFeeds) {
+            foreach ($providersFeeds as $feed) {
+                $ext_from = $feed->extension;
 
-        $providersFeeds = AutoDailerUploadedData::whereDate('created_at', Carbon::today())->get();
+                try {
+                    $token = $this->tokenService->getToken();
 
-        foreach ($providersFeeds as $feed) {
-            $ext_from = $feed->extension;
+                    $responseState = Http::withHeaders([
+                        'Authorization' => 'Bearer ' . $token,
+                    ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
 
-            try {
-                $token = $this->tokenService->getToken();
-                // Log::error("participantsCommand token new-token" . $token );
-                // Fetch participants for the extension
-
-
-                $responseState = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $token,
-                ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
-                $participants = $responseState->json();
-
-                if (empty($participants)) {
-                    Log::warning("
-                                \t-----------------------------------------------------------------------
-                                \t\t********** Auto Dialer Warning **********\n
-                                \t-----------------------------------------------------------------------
-                                \t ⚠️  No participantsCommand for {$ext_from}
-                                \t-----------------------------------------------------------------------
-                        ");
-
-                    continue;
-                }
-
-                if (!$responseState->successful()) {
-                    Log::error("participantsCommand Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
-                    Log::info('participantsCommand:  Response Status Code: ' . $responseState->status());
-                    // Log::info('participantsCommand:  Full Response: ' . print_r($responseState, TRUE));
-                    // Log::info('participantsCommand: Headers: ' . json_encode($responseState->headers()));
-                    continue;
-                }
-
-                Log::info("
-                                        \t********** Auto Dialer Response Participants **********
-                                        \tResponse Data:
-                                        \t" . print_r($participants, true) . "
-                                        \t***********************************************
-                                     ");
-                foreach ($participants as $participant_data) {
-                    try {
-                        // Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));
-                        $token = $this->tokenService->getToken();
-                        $filter = "contains(Caller, '{$participant_data['dn']}')";
-                        $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
-
-                        $activeCallsResponse = Http::withHeaders([
-                            'Authorization' => 'Bearer ' . $token,
-                        ])->get($url);
-
-                        if ($activeCallsResponse->successful()) {
-                            // Log::debug("Processing participant data For Auto Dailer: " . print_r($participant_data, true));
-                            $activeCalls = $activeCallsResponse->json();
-                            //Log::debug("Active Calls: " . print_r($participant_data, true));
-                            Log::info("
-                            \t********** Auto Dialer Response Participant Active Call **********
-                            \tResponse Data:
-                            \t" . print_r($activeCalls, true) . "
-                            \t******************************************************************
-                         ");
-
-                            // Iterate through all active calls to find matching callId
-                            foreach ($activeCalls['value'] as $call) {
-                                // Check if the call contains the required information
-                                // Log::info("User Participant Active Call Response: " . print_r($activeCalls, true));
-                                if (isset($call['Id']) && isset($call['Status'])) {
-                                    // Log the status to track each call's behavior
-                                    Log::info("
-                                    \t-----------------------------------------------------------------------
-                                    \t\t********** Auto Dialer Processing Call **********
-                                    \t-----------------------------------------------------------------------
-                                    \t| 📞 Processing Call ID {$call['Id']} with status: {$call['Status']} |
-                                    \t-----------------------------------------------------------------------
-                            ");
-
-                                    // Check if the call is in progress
-                                    if ($call['Status'] === "Talking" || $call['Status'] === "Routing") { // Routing When Ringing
-                                        AutoDailerReport::where('call_id', $call['Id'])->update(['status' => $call['Status']]);
-                                        AutoDailerUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
-                                        Log::info("
-                                                    \t-----------------------------------------------------------------------
-                                                    \t\t********** Auto Dialer Call Status Updated **********
-                                                    \t-----------------------------------------------------------------------
-                                                    \t| ✅ Updated status for Call ID {$call['Id']} to: {$call['Status']} |
-                                                    \t-----------------------------------------------------------------------
-                                            ");
-                                    }
-                                } else {
-                                    Log::warning("
-                                    \t-----------------------------------------------------------------------
-                                    \t\t********** Auto Dialer Warning **********
-                                    \t-----------------------------------------------------------------------
-                                    \t| ⚠️ Call missing 'Id' or 'Status' for participant DN {$participant_data['dn']} |
-                                    \t| Call Data: " . print_r($call, true) . " |
-                                    \t-----------------------------------------------------------------------
-                            ");
-                                }
-                            }
-                        } else {
-                            Log::error('Auto Dailer Error: ❌ Failed to fetch active calls. Response: ' . $activeCallsResponse->body());
-                        }
-                    } catch (\Exception $e) {
-                        Log::error('Auto Dailer Error: ❌ Failed to process participant data for call ID ' . ($participant_data['callid'] ?? 'N/A') . ': ' . $e->getMessage());
+                    if (!$responseState->successful()) {
+                        Log::error("Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
+                        continue;
                     }
+
+                    $participants = $responseState->json();
+
+                    if (empty($participants)) {
+                        Log::warning("⚠️ No participants found for extension {$ext_from}");
+                        continue;
+                    }
+
+                    Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
+
+                    foreach ($participants as $participant_data) {
+                        try {
+                            Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
+                            $token = $this->tokenService->getToken();
+                            $filter = "contains(Caller, '{$participant_data['dn']}')";
+                            $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+
+                            $activeCallsResponse = Http::withHeaders([
+                                'Authorization' => 'Bearer ' . $token,
+                            ])->get($url);
+
+                            if ($activeCallsResponse->successful()) {
+                                $activeCalls = $activeCallsResponse->json();
+                                Log::info("✅ Active Calls Response: " . print_r($activeCalls, true));
+
+                                foreach ($activeCalls['value'] as $call) {
+                                    if (isset($call['Id'], $call['Status'])) {
+                                        Log::info("📞 Processing Call ID {$call['Id']} with status: {$call['Status']}");
+
+                                        if ($call['Status'] === "Talking" || $call['Status'] === "Routing") {
+                                            AutoDailerReport::where('call_id', $call['Id'])->update(['status' => $call['Status']]);
+                                            AutoDailerUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
+                                            Log::info("✅ Updated status for Call ID {$call['Id']} to: {$call['Status']}");
+                                        }
+                                    } else {
+                                        Log::warning("⚠️ Missing 'Id' or 'Status' for participant DN {$participant_data['dn']} | Call Data: " . json_encode($call));
+                                    }
+                                }
+                            } else {
+                                Log::error("❌ Failed to fetch active calls. Response: " . $activeCallsResponse->body());
+                            }
+                        } catch (\Exception $e) {
+                            Log::error("❌ Failed to process participant data for call ID " . ($participant_data['callid'] ?? 'N/A') . ": " . $e->getMessage());
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error("❌ Failed fetching participants for provider {$ext_from}: " . $e->getMessage());
                 }
-            } catch (\Exception $e) {
-                Log::error("Auto Dailer Error: ❌ Failed fetching participants forcc provider {$ext_from}: " . $e->getMessage());
             }
-        }
-    }
+        });
 
-
-    /**
-     * Update or create participant report.
-     */
-    private function updateParticipant($participant_data)
-    {
-        AutoDailerReport::where('call_id', $participant_data['id'])
-            ->update([
-                'status' => $participant_data['party_dn_type'] ?? 'Unknown',
-                'phone_number' => $participant_data['party_caller_id'] ?? 'Unknown',
-            ]);
-    }
-
-    /**
-     * Drop a call for a participant.
-     */
-    /**
-     * Drop a call for a participant with additional payload.
-     */
-
-
-
-    private function dropCall($ext_from, $participantId, $partyCallerId, $token)
-    {
-        $drop = "false";
-        try {
-            $action = "drop";
-            $url = config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants/{$participantId}/{$action}";
-
-            // Request payload with dynamic destination
-            $payload = [
-                "reason" => "new call",
-                "destination" => $partyCallerId,
-                "timeout" => 0,
-            ];
-
-            $dropResponse = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
-                'Content-Type' => 'application/json',
-            ])->post($url, $payload);
-
-            if ($dropResponse->successful()) {
-                $drop = "true";
-                Log::info("Successfully dropped the call for provider {$ext_from}, participant ID {$participantId}: " . json_encode($dropResponse->json()));
-            } else {
-                $drop = "false";
-                Log::error("Failed to drop the call for provider {$ext_from}, participant ID {$participantId}. HTTP Status: {$dropResponse->status()}. Response: {$dropResponse->body()}");
-            }
-        } catch (\Exception $e) {
-            Log::error("Error dropping call for provider {$ext_from}, participant ID {$participantId}: " . $e->getMessage());
-        }
+        Log::info("✅ Auto Dialer command execution completed.");
     }
 }

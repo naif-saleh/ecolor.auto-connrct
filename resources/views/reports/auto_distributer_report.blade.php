@@ -340,6 +340,7 @@
                                 <th>Provider</th>
                                 <th>Extension</th>
                                 <th>Status</th>
+                                <th>Duration</th>
                                 <th>Called At - Date</th>
                                 <th>Called At - Time</th>
                             </tr>
@@ -377,6 +378,7 @@
                                             {{ ucfirst($status) }}
                                         </span>
                                     </td>
+                                    <td>{{$report->duration_time ? $report->duration_time : '-'}}</td>
                                     <td>{{ $report->created_at->addHours(3)->format('Y-m-d') }}</td> <!-- For Date -->
                                     <td>{{ $report->created_at->addHours(3)->format('H:i:s') }}</td> <!-- For Time -->
 
