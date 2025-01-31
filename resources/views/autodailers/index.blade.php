@@ -1,6 +1,55 @@
 @extends('layout.master')
 @section('title', 'Auto Dialer')
 @section('content')
+
+@if(session('skip'))
+   <div class="alert alert-warning">
+       <strong>Skipped Numbers:</strong><br>
+       {{ session('skip') }}
+   </div>
+@endif
+
+
+@if($errors->any())
+   <div class="alert alert-danger">
+       <ul>
+           @foreach($errors->all() as $error)
+               <li>{{ $error }}</li>
+           @endforeach
+       </ul>
+   </div>
+@endif
+<style>
+   .alert {
+   padding: 15px;
+   margin-bottom: 20px;
+   border: 1px solid transparent;
+   border-radius: 4px;
+}
+
+
+.alert-success {
+   color: #155724;
+   background-color: #d4edda;
+   border-color: #c3e6cb;
+}
+
+
+.alert-warning {
+   color: #856404;
+   background-color: #fff3cd;
+   border-color: #ffeeba;
+}
+
+
+.alert-danger {
+   color: #721c24;
+   background-color: #f8d7da;
+   border-color: #f5c6cb;
+}
+</style>
+
+
     <div class="container mt-5">
         <h1 class="mb-4"><i class="bi bi-telephone"></i> Auto Dialers Files List</h1>
 

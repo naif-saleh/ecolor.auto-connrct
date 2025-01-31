@@ -50,7 +50,7 @@ class makeCallCommand extends Command
                     \t-----------------------------------------------------------------------
                 ");
 
-        $token = $this->tokenService;
+        //$token = $this->tokenService;
         AutoDailerFile::chunk(100, function ($autoDailerFiles) {
             foreach ($autoDailerFiles as $feed) {
                 $from = Carbon::parse("{$feed->date} {$feed->from}")->subHours(3);

@@ -156,24 +156,317 @@ class AutoDistributorFileController extends Controller
 
 
 
+    // public function uploadCsv(Request $request)
+    // {
+    //     // Validate file input
+    //     Log::info('File upload started. Validating input...');
+    //     $request->validate([
+    //         'file' => 'required|mimes:csv,txt',
+    //     ]);
+    //     Log::info('File validation passed.');
+
+    //     // Handle file upload
+    //     $file = $request->file('file');
+    //     $fileName = time() . '_' . $file->getClientOriginalName();
+    //     Log::info('Storing file: ' . $fileName);
+    //     $file->storeAs('uploads', $fileName);
+
+    //     // Open file for reading
+    //     $path = $file->getRealPath();
+    //     Log::info('Reading file content from: ' . $path);
+
+    //     $handle = fopen($path, 'r');
+    //     if (!$handle) {
+    //         Log::error('Failed to open file.');
+    //         return back()->withErrors(['error' => 'Failed to open the file.']);
+    //     }
+
+    //     // Read header
+    //     $header = fgetcsv($handle);
+    //     if (!$header || count($header) < 6) {
+    //         Log::error('The file does not contain valid headers.');
+    //         fclose($handle);
+    //         return back()->withErrors(['error' => 'Invalid file headers.']);
+    //     }
+
+    //     // Extract the first data row to get date, from, and to values
+    //     $firstDataRow = fgetcsv($handle); // Read the first data row
+    //     if (count($firstDataRow) < 6) {
+    //         Log::error('Missing required columns (from, to, date).');
+    //         fclose($handle);
+    //         return back()->withErrors(['error' => 'Missing required columns (from, to, date).']);
+    //     }
+
+    //     // Time Format Handling
+    //     Log::info('Converting time fields...');
+    //     try {
+    //         // Possible time formats
+    //         $timeFormats = [
+    //             'h:i:s A',   // 08:00:00 AM
+    //             'h:i A',     // 08:00 AM
+    //             'H:i:s',     // 08:00:00
+    //             'H:i',       // 08:00
+    //         ];
+
+    //         Log::info('Converting time fields...');
+    //         $utcTime_from = null;
+    //         $utcTime_to = null;
+
+    //         // Attempt to parse `from` time
+    //         foreach ($timeFormats as $format) {
+    //             try {
+    //                 $utcTime_from = Carbon::createFromFormat($format, $firstDataRow[3])->format('H:i:s');
+    //                 break; // Stop once a valid format is found
+    //             } catch (\Exception $e) {
+    //                 // Continue trying the next format
+    //             }
+    //         }
+
+    //         // Attempt to parse `to` time
+    //         foreach ($timeFormats as $format) {
+    //             try {
+    //                 $utcTime_to = Carbon::createFromFormat($format, $firstDataRow[4])->format('H:i:s');
+    //                 break; // Stop once a valid format is found
+    //             } catch (\Exception $e) {
+    //                 // Continue trying the next format
+    //             }
+    //         }
+
+    //         if (!$utcTime_from || !$utcTime_to) {
+    //             return back()->with(
+    //                 'wrong',
+    //                 'Invalid time format in the file. Please try one of these time formats:{ 08:00:00 AM, 08:00 AM, 08:00:00, 08:00, 08:00AM, 8:00AM }'
+    //             );
+    //         }
+    //     } catch (\Exception $e) {
+    //         Log::error('Time format conversion error: ' . $e->getMessage());
+    //         fclose($handle);
+    //         return back()->withErrors(['error' => 'Invalid time format in the file.']);
+    //     }
+
+    //     // Date Format Handling
+    //     try {
+    //         // Possible date formats
+    //         $dateFormats = [
+    //             'Y-m-d',       // 2025-01-19
+    //             'Y/m/d',       // 2025/01/19
+    //             'd/m/Y',       // 19/01/2025
+    //             'm/d/Y',       // 01/19/2025
+    //             'd-m-Y',       // 19-01-2025
+    //             'm-d-Y',       // 01-19-2025
+    //             'd.m.Y',       // 19.01.2025
+    //             'M d, Y',      // Jan 19, 2025
+    //             'd M Y',       // 19 Jan 2025
+    //             'F d, Y',      // January 19, 2025
+    //             'd F Y',       // 19 January 2025
+    //         ];
+
+    //         $formattedDate = null;
+
+    //         foreach ($dateFormats as $format) {
+    //             try {
+    //                 $formattedDate = Carbon::createFromFormat($format, $firstDataRow[5])->format('Y-m-d');
+    //                 break; // Stop checking once a valid format is found
+    //             } catch (\Exception $e) {
+    //                 // Continue trying the next format
+    //             }
+    //         }
+
+    //         if (!$formattedDate) {
+    //             return back()->with(
+    //                 'wrong',
+    //                 'Invalid date format in the file. Please try one of these date formats:{ 2025-01-19, 2025/01/19, 19/01/2025, 01/19/2025, 19-01-2025, 01-19-2025, 19.01.2025, 19 Jan 2025, 19 January 2025 }'
+    //             );
+    //         }
+    //     } catch (\Exception $e) {
+    //         Log::error('Date format conversion error: ' . $e->getMessage());
+    //         fclose($handle);
+    //         return back()->withErrors(['wrong' => 'Invalid date format in the file.']);
+    //     }
+
+
+
+    //     // Create a SINGLE AutoDistributorFile entry for this upload
+    //     Log::info('Creating AutoDistributorFile entry...');
+    //     $uploadedFile = AutoDistributorFile::create([
+    //         'file_name' => $fileName,
+    //         'from' => $utcTime_from,
+    //         'to' => $utcTime_to,
+    //         'date' => $formattedDate,
+    //         'uploaded_by' => Auth::id(),
+    //     ]);
+    //     Log::info('AutoDistributorFile entry created with ID: ' . $uploadedFile->id);
+
+    //     // Prepare batch insert array
+    //     $seenMobiles = [];
+    //     $insertData = [];
+    //     $rowCount = 0;
+    //     $extensions = [];
+    //     rewind($handle); // Rewind the file pointer to the beginning of the file
+    //     fgetcsv($handle); // Skip the header row
+
+    //     // Extract all extensions into an array for bulk fetching
+    //     while (($row = fgetcsv($handle)) !== false) {
+    //         if (isset($row[2])) {
+    //             $extensions[] = $row[2]; // Collect extensions
+    //         }
+    //     }
+
+    //     // Remove duplicates to reduce unnecessary queries
+    //     $extensions = array_unique($extensions);
+
+    //     // Fetch all user statuses in bulk
+    //     Log::info('Fetching user statuses for extensions...');
+    //     $userStatuses = TrheeCxUserStatus::whereIn('extension', $extensions)->get()->keyBy('extension');
+
+    //     if ($userStatuses->isEmpty()) {
+    //         Log::error('No valid user statuses found for provided extensions.');
+    //         $uploadedFile->delete();
+    //         fclose($handle);
+    //         return back()->with(['wrong' => 'No valid user statuses found for the provided extensions.']);
+    //     }
+
+    //     // Reset the file pointer again to process rows
+    //     rewind($handle);
+    //     fgetcsv($handle); // Skip the header row
+    //     // Process the CSV rows (starting from second row since first is header)
+    //     while (($row = fgetcsv($handle)) !== false) {
+    //         $rowCount++;
+
+    //         // Check if the extension exists in the user statuses
+    //         $userStatus = $userStatuses[$row[2]] ?? null;
+
+    //         if (!$userStatus) {
+    //             Log::warning('User status not found for extension: ' . $row[2]);
+    //             $uploadedFile->delete(); // Rollback file upload on error
+    //             fclose($handle);
+    //             return back()->with(['wrong' => 'No user with extension ' . $row[2] . ' in your system.']);
+    //         }
+
+    //         // Ensure row has sufficient columns (at least 3: mobile, user, extension)
+    //         if (count($row) < 3) {
+    //             Log::warning('Skipping row due to insufficient columns: ' . json_encode($row));
+    //             $uploadedFile->delete(); // Rollback file upload on error
+    //             fclose($handle);
+    //             return back()->with(['wrong' => 'Ensure that no row is empty in the file.']);
+    //         }
+
+    //         // Validate that the required columns have no empty values
+    //         if (empty($row[0]) || empty($row[1]) || empty($row[2])) {
+    //             $uploadedFile->delete(); // Rollback file upload on error
+    //             fclose($handle);
+    //             return back()->with(['wrong' => 'Ensure that no row is empty in the file.']);
+    //         }
+
+    //         // Check if $row[0] contains only numbers
+    //         if (!ctype_digit($row[0])) {
+    //             Log::warning('Skipping row due to non-numeric mobile number: ' . json_encode($row));
+    //             $uploadedFile->delete();
+    //             return back()->with(['wrong' => 'Mobile should only be numbers: ' . $row[0]]);
+    //         }
+
+    //         // Check for duplicate mobile number
+    //         if (in_array($row[0], $seenMobiles)) {
+    //             Log::warning('Skipping row due to duplicate mobile number: ' . json_encode($row));
+    //             $uploadedFile->delete();
+    //             return back()->with(['wrong' => 'Mobile is duplicated: ' . $row[0]]);
+    //             continue; // Skip this row
+    //         }
+
+    //         // Add the mobile number to the seen array
+    //         $seenMobiles[] = $row[0];
+
+    //         // Add to batch insert array
+    //         $insertData[] = [
+    //             'mobile' => $row[0],
+    //             'user' => $row[1],
+    //             'extension' => $row[2],
+    //             'userStatus' => $userStatus->status,
+    //             'three_cx_user_id' => $userStatus->user_id,
+    //             'uploaded_by' => Auth::id(),
+    //             'file_id' => $uploadedFile->id,
+    //         ];
+
+    //         Log::info('Prepared data for mobile: ' . $row[0] . ' extension: ' . $row[2]);
+
+    //         // Batch insert every 1000 rows to prevent memory overflow
+    //         if (count($insertData) >= 1000) {
+    //             DB::beginTransaction();
+
+    //             try {
+    //                 Log::info('Inserting the following data: ' . json_encode($insertData));
+    //                 AutoDistributorUploadedData::insert($insertData);
+    //                 DB::commit();
+    //                 Log::info('Inserted ' . count($insertData) . ' records successfully.');
+    //                 $insertData = []; // Reset batch data
+    //             } catch (\Exception $e) {
+    //                 DB::rollBack();
+    //                 Log::error("Error inserting records: " . $e->getMessage());
+    //                 fclose($handle);
+    //                 return back()->with(['wrong' => 'Failed to insert records into the database.']);
+    //             }
+    //         }
+    //     }
+
+    //     // Insert remaining rows if any
+    //     if (!empty($insertData)) {
+    //         DB::beginTransaction();
+
+    //         try {
+    //             AutoDistributorUploadedData::insert($insertData);
+    //             DB::commit();
+    //             Log::info('Inserted ' . count($insertData) . ' records successfully.');
+    //         } catch (\Exception $e) {
+    //             DB::rollBack();
+    //             Log::error("Error inserting records: " . $e->getMessage());
+    //             fclose($handle);
+    //             return back()->with(['wrong' => 'Failed to insert remaining records into the database.']);
+    //         }
+    //     }
+
+    //     fclose($handle);
+
+    //     Log::info('File uploaded and processed successfully.');
+    //     return back()->with('success', 'File uploaded and processed successfully.');
+
+    //     // Insert remaining rows if any
+    //     if (!empty($insertData)) {
+    //         DB::beginTransaction();
+
+    //         try {
+    //             AutoDistributorUploadedData::insert($insertData);
+    //             DB::commit();
+    //             Log::info('Inserted ' . count($insertData) . ' records successfully.');
+    //         } catch (\Exception $e) {
+    //             DB::rollBack();
+    //             Log::error("Error inserting records: " . $e->getMessage());
+    //             fclose($handle);
+    //             return back()->withErrors(['wrong' => 'Failed to insert remaining records into the database.']);
+    //         }
+    //     }
+
+    //     fclose($handle);
+
+    //     Log::info('File uploaded and processed successfully.');
+    //     return back()->with('success', 'File uploaded and processed successfully.');
+    // }
+
     public function uploadCsv(Request $request)
     {
-        // Validate file input
         Log::info('File upload started. Validating input...');
-        $request->validate([
-            'file' => 'required|mimes:csv,txt',
-        ]);
+        $request->validate(['file' => 'required|mimes:csv,txt']);
         Log::info('File validation passed.');
 
-        // Handle file upload
+
         $file = $request->file('file');
         $fileName = time() . '_' . $file->getClientOriginalName();
         Log::info('Storing file: ' . $fileName);
         $file->storeAs('uploads', $fileName);
 
-        // Open file for reading
+
         $path = $file->getRealPath();
         Log::info('Reading file content from: ' . $path);
+
 
         $handle = fopen($path, 'r');
         if (!$handle) {
@@ -181,7 +474,7 @@ class AutoDistributorFileController extends Controller
             return back()->withErrors(['error' => 'Failed to open the file.']);
         }
 
-        // Read header
+
         $header = fgetcsv($handle);
         if (!$header || count($header) < 6) {
             Log::error('The file does not contain valid headers.');
@@ -189,104 +482,62 @@ class AutoDistributorFileController extends Controller
             return back()->withErrors(['error' => 'Invalid file headers.']);
         }
 
-        // Extract the first data row to get date, from, and to values
-        $firstDataRow = fgetcsv($handle); // Read the first data row
+
+        $firstDataRow = fgetcsv($handle);
         if (count($firstDataRow) < 6) {
             Log::error('Missing required columns (from, to, date).');
             fclose($handle);
             return back()->withErrors(['error' => 'Missing required columns (from, to, date).']);
         }
 
-        // Time Format Handling
-        Log::info('Converting time fields...');
-        try {
-            // Possible time formats
-            $timeFormats = [
-                'h:i:s A',   // 08:00:00 AM
-                'h:i A',     // 08:00 AM
-                'H:i:s',     // 08:00:00
-                'H:i',       // 08:00
-            ];
 
-            Log::info('Converting time fields...');
-            $utcTime_from = null;
-            $utcTime_to = null;
+        Log::info('Converting time and date fields...');
+        $timeFormats = ['h:i:s A', 'h:i A', 'H:i:s', 'H:i'];
+        $utcTime_from = null;
+        $utcTime_to = null;
 
-            // Attempt to parse `from` time
-            foreach ($timeFormats as $format) {
-                try {
-                    $utcTime_from = Carbon::createFromFormat($format, $firstDataRow[3])->format('H:i:s');
-                    break; // Stop once a valid format is found
-                } catch (\Exception $e) {
-                    // Continue trying the next format
-                }
+
+        foreach ($timeFormats as $format) {
+            try {
+                $utcTime_from = Carbon::createFromFormat($format, $firstDataRow[3])->format('H:i:s');
+                break;
+            } catch (\Exception $e) {
             }
-
-            // Attempt to parse `to` time
-            foreach ($timeFormats as $format) {
-                try {
-                    $utcTime_to = Carbon::createFromFormat($format, $firstDataRow[4])->format('H:i:s');
-                    break; // Stop once a valid format is found
-                } catch (\Exception $e) {
-                    // Continue trying the next format
-                }
-            }
-
-            if (!$utcTime_from || !$utcTime_to) {
-                return back()->with(
-                    'wrong',
-                    'Invalid time format in the file. Please try one of these time formats:{ 08:00:00 AM, 08:00 AM, 08:00:00, 08:00, 08:00AM, 8:00AM }'
-                );
-            }
-        } catch (\Exception $e) {
-            Log::error('Time format conversion error: ' . $e->getMessage());
-            fclose($handle);
-            return back()->withErrors(['error' => 'Invalid time format in the file.']);
-        }
-
-        // Date Format Handling
-        try {
-            // Possible date formats
-            $dateFormats = [
-                'Y-m-d',       // 2025-01-19
-                'Y/m/d',       // 2025/01/19
-                'd/m/Y',       // 19/01/2025
-                'm/d/Y',       // 01/19/2025
-                'd-m-Y',       // 19-01-2025
-                'm-d-Y',       // 01-19-2025
-                'd.m.Y',       // 19.01.2025
-                'M d, Y',      // Jan 19, 2025
-                'd M Y',       // 19 Jan 2025
-                'F d, Y',      // January 19, 2025
-                'd F Y',       // 19 January 2025
-            ];
-
-            $formattedDate = null;
-
-            foreach ($dateFormats as $format) {
-                try {
-                    $formattedDate = Carbon::createFromFormat($format, $firstDataRow[5])->format('Y-m-d');
-                    break; // Stop checking once a valid format is found
-                } catch (\Exception $e) {
-                    // Continue trying the next format
-                }
-            }
-
-            if (!$formattedDate) {
-                return back()->with(
-                    'wrong',
-                    'Invalid date format in the file. Please try one of these date formats:{ 2025-01-19, 2025/01/19, 19/01/2025, 01/19/2025, 19-01-2025, 01-19-2025, 19.01.2025, 19 Jan 2025, 19 January 2025 }'
-                );
-            }
-        } catch (\Exception $e) {
-            Log::error('Date format conversion error: ' . $e->getMessage());
-            fclose($handle);
-            return back()->withErrors(['wrong' => 'Invalid date format in the file.']);
         }
 
 
+        foreach ($timeFormats as $format) {
+            try {
+                $utcTime_to = Carbon::createFromFormat($format, $firstDataRow[4])->format('H:i:s');
+                break;
+            } catch (\Exception $e) {
+            }
+        }
 
-        // Create a SINGLE AutoDistributorFile entry for this upload
+
+        if (!$utcTime_from || !$utcTime_to) {
+            return back()->with('wrong', 'Invalid time format in the file.');
+        }
+
+
+        $dateFormats = ['Y-m-d', 'Y/m/d', 'd/m/Y', 'm/d/Y', 'd-m-Y', 'm-d-Y', 'd.m.Y', 'M d, Y', 'd M Y', 'F d, Y', 'd F Y'];
+        $formattedDate = null;
+
+
+        foreach ($dateFormats as $format) {
+            try {
+                $formattedDate = Carbon::createFromFormat($format, $firstDataRow[5])->format('Y-m-d');
+                break;
+            } catch (\Exception $e) {
+            }
+        }
+
+
+        if (!$formattedDate) {
+            return back()->with('wrong', 'Invalid date format in the file.');
+        }
+
+
         Log::info('Creating AutoDistributorFile entry...');
         $uploadedFile = AutoDistributorFile::create([
             'file_name' => $fileName,
@@ -295,90 +546,92 @@ class AutoDistributorFileController extends Controller
             'date' => $formattedDate,
             'uploaded_by' => Auth::id(),
         ]);
-        Log::info('AutoDistributorFile entry created with ID: ' . $uploadedFile->id);
 
-        // Prepare batch insert array
-        $seenMobiles = [];
-        $insertData = [];
-        $rowCount = 0;
+
+        Log::info('Fetching user statuses for extensions...');
         $extensions = [];
-        rewind($handle); // Rewind the file pointer to the beginning of the file
-        fgetcsv($handle); // Skip the header row
+        rewind($handle);
+        fgetcsv($handle);
 
-        // Extract all extensions into an array for bulk fetching
+
+        $extensions = [];
+
         while (($row = fgetcsv($handle)) !== false) {
             if (isset($row[2])) {
-                $extensions[] = $row[2]; // Collect extensions
+                $extensions[] = $row[2];
             }
         }
 
-        // Remove duplicates to reduce unnecessary queries
         $extensions = array_unique($extensions);
-
-        // Fetch all user statuses in bulk
-        Log::info('Fetching user statuses for extensions...');
         $userStatuses = TrheeCxUserStatus::whereIn('extension', $extensions)->get()->keyBy('extension');
 
         if ($userStatuses->isEmpty()) {
             Log::error('No valid user statuses found for provided extensions.');
+
+            // Use the extensions collected earlier instead of `$insertData`
+            $uploadedExtensions = implode(', ', $extensions);
+
             $uploadedFile->delete();
             fclose($handle);
-            return back()->with(['wrong' => 'No valid user statuses found for the provided extensions.']);
+
+            return back()->with([
+                'wrong' => 'No valid user statuses found for the provided extensions: ' . $uploadedExtensions
+            ]);
         }
 
-        // Reset the file pointer again to process rows
+
+
+
+        Log::info('Processing CSV data...');
         rewind($handle);
-        fgetcsv($handle); // Skip the header row
-        // Process the CSV rows (starting from second row since first is header)
+        fgetcsv($handle);
+        $seenMobiles = [];
+        $insertData = [];
+        $rowCount = 0;
+        $invalidNumbers = [];
+        $invalidReasons = []; // Array to store reasons why numbers are invalid
+
+
+        rewind($handle); // Reset file pointer to beginning
+        fgetcsv($handle); // Skip header row
+
+
         while (($row = fgetcsv($handle)) !== false) {
-            $rowCount++;
+            if (count($row) < 6) {
+                Log::warning('Skipping row due to missing columns: ' . json_encode($row));
+                continue;
+            }
 
-            // Check if the extension exists in the user statuses
+
+            $mobileNumber = trim($row[0]); // Trim whitespace
+
+
+            // Check if the number is valid (only digits)
+            if (!ctype_digit($mobileNumber)) {
+                $invalidNumbers[] = $mobileNumber;
+                $invalidReasons[$mobileNumber] = "Contains non-numeric characters";
+                continue;
+            }
+
+
+            // Check for duplicates
+            if (isset($seenMobiles[$mobileNumber])) {
+                $invalidNumbers[] = $mobileNumber;
+                $invalidReasons[$mobileNumber] = "Duplicate number";
+                continue;
+            }
+
+
+            $seenMobiles[$mobileNumber] = true;
+
+
             $userStatus = $userStatuses[$row[2]] ?? null;
+            if (!$userStatus) continue;
 
-            if (!$userStatus) {
-                Log::warning('User status not found for extension: ' . $row[2]);
-                $uploadedFile->delete(); // Rollback file upload on error
-                fclose($handle);
-                return back()->with(['wrong' => 'No user with extension ' . $row[2] . ' in your system.']);
-            }
 
-            // Ensure row has sufficient columns (at least 3: mobile, user, extension)
-            if (count($row) < 3) {
-                Log::warning('Skipping row due to insufficient columns: ' . json_encode($row));
-                $uploadedFile->delete(); // Rollback file upload on error
-                fclose($handle);
-                return back()->with(['wrong' => 'Ensure that no row is empty in the file.']);
-            }
 
-            // Validate that the required columns have no empty values
-            if (empty($row[0]) || empty($row[1]) || empty($row[2])) {
-                $uploadedFile->delete(); // Rollback file upload on error
-                fclose($handle);
-                return back()->with(['wrong' => 'Ensure that no row is empty in the file.']);
-            }
-
-            // Check if $row[0] contains only numbers
-            if (!ctype_digit($row[0])) {
-                Log::warning('Skipping row due to non-numeric mobile number: ' . json_encode($row));
-                $uploadedFile->delete();
-                return back()->with(['wrong' => 'Mobile should only be numbers: ' . $row[0]]);
-            }
-
-            // Check for duplicate mobile number
-            if (in_array($row[0], $seenMobiles)) {
-                Log::warning('Skipping row due to duplicate mobile number: ' . json_encode($row));
-                $uploadedFile->delete();
-                return back()->with(['wrong' => 'Mobile is duplicated: ' . $row[0]]);
-                continue; // Skip this row
-            }
-
-            // Add the mobile number to the seen array
-            $seenMobiles[] = $row[0];
-
-            // Add to batch insert array
             $insertData[] = [
-                'mobile' => $row[0],
+                'mobile' => $mobileNumber,
                 'user' => $row[1],
                 'extension' => $row[2],
                 'userStatus' => $userStatus->status,
@@ -387,71 +640,38 @@ class AutoDistributorFileController extends Controller
                 'file_id' => $uploadedFile->id,
             ];
 
-            Log::info('Prepared data for mobile: ' . $row[0] . ' extension: ' . $row[2]);
 
-            // Batch insert every 1000 rows to prevent memory overflow
             if (count($insertData) >= 1000) {
-                DB::beginTransaction();
-
-                try {
-                    Log::info('Inserting the following data: ' . json_encode($insertData));
-                    AutoDistributorUploadedData::insert($insertData);
-                    DB::commit();
-                    Log::info('Inserted ' . count($insertData) . ' records successfully.');
-                    $insertData = []; // Reset batch data
-                } catch (\Exception $e) {
-                    DB::rollBack();
-                    Log::error("Error inserting records: " . $e->getMessage());
-                    fclose($handle);
-                    return back()->with(['wrong' => 'Failed to insert records into the database.']);
-                }
-            }
-        }
-
-        // Insert remaining rows if any
-        if (!empty($insertData)) {
-            DB::beginTransaction();
-
-            try {
-                AutoDistributorUploadedData::insert($insertData);
-                DB::commit();
+                DB::transaction(fn() => AutoDistributorUploadedData::insert($insertData));
                 Log::info('Inserted ' . count($insertData) . ' records successfully.');
-            } catch (\Exception $e) {
-                DB::rollBack();
-                Log::error("Error inserting records: " . $e->getMessage());
-                fclose($handle);
-                return back()->with(['wrong' => 'Failed to insert remaining records into the database.']);
+                $insertData = [];
             }
         }
+
+
+        if (!empty($insertData)) {
+            DB::transaction(fn() => AutoDistributorUploadedData::insert($insertData));
+            Log::info('Inserted remaining ' . count($insertData) . ' records successfully.');
+        }
+
 
         fclose($handle);
-
-        Log::info('File uploaded and processed successfully.');
-        return back()->with('success', 'File uploaded and processed successfully.');
-
-        // Insert remaining rows if any
-        if (!empty($insertData)) {
-            DB::beginTransaction();
-
-            try {
-                AutoDistributorUploadedData::insert($insertData);
-                DB::commit();
-                Log::info('Inserted ' . count($insertData) . ' records successfully.');
-            } catch (\Exception $e) {
-                DB::rollBack();
-                Log::error("Error inserting records: " . $e->getMessage());
-                fclose($handle);
-                return back()->withErrors(['wrong' => 'Failed to insert remaining records into the database.']);
+        if (!empty($invalidNumbers)) {
+            $errorMessages = [];
+            foreach ($invalidNumbers as $index => $number) {
+                $errorMessages[] = $number . ' (' . $invalidReasons[$number] . ')';
             }
+
+
+            return back()->with([
+                'success' => 'File uploaded successfully with some skipped numbers.',
+                'skip' => implode(', ', $errorMessages)
+            ]);
         }
-
-        fclose($handle);
-
-        Log::info('File uploaded and processed successfully.');
-        return back()->with('success', 'File uploaded and processed successfully.');
+        // $message = 'File processed. ' . (!empty($invalidNumbers) ? 'Some numbers were skipped.' : '');
+        // Log::info('Numbers Invalid: '.print_r($invalidNumbers, True));
+        // return back()->with(['success' => $message]);
     }
-
-
 
 
 
