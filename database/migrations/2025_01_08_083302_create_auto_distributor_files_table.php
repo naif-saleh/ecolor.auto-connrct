@@ -21,8 +21,10 @@ return new class extends Migration
             $table->boolean('is_done')->default(false);
             $table->string('slug')->unique();
             $table->unsignedBigInteger('uploaded_by');
+            $table->unsignedBigInteger('provider_id');
             $table->timestamps();
 
+            $table->foreign('user_ext_id')->references('id')->on('trhee_cx_user_statuses')->onDelete('cascade');
             $table->foreign('uploaded_by')->references('id')->on('users')->onDelete('cascade');
         });
     }

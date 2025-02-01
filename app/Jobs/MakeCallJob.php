@@ -20,6 +20,7 @@ class MakeCallJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $feedData;
+    protected $extension;
     protected $tokenService;
 
     /**
@@ -27,11 +28,12 @@ class MakeCallJob implements ShouldQueue
      */
 
 
-public function __construct($feedData, TokenService $tokenService)
-{
-    $this->feedData = $feedData;
-    $this->tokenService = $tokenService;
-}
+     public function __construct($feedData, TokenService $tokenService, $extension)
+     {
+         $this->feedData = $feedData;
+         $this->tokenService = $tokenService;
+         $this->extension = $extension;
+     }
 
     /**
      * Execute the job.
@@ -40,56 +42,39 @@ public function __construct($feedData, TokenService $tokenService)
     {
         try {
             $token = $this->tokenService->getToken();
-            $ext = $this->feedData->extension;
-            Log::info($token);
+            Log::info("Calling API for extension: " . $this->extension);
+
             $responseState = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
-            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
+            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$this->extension}/makecall", [
                 'destination' => $this->feedData->mobile,
             ]);
 
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
 
-                Log::info("
-                    \t********** Auto Dialer Response Call **********
-                    \tResponse Data:
-                    \t" . print_r($responseData, true) . "
-                    \t***********************************************
-                ");
-
                 AutoDailerReport::updateOrCreate(
                     ['call_id' => $responseData['result']['callid']],
                     [
                         'status' => $responseData['result']['status'],
-                        'provider' => $this->feedData->provider,
-                        'extension' => $responseData['result']['dn'],
-                        'phone_number' => $responseData['result']['party_caller_id'],
+                        'provider' => $this->feedData->provider_name,
+                        'extension' => $this->extension,
+                        'phone_number' => $this->feedData->mobile,
                     ]
                 );
 
                 $this->feedData->update([
                     'state' => "Routing",
-                    'call_date' => Carbon::now(),
+                    'call_date' => now(),
                     'call_id' => $responseData['result']['callid'],
-                    'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
                 ]);
 
-                Log::info("
-                    \t📞 ✅ Auto Dialer Called Successfully for Mobile: " . $this->feedData->mobile . " 📞
-                ");
+                Log::info("📞✅ Call successful for: " . $this->feedData->mobile);
             } else {
-                Log::error("
-                    \t❌ 🚨 Auto Dialer Failed 🚨 ❌
-                    \t| Failed to make call for Mobile Number: " . $this->feedData->mobile . " |
-                    \t| Response: " . $responseState->body() . " |
-                ");
+                Log::error("❌ Failed call: " . $this->feedData->mobile);
             }
         } catch (\Exception $e) {
-            Log::error("
-                \t❌ ❗ Error in Auto Dialer Job ❗ ❌
-                \t| Exception: " . $e->getMessage() . " |
-            ");
+            Log::error("❌ Exception: " . $e->getMessage());
         }
     }
 }

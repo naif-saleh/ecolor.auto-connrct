@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use App\Models\AutoDialerProvider;
 use App\Models\AutoDailerFile;
 use App\Models\AutoDialerData;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 
@@ -159,4 +159,60 @@ class ProviderFeedController extends Controller
     }
 
 
+    public function update(Request $request, $slug)
+    {
+        // Validate incoming request
+        $request->validate([
+            'file_name' => 'required|string|max:255',
+            'from' => 'nullable|date_format:H:i',
+            'to' => 'nullable|date_format:H:i',
+            'date' => 'required|date',
+        ]);
+
+        // Find the file by slug
+        $file = AutoDailerFile::where('slug', $slug)->firstOrFail();
+
+        // Update the file's data
+        $file->update([
+            'file_name' => $request->file_name,
+            'from' => $request->from,
+            'to' => $request->to,
+            'date' => $request->date,
+        ]);
+
+        return redirect()->route('provider.files.index', $file->provider)
+            ->with('success', 'File updated successfully!');
+    }
+
+
+
+    public function destroy($slug)
+    {
+        try {
+            // Find the file by its slug
+            $file = AutoDailerFile::where('slug', $slug)->firstOrFail();
+
+            // Optionally, delete associated data or related entries if necessary
+            $file->uploadedData()->delete(); // Delete all uploaded data related to this file
+
+            // Delete the actual file from storage
+            if (Storage::exists("provider_files/{$file->slug}")) {
+                Storage::delete("provider_files/{$file->slug}");
+            }
+
+            // Delete the file record from the database
+            $file->delete();
+
+            return redirect()->route('provider.files.index', $file->provider)
+                ->with('success', 'File deleted successfully!');
+        } catch (\Exception $e) {
+            Log::error("❌ Error deleting file: " . $e->getMessage());
+            return redirect()->route('provider.files.index')
+                ->with('error', 'Failed to delete the file. Please try again.');
+        }
+    }
+
+
+
+    
 }

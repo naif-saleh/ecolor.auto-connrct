@@ -68,16 +68,16 @@
                                             <i class="bi bi-download"></i>
                                         </a>
 
-                                        <a href="{{ route('provider.files.show', $file->slug) }}"
-                                            class="btn btn-info btn-sm mx-1" title="View File">
+                                        <!-- view Button -->
+                                        <button type="button" class="btn btn-info btn-sm mx-1">
                                             <i class="bi bi-eye"></i>
-                                        </a>
+                                        </button>
 
 
 
                                         <!-- Edit Button (Opens Modal) -->
                                         <button type="button" class="btn btn-warning btn-sm mx-1" data-bs-toggle="modal"
-                                            data-bs-target="#editFileModal">
+                                            data-bs-target="#editFileModal{{ $file->slug }}">
                                             <i class="bi bi-pencil"></i>
                                         </button>
 
@@ -92,48 +92,51 @@
                                                 <i class="bi bi-trash"></i>
                                             </button>
                                         </form>
+
                                     </div>
 
                                 </td>
                             </tr>
 
 
-                            <div class="modal fade" id="editFileModal" tabindex="-1" aria-labelledby="editFileModalLabel"
-                                aria-hidden="true">
+                            <!-- Edit Modal -->
+                            <div class="modal fade" id="editFileModal{{ $file->slug }}" tabindex="-1"
+                                aria-labelledby="editFileModalLabel{{ $file->slug }}" aria-hidden="true">
                                 <div class="modal-dialog">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h5 class="modal-title" id="editFileModalLabel">Update Time & Date</h5>
+                                            <h5 class="modal-title">Update Time & Date</h5>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal"
                                                 aria-label="Close"></button>
                                         </div>
-
                                         <div class="modal-body">
-                                            <form action="{{route('autoDailer.update' , $file->slug)}}" method="POST">
+                                            <form method="POST" action="{{ route('autoDailer.update', $file->slug) }}">
                                                 @csrf
                                                 @method('PUT')
-                                                <input type="hidden" value="{{$file->slug}}">
+
+                                                <input type="hidden" name="file_id" value="{{ $file->id }}">
+
                                                 <div class="mb-3">
                                                     <label for="file_name" class="form-label">File Name:</label>
-                                                    <input type="text" class="form-control" name="file_name" id="file_name"
-                                                    value="{{ old('file_name', $file->file_name) }}" required>
+                                                    <input type="text" class="form-control" name="file_name"
+                                                        value="{{ old('file_name', $file->file_name) }}" required>
                                                 </div>
                                                 <div class="mb-3">
                                                     <label for="from" class="form-label">From:</label>
-                                                    <input type="time" class="form-control" name="from" id="editFrom"
-                                                    value="{{ old('file_name', $file->from) }}"  required>
+                                                    <input type="time" class="form-control" name="from"
+                                                        value="{{ old('from', $file->from) }}" required>
                                                 </div>
 
                                                 <div class="mb-3">
                                                     <label for="to" class="form-label">To:</label>
-                                                    <input type="time" class="form-control" name="to" id="editTo"
-                                                    value="{{ old('file_name', $file->to) }}" required>
+                                                    <input type="time" class="form-control" name="to"
+                                                        value="{{ old('to', $file->to) }}" required>
                                                 </div>
 
                                                 <div class="mb-3">
                                                     <label for="date" class="form-label">Date:</label>
                                                     <input type="date" class="form-control" name="date"
-                                                    value="{{ old('file_name', $file->date) }}" id="editDate" required>
+                                                        value="{{ old('date', $file->date) }}" required>
                                                 </div>
 
                                                 <div class="modal-footer">
