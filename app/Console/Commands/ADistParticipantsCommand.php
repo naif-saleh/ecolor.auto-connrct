@@ -2,12 +2,14 @@
 
 namespace App\Console\Commands;
 
+use App\Models\ADistAgent;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use App\Models\AutoDistributorUploadedData;
-use App\Models\AutoDistributerReport;
+use App\Models\ADistData;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Cache;
+use App\Models\AutoDistributerReport;
 use DateTime;
 use App\Services\TokenService;
 
@@ -20,19 +22,20 @@ class ADistParticipantsCommand extends Command
      * @var string
      */
     protected $signature = 'app:ADist-participants-command';
-    protected $threeCXTokenService;
+
     protected $tokenService;
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Command description';
+    protected $description = 'Fetch and process participants data from 3CX API';
     public function __construct(TokenService $tokenService)
     {
         parent::__construct(); // This is required
         $this->tokenService = $tokenService;
     }
+
 
     /**
      * Execute the console command.
@@ -41,140 +44,85 @@ class ADistParticipantsCommand extends Command
     {
         Log::info("
         \t-----------------------------------------------------------------------
-        \t\t\t********** Auto Distributor **********\n
+        \t\t\t********** Auto Dialer **********\n
         \t-----------------------------------------------------------------------
         \t| 📞 ✅ ParticipantCommand executed at " . now() . "            |
         \t-----------------------------------------------------------------------
     ");
+        // Fetch all providers
+        $agents = ADistAgent::all();
 
-        // Process data in chunks to optimize memory usage
-        AutoDistributorUploadedData::chunk(100, function ($providersFeeds) {
-            foreach ($providersFeeds as $feed) {
-                $ext_from = $feed->extension;
 
-                try {
-                    $token = $this->tokenService->getToken();
+        foreach ($agents as $agent) {
+            $ext_from = $agent->extension;
 
-                    // Fetch participants for the extension
-                    $responseState = Http::withHeaders([
-                        'Authorization' => 'Bearer ' . $token,
-                    ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
+            try {
+                $token = $this->tokenService->getToken();
 
-                    if (!$responseState->successful()) {
-                        Log::error("Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
-                        continue;
-                    }
+                $responseState = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $token,
+                ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
 
-                    $participants = $responseState->json();
-
-                    if (empty($participants)) {
-                        Log::warning("⚠️ No participants found for extension {$ext_from}");
-                        continue;
-                    }
-
-                    foreach ($participants as $participant_data) {
-                        try {
-                            $filter = "contains(Caller, '{$participant_data['dn']}')";
-                            $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
-
-                            $activeCallsResponse = Http::withHeaders([
-                                'Authorization' => 'Bearer ' . $token,
-                            ])->get($url);
-
-                            if ($activeCallsResponse->successful()) {
-                                $activeCalls = $activeCallsResponse->json();
-
-                                foreach ($activeCalls['value'] as $call) {
-                                    if (isset($call['Id'], $call['Status'], $call['EstablishedAt'], $call['ServerNow'])) {
-                                        Log::info("Processing Call ID {$call['Id']} with status {$call['Status']}");
-
-                                        // Update call duration if in 'Talking' status
-                                        if ($call['Status'] === 'Talking') {
-                                            $establishedAt = new DateTime($call['EstablishedAt']);
-                                            $serverNow = new DateTime($call['ServerNow']);
-                                            $interval = $establishedAt->diff($serverNow);
-                                            $durationTime = $interval->format('%H:%I:%S');
-
-                                            AutoDistributerReport::where('call_id', $call['Id'])->update([
-                                                'status' => $call['Status'],
-                                                'duration_time' => $durationTime
-                                            ]);
-                                        } else {
-                                            AutoDistributerReport::where('call_id', $call['Id'])->update([
-                                                'status' => $call['Status']
-                                            ]);
-                                        }
-
-                                        // Update call state
-                                        AutoDistributorUploadedData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
-
-                                        Log::info("✅ Updated status for Call ID {$call['Id']} to: {$call['Status']}");
-                                    } else {
-                                        Log::warning("⚠️ Missing required fields in call data: " . json_encode($call));
-                                    }
-                                }
-                            } else {
-                                Log::error("❌ Failed to fetch active calls. Response: " . $activeCallsResponse->body());
-                            }
-                        } catch (\Exception $e) {
-                            Log::error("❌ Failed to process participant data for call ID " . ($participant_data['callid'] ?? 'N/A') . ": " . $e->getMessage());
-                        }
-                    }
-                } catch (\Exception $e) {
-                    Log::error("❌ Failed to process provider {$ext_from}: " . $e->getMessage());
+                if (!$responseState->successful()) {
+                    Log::error("Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
+                    continue;
                 }
+
+                $participants = $responseState->json();
+
+                if (empty($participants)) {
+                    Log::warning("⚠️ No participants found for extension {$ext_from}");
+                    continue;
+                }
+
+                Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
+
+                foreach ($participants as $participant_data) {
+                    try {
+                        Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
+                        $filter = "contains(Caller, '{$participant_data['dn']}')";
+                        $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+
+                        $activeCallsResponse = Http::withHeaders([
+                            'Authorization' => 'Bearer ' . $token,
+                        ])->get($url);
+
+                        if ($activeCallsResponse->successful()) {
+                            $activeCalls = $activeCallsResponse->json();
+                            Log::info("✅ Active Calls Response: " . print_r($activeCalls, true));
+
+                            foreach ($activeCalls['value'] as $call) {
+                                if ($call['Status'] === 'Talking') {
+                                    $establishedAt = new DateTime($call['EstablishedAt']);
+                                    $serverNow = new DateTime($call['ServerNow']);
+                                    $interval = $establishedAt->diff($serverNow);
+                                    $durationTime = $interval->format('%H:%I:%S');
+
+                                    AutoDistributerReport::where('call_id', $call['Id'])->update([
+                                        'status' => $call['Status'],
+                                        'duration_time' => $durationTime
+                                    ]);
+                                } else {
+                                    AutoDistributerReport::where('call_id', $call['Id'])->update([
+                                        'status' => $call['Status']
+                                    ]);
+                                    ADistData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
+                                    Log::info("✅ Updated status for Call ID {$call['Id']} to: {$call['Status']}");
+                                }
+                            }
+                        } else {
+                            Log::error("❌ Failed to fetch active calls. Response: " . $activeCallsResponse->body());
+                        }
+                    } catch (\Exception $e) {
+                        Log::error("❌ Failed to process participant data for call ID " . ($participant_data['callid'] ?? 'N/A') . ": " . $e->getMessage());
+                    }
+                }
+            } catch (\Exception $e) {
+                Log::error("❌ Failed fetching participants for provider {$ext_from}: " . $e->getMessage());
             }
-        });
+        }
 
-        Log::info("✅ Auto Distributor command execution completed.");
+
+        Log::info("✅ Auto Dialer command execution completed.");
     }
-
-
-    /**
-     * Update or create participant report.
-     */
-    private function updateReportStatus($callId, $status)
-    {
-        AutoDistributerReport::where('call_id', $callId)->update(['status' => $status]);
-    }
-
-    /**
-     * Drop a call for a participant.
-     */
-    /**
-     * Drop a call for a participant with additional payload.
-     */
-
-
-
-    // private function dropCall($ext_from, $participantId, $partyCallerId, $token)
-    // {
-    //     $drop = "false";
-    //     try {
-    //         $action = "drop";
-    //         $url = config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants/{$participantId}/{$action}";
-
-    //         // Request payload with dynamic destination
-    //         $payload = [
-    //             "reason" => "new call",
-    //             "destination" => $partyCallerId,
-    //             "timeout" => 0,
-    //         ];
-
-    //         $dropResponse = Http::withHeaders([
-    //             'Authorization' => 'Bearer ' . $token,
-    //             'Content-Type' => 'application/json',
-    //         ])->post($url, $payload);
-
-    //         if ($dropResponse->successful()) {
-    //             $drop = "true";
-    //             Log::info("Successfully dropped the call for extension {$ext_from}, participant ID {$participantId}: " . json_encode($dropResponse->json()));
-    //         } else {
-    //             $drop = "false";
-    //             Log::error("Failed to drop the call for extension {$ext_from}, participant ID {$participantId}. HTTP Status: {$dropResponse->status()}. Response: {$dropResponse->body()}");
-    //         }
-    //     } catch (\Exception $e) {
-    //         Log::error("Error dropping call for extension {$ext_from}, participant ID {$participantId}: " . $e->getMessage());
-    //     }
-    // }
 }
