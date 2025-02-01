@@ -94,17 +94,34 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/providers', [ProviderFeedController::class, 'index'])->name('providers.index');
     Route::post('/providers/store', [ProviderFeedController::class, 'store'])->name('providers.store');
     Route::get('/providers/create', [ProviderFeedController::class, 'create'])->name('providers.create');
-
-
     Route::get('/providers/{provider}/files/create', [ProviderFeedController::class, 'createFile'])->name('provider.files.create');
     Route::post('/providers/{provider}/files/store', [ProviderFeedController::class, 'storeFile'])->name('provider.files.store');
     Route::get('/providers/{provider}/files', [ProviderFeedController::class, 'files'])->name('provider.files.index');
-
+    Route::delete('/autodailer/{slug}', [ProviderFeedController::class, 'destroy'])->name('autodailer.delete');
+    Route::put('/auto-dailer/{slug}', [ProviderFeedController::class, 'update'])->name('autoDailer.update');
     Route::get('/providers/files/{slug}', [ProviderFeedController::class, 'showFileContent'])->name('provider.files.show');
 
     //Auto Distributor User
     Route::get('/users', [UserFeedController::class, 'index'])->name('users.index');
     Route::get('/users/{user}/files/create', [UserFeedController::class, 'createFile'])->name('users.files.create');
+    Route::post('/users/{user}/files/store', [UserFeedController::class, 'storeFile'])->name('users.files.store');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     // Manager Reports...................................................................................................................
 
@@ -143,9 +160,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('autodailers/files/show/{slug}', [AutoDailerFileController::class, 'showFile'])->name('autodailers.files.show');
     // Route::put('autodailers/files/update/{slug}', [AutoDailerFileController::class, 'updateFile'])->name('autodailers.files.update');
     Route::delete('autodailers/files/delete/{slug}', [AutoDailerFileController::class, 'deleteFile'])->name('autodailers.files.delete');
-    Route::get('autodailers/files/{slug}', [AutoDailerFileController::class, 'show'])->name('autodailers.files.show');
+    // Route::get('autodailers/files/{slug}', [AutoDailerFileController::class, 'show'])->name('autodailers.files.show');
     Route::post('auto-dailer/upload-csv', [AutoDailerFileController::class, 'uploadCsv'])->name('autodailers.upload.csv');
-    Route::delete('/autodailer-file/{id}', [AutoDailerFileController::class, 'deleteFile'])->name('autodailer.delete');
+    // Route::delete('/autodailer-file/{id}', [AutoDailerFileController::class, 'deleteFile'])->name('autodailer.delete');
     // Route::get('/auto-dailer/{slug}/edit', [AutoDailerFileController::class, 'edit'])->name('autodailer.edit');
     Route::put('/auto-dailer/{slug}', [AutoDailerFileController::class, 'updateAutoDailer'])->name('autoDailer.update');
 

@@ -57,37 +57,38 @@ class UpdateUserStatusCommand extends Command
                 if (isset($users['value']) && is_array($users['value'])) {
                     Log::info("
                     \t-----------------------------------------------------------------------
-                    \t\t\t********** Auto Distributor **********\n
+                    \t\t\t********** Updating Users **********\n
                     \t-----------------------------------------------------------------------
                     \t| ✅ Successfully fetched users from 3CX API.           |
                     \t-----------------------------------------------------------------------
                 ");
-                    // Iterate through all users and update corresponding entries in the database
-                    foreach ($users['value'] as $user) {
-                       // $extension = AutoDistributorUploadedData::where('three_cx_user_id', $user['Id'])->get();
-                       $extension =    TrheeCxUserStatus::where('user_id', $user['Id'])->get();
-                        if ($extension) {
-                            // Update multiple fields
-                            $updatedFields = [
-                                'status' => $user['status'] ?? $extension->status,
-                                'queueStatus' => $user['QueueStatus'] ?? $extension->queueStatus,
-                                // Add more fields as needed
-                            ];
+                foreach ($users['value'] as $user) {
+                    $extension = TrheeCxUserStatus::where('user_id', $user['Id'])->first();
 
-                            $extension->update($updatedFields);
+                    if ($extension) {
+                        // Update multiple fields
+                        $updatedFields = [
+                            'status' => $user['CurrentProfileName'] ?? $extension->userStatus,
+                            'displayName' => $user['DisplayName'] ?? $extension->displayName,
+                            'email' => $user['EmailAddress'] ?? $extension->email,
+                            'queueStatus' => $user['QueueStatus'] ?? $extension->queueStatus,
+                            // Add more fields as needed
+                        ];
 
-                            Log::info("Auto Distributor: ✅ Updated user data for extension ID {$extension->id}.", $updatedFields);
-                        } else {
+                        $extension->update($updatedFields);
 
-                            Log::warning("
-                                            \t-----------------------------------------------------------------------
-                                            \t\t********** Auto Distributor Warning **********\n
-                                            \t-----------------------------------------------------------------------
-                                            \t ⚠️  No extension found for 3CX user ID {$user['Id']}.
-                                            \t-----------------------------------------------------------------------
-                                    ");
-                        }
+                        Log::info("Auto Distributor: ✅ Updated user data for extension ID {$extension->id}.", $updatedFields);
+                    } else {
+
+                        Log::warning("
+                                        \t-----------------------------------------------------------------------
+                                        \t\t**** Auto Distributor Warning ****\n
+                                        \t-----------------------------------------------------------------------
+                                        \t ⚠️  No extension found for 3CX user ID {$user['Id']}.
+                                        \t-----------------------------------------------------------------------
+                                ");
                     }
+                }
 
                     $this->info('All user data updated successfully.');
                 } else {
@@ -109,5 +110,6 @@ class UpdateUserStatusCommand extends Command
             $this->error('An error occurred. Check logs for details.');
         }
 
+   
     }
 }

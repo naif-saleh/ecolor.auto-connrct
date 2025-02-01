@@ -7,7 +7,7 @@
     <div class="container">
         <h2 class="mb-4">Add File for User: {{ $user->displayName }}</h2>
 
-        <form action="" method="POST" enctype="multipart/form-data">
+        <form action="{{route('users.files.store', $user)}}" method="POST" enctype="multipart/form-data">
             @csrf
             <div class="mb-3">
                 <label for="file_name" class="form-label">File Name</label>
