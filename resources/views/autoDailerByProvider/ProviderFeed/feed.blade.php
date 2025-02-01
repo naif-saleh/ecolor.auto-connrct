@@ -69,9 +69,9 @@
                                         </a>
 
                                         <!-- view Button -->
-                                        <button type="button" class="btn btn-info btn-sm mx-1">
+                                        <a href="{{ route('provider.files.show', $file->slug)}}" type="button" class="btn btn-info btn-sm mx-1">
                                             <i class="bi bi-eye"></i>
-                                        </button>
+                                        </a>
 
 
 

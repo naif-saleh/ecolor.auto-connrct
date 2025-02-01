@@ -3,19 +3,21 @@
     <div class="container">
         <h2>File: {{ $file->file_name }}</h2>
 
-        @if (!empty($data))
+        @if (!empty($file))
             <table class="table table-bordered">
                 <thead>
                     <tr>
                         <th>#</th>
                         <th>Mobile Number</th>
+                        <th>state</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($data as $index => $row)
+                    @foreach ($data as $row)
                         <tr>
-                            <td>{{ $index + 1 }}</td>
-                            <td>{{ $row[0] ?? 'N/A' }}</td>
+                            <td>{{ $row->id }}</td>
+                            <td>{{ $row->mobile ?? 'N/A' }}</td>
+                            <td>{{ $row->state ?? 'N/A' }}</td>
                         </tr>
                     @endforeach
                 </tbody>

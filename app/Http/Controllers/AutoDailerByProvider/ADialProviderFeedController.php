@@ -4,20 +4,20 @@ namespace App\Http\Controllers\AutoDailerByProvider;
 
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
-use App\Models\AutoDialerProvider;
-use App\Models\AutoDailerFile;
-use App\Models\AutoDialerData;
+use App\Models\ADialData;
+use App\Models\ADialFeed;
+use App\Models\ADialProvider;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
-
-
-class ProviderFeedController extends Controller
+use App\Models\ActivityLog;
+use Illuminate\Support\Facades\Auth;
+class ADialProviderFeedController extends Controller
 {
 
     public function index()
     {
-        $providers = AutoDialerProvider::all();
+        $providers = ADialProvider::all();
         return view('autoDailerByProvider.Provider.index', compact('providers'));
     }
 
@@ -30,12 +30,12 @@ class ProviderFeedController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:auto_dialer_providers,name',
+            'name' => 'required|string|max:255|unique:a_dial_providers,name',
             'extension' => 'nullable|string|max:50',
         ]);
 
         try {
-            AutoDialerProvider::create([
+            ADialProvider::create([
                 'name' => $request->name,
                 'extension' => $request->extension,
                 'user_id' => auth()->id(), // Ensure the user is logged in
@@ -48,14 +48,14 @@ class ProviderFeedController extends Controller
     }
 
 
-    public function createFile(AutoDialerProvider $provider)
+    public function createFile(ADialProvider $provider)
     {
-        $providers = AutoDialerProvider::find($provider);
+        $providers = ADialProvider::find($provider);
         return view('autoDailerByProvider.ProviderFeed.create', compact('provider'));
     }
 
 
-    public function storeFile(Request $request, AutoDialerProvider $provider)
+    public function storeFile(Request $request, ADialProvider $provider)
     {
         $request->validate([
             'file_name' => 'required|string|max:255',
@@ -69,7 +69,7 @@ class ProviderFeedController extends Controller
         $filePath = $request->file('file_upload')->store('provider_files');
 
         // Create a record for the file
-        $file = AutoDailerFile::create([
+        $file = ADialFeed::create([
             'file_name' => $request->file_name,
             'slug' => Str::slug($request->file_name . '-' . time()),
             'is_done' => false,
@@ -96,39 +96,38 @@ class ProviderFeedController extends Controller
 
         foreach ($lines as $line) {
             $mobile = trim($line); // Assuming each line contains only a mobile number
-
+            Log::info('mobile executed at ' . $mobile);
             if ($this->isValidMobile($mobile)) {
                 $batchData[] = [
-                    'auto_dailer_file_id' => $fileId,
+                    'feed_id' => $fileId,
                     'mobile' => $mobile,
-                    'provider_name' => $provider->name,
-                    'extension' => $provider->extension,
                     'state' => 'new', // Default state
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
+            } else {
+                Log::info('This mobile not valid ' . $mobile);
             }
 
             // Insert in batches to improve performance
             if (count($batchData) >= $batchSize) {
-                AutoDialerData::insert($batchData);
+                ADialData::insert($batchData);
                 $batchData = []; // Reset batch
             }
         }
-
         // Insert remaining records
         if (!empty($batchData)) {
-            AutoDialerData::insert($batchData);
+            ADialData::insert($batchData);
         }
     }
 
     private function isValidMobile($mobile)
     {
-        return preg_match('/^\+?[1-9]\d{7,14}$/', $mobile); // Supports international numbers
+        return preg_match('/^9665[0-9]{8}$/', $mobile); // Validates Saudi mobile numbers
     }
 
     // Display all files for a provider
-    public function files(AutoDialerProvider $provider)
+    public function files(ADialProvider $provider)
     {
         $files = $provider->files; // Relationship defined in the provider model
         return view('autoDailerByProvider.ProviderFeed.feed', compact('provider', 'files'));
@@ -138,22 +137,9 @@ class ProviderFeedController extends Controller
     public function showFileContent($slug)
     {
         // Find the file by slug instead of using route model binding
-        $file = AutoDailerFile::where('slug', $slug)->firstOrFail();
+        $file = ADialFeed::where('slug', $slug)->firstOrFail();
 
-        // Get the file path
-        $filePath = storage_path("app/provider_files/{$file->slug}");
-
-        // Check if the file exists
-        if (!Storage::exists("provider_files/{$file->slug}")) {
-            return redirect()->back()->with('error', 'File not found.');
-        }
-
-        // Read the file contents
-        $content = Storage::get("provider_files/{$file->slug}");
-
-        // Convert CSV into an array
-        $lines = explode("\n", $content);
-        $data = array_map('str_getcsv', $lines);
+        $data = ADialData::where('feed_id',$file->id )->paginate(400);
 
         return view('autoDailerByProvider.ProviderFeed.show', compact('file', 'data'));
     }
@@ -170,7 +156,7 @@ class ProviderFeedController extends Controller
         ]);
 
         // Find the file by slug
-        $file = AutoDailerFile::where('slug', $slug)->firstOrFail();
+        $file = ADialFeed::where('slug', $slug)->firstOrFail();
 
         // Update the file's data
         $file->update([
@@ -190,7 +176,7 @@ class ProviderFeedController extends Controller
     {
         try {
             // Find the file by its slug
-            $file = AutoDailerFile::where('slug', $slug)->firstOrFail();
+            $file = ADialFeed::where('slug', $slug)->firstOrFail();
 
             // Optionally, delete associated data or related entries if necessary
             $file->uploadedData()->delete(); // Delete all uploaded data related to this file
@@ -213,6 +199,26 @@ class ProviderFeedController extends Controller
     }
 
 
+    public function updateAllowStatus(Request $request, $slug)
+    {
+        $file = ADialFeed::where('slug', $slug)->firstOrFail();
+
+        // Handle the 'allow' checkbox as a boolean
+        $file->allow = $request->has('allow') ? (bool) $request->allow : false; // Ensure that allow is properly set as a boolean
+        $file->save();
+
+        // Active Log Report...............................
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' => $file->allow ? 'Active' : "Inactive",
+            'file_id' => $file->id,
+            'file_type' => 'Auto-Dailer',
+            'file_name' => $file->file_name,
+            'operation_time' => now(),
+        ]);
+
+        return back();
+    }
 
     
 }

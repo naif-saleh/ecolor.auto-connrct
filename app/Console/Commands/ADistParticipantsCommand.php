@@ -12,14 +12,14 @@ use DateTime;
 use App\Services\TokenService;
 
 
-class MakeUserParticipantCommand extends Command
+class ADistParticipantsCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'app:make-user-participant-command';
+    protected $signature = 'app:ADist-participants-command';
     protected $threeCXTokenService;
     protected $tokenService;
     /**

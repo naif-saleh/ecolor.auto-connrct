@@ -11,14 +11,14 @@ use Illuminate\Support\Facades\Cache;
 use App\Services\TokenService;
 
 
-class UpdateUserStatusCommand extends Command
+class ADistUpdateUserStatusCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'app:update-user-status-command';
+    protected $signature = 'app:ADist-update-user-status-command';
 
     protected $tokenService;
     /**

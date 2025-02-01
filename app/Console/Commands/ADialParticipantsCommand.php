@@ -14,14 +14,14 @@ use DateTime;
 use App\Services\TokenService;
 
 
-class participantsCommand extends Command
+class ADialParticipantsCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'app:participants-command';
+    protected $signature = 'app:ADial-participants-command';
 
     protected $tokenService;
     /**

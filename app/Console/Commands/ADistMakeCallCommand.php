@@ -13,14 +13,14 @@ use App\Models\AutoDistributorFile;
 use App\Jobs\MakeCallJob;
 use App\Services\TokenService;
 
-class MakeUserCallCommand extends Command
+class ADistMakeCallCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'app:make-user-call-command';
+    protected $signature = 'app:ADist-make-call-command';
     protected $threeCXTokenService;
     protected $tokenService;
     /**

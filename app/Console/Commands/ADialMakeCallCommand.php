@@ -2,25 +2,24 @@
 
 namespace App\Console\Commands;
 
-use App\Models\AutoDailerFile;
-use App\Models\AutoDialerData;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
-use App\Models\AutoDailerReport;
-use Illuminate\Support\Facades\Http;
+use App\Models\ADialProvider;
+use App\Models\ADialData;
+use App\Models\ADialFeed;
+
 use App\Jobs\MakeCallJob;
-use App\Models\AutoDialerProvider;
 use App\Services\TokenService;
 
-class makeCallCommand extends Command
+class ADialMakeCallCommand extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'app:make-call-command';
+    protected $signature = 'app:ADial-make-call-command';
 
     /**
      * The console command description.
@@ -42,31 +41,34 @@ class makeCallCommand extends Command
      */
     public function handle()
     {
-        Log::info('MakeCallCommand executed at ' . now());
+        Log::info('ADialMakeCallCommand executed at ' . now());
 
         // Fetch all providers
-        $providers = AutoDialerProvider::all();
-
+        $providers = ADialProvider::all();
+      
         foreach ($providers as $provider) {
+            // TODO: add new feature to turn of the provider
             // Fetch files uploaded today
-            $files = AutoDailerFile::where('provider_id', $provider->id)
+            $files = ADialFeed::where('provider_id', $provider->id)
                 ->whereDate('date', today())
                 ->where('allow', true) // Only allowed files
                 ->get();
 
             foreach ($files as $file) {
+            
                 $from = Carbon::parse("{$file->date} {$file->from}")->subHours(3);
                 $to = Carbon::parse("{$file->date} {$file->to}")->subHours(3);
 
                 if (now()->between($from, $to)) {
+                
                     Log::info("✅ File ID {$file->id} is within range, processing calls...");
 
-                    AutoDialerData::where('file_id', $file->id)
+                    ADialData::where('feed_id', $file->id)
                         ->where('state', 'new')
                         ->chunk(50, function ($dataBatch) use ($provider) {
                             foreach ($dataBatch as $feedData) {
                                 try {
-                                    $token = app(TokenService::class);  
+                                    $token = app(TokenService::class);
                                     dispatch(new MakeCallJob($feedData, $token, $provider->extension));
                                 } catch (\Exception $e) {
                                     Log::error("❌ Error in dispatching call: " . $e->getMessage());
@@ -75,7 +77,7 @@ class makeCallCommand extends Command
                         });
 
                     // Mark file as done if all calls are processed
-                    if (!AutoDialerData::where('file_id', $file->id)->where('state', 'new')->exists()) {
+                    if (!ADialData::where('feed_id', $file->id)->where('state', 'new')->exists()) {
                         $file->update(['is_done' => true]);
                         Log::info("✅✅✅ All numbers called for File ID: {$file->id}");
                     }
@@ -85,7 +87,7 @@ class makeCallCommand extends Command
             }
         }
 
-        Log::info('📞✅ MakeCallCommand execution completed at ' . now());
+        Log::info('📞✅ ADialMakeCallCommand execution completed at ' . now());
     }
 
 }
