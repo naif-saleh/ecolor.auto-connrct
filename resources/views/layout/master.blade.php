@@ -71,7 +71,7 @@
                                 <a class="nav-link" href="{{ route('manager.dashboard') }}">Manager Statistics</a>
                             </li> --}}
                             <li class="nav-item">
-                                <a class="nav-link" href="{{ route('autodailers.files.index') }}">Auto Dailer</a>
+                                <a class="nav-link" href="{{ route('providers.index') }}">Auto Dailer</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ route('distributor.files.index') }}">Auto
