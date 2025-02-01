@@ -2,21 +2,19 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class AutoDialerProvider extends Model
 {
-    use HasFactory;
-
-    protected $fillable = ['name', 'extension', 'file_sound', 'user_id'];
+    protected $fillable = ['name', 'extension', 'user_id'];
 
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-    public function feedFiles()
+
+    public function files()
     {
-        return $this->hasMany(AutoDailerFeedFile::class, 'provider_id');
+        return $this->hasMany(AutoDailerFile::class, 'provider_id');
     }
 }

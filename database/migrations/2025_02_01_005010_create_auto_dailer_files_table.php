@@ -20,10 +20,13 @@ return new class extends Migration
             $table->boolean('allow')->default(false);
             $table->boolean('is_done')->default(false);
             $table->string('slug')->unique();
-            $table->unsignedBigInteger('uploaded_by');
+            $table->unsignedBigInteger('uploaded_by'); // Make sure this comes first
+            $table->unsignedBigInteger('provider_id'); // Then add provider_id
             $table->timestamps();
 
+            // Foreign keys
             $table->foreign('uploaded_by')->references('id')->on('users')->onDelete('cascade');
+            $table->foreign('provider_id')->references('id')->on('auto_dialer_providers')->onDelete('cascade');
         });
     }
 

@@ -1,16 +1,21 @@
 @extends('layout.master')
 
 @section('content')
-<div class="container">
-    <h1>Feed Details</h1>
+    <div class="container">
+        <h2 class="mb-4">Files for Provider: {{ $provider->name }}</h2>
 
-    <p><strong>Mobile:</strong> {{ $feed->mobile }}</p>
-    <p><strong>Extension:</strong> {{ $feed->extension }}</p>
-    <p><strong>From:</strong> {{ $feed->from }}</p>
-    <p><strong>To:</strong> {{ $feed->to }}</p>
-    <p><strong>Date:</strong> {{ $feed->date }}</p>
-    <p><strong>Status:</strong> {{ $feed->on ? 'On' : 'Off' }}</p>
+        <!-- Files List -->
+        <ul class="list-group">
+            @foreach ($files as $file)
+                <li class="list-group-item">
+                    {{ $file->file_name }}
+                    <!-- Optionally, you can link to download/view the file -->
+                    <a href="{{ Storage::url($file->file_name) }}" class="btn btn-link" target="_blank">View</a>
+                </li>
+            @endforeach
+        </ul>
 
-    <a href="{{ route('autoDialerProviders.show', $feed->provider_id) }}">Back to Provider</a>
-</div>
+        <!-- Back to provider list -->
+        <a href="{{ route('providers.index') }}" class="btn btn-primary mt-3">Back to Providers</a>
+    </div>
 @endsection

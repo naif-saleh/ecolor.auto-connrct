@@ -1,6 +1,48 @@
 @extends('layout.master')
 
+
+
 @section('content')
+<div class="container">
+    <h2 class="mb-4">Providers</h2>
+
+    <!-- Button to Navigate to Add Provider Page -->
+    <a href="{{ route('providers.create') }}" class="btn btn-primary">Add Provider</a>
+
+    <!-- Providers List -->
+    <ul class="list-group mt-3">
+        @foreach($providers as $provider)
+            <li class="list-group-item">
+                {{ $provider->name }} ({{ $provider->extension ?? 'No Extension' }})
+                <!-- Add File Button -->
+                <a href="{{ route('provider.files.create', $provider) }}" class="btn btn-secondary btn-sm ml-2">Add File</a>
+                <!-- View Files Button -->
+                <a href="{{ route('provider.files.index', $provider) }}" class="btn btn-info btn-sm ml-2">View Files</a>
+            </li>
+        @endforeach
+    </ul>
+
+    <!-- Display Success Message -->
+    @if(session('success'))
+        <div class="alert alert-success mt-3">
+            {{ session('success') }}
+        </div>
+    @endif
+</div>
+@endsection
+
+
+
+
+
+
+
+
+
+
+
+
+{{-- @section('content')
 <div class="container py-5">
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="display-4">Auto Dialer Providers </h1>
@@ -9,7 +51,7 @@
         </a>
     </div>
 
-    @if($providers->isEmpty())
+    @if ($providers->isEmpty())
         <div class="alert alert-warning">
             No Auto Dialer Providers found. Click "Create New Provider" to add one.
         </div>
@@ -24,7 +66,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach($providers as $provider)
+                    @foreach ($providers as $provider)
                         <tr>
                             <td>{{ $provider->name }}</td>
                             <td>{{ $provider->extension }}</td>
@@ -49,4 +91,4 @@
         </div>
     @endif
 </div>
-@endsection
+@endsection --}}

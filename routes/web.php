@@ -35,7 +35,6 @@ Route::get('/', function () {
         if ($user->isUser()) {
             return redirect()->route('evaluation');
         }
-
     }
 
     return view('auth.login');
@@ -90,6 +89,16 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('users', [UserController::class, 'store'])->name('users.store');
 
+
+    // Provider
+    Route::get('/providers', [ProviderFeedController::class, 'index'])->name('providers.index');
+    Route::post('/providers/store', [ProviderFeedController::class, 'store'])->name('providers.store');
+    Route::get('/providers/create', [ProviderFeedController::class, 'create'])->name('providers.create');
+
+
+    Route::get('/providers/{provider}/files/create', [ProviderFeedController::class, 'createFile'])->name('provider.files.create');
+    Route::post('/providers/{provider}/files/store', [ProviderFeedController::class, 'storeFile'])->name('provider.files.store');
+    Route::get('/providers/{provider}/files', [ProviderFeedController::class, 'files'])->name('provider.files.index');
 
 
 
