@@ -5,7 +5,7 @@ namespace App\Console\Commands;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use App\Models\TrheeCxUserStatus;
+use App\Models\ADistAgent;
 use App\Models\AutoDistributerFeedFile;
 use Illuminate\Support\Facades\Cache;
 use App\Services\TokenService;
@@ -39,11 +39,6 @@ class ADistUpdateUserStatusCommand extends Command
      */
     public function handle()
     {
-        // $token = Cache::get('three_cx_token'); // Assuming you store the token in cache
-
-
-
-
         try {
             $token = $this->tokenService->getToken();
             // Fetch user data from 3CX API
@@ -62,44 +57,24 @@ class ADistUpdateUserStatusCommand extends Command
                     \t| ✅ Successfully fetched users from 3CX API.           |
                     \t-----------------------------------------------------------------------
                 ");
-                foreach ($users['value'] as $user) {
-                    $extension = TrheeCxUserStatus::where('user_id', $user['Id'])->first();
+                    foreach ($users['value'] as $user) {
+                        ADistAgent::updateOrCreate(
+                            ['three_cx_user_id' => $user['Id']], // Search criteria
+                            [
+                                'status' => $user['CurrentProfileName'],
+                                'displayName' => $user['DisplayName'],
+                                'email' => $user['EmailAddress'],
+                                'QueueStatus' => $user['QueueStatus'],
+                                'extension' => $user['Number'],
+                                'firstName' => $user['FirstName'],
+                                'lastName' => $user['LastName'],
+                            ]
+                        );
 
-                    if ($extension) {
-                        // Update multiple fields
-                        $updatedFields = [
-                            'status' => $user['CurrentProfileName'] ?? $extension->userStatus,
-                            'displayName' => $user['DisplayName'] ?? $extension->displayName,
-                            'email' => $user['EmailAddress'] ?? $extension->email,
-                            'queueStatus' => $user['QueueStatus'] ?? $extension->queueStatus,
-                            // Add more fields as needed
-                        ];
-
-                        $extension->update($updatedFields);
-
-                        Log::info("Auto Distributor: ✅ Updated user data for extension ID {$extension->id}.", $updatedFields);
-                    } else {
-
-                        Log::warning("
-                                        \t-----------------------------------------------------------------------
-                                        \t\t**** Auto Distributor Warning ****\n
-                                        \t-----------------------------------------------------------------------
-                                        \t ⚠️  No extension found for 3CX user ID {$user['Id']}.
-                                        \t-----------------------------------------------------------------------
-                                ");
+                        Log::info("Auto Distributor: ✅ Updated user data for extension ");
                     }
-                }
 
                     $this->info('All user data updated successfully.');
-                } else {
-                    Log::warning("
-                    \t-----------------------------------------------------------------------
-                    \t\t********** Auto Distributor Warning **********\n
-                    \t-----------------------------------------------------------------------
-                    \t ⚠️  API response does not contain the expected value key or it is not an array.
-                    \t-----------------------------------------------------------------------
-            ");
-                    $this->error('Unexpected API response structure.');
                 }
             } else {
                 Log::error('Auto Distributor Error: ❌ Failed to fetch users from 3CX API. Response: ' . $response->body());
@@ -109,7 +84,5 @@ class ADistUpdateUserStatusCommand extends Command
             Log::error('Auto Distributor Error: ❌ An error occurred while updating user data: ' . $e->getMessage());
             $this->error('An error occurred. Check logs for details.');
         }
-
-   
     }
 }

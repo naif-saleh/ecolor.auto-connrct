@@ -69,7 +69,7 @@
         </div>
 
         {{-- Alert for No Users --}}
-        @if ($users->isEmpty())
+        @if ($agents->isEmpty())
             <div class="alert alert-warning text-center">
                 No Auto Distributerer Users found. Click "Import Users" to add one.
             </div>
@@ -87,37 +87,44 @@
                         </tr>
                     </thead>
                     <tbody id="users-table-body">
-                        @foreach ($users as $extension)
+                        @foreach ($agents as $agent)
                             <tr class="user-row">
-                                <td class="name">{{ $extension->displayName }}  </td>
-                                <td>{{ $extension->extension }}</td>
-                                <td>{{ $extension->status }}</td>
+                                <td class="name">{{ $agent->displayName }}  </td>
+                                <td>{{ $agent->extension }}</td>
+                                <td>{{ $agent->status }}</td>
                                 <td class="d-flex justify-content-start gap-2">
                                     {{-- View Button --}}
-                                    {{-- <a href="{{ route('auto_distributerer_extensions.show', $extension->id) }}"
+                                    {{-- <a href="{{ route('auto_distributerer_extensions.show', $agent->id) }}"
                                         class="btn btn-info btn-sm">
                                         <i class="bi bi-eye"></i>
                                     </a> --}}
 
                                     {{-- Edit Button --}}
-                                    {{-- <a href="{{ route('auto_distributerer_extensions.edit', $extension->id) }}"
+                                    {{-- <a href="{{ route('auto_distributerer_extensions.edit', $agent->id) }}"
                                         class="btn btn-warning btn-sm">
                                         <i class="bi bi-pencil"></i> Edit
                                     </a> --}}
 
 
-                                     <a href=" {{route('users.files.create', $extension->id)}}"
+                                     <a href=" {{route('users.files.create', $agent->id)}}"
                                         class="btn btn-primary btn-sm">
                                         <i class="bi bi-plus-lg"></i>
+                                       
                                     </a>
+                                    <a href=" {{route('users.files.index', $agent->id)}}"
+                                        class="btn btn-warning btn-sm">
+                                        <i class="bi bi-eye"></i>
+                                       
+                                    </a>
+                                    
 
                                     {{-- Delete Button --}}
-                                    {{-- <form action="{{ route('auto_distributerer_extensions.destroy', $extension->id) }}"
-                                        method="POST" class="d-inline" id="delete-form-{{ $extension->id }}">
+                                    {{-- <form action="{{ route('auto_distributerer_extensions.destroy', $agent->id) }}"
+                                        method="POST" class="d-inline" id="delete-form-{{ $agent->id }}">
                                         @csrf
                                         @method('DELETE')
                                         <button type="button" class="btn btn-danger btn-sm"
-                                            onclick="confirmDelete({{ $extension->id }})">
+                                            onclick="confirmDelete({{ $agent->id }})">
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </form> --}}

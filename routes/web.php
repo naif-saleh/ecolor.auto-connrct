@@ -6,7 +6,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AutoDailerByProvider\ADialProviderFeedController;
-use App\Http\Controllers\AutoDistributerByUser\UserFeedController;
+use App\Http\Controllers\AutoDistributerByUser\ADistAgentFeedController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\AutoDailerFileController;
 use App\Http\Controllers\AutoDistributorFileController;
@@ -57,9 +57,14 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/providers/feeds/{slug}/allow', [ADialProviderFeedController::class, 'updateAllowStatus'])->name('autodailers.files.allow');
 
     //Auto Distributor User
-    Route::get('/users', [UserFeedController::class, 'index'])->name('users.index');
-    Route::get('/users/{user}/files/create', [UserFeedController::class, 'createFile'])->name('users.files.create');
-    Route::post('/users/{user}/files/store', [UserFeedController::class, 'storeFile'])->name('users.files.store');
+    Route::get('/agents', [ADistAgentFeedController::class, 'index'])->name('users.index');
+    Route::get('/agents/{agent}/feeds', [ADistAgentFeedController::class, 'files'])->name('users.files.index');
+    Route::get('/agents/feeds/{slug}', [ADistAgentFeedController::class, 'showFileContent'])->name('users.files.show');
+
+    Route::get('/agents/{agent}/feed/create', [ADistAgentFeedController::class, 'createFile'])->name('users.files.create');
+    Route::post('/agents/{agent}/feed/store', [ADistAgentFeedController::class, 'storeFile'])->name('users.files.store');
+    Route::post('/agents/feeds/{slug}/allow', [ADistAgentFeedController::class, 'updateAllowStatus'])->name('users.files.allow');
+
 
 
 
@@ -172,10 +177,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // Route::delete('auto-distributer-extensions/delete-all', [UserForAutoDistributer::class, 'destroyAllUsers'])->name('auto_distributerer_extensions.deleteAll');
 
 
-    // Route::get('auto-distributer-extensions/{id}/show', [UserFeedController::class, 'show'])->name('auto_distributerer_extensions.show');
-    // Route::post('auto-distributer-extensions/{id}/store', [UserFeedController::class, 'store'])->name('auto_distributerer_extensions.storeFeed');
-    // Route::get('auto-distributer-extensions/{id}/createFeed', [UserFeedController::class, 'createFeed'])->name('auto_distributerer_extensions.createFeed');
-    // Route::get('auto-distributer-extensions/{extensionId}/feed/{feedFileId}/view-data', [UserFeedController::class, 'viewFeedData'])->name('auto_distributer_extensions.viewFeedData');
+    // Route::get('auto-distributer-extensions/{id}/show', [ADistAgentFeedController::class, 'show'])->name('auto_distributerer_extensions.show');
+    // Route::post('auto-distributer-extensions/{id}/store', [ADistAgentFeedController::class, 'store'])->name('auto_distributerer_extensions.storeFeed');
+    // Route::get('auto-distributer-extensions/{id}/createFeed', [ADistAgentFeedController::class, 'createFeed'])->name('auto_distributerer_extensions.createFeed');
+    // Route::get('auto-distributer-extensions/{extensionId}/feed/{feedFileId}/view-data', [ADistAgentFeedController::class, 'viewFeedData'])->name('auto_distributer_extensions.viewFeedData');
 
     // // AutoDailer By Provider..........................................................................................................
 
