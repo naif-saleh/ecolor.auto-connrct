@@ -1,34 +1,29 @@
 @extends('layout.master')
-
 @section('content')
-    <div class="container mt-5">
+    <div class="container">
+        <h2>File: {{ $file->file_name }}</h2>
 
-
-        <h3>Feed File: {{ $feedFile->file_name }}</h3>
-        <h5>From: {{ \Carbon\Carbon::parse($feedFile->from)->addHours(3)->format('H:i:s') }} | To: {{ \Carbon\Carbon::parse($feedFile->to)->addHours(3)->format('H:i:s') }} | Date: {{ $feedFile->date }}</h5>
-
-        <div class="mb-3">
-            <h4>Mobile Numbers</h4>
+        @if (!empty($data))
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>Mobile</th>
-                        <th>Status</th>
+                        <th>#</th>
+                        <th>Mobile Number</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($feeds as $feed)
+                    @foreach ($data as $index => $row)
                         <tr>
-                            <td>{{ $feed->mobile }}</td>
-                            <td>{{ $feed->state }}</td>
+                            <td>{{ $index + 1 }}</td>
+                            <td>{{ $row[0] ?? 'N/A' }}</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
-        </div>
+        @else
+            <p>No data found in this file.</p>
+        @endif
 
-
-        <a href="{{ route('autoDialerProviders.show', $feedFile->id) }}" class="btn btn-secondary">Back to
-            Provider</a>
+        <a href="{{ route('provider.files.index', $file->provider_id) }}" class="btn btn-primary">Back</a>
     </div>
 @endsection

@@ -2,11 +2,18 @@
 
 namespace App\Models;
 
+
+
+
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class AutoDailerFile extends Model
 {
+    use HasFactory;
+
     protected $fillable = ['file_name', 'slug', 'is_done', 'allow', 'from', 'to', 'date', 'uploaded_by', 'provider_id'];
 
     public function user()

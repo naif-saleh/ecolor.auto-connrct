@@ -73,7 +73,7 @@ class ProviderFeedController extends Controller
             'file_name' => $request->file_name,
             'slug' => Str::slug($request->file_name . '-' . time()),
             'is_done' => false,
-            'allow' => true,
+            'allow' => false,
             'from' => $request->from,
             'to' => $request->to,
             'date' => $request->date,
@@ -84,7 +84,7 @@ class ProviderFeedController extends Controller
         // Process CSV file for mobile numbers
         $this->processCsvFile($filePath, $provider, $file->id);
 
-        return redirect()->route('provider.ProviderFeed.feed', $provider)->with('success', 'File added and data imported successfully!');
+        return redirect()->route('provider.files.index', $provider)->with('success', 'File added and data imported successfully!');
     }
 
     private function processCsvFile($filePath, $provider, $fileId)
@@ -103,7 +103,7 @@ class ProviderFeedController extends Controller
                     'mobile' => $mobile,
                     'provider_name' => $provider->name,
                     'extension' => $provider->extension,
-                    'state' => 'pending', // Default state
+                    'state' => 'new', // Default state
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
@@ -131,126 +131,32 @@ class ProviderFeedController extends Controller
     public function files(AutoDialerProvider $provider)
     {
         $files = $provider->files; // Relationship defined in the provider model
-        return view('providers.files.index', compact('provider', 'files'));
+        return view('autoDailerByProvider.ProviderFeed.feed', compact('provider', 'files'));
     }
 
 
+    public function showFileContent($slug)
+    {
+        // Find the file by slug instead of using route model binding
+        $file = AutoDailerFile::where('slug', $slug)->firstOrFail();
+
+        // Get the file path
+        $filePath = storage_path("app/provider_files/{$file->slug}");
+
+        // Check if the file exists
+        if (!Storage::exists("provider_files/{$file->slug}")) {
+            return redirect()->back()->with('error', 'File not found.');
+        }
+
+        // Read the file contents
+        $content = Storage::get("provider_files/{$file->slug}");
+
+        // Convert CSV into an array
+        $lines = explode("\n", $content);
+        $data = array_map('str_getcsv', $lines);
+
+        return view('autoDailerByProvider.ProviderFeed.show', compact('file', 'data'));
+    }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    // public function createFeed($id)
-    // {
-    //     $provider = AutoDialerProvider::findOrFail($id);
-    //     return view('autoDailerByProvider.ProviderFeed.create', compact('provider'));
-    // }
-
-    // // Store the feed data after submission
-    // public function storeFeed(Request $request, $id)
-    // {
-    //     // Fetch the provider by its ID
-    //     $provider = AutoDialerProvider::findOrFail($id);
-
-    //     // Validate the form inputs (other than extension, which will come from provider)
-    //     $request->validate([
-    //         'from' => 'required|date_format:H:i',
-    //         'to' => 'required|date_format:H:i',
-    //         'date' => 'required|date',
-    //         'on' => 'required|boolean',
-    //         'csv_file' => 'required|file|mimes:csv,txt',
-    //     ]);
-
-
-    //     $localTime_form = Carbon::createFromFormat('H:i', $request->from, $request->timezone);
-    //     $localTime_to = Carbon::createFromFormat('H:i', $request->to, $request->timezone);
-    //     // Subtract the offset to align with UTC
-    //     $offsetInHours = $localTime_form->offsetHours;
-    //     $utcTime_from = $localTime_form->subHours($offsetInHours);
-    //     $utcTime_to = $localTime_to->subHours($offsetInHours);
-
-    //     // Format the UTC time to store in the database
-    //     $formattedTime_from = $utcTime_from->format('H:i:s');
-    //     $formattedTime_to = $utcTime_to->format('H:i:s');
-
-
-
-
-    //     // Handle CSV upload and processing
-    //     if ($request->hasFile('csv_file')) {
-    //         $file = $request->file('csv_file');
-    //         $csvData = array_map('str_getcsv', file($file->getRealPath()));
-
-    //         // Create a FeedFile entry to store the metadata of the uploaded file
-    //         $feedFile = AutoDailerFeedFile::create([
-    //             'provider_id' => $provider->id,
-    //             'file_name' => $file->getClientOriginalName(),
-    //             'extension' => $provider->extension,
-    //             'from' => $formattedTime_from,
-    //             'to' => $formattedTime_to,
-    //             'date' => $request->input('date'),
-    //             'on' => $request->input('on'),
-    //             'off' => $request->input('off'),
-    //         ]);
-
-
-    //         foreach ($csvData as $row) {
-    //             AutoDailerProviderFeed::create([
-    //                 'provider_id' => $provider->id,
-    //                 'mobile' => $row[0],
-    //                 'auto_dailer_feed_file_id' => $feedFile->id,
-    //             ]);
-    //         }
-    //     }
-
-    //     return redirect('/auto-dialer-providers')->with('success', 'Feed added successfully!');
-    // }
-
-
-
-
-    // // public function show($id)
-    // // {
-    // //     // Fetch the provider by its ID
-    // //     $provider = AutoDialerProvider::findOrFail($id);
-
-    // //     // Fetch all the feeds related to this provider
-    // //     $feeds = AutoDailerProviderFeed::where('provider_id', $id)->get();
-
-    // //     // Return the view with provider and feeds data
-    // //     return view('autoDailerByProvider.ProviderFeed.show', compact('provider', 'feeds'));
-    // // }
-    // public function show($id)
-    // {
-    //     $feedFile = AutoDailerFeedFile::with('provider', 'feeds')->findOrFail($id);
-    //     $feeds = AutoDailerProviderFeed::where('auto_dailer_feed_file_id', $id)->get();
-    //     return view('autoDailerByProvider.ProviderFeed.show', compact('feedFile', 'feeds'));
-    // }
-
-
-    // public function showFeed($id)
-    // {
-    //     // Fetch the feed by its ID
-    //     $feed = AutoDailerProviderFeed::findOrFail($id);
-
-    //     // Return view with feed data
-    //     return view('autoDailerByProvider.ProviderFeed.feed', compact('feed'));
-    // }
 }

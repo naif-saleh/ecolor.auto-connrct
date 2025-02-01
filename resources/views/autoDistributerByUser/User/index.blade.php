@@ -41,16 +41,16 @@
                 {{-- Search Users Field --}}
                 <input type="text" id="search-input" class="form-control form-control-lg" placeholder="Search by name..." />
 
-                {{-- Import Users Button --}}
+                {{-- Import Users Button
                 @if ($extensions->isEmpty())
                     <a href="{{ route('auto_distributerer_extensions.import') }}"
                         class="btn btn-success btn-lg import-button">
                         <i class="bi bi-cloud-arrow-down"></i> Import Users
                     </a>
-                @endif
+                @endif --}}
 
 
-                    {{-- Delete All Users Button --}}
+                    {{-- Delete All Users Button
                     @if (!$extensions->isEmpty())
                         <form action="{{ route('auto_distributerer_extensions.deleteAll') }}" method="POST"
                             id="delete-all-users-form" style="display: inline;">
@@ -62,14 +62,14 @@
                             </button>
 
                         </form>
-                    @endif
-               
+                    @endif --}}
+
             </div>
 
         </div>
 
         {{-- Alert for No Users --}}
-        @if ($extensions->isEmpty())
+        @if ($users->isEmpty())
             <div class="alert alert-warning text-center">
                 No Auto Distributerer Users found. Click "Import Users" to add one.
             </div>
