@@ -81,24 +81,23 @@
                         <tr>
                             <th>Name</th>
                             <th>Extension</th>
-                            <th>Created By</th>
+
                             <th>User Status</th>
                             <th>Actions</th>
                         </tr>
                     </thead>
                     <tbody id="users-table-body">
-                        @foreach ($extensions as $extension)
+                        @foreach ($users as $extension)
                             <tr class="user-row">
-                                <td class="name">{{ $extension->name }} {{ $extension->lastName }}</td>
+                                <td class="name">{{ $extension->displayName }}  </td>
                                 <td>{{ $extension->extension }}</td>
-                                <td>{{ $extension->user->name }}</td>
-                                <td>{{ $extension->userStatus }}</td>
+                                <td>{{ $extension->status }}</td>
                                 <td class="d-flex justify-content-start gap-2">
                                     {{-- View Button --}}
-                                    <a href="{{ route('auto_distributerer_extensions.show', $extension->id) }}"
+                                    {{-- <a href="{{ route('auto_distributerer_extensions.show', $extension->id) }}"
                                         class="btn btn-info btn-sm">
                                         <i class="bi bi-eye"></i>
-                                    </a>
+                                    </a> --}}
 
                                     {{-- Edit Button --}}
                                     {{-- <a href="{{ route('auto_distributerer_extensions.edit', $extension->id) }}"
@@ -106,14 +105,14 @@
                                         <i class="bi bi-pencil"></i> Edit
                                     </a> --}}
 
-                                    {{-- Add Feed Button --}}
-                                    <a href="{{ route('auto_distributerer_extensions.createFeed', $extension->id) }}"
+
+                                     <a href=" {{route('users.files.create', $extension->id)}}"
                                         class="btn btn-primary btn-sm">
                                         <i class="bi bi-plus-lg"></i>
                                     </a>
 
                                     {{-- Delete Button --}}
-                                    <form action="{{ route('auto_distributerer_extensions.destroy', $extension->id) }}"
+                                    {{-- <form action="{{ route('auto_distributerer_extensions.destroy', $extension->id) }}"
                                         method="POST" class="d-inline" id="delete-form-{{ $extension->id }}">
                                         @csrf
                                         @method('DELETE')
@@ -121,7 +120,7 @@
                                             onclick="confirmDelete({{ $extension->id }})">
                                             <i class="bi bi-trash"></i>
                                         </button>
-                                    </form>
+                                    </form> --}}
                                 </td>
                             </tr>
                         @endforeach
