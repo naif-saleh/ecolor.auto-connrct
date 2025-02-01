@@ -90,7 +90,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('users', [UserController::class, 'store'])->name('users.store');
 
 
-    // Provider
+    // Auto Dailer Provider
     Route::get('/providers', [ProviderFeedController::class, 'index'])->name('providers.index');
     Route::post('/providers/store', [ProviderFeedController::class, 'store'])->name('providers.store');
     Route::get('/providers/create', [ProviderFeedController::class, 'create'])->name('providers.create');
@@ -101,8 +101,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('/providers/{provider}/files', [ProviderFeedController::class, 'files'])->name('provider.files.index');
 
     Route::get('/providers/files/{slug}', [ProviderFeedController::class, 'showFileContent'])->name('provider.files.show');
- 
 
+    //Auto Distributor User
+    Route::get('/users', [UserFeedController::class, 'index'])->name('users.index');
+    Route::get('/users/{user}/files/create', [UserFeedController::class, 'createFile'])->name('users.files.create');
 
     // Manager Reports...................................................................................................................
 

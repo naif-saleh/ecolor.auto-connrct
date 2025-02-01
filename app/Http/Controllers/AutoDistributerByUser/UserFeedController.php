@@ -25,7 +25,7 @@ class UserFeedController extends Controller
     }
 
 
-    public function importAllUsers()
+    public function index()
     {
         $token = $this->tokenService->getToken();
         Log::info('Token retrieved successfully.');
@@ -82,10 +82,15 @@ class UserFeedController extends Controller
             Log::error('An error occurred during user import.', ['error' => $e->getMessage()]);
         }
         $users = TrheeCxUserStatus::all();
-        return back()->with([
-            'success' => 'Users Synchronized Successfully',
-            'users' => $users
-        ]);
+        return view('autoDistributerByUser.User.index', compact('users')) ;
 
     }
+
+    public function createFile(TrheeCxUserStatus $user)
+    {
+        $users = TrheeCxUserStatus::find($user);
+        return view('autoDistributerByUser.UserFeed.create', compact('user'));
+    }
+
+
 }
