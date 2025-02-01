@@ -66,10 +66,17 @@ class ADialMakeCallCommand extends Command
                     ADialData::where('feed_id', $file->id)
                         ->where('state', 'new')
                         ->chunk(50, function ($dataBatch) use ($provider) {
+                            Log::info("dadad before call ");
                             foreach ($dataBatch as $feedData) {
                                 try {
                                     $token = app(TokenService::class);
-                                    dispatch(new MakeCallJob($feedData, $token, $provider->extension));
+                                    Log::info("dadad before call id " . $feedData->mobile);
+                                    $job = dispatch(new MakeCallJob($feedData, $token, $provider->extension));
+                                    Log::info("dadad job field call id " . print_r($job, TRUE));
+
+                                    if (!$job) {
+                                        Log::info("dadad job field call id " . $feedData->mobile);
+                                    }
                                 } catch (\Exception $e) {
                                     Log::error("❌ Error in dispatching call: " . $e->getMessage());
                                 }

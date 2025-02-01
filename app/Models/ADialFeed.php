@@ -21,7 +21,10 @@ class ADialFeed extends Model
     {
         return $this->hasMany(ADialData::class, 'feed_id'); // hasMany instead of belongsTo
     }
-
+    public function provider()
+    {
+        return $this->hasMany(ADialProvider::class, 'provider_id'); // hasMany instead of belongsTo
+    }
     protected static function boot()
     {
         parent::boot();

@@ -14,8 +14,10 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
+use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 
-class MakeCallJob implements ShouldQueue
+
+class MakeCallJob implements  ShouldBeUniqueUntilProcessing
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -26,7 +28,7 @@ class MakeCallJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-
+    public $uniqueFor = 60;
 
      public function __construct($feedData, TokenService $tokenService, $extension)
      {
@@ -52,7 +54,7 @@ class MakeCallJob implements ShouldQueue
 
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
-
+                Log::info("dadad call id " .  $responseData['result']['callid']. ' mobile ' .$this->feedData->mobile );
                 AutoDailerReport::updateOrCreate(
                     ['call_id' => $responseData['result']['callid']],
                     [
@@ -76,5 +78,12 @@ class MakeCallJob implements ShouldQueue
         } catch (\Exception $e) {
             Log::error("❌ Exception: " . $e->getMessage());
         }
+    }
+    /**
+     * Define unique job key (Ensures uniqueness for each mobile)
+     */
+    public function uniqueId(): string
+    {
+        return $this->feedData->mobile . "aa"; // Unique identifier
     }
 }

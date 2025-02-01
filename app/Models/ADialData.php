@@ -12,4 +12,5 @@ class ADialData extends Model
     {
         return $this->belongsTo(ADialFeed::class, 'feed_id');
     }
+    
 }
