@@ -129,7 +129,8 @@ class ADialProviderFeedController extends Controller
     // Display all files for a provider
     public function files(ADialProvider $provider)
     {
-        $files = $provider->files; // Relationship defined in the provider model
+        $files = $provider->files()->orderBy('created_at', 'desc')->paginate(5); // Change 'created_at' to the correct column if needed
+        // Relationship defined in the provider model
         return view('autoDailerByProvider.ProviderFeed.feed', compact('provider', 'files'));
     }
 

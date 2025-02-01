@@ -84,6 +84,6 @@ class MakeCallJob implements  ShouldBeUniqueUntilProcessing
      */
     public function uniqueId(): string
     {
-        return $this->feedData->mobile . "aa"; // Unique identifier
+        return $this->feedData->mobile . "."; // Unique identifier
     }
 }

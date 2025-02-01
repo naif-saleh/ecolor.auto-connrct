@@ -19,9 +19,11 @@
                 <!-- View Files Button -->
                 <a href="{{ route('provider.files.index', $provider) }}" class="btn btn-info btn-sm ml-2">View Files</a>
             </li>
+          
         @endforeach
     </ul>
 
+    
     <!-- Display Success Message -->
     @if(session('success'))
         <div class="alert alert-success mt-3">

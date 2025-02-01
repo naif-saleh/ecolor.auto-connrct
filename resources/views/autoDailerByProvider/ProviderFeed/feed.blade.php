@@ -3,6 +3,7 @@
 @section('content')
     <div class="container">
         <h2 class="mb-4">Files for Provider: {{ $provider->name }}</h2>
+        <a href="{{ route('provider.files.create', $provider) }}" class="btn btn-secondary btn-sm ml-2">Add File</a>
 
         <!-- Files List -->
         <div class="table-responsive shadow-sm rounded">
@@ -152,9 +153,11 @@
                         @endforeach
                     </tbody>
                 </table>
+                {{ $files->links() }}
             @endif
+          
         </div>
-
+       
         <!-- Back to provider list -->
         <a href="{{ route('providers.index') }}" class="btn btn-primary mt-3">Back to Providers</a>
     </div>
