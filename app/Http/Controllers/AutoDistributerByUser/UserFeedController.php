@@ -5,90 +5,87 @@ namespace App\Http\Controllers\AutoDistributerByUser;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\AutoDistributerExtensionFeed;
-use App\Models\AutoDistributerFeedFile;
+use App\Models\TrheeCxUserStatus;
 use App\Models\AutoDistributererExtension;
 use Carbon\Carbon;
-
+use Illuminate\Support\Facades\Log;
+use App\Services\TokenService;
+use Illuminate\Support\Facades\Http;
 
 class UserFeedController extends Controller
 {
-    public function show($id)
+
+
+    protected $tokenService;
+
+    public function __construct(TokenService $tokenService)
     {
-        $extension = AutoDistributererExtension::with('feedFiles', 'extensionFeeds')->findOrFail($id);
-        return view('autoDistributerByUser.User.show', compact('extension'));
+
+        $this->tokenService = $tokenService;
     }
 
-    public function viewFeedData($extensionId, $feedFileId)
+
+    public function importAllUsers()
     {
+        $token = $this->tokenService->getToken();
+        Log::info('Token retrieved successfully.');
 
-        $extension = AutoDistributererExtension::findOrFail($extensionId);
-        $feedFile = AutoDistributerFeedFile::findOrFail($feedFileId);
-        $extensionFeeds = AutoDistributerExtensionFeed::where('auto_dist_feed_file_id', $feedFileId)->get();
+        try {
+            Log::info('Sending request to fetch users from the API.');
+            $responseState = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+            ])->get(config('services.three_cx.api_url') . "/xapi/v1/Users");
 
-        return view('autoDistributerByUser.UserFeed.show', compact('extension', 'feedFile', 'extensionFeeds'));
-    }
+            Log::info('Request sent, awaiting response.');
 
-    public function createFeed($id)
-    {
-        $extension = AutoDistributererExtension::findOrFail($id);
-        return view('autoDistributerByUser.UserFeed.create', compact('extension'));
-    }
+            if ($responseState->successful()) {
+                Log::info('API response received successfully.');
 
-    // Handle the CSV file upload and processing
-    public function store(Request $request, $id)
-    {
-        $extension = AutoDistributererExtension::findOrFail($id);
+                $responseData = $responseState->json();
+                Log::info('Response data decoded.', ['responseData' => $responseData]);
 
-        // Validate the incoming request
-        $request->validate([
-            'csv_file' => 'required|file|mimes:csv,txt|max:10240',
-            'from' => 'required|date_format:H:i',
-            'to' => 'required|date_format:H:i',
-            'date' => 'required|date',
-            'on' => 'required|boolean',
-        ]);
+                if (isset($responseData['value']) && is_array($responseData['value'])) {
+                    $apiUserIds = [];
+                    Log::info('Processing user data.');
 
-        $localTime_form = Carbon::createFromFormat('H:i', $request->from, $request->timezone);
-        $localTime_to = Carbon::createFromFormat('H:i', $request->to, $request->timezone);
-        // Subtract the offset to align with UTC
-        $offsetInHours = $localTime_form->offsetHours;
-        $utcTime_from = $localTime_form->subHours($offsetInHours);
-        $utcTime_to = $localTime_to->subHours($offsetInHours);
+                    foreach ($responseData['value'] as $data) {
+                        $userId = $data['Id'] ?? null;
+                        $apiUserIds[] = $userId;
 
-        // Format the UTC time to store in the database
-        $formattedTime_from = $utcTime_from->format('H:i:s');
-        $formattedTime_to = $utcTime_to->format('H:i:s');
+                        Log::info('Updating or creating user.', ['userId' => $userId, 'userData' => $data]);
 
-        // Handle the CSV upload
-        $file = $request->file('csv_file');
-        $csvData = array_map('str_getcsv', file($file->getRealPath()));
+                       TrheeCxUserStatus::updateOrCreate(
+                            ['user_id' => $userId],
+                            [
+                                "firstName" => $data['FirstName'] ?? null,
+                                "lastName" => $data['LastName'] ?? null,
+                                "displayName" => $data['DisplayName'] ?? null,
+                                "email" => $data['EmailAddress'] ?? null,
+                                "isRegistred" => $data['IsRegistered'] ?? null,
+                                "QueueStatus" => $data['QueueStatus'] ?? null,
+                                "extension" => $data['Number'] ?? null,
+                                "status" => $data['CurrentProfileName'] ?? null,
+                            ]
+                        );
+                    }
 
-        // Create FeedFile metadata entry
-        $feedFile = AutoDistributerFeedFile::create([
-            'user_ext_id' => $extension->id,
-            'extension' => $extension->extension,
-            'userStatus' => $extension->userStatus,
-            "three_cx_user_id" => $extension->three_cx_user_id,
-            'from' => $formattedTime_from,
-            'to' => $formattedTime_to,
-            'date' => $request->input('date'),
-            'on' => $request->input('on'),
-            'file_name' => $file->getClientOriginalName(),
-        ]);
-
-        // Process CSV rows
-        foreach ($csvData as $row) {
-            $mobileNumber = $row[0];  // Assuming the mobile number is in the first column of the CSV
-
-            AutoDistributerExtensionFeed::create([
-                'user_ext_id' => $extension->id,
-                'mobile' => $mobileNumber,
-                'state' => 'new',  // Default state
-                'auto_dist_feed_file_id' => $feedFile->id,
-            ]);
+                    Log::info('Finished processing users, deleting users not in the API response.');
+                    TrheeCxUserStatus::whereNotIn('user_id', $apiUserIds)->delete();
+                    Log::info('Unused users deleted successfully.');
+                } else {
+                    Log::warning("No users found in the response or response data format is incorrect.");
+                }
+            } else {
+                Log::error("Failed to import users, response was not successful.", ['statusCode' => $responseState->status(), 'responseBody' => $responseState->body()]);
+            }
+        } catch (\Exception $e) {
+            Log::error('An error occurred during user import.', ['error' => $e->getMessage()]);
         }
+        $users = TrheeCxUserStatus::all();
+        return back()->with([
+            'success' => 'Users Synchronized Successfully',
+            'users' => $users
+        ]);
 
-        return redirect()->route('auto_distributerer_extensions.show', $id)
-            ->with('success', 'CSV file uploaded and processed successfully.');
     }
 }

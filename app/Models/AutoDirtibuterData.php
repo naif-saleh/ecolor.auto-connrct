@@ -7,13 +7,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 
 class AutoDirtibuterData extends Model
 {
-    use HasFactory;
+    protected $fillable = ['file_id', 'mobile', 'user_name', 'extension', 'state'];
 
-    protected $fillable = ['auto_dirtibuter_id', 'mobile', 'provider_name', 'extension', 'state'];
-
-    // Relationship with AutoDirtibuter
-    public function autodistributer()
+    public function file()
     {
-        return $this->belongsTo(AutoDirtibuter::class);
+        return $this->belongsTo(AutoDistributorFile::class, 'file_id');
     }
 }

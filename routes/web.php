@@ -100,7 +100,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/providers/{provider}/files/store', [ProviderFeedController::class, 'storeFile'])->name('provider.files.store');
     Route::get('/providers/{provider}/files', [ProviderFeedController::class, 'files'])->name('provider.files.index');
 
-
+    Route::get('/providers/files/{slug}', [ProviderFeedController::class, 'showFileContent'])->name('provider.files.show');
+ 
 
 
     // Manager Reports...................................................................................................................
