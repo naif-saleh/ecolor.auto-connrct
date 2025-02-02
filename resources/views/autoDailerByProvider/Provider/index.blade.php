@@ -6,7 +6,9 @@
 
         <!-- Button to Navigate to Add Provider Page -->
         <a href="javascript:void(0);" class="btn btn-primary" onclick="showProviderForm()">Add Provider</a>
-
+        {{-- Upload CSV File --}}
+        <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#uploadModal">Upload File</a>
+        @include('autoDailerByProvider.Provider.__Dil_dropZoneUploadFile')
 
         @if ($providers->isEmpty())
 
@@ -238,5 +240,32 @@
                 });
             });
         });
+
+        // DropZone Uploading File
+        Dropzone.options.fileDropzone = {
+    paramName: "file",
+    maxFilesize: 40, // Max size 40MB
+    acceptedFiles: ".csv", // Accept only CSV files
+    dictDefaultMessage: "Drop your CSV file here or click to upload",
+    dictInvalidFileType: "Only CSV files are allowed!",
+    dictFileTooBig: "File is too large! Max size: 40MB",
+
+    init: function() {
+        this.on("error", function(file, response) {
+            console.log(response); // Debugging: See what response contains
+
+            // Check if response is an object and extract error message
+            let errorMessage = typeof response === "object" ? response.message || "Upload failed" : response;
+            alert(errorMessage);
+            // Remove invalid file from Dropzone
+            this.removeFile(file);
+        });
+
+        this.on("success", function(file, response) {
+            alert("CSV uploaded successfully!");
+        });
+    }
+};
+
     </script>
 @endsection

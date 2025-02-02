@@ -8,9 +8,11 @@
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
     <title>@yield('title')</title>
+    {{-- Tap Icon --}}
     <link rel="icon"
         href="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
         type="image/png">
+        {{-- Font Awesome --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
         integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -31,8 +33,6 @@
     <!-- inject:css -->
     <link rel="stylesheet" href="{{ url('assets/css/style.css') }}">
     <!-- endinject -->
-    <link rel="shortcut icon" href="{{ url('assets/images/favicon.png') }}">
-
 
 
 </head>
@@ -54,10 +54,7 @@
             <div class="navbar-menu-wrapper d-flex align-items-top justify-content-between">
                 <ul class="navbar-nav">
                     <div>
-                        {{-- <a class="navbar-brand brand-logo" href="{{route('index.page')}}">
-                            <img src="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
-                            width="29" alt="ejaada-logo">
-                        </a> --}}
+                       
                         <a class="navbar-brand brand-logo-mini" href="{{ route('index.page') }}">
                             <img src="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
                                 width="40" alt="ejaada-logo">
@@ -232,6 +229,9 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+    <!-- Bootstrap & Dropzone JS (Include before closing body tag) -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
 
     @if (session('success'))
         <script>

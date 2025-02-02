@@ -1,18 +1,20 @@
 @extends('layout.main')
 @section('title', 'Distributor | Agents')
- 
+
 @section('content')
     <div class="container py-5">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
-            <h2 class="mb-0 text-center text-md-left">Auto Distributerer Agents</h2>
+            <div class="d-flex flex-column flex-md-column align-items-center align-items-md-start">
+                <h2 class="mb-0 text-center text-md-left">Auto Distributer Agents</h2>
+                {{-- Upload CSV File --}}
+                <a href="#" class="btn btn-warning w-auto mt-4" data-bs-toggle="modal" data-bs-target="#uploadModal">Upload File</a>
+                @include('autoDistributerByUser.Agent.__Dis_dropZoneUploadFile')
+            </div>
 
             {{-- Actions Section --}}
             <div class="d-flex justify-content-between align-items-center">
                 {{-- Search Users Field --}}
                 <input type="text" id="search-input" class="form-control form-control-lg" placeholder="Search by name..." />
-
-
-
             </div>
 
         </div>
@@ -112,6 +114,33 @@
                 }
             };
         });
+
+        // DropZone Uploading File
+        Dropzone.options.fileDropzone = {
+    paramName: "file",
+    maxFilesize: 40, // Max size 40MB
+    acceptedFiles: ".csv", // Accept only CSV files
+    dictDefaultMessage: "Drop your CSV file here or click to upload",
+    dictInvalidFileType: "Only CSV files are allowed!",
+    dictFileTooBig: "File is too large! Max size: 40MB",
+
+    init: function() {
+        this.on("error", function(file, response) {
+            console.log(response); // Debugging: See what response contains
+
+            // Check if response is an object and extract error message
+            let errorMessage = typeof response === "object" ? response.message || "Upload failed" : response;
+            alert(errorMessage);
+            // Remove invalid file from Dropzone
+            this.removeFile(file);
+        });
+
+        this.on("success", function(file, response) {
+            alert("CSV uploaded successfully!");
+        });
+    }
+};
+
     </script>
 
 @endsection
