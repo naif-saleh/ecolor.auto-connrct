@@ -12,7 +12,10 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
-    // Active Log Report method...............................
+    
+    /**
+     * Active Log Report method
+     */
     public function activityReport()
     {
         $logs = ActivityLog::with('user:id,name')
@@ -22,6 +25,9 @@ class ReportController extends Controller
         return view('reports.user_activity_report', compact('logs'));
     }
 
+    /**
+     * User Activity Report
+     */
     public function UserActivityReport()
     {
         $logs = UserActivityLog::with('user:id,name')
@@ -31,9 +37,9 @@ class ReportController extends Controller
         return view('reports.user_logs', compact('logs'));
     }
 
-
-    // display Auto Dailer Report...........................................................................................................
-
+    /**
+     * display Auto Dailer Report
+     */
     public function AutoDailerReports(Request $request)
     {
         $filter = $request->input('filter', 'today'); // Default to "today"
@@ -118,13 +124,9 @@ class ReportController extends Controller
         ));
     }
 
-
-
-
-
-
-
-    // Export Auto Distributer AS CSV File...........................................................................................................
+    /**
+     * Export Auto Distributer AS CSV File
+     */
     public function exportAutoDailerReport(Request $request)
     {
         $filter = $request->query('filter');
@@ -197,11 +199,9 @@ class ReportController extends Controller
         return $response;
     }
 
-
-
-
-
-    // display Auto Distributer Report...........................................................................................................
+    /**
+     * display Auto Distributer Report
+     */
     public function AutoDistributerReports(Request $request)
     {
         $filter = $request->input('filter', 'today'); // Default to 'today' filter
@@ -289,15 +289,9 @@ class ReportController extends Controller
         ));
     }
 
-
-
-
-
-
-
-
-
-    // Export Auto Distributer AS CSV File...........................................................................................................
+    /**
+     * Export Auto Distributer AS CSV File
+     */
     public function exportAutoDistributerReport(Request $request)
     {
         $filter = $request->query('filter');
@@ -373,9 +367,9 @@ class ReportController extends Controller
         return $response;
     }
 
-
-    // Evaluation.................................................................................................................
-
+    /**
+     * Evaluation
+     */
     public function Evaluation(Request $request)
     {
         // Retrieve filter parameters from the request (default to 'today')
@@ -423,7 +417,9 @@ class ReportController extends Controller
     }
 
 
-
+    /**
+     * Export Evaluation
+     */
     public function exportEvaluation(Request $request)
     {
         // Retrieve filter parameters from the request (if any)

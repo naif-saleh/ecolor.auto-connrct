@@ -8,34 +8,70 @@ use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AutoDailerByProvider\ADialProviderFeedController;
 use App\Http\Controllers\AutoDistributerByUser\ADistAgentFeedController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\AutoDailerFileController;
-use App\Http\Controllers\AutoDistributorFileController;
+use App\Http\Controllers\HomeController;
 
-Route::get('/', function () {
+/**
+ * Root Route Handling
+ *
+ * This route determines the landing page based on the user's authentication
+ * status and role. If authenticated, the user is redirected to the appropriate
+ * dashboard based on their role. Otherwise, the login page is displayed.
+ *
+ * Redirect Rules:
+ * - SuperUser/Admin → Redirects to /auto-dialer/files.
+ * - Manager → Redirects to the manager dashboard.
+ * - Regular User → Redirects to the evaluation page.
+ * - Unauthenticated → Shows the login page.
+ */
+
+ Route::get('/', function () {
     if (Auth::check()) {
         $user = Auth::user();
 
-
-        if ($user->isSuperUser() || $user->isAdmin()) {
-            return redirect('/auto-dailer/files');
+        if ($user->isSuperUser() || $user->isAdmin() || $user->isUser()) {
+            return redirect()->route('index.page'); // Redirect if Admin/Superuser
         }
 
-        if ($user->isManagerUser()) {
-            return redirect()->route('manager.dashboard');
-        }
+        // if ($user->isManagerUser()) {
+        //     return redirect()->route('index.page');
+        // }
 
-        if ($user->isUser()) {
-            return redirect()->route('evaluation');
-        }
+        // if ($user->isUser()) {
+        //     return redirect()->route('index.page');
+        // }
     }
 
     return view('auth.login');
 });
 
+ // Ensure the index route is defined outside the condition
+
+
+ Route::get('/error',  function(){
+    return view('404');
+ });
 
 // User Management..........................................................................................................................
 Route::middleware(['auth', 'admin'])->group(function () {
-    Route::get('users', [UserController::class, 'index'])->name('users.index');
+    Route::get('/home', [HomeController::class, 'index'])->name('index.page');
+    /**
+     * User Management Routes
+     *
+     * These routes handle various operations related to user management,
+     * including listing, creating, updating, editing, and deleting users.
+     * Additionally, it includes functionality for resetting user passwords.
+     *
+     * Routes:
+     * - GET /users → List all users.
+     * - GET /users/{user}/edit → Show edit form for a specific user.
+     * - PUT /users/{user} → Update a specific user.
+     * - DELETE /users/{user} → Delete a specific user.
+     * - POST /users/reset-password → Reset the password for a user.
+     * - GET /users/create → Show user creation form.
+     * - POST /users → Store a new user.
+     */
+
+    Route::get('users', [UserController::class, 'index'])->name('users.system.index');
     Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
     Route::delete('users/{user}', [UserController::class, 'destroy'])->name('users.destroy');
@@ -44,42 +80,62 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('users', [UserController::class, 'store'])->name('users.store');
 
 
-    // Auto Dailer Provider
+
+    /**
+     * Auto Dialer Provider Routes
+     *
+     * These routes manage auto dialer providers and their related feeds/files.
+     * Functionality includes listing, creating, storing, updating, and deleting
+     * provider records, as well as managing associated feeds.
+     *
+     * Routes:
+     * - GET /providers → List all providers.
+     * - POST /provider/store → Store a new provider.
+     * - GET /provider/create → Show provider creation form.
+     * - GET /providers/{provider}/feed/create → Show feed creation form for a provider.
+     * - POST /providers/{provider}/feed/store → Store a new feed for a provider.
+     * - GET /providers/{provider}/feeds → List feeds for a specific provider.
+     * - DELETE /autodailer/{slug} → Delete a provider.
+     * - PUT /auto-dailer/{slug} → Update a provider.
+     * - GET /providers/feeds/{slug} → Show file content of a feed.
+     * - POST /providers/feeds/{slug}/allow → Update allow status for a feed.
+     */
     Route::get('/providers', [ADialProviderFeedController::class, 'index'])->name('providers.index');
     Route::post('/provider/store', [ADialProviderFeedController::class, 'store'])->name('providers.store');
     Route::get('/provider/create', [ADialProviderFeedController::class, 'create'])->name('providers.create');
+    Route::put('/providers/{id}/update', [ADialProviderFeedController::class, 'updateProvider'])->name('providers.update');
+    Route::delete('/provider/{id}/destroy', [ADialProviderFeedController::class, 'destroyProvider'])->name('providers.delete');
     Route::get('/providers/{provider}/feed/create', [ADialProviderFeedController::class, 'createFile'])->name('provider.files.create');
     Route::post('/providers/{provider}/feed/store', [ADialProviderFeedController::class, 'storeFile'])->name('provider.files.store');
     Route::get('/providers/{provider}/feeds', [ADialProviderFeedController::class, 'files'])->name('provider.files.index');
-    Route::delete('/autodailer/{slug}', [ADialProviderFeedController::class, 'destroy'])->name('autodailer.delete');
+    Route::delete('/auto-dailer/{slug}', [ADialProviderFeedController::class, 'destroy'])->name('autodailer.delete');
     Route::put('/auto-dailer/{slug}', [ADialProviderFeedController::class, 'update'])->name('autoDailer.update');
     Route::get('/providers/feeds/{slug}', [ADialProviderFeedController::class, 'showFileContent'])->name('provider.files.show');
     Route::post('/providers/feeds/{slug}/allow', [ADialProviderFeedController::class, 'updateAllowStatus'])->name('autodailers.files.allow');
 
-    //Auto Distributor User
+    /**
+     * Auto Distributor User Routes
+     *
+     * These routes handle agent-related actions within the auto distributor system.
+     * Functionality includes listing agents, managing their feeds/files, and
+     * updating file statuses.
+     *
+     * Routes:
+     * - GET /agents → List all agents.
+     * - GET /agents/{agent}/feeds → List feeds for a specific agent.
+     * - GET /agents/feeds/{slug} → Show file content of a feed.
+     * - GET /agents/{agent}/feed/create → Show feed creation form for an agent.
+     * - POST /agents/{agent}/feed/store → Store a new feed for an agent.
+     * - POST /agents/feeds/{slug}/allow → Update allow status for an agent's feed.
+     */
     Route::get('/agents', [ADistAgentFeedController::class, 'index'])->name('users.index');
     Route::get('/agents/{agent}/feeds', [ADistAgentFeedController::class, 'files'])->name('users.files.index');
     Route::get('/agents/feeds/{slug}', [ADistAgentFeedController::class, 'showFileContent'])->name('users.files.show');
-
     Route::get('/agents/{agent}/feed/create', [ADistAgentFeedController::class, 'createFile'])->name('users.files.create');
     Route::post('/agents/{agent}/feed/store', [ADistAgentFeedController::class, 'storeFile'])->name('users.files.store');
     Route::post('/agents/feeds/{slug}/allow', [ADistAgentFeedController::class, 'updateAllowStatus'])->name('users.files.allow');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    Route::put('/agents/feed/{slug}', [ADistAgentFeedController::class, 'update'])->name('users.feed.update');
+    Route::delete('/agent/feed/{slug}', [ADistAgentFeedController::class, 'destroy'])->name('users.feed.delete');
 
 
 
@@ -113,103 +169,14 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // // Export Auto Distributer...........................................................................................................
     Route::get('auto-distributer-report/export', [ReportController::class, 'exportAutoDistributerReport'])->name('auto_distributer.report.export');
 
-
-    // AutoDailer..........................................................................................................................
-    Route::get('auto-dailer/files', [AutoDailerFileController::class, 'index'])->name('autodailers.files.index');
-    Route::get('autodailers/providers', [AutoDailerFileController::class, 'providers'])->name('autodailers.providers');
-    Route::get('autodailers/files/show/{slug}', [AutoDailerFileController::class, 'showFile'])->name('autodailers.files.show');
-    // Route::put('autodailers/files/update/{slug}', [AutoDailerFileController::class, 'updateFile'])->name('autodailers.files.update');
-    Route::delete('autodailers/files/delete/{slug}', [AutoDailerFileController::class, 'deleteFile'])->name('autodailers.files.delete');
-    // Route::get('autodailers/files/{slug}', [AutoDailerFileController::class, 'show'])->name('autodailers.files.show');
-    Route::post('auto-dailer/upload-csv', [AutoDailerFileController::class, 'uploadCsv'])->name('autodailers.upload.csv');
-    // Route::delete('/autodailer-file/{id}', [AutoDailerFileController::class, 'deleteFile'])->name('autodailer.delete');
-    // Route::get('/auto-dailer/{slug}/edit', [AutoDailerFileController::class, 'edit'])->name('autodailer.edit');
-    Route::put('/auto-dailer/{slug}', [AutoDailerFileController::class, 'updateAutoDailer'])->name('autoDailer.update');
-
-    // download File....................................................................................................................
-    Route::get('auto-dailer/download-processed-file/{fileId}', [AutoDailerFileController::class, 'downloadUploadedFile'])->name('autodailers.download.processed.files');
-    // Update value if file done or not.................................................................................................
-    // Download Example csv.............................................................................................................
-    Route::get('/download-example-csv', [AutoDailerFileController::class, 'downloadExampleCsv'])->name('download.example.csv');
     //    Manager Dashboard........................................................................................................
     Route::get('manager/dashboard', [DashboardController::class, 'getCallManagerStatisticsAutoDailer'])->name('manager.dashboard');
-
-
-
-    // AutoDistributor..........................................................................................................................
-    Route::get('auto-distributor/files', [AutoDistributorFileController::class, 'index'])->name('distributor.files.index');
-    Route::get('auto-distributor/files/{slug}', [AutoDistributorFileController::class, 'show'])->name('distributor.files.show');
-    Route::post('auto-distributor/upload-csv', [AutoDistributorFileController::class, 'uploadCsv'])->name('distributor.upload.csv');
-    Route::delete('auto-distributor-file/{id}', [AutoDistributorFileController::class, 'deleteFile'])->name('distributor.delete');
-    Route::get('/download-processed-file/{fileId}', [AutoDistributorFileController::class, 'downloadUploadedFile'])->name('distributor.download.processed.file');
-    Route::put('/auto-distributor/{id}', [AutoDistributorFileController::class, 'updateAutoDistributor'])->name('distributor.update');
-    Route::patch('/update-users-status', [AutoDistributorFileController::class, 'updateMultipleStatus'])->name('distributor.updateUsersStatus');
-
-    // Update value if file done or not.................................................................................................
-    Route::post('auto-distributor/files/{slug}/allow', [AutoDistributorFileController::class, 'updateAllowStatus'])->name('distributor.files.allow');
-    // Download Example csv.............................................................................................................
-    Route::get('/download-example-csv', [AutoDistributorFileController::class, 'downloadExampleCsv'])->name('download.example.csv');
-    // Import All Users...................................................................................................................
-    Route::get('auto-distributor/import-users', [AutoDistributorFileController::class, 'importAllUsers'])->name('distributor.import.users');
-
 
 
     // Evaluation..............................................................................................................
     // Auto Dailer
     Route::get('reports/evaluation', [ReportController::class, 'Evaluation'])->name('evaluation');
     Route::get('reports/evaluation/export', [ReportController::class, 'exportEvaluation'])->name('evaluation.export');
-
-    // Auto Distributor
-    // Route::get('auto-distributor/evaluation', [ReportController::class, 'AutoDistributorEvaluation'])->name('autoDistributor.evaluation');
-    // Route::get('auto-distributor/evaluation/export', [ReportController::class, 'exportAutoDistributorEvaluation'])->name('autoDistributor.evaluation.export');
-    // //    Manager Dashboard........................................................................................................
-    // Route::get('manager/dashboard', [DashboardController::class, 'getCallManagerStatisticsAutoDailer'])->name('manager.dashboard');
-
-
-
-
-
-
-
-    // AutoDistributer..............................................................................................................
-    // Route::resource('auto_distributerer_extensions', UserForAutoDistributer::class);
-    // Route::get('auto-distributer-extensions/import', [UserForAutoDistributer::class, 'import'])->name('auto_distributerer_extensions.import');
-    // Route::delete('auto-distributer-extensions/delete-all', [UserForAutoDistributer::class, 'destroyAllUsers'])->name('auto_distributerer_extensions.deleteAll');
-
-
-    // Route::get('auto-distributer-extensions/{id}/show', [ADistAgentFeedController::class, 'show'])->name('auto_distributerer_extensions.show');
-    // Route::post('auto-distributer-extensions/{id}/store', [ADistAgentFeedController::class, 'store'])->name('auto_distributerer_extensions.storeFeed');
-    // Route::get('auto-distributer-extensions/{id}/createFeed', [ADistAgentFeedController::class, 'createFeed'])->name('auto_distributerer_extensions.createFeed');
-    // Route::get('auto-distributer-extensions/{extensionId}/feed/{feedFileId}/view-data', [ADistAgentFeedController::class, 'viewFeedData'])->name('auto_distributer_extensions.viewFeedData');
-
-    // // AutoDailer By Provider..........................................................................................................
-
-    // // Provider..........................................................................................................................
-    // Route::get('/auto-dialer-providers', [ProviderForAutoDailerController::class, 'index'])->name('autoDialerProviders.index');
-    // Route::get('/auto-dialer-providers/create', [ProviderForAutoDailerController::class, 'create'])->name('autoDialerProviders.create');
-    // Route::post('/auto-dialer-providers', [ProviderForAutoDailerController::class, 'store'])->name('autoDialerProviders.store');
-    // Route::get('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'show'])->name('autoDialerProvider.show');
-    // Route::get('/auto-dialer-providers/{id}/edit', [ProviderForAutoDailerController::class, 'edit'])->name('autoDialerProviders.edit');
-    // Route::put('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'update'])->name('autoDialerProviders.update');
-    // Route::delete('/auto-dialer-providers/{id}', [ProviderForAutoDailerController::class, 'destroy'])->name('autoDialerProviders.destroy');
-    // // Provider................................................................................................................................
-
-    // // Provider Feed....................................................................................................................
-    // Route::get('autoDialerProviders/{id}/createFeed', [ADialProviderFeedController::class, 'createFeed'])->name('autoDialerProviders.createFeed');
-    // Route::post('autoDialerProviders/{id}/storeFeed', [ADialProviderFeedController::class, 'storeFeed'])->name('autoDialerProviders.storeFeed');
-    // Route::get('autoDialerProviders/{id}', [ADialProviderFeedController::class, 'show'])->name('autoDialerProviders.show');
-    // // Route::get('autoDialercall', [ProviderForAutoDailerController::class, 'autoDailer'])->name('call');
-    // Provider Feed....................................................................................................................
-
-
-
-    // // Dailer Calling..........................................................................................................................
-    // Route::get('auto-dailer-call', [ApiController::class, 'autoDailer'])->name('autoDailer');
-    // Route::get('auto-dailer-call-click', [ApiController::class, 'autoDailerByClick'])->name('auto_dailer.call.click');
-    // // Distributer Calling.....................................................................................................................
-    // Route::get('auto-distributer-call', [ApiController::class, 'autoDistributer']);
-    // Route::get('auto-distributer-call-click', [ApiController::class, 'autoDistributerByClicking'])->name('auto_distributer.call.click');
-
 });
 
 
@@ -223,20 +190,6 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
-
-    // Settings............................................................................................................................
-    // Route::get('/settings', [SettingController::class, 'showForm'])->name('settings.form');
-    // Route::post('/settings', [SettingController::class, 'saveSettings'])->name('settings.save');
-    // // AutoDailers............................................................................................................................
-    // Route::resource('autodailers', AutoDailerController::class);
-    // Route::delete('/auto-dailers/delete-all', [AutoDailerController::class, 'deleteAllFiles'])->name('auto-dailers.deleteAll');
-    // Route::get('/auto_dailer/{id}/download', [AutoDailerController::class, 'download'])->name('auto_dailer.download');
-    // // AutoDistributers............................................................................................................................
-    // Route::resource('autodistributers', AutoDirtibuterController::class);
-    // Route::delete('/auto-distributers/delete-all', [AutoDirtibuterController::class, 'deleteAllFiles'])->name('auto-distributers.deleteAll');
-    // Route::get('/auto_distributers/{id}/download', [AutoDirtibuterController::class, 'download'])->name('auto_distributers.download');
-    // // Providers............................................................................................................................
-    // Route::resource('providers', ProviderController::class);
 });
 
 require __DIR__ . '/auth.php';

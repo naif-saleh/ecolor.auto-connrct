@@ -48,21 +48,41 @@ class User extends Authenticatable
         ];
     }
 
-
+    /**
+     * Check if the user has a superuser role.
+     *
+     * @return bool
+     */
     public function isSuperUser()
     {
         return $this->role === 'superuser';
     }
 
+    /**
+     * Check if the user has a manager role.
+     *
+     * @return bool
+     */
     public function isManagerUser()
     {
         return $this->role === 'manager';
     }
 
+    /**
+     * Check if the user has an admin role.
+     *
+     * @return bool
+     */
     public function isAdmin()
     {
         return $this->role === 'admin';
     }
+
+    /**
+     * Check if the user has a standard user role.
+     *
+     * @return bool
+     */
     public function isUser()
     {
         return $this->role === 'user';

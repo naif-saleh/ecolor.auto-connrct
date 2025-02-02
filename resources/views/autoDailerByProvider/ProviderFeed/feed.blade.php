@@ -1,27 +1,37 @@
-@extends('layout.master')
+@extends('layout.main')
+@section('title', 'Dialer | Files for ' . $provider->name)
 
 @section('content')
-    <div class="container">
-        <h2 class="mb-4">Files for Provider: {{ $provider->name }}</h2>
-        <a href="{{ route('provider.files.create', $provider) }}" class="btn btn-secondary btn-sm ml-2">Add File</a>
 
+    <style>
+        
+    </style>
+    <div class="container">
+        <h2 class="mb-4">Files for Provider: <u>{{ $provider->name }}</u></h2>
+        <a href="{{ route('provider.files.create', $provider) }}" class="btn btn-primary  mb-2"><i
+                class="fa-solid fa-plus"></i>Add File</a>
+        <!-- Back to provider list -->
+        <a href="{{ route('providers.index') }}" class="btn btn-dark mb-2">Back to Providers</a>
         <!-- Files List -->
         <div class="table-responsive shadow-sm rounded">
             @if ($files->isEmpty())
                 <div class="alert alert-info text-center" role="alert">
-                    <i class="bi bi-info-circle"></i> No files available.
+                    <i class="fa fa-info-circle"></i> No files available.
                 </div>
             @else
                 <table class="table table-striped table-hover table-bordered">
                     <thead class="thead-dark">
                         <tr>
-                            <th><i class="bi bi-file-earmark"></i> File Name</th>
-                            <th><i class="bi bi-clock"></i> From</th>
-                            <th><i class="bi bi-clock"></i> To</th>
-                            <th><i class="bi bi-calendar"></i> Date</th>
-                            <th><i class="bi bi-calendar"></i> Uploaded At</th>
-                            <th><i class="bi bi-person"></i> Uploaded By</th>
-                            <th><i class="bi bi-gear"></i> Actions</th>
+                            <th><i class="fa-solid fa-file"></i> File Name</th>
+                            <th><i class="fa fa-clock"></i> From</th>
+                            <th><i class="fa fa-clock"></i> To</th>
+                            <th><i class="fa fa-calendar-day"></i> Date</th>
+                            <th><i class="fa fa-user"></i> Uploaded By</th>
+                            <th><i class="fa-solid fa-power-off"></i> On\Off</th>
+                            <th><i class="fa-solid fa-phone"></i> File Status</th>
+                            <th><i class="fa fa-cogs"></i> Actions</th>
+                            <th><i class="fa fa-calendar-plus"></i> Uploaded At</th>
+
                         </tr>
                     </thead>
                     <tbody>
@@ -31,47 +41,64 @@
                                 <td>{{ $file->from }}</td>
                                 <td>{{ $file->to }}</td>
                                 <td>{{ $file->date }}</td> <!-- For Date -->
-                                <td>{{ $file->created_at->addHours(3) }}</td> <!-- For Time -->
                                 <td>{{ $file->user->name ?? 'Unknown' }}</td>
-                                <td class="d-flex justify-content-between">
-                                    <!-- Switch for Allow (moved to start) -->
+
+                                <td>
+                                    <!-- Switch with better design -->
                                     <form action="{{ route('autodailers.files.allow', $file->slug) }}" method="POST"
                                         id="allowForm{{ $file->slug }}">
                                         @csrf
-                                        <div class="form-check form-switch form-check-lg">
-                                            <input class="form-check-input" type="checkbox"
-                                                id="allowSwitch{{ $file->slug }}" name="allow"
-                                                {{ $file->allow ? 'checked' : '' }} data-file-id="{{ $file->slug }}"
-                                                onchange="this.form.submit()">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <!-- Status Label -->
                                             <span id="statusText{{ $file->slug }}"
-                                                class="{{ $file->allow ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill' }}">
+                                                class="badge rounded-pill px-3 py-1 fw-bold
+                                                        {{ $file->allow ? 'bg-success-subtle border border-success-subtle text-success-emphasis' : 'bg-danger-subtle border border-danger-subtle text-danger-emphasis' }}">
                                                 <i
-                                                    class="{{ $file->allow ? 'bi bi-check-circle' : 'bi bi-x-circle' }}"></i>
+                                                    class="{{ $file->allow ? 'fa fa-check-circle' : 'fa fa-exclamation-circle' }}"></i>
                                                 {{ $file->allow ? 'Active' : 'Inactive' }}
                                             </span>
+                                            <!-- Custom Switch -->
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input custom-switch" type="checkbox"
+                                                    id="allowSwitch{{ $file->slug }}" name="allow"
+                                                    {{ $file->allow ? 'checked' : '' }} data-file-id="{{ $file->slug }}"
+                                                    onchange="this.form.submit()">
+                                            </div>
+
                                         </div>
                                     </form>
-
+                                </td>
+                                <td>
                                     <div>
                                         <span
                                             class="{{ $file->is_done ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill' }}">
                                             <i
-                                                class="{{ $file->is_done ? 'bi bi-check-circle' : 'bi bi-exclamation-circle' }}"></i>
+                                                class="{{ $file->is_done ? 'fa fa-check-circle' : 'fa fa-exclamation-circle' }}"></i>
                                             {{ $file->is_done ? 'All Numbers Called' : 'Not Called Yet' }}
                                         </span>
                                     </div>
+                                </td>
+                                </td>
+
+
+
+                                <td class="d-flex justify-content-between">
+
+
+
 
                                     <!-- View and Delete Buttons (moved to end) -->
                                     <div>
-                                        <!-- Download Button -->
+                                        {{-- <!-- Download Button -->
                                         <a href="{{ url('auto-dailer/download-processed-file', $file->id) }}"
-                                            class="btn btn-sm bg-primary mx-1" title="Download File">
-                                            <i class="bi bi-download"></i>
-                                        </a>
+                                            class="btn btn-dark btn-sm bg-primary mx-1" title="Download File">
+                                            <i class="fa fa-download"></i>
+                                        </a> --}}
 
                                         <!-- view Button -->
-                                        <a href="{{ route('provider.files.show', $file->slug)}}" type="button" class="btn btn-info btn-sm mx-1">
-                                            <i class="bi bi-eye"></i>
+                                        <a href="{{ route('provider.files.show', $file->slug) }}" type="button"
+                                            class="btn btn-info btn-sm mx-1">
+                                            <i class="fa fa-eye"></i>
                                         </a>
 
 
@@ -79,24 +106,28 @@
                                         <!-- Edit Button (Opens Modal) -->
                                         <button type="button" class="btn btn-warning btn-sm mx-1" data-bs-toggle="modal"
                                             data-bs-target="#editFileModal{{ $file->slug }}">
-                                            <i class="bi bi-pencil"></i>
+                                            <i class="fa fa-pencil"></i>
                                         </button>
 
 
-                                        <!-- Delete Button -->
-                                        <form action="{{ route('autodailer.delete', $file->slug) }}" method="POST"
-                                            style="display: inline;" id="deleteForm{{ $file->id }}">
+                                        <!-- Delete Button (Form) -->
+                                        <form id="deleteForm{{ $file->slug }}"
+                                            action="{{ route('autodailer.delete', $file->slug) }}" method="POST"
+                                            style="display: inline;">
                                             @csrf
                                             @method('DELETE')
                                             <button type="button" class="btn btn-danger btn-sm mx-1" title="Delete File"
-                                                onclick="confirmDeleteAction('{{ $file->id }}')">
-                                                <i class="bi bi-trash"></i>
+                                                onclick="confirmDeleteAction('{{ $file->slug }}')">
+                                                <i class="fa fa-trash"></i>
                                             </button>
                                         </form>
+
+
 
                                     </div>
 
                                 </td>
+                                <td>{{ $file->created_at->addHours(3) }}</td>
                             </tr>
 
 
@@ -153,12 +184,48 @@
                         @endforeach
                     </tbody>
                 </table>
-                {{ $files->links() }}
-            @endif
-          
+
+             @endif
+
         </div>
-       
-        <!-- Back to provider list -->
-        <a href="{{ route('providers.index') }}" class="btn btn-primary mt-3">Back to Providers</a>
+        <div class="pagination-wrapper d-flex justify-content-center mt-4">
+            <ul class="pagination">
+                <li class="page-item {{ $files->onFirstPage() ? 'disabled' : '' }}">
+                    <a class="page-link" href="{{ $files->previousPageUrl() }}" tabindex="-1"
+                        aria-disabled="true">Previous</a>
+                </li>
+                @foreach ($files->getUrlRange(1, $files->lastPage()) as $page => $url)
+                    <li class="page-item {{ $files->currentPage() == $page ? 'active' : '' }}">
+                        <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                    </li>
+                @endforeach
+                <li class="page-item {{ $files->hasMorePages() ? '' : 'disabled' }}">
+                    <a class="page-link" href="{{ $files->nextPageUrl() }}">Next</a>
+                </li>
+            </ul>
+        </div>
+
     </div>
+
+
+    <script>
+        function confirmDeleteAction(slug) {
+            Swal.fire({
+                title: 'Are you sure?',
+                text: 'You won\'t be able to revert this!',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'No, cancel!',
+                preConfirm: () => {
+                    return new Promise((resolve) => {
+                        // Find the form and submit it
+                        document.getElementById('deleteForm' + slug).submit();
+                    });
+                }
+            });
+        }
+    </script>
+
+
 @endsection

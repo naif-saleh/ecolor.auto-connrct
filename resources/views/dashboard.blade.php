@@ -1,7 +1,7 @@
 @extends('layout.master')
 
 @section('content')
-<div class="container">
+{{-- <div class="container">
     <div class="row">
         <div class="col-md-12">
             <h2 class="text-center">Auto Calls Dashboard</h2>
@@ -12,10 +12,10 @@
             </div>
         </div>
     </div>
-</div>
+</div> --}}
 @endsection
 
-@push('scripts')
+{{-- @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     var ctx = document.getElementById('autoCallsChart').getContext('2d');
@@ -41,4 +41,4 @@
         }
     });
 </script>
-@endpush
+@endpush --}}

@@ -12,15 +12,18 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
+
 class ADialProviderFeedController extends Controller
 {
 
+    //Auto Dialer Index
     public function index()
     {
-        $providers = ADialProvider::all();
+        $providers = ADialProvider::paginate(10);
         return view('autoDailerByProvider.Provider.index', compact('providers'));
     }
 
+    //Create Provider
     public function create()
     {
         return view('autoDailerByProvider.Provider.create');
@@ -48,6 +51,30 @@ class ADialProviderFeedController extends Controller
     }
 
 
+    //Update Provider
+    public function updateProvider(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string|max:255|unique:a_dial_providers,name,' . $id,
+            'extension' => 'nullable|string|max:50',
+        ]);
+
+        try {
+            $provider = ADialProvider::findOrFail($id);
+            $provider->update([
+                'name' => $request->name,
+                'extension' => $request->extension,
+            ]);
+
+            return response()->json(['success' => 'Provider Updated Successfully']);
+        } catch (\Exception $e) {
+            return response()->json(['error' => 'Something went wrong: ' . $e->getMessage()], 500);
+        }
+    }
+
+
+
+    //Create File For a Provider
     public function createFile(ADialProvider $provider)
     {
         $providers = ADialProvider::find($provider);
@@ -55,6 +82,7 @@ class ADialProviderFeedController extends Controller
     }
 
 
+    //Store New File For a Provider
     public function storeFile(Request $request, ADialProvider $provider)
     {
         $request->validate([
@@ -87,6 +115,7 @@ class ADialProviderFeedController extends Controller
         return redirect()->route('provider.files.index', $provider)->with('success', 'File added and data imported successfully!');
     }
 
+    //Proccessing CSV File Data
     private function processCsvFile($filePath, $provider, $fileId)
     {
         $file = Storage::get($filePath);
@@ -121,6 +150,7 @@ class ADialProviderFeedController extends Controller
         }
     }
 
+    //Validate If Mobile Number is_KSA
     private function isValidMobile($mobile)
     {
         return preg_match('/^9665[0-9]{8}$/', $mobile); // Validates Saudi mobile numbers
@@ -135,20 +165,21 @@ class ADialProviderFeedController extends Controller
     }
 
 
+    //Show Data Inside File
     public function showFileContent($slug)
     {
         // Find the file by slug instead of using route model binding
         $file = ADialFeed::where('slug', $slug)->firstOrFail();
+        $numbers = ADialData::where('feed_id', $file->id)->count();
+        $data = ADialData::where('feed_id', $file->id)->paginate(400);
 
-        $data = ADialData::where('feed_id',$file->id )->paginate(400);
-
-        return view('autoDailerByProvider.ProviderFeed.show', compact('file', 'data'));
+        return view('autoDailerByProvider.ProviderFeed.show', compact('file', 'data', 'numbers'));
     }
 
 
+    //Update File : File_name, From, To, Date
     public function update(Request $request, $slug)
     {
-        // Validate incoming request
         $request->validate([
             'file_name' => 'required|string|max:255',
             'from' => 'nullable|date_format:H:i',
@@ -156,10 +187,8 @@ class ADialProviderFeedController extends Controller
             'date' => 'required|date',
         ]);
 
-        // Find the file by slug
         $file = ADialFeed::where('slug', $slug)->firstOrFail();
 
-        // Update the file's data
         $file->update([
             'file_name' => $request->file_name,
             'from' => $request->from,
@@ -167,39 +196,37 @@ class ADialProviderFeedController extends Controller
             'date' => $request->date,
         ]);
 
-        return redirect()->route('provider.files.index', $file->provider)
-            ->with('success', 'File updated successfully!');
+        return back()->with('success', 'File updated successfully');
     }
 
 
 
+
+    //Delete File with All Data
     public function destroy($slug)
     {
         try {
-            // Find the file by its slug
+            // Find the file by slug
             $file = ADialFeed::where('slug', $slug)->firstOrFail();
-
-            // Optionally, delete associated data or related entries if necessary
-            $file->uploadedData()->delete(); // Delete all uploaded data related to this file
-
-            // Delete the actual file from storage
-            if (Storage::exists("provider_files/{$file->slug}")) {
-                Storage::delete("provider_files/{$file->slug}");
-            }
-
-            // Delete the file record from the database
             $file->delete();
 
-            return redirect()->route('provider.files.index', $file->provider)
-                ->with('success', 'File deleted successfully!');
+            return back()->with('success', 'File deleted successfully');
         } catch (\Exception $e) {
-            Log::error("❌ Error deleting file: " . $e->getMessage());
-            return redirect()->route('provider.files.index')
-                ->with('error', 'Failed to delete the file. Please try again.');
+            return response()->json(['message' => 'There was an error deleting the file', 'error' => $e->getMessage()], 500);
         }
     }
 
 
+
+    // Delete Provider with All Files
+    public function destroyProvider($id)
+    {
+        $provider = ADialProvider::where('id', $id)->first();
+        $provider->delete();
+        return back()->with('success', 'Provider Deleted Successfully');
+    }
+
+    // Active and Inactine File
     public function updateAllowStatus(Request $request, $slug)
     {
         $file = ADialFeed::where('slug', $slug)->firstOrFail();
@@ -220,6 +247,4 @@ class ADialProviderFeedController extends Controller
 
         return back();
     }
-
-    
 }

@@ -1,11 +1,12 @@
-@extends('layout.master')
+@extends('layout.main')
 
-
-
-
+@section('title', 'Dialer |Create New File for ' . $provider->name . ' Provider')
 @section('content')
     <div class="container">
-        <h2 class="mb-4">Add File for Provider: {{ $provider->name }}</h2>
+        <div class="d-flex justify-content-between">
+            <h2 class="mb-4">Add File for Provider: {{ $provider->name }}</h2>
+            <a href="/Auto Dialer Demo.csv" class="btn btn-info" download><i class="fa-solid fa-download"></i> Download Demo File</a>
+        </div>
 
         <form action="{{ route('provider.files.store', $provider) }}" method="POST" enctype="multipart/form-data">
             @csrf

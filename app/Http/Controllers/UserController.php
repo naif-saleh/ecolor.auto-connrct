@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Validator;
 use App\Models\UserActivityLog;
 use Illuminate\Support\Facades\Auth;
@@ -24,24 +23,26 @@ class UserController extends Controller
      *   )
      */
 
-    // Display a list of users
+    /**
+     * Display a list of users
+     */
     public function index()
     {
         $users = User::all();
         return view('users.index', compact('users'));
     }
 
-    // Reset Password......................................................................................................................................
+    /**
+     * Reset Password
+     */
     public function resetPassword(Request $request)
     {
         // Validate the new password
         $validator = Validator::make($request->all(), [
-            'new_password' => 'required|min:8|confirmed',
+            'new_password' => 'required|min:8',
         ]);
 
-        // if ($validator->fails()) {
-        //     return response()->json(['success' => false, 'message' => 'Password validation failed.']);
-        // }
+        
 
         // Find the user by the ID
         $user = User::findOrFail($request->user_id);
@@ -52,21 +53,25 @@ class UserController extends Controller
         UserActivityLog::create([
             'user_id' => Auth::id(),
             'opreation' => 'Reset User Password',
-            'user_role' => $user->role ,
+            'user_role' => $user->role,
             'user_name' => $user->name,
-            'user_email' =>$user->email
+            'user_email' => $user->email
 
         ]);
         return response()->json(['success' => true, 'message' => 'Password reset successfully.']);
     }
 
-    // Show the form to create a new user
+    /**
+     * Show the form to create a new user
+     */
     public function create()
     {
         return view('users.create');
     }
 
-    // Store the new user
+    /**
+     * Store the new user
+     */
     public function store(Request $request)
     {
         $request->validate([
@@ -92,19 +97,23 @@ class UserController extends Controller
             'opreation' => 'Add User',
             'user_role' => $request->role ? $request->role : '',
             'user_name' => $request->name,
-            'user_email' =>$request->email
+            'user_email' => $request->email
 
         ]);
-        return redirect()->route('users.index')->with('success', 'User created successfully.');
+        return redirect()->route('users.system.index')->with('success', 'User created successfully.');
     }
 
-    // Show the form to edit a user
+    /**
+     * Show the form to edit a user
+     */
     public function edit(User $user)
     {
         return view('users.edit', compact('user'));
     }
 
-    // Update user details
+     /**
+     * Update user details
+     */
     public function update(Request $request, User $user)
     {
 
@@ -122,40 +131,44 @@ class UserController extends Controller
             'role' => $request->role,
         ]);
 
-         // Active Log Report...............................
-         UserActivityLog::create([
+        // Active Log Report...............................
+        UserActivityLog::create([
             'user_id' => Auth::id(),
             'opreation' => 'Update User',
             'user_role' => $request->role ? $request->role : '',
             'user_name' => $request->name,
-            'user_email' =>$request->email
+            'user_email' => $request->email
 
         ]);
-        return redirect()->route('users.index')->with('success', 'User updated successfully.');
+        return redirect()->route('users.system.index')->with('success', 'User updated successfully.');
     }
 
-    // Delete a user
+    /**
+     * Delete a user
+     */
     public function destroy(User $user)
     {
         Log::info("User Deleted");
 
         if ($user->id === auth()->id()) {
-            return redirect()->route('users.index')->with('error', 'You cannot delete your own account.');
+            return redirect()->route('users.system.index')->with('wrong', 'You cannot delete your own account.');
         }
 
         $user->delete();
         // // Active Log Report...............................
         // dd($user->name);
-         // Active Log Report...............................
-         UserActivityLog::create([
+        // Active Log Report...............................
+        UserActivityLog::create([
             'user_id' => Auth::id(),
             'opreation' => 'Delete User',
             'user_role' => $user->role,
             'user_name' => $user->name,
-            'user_email' =>$user->email
+            'user_email' => $user->email
 
         ]);
 
-        return redirect()->route('users.index')->with('success', 'User deleted successfully.');
+        return redirect()->route('users.system.index')->with('success', 'User deleted successfully.');
     }
+
+
 }

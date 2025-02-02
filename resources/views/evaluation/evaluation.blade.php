@@ -1,6 +1,6 @@
-@extends('layout.master')
+@extends('layout.main')
 
-@section('style')
+
     <style>
         /* Export Button */
         .btn-modern-export {
@@ -193,7 +193,7 @@
             color: #6c757d;
         }
     </style>
-@endsection
+ 
 
 @section('title', 'Reports | Evaluation')
 

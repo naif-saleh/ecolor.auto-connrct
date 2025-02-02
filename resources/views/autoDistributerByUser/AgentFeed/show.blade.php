@@ -1,8 +1,11 @@
-@extends('layout.master')
+@extends('layout.main')
 @section('content')
     <div class="container">
-        <h2>File: {{ $file->file_name }}</h2>
+        <div class="d-flex justify-content-between">
+            <h2>File Name: {{ $file->file_name }} contains <u>{{ $numbers }}</u> Numbers</h2>
+            <a href="{{ route('users.files.index', $file->agent_id) }}" class="btn btn-primary">Back</a>
 
+        </div>
         @if (!empty($file))
             <table class="table table-bordered">
                 <thead>
@@ -25,7 +28,21 @@
         @else
             <p>No data found in this file.</p>
         @endif
-
-        <a href="{{ route('users.files.index', $file->agent_id) }}" class="btn btn-primary">Back</a>
+        <div class="pagination-wrapper d-flex justify-content-center mt-4">
+            <ul class="pagination">
+                <li class="page-item {{ $data->onFirstPage() ? 'disabled' : '' }}">
+                    <a class="page-link" href="{{ $data->previousPageUrl() }}" tabindex="-1"
+                        aria-disabled="true">Previous</a>
+                </li>
+                @foreach ($data->getUrlRange(1, $data->lastPage()) as $page => $url)
+                    <li class="page-item {{ $data->currentPage() == $page ? 'active' : '' }}">
+                        <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                    </li>
+                @endforeach
+                <li class="page-item {{ $data->hasMorePages() ? '' : 'disabled' }}">
+                    <a class="page-link" href="{{ $data->nextPageUrl() }}">Next</a>
+                </li>
+            </ul>
+        </div>
     </div>
 @endsection

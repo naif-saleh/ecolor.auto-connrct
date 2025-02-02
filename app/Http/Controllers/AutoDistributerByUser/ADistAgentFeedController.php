@@ -7,44 +7,43 @@ use Illuminate\Http\Request;
 use App\Models\ADistFeed;
 use App\Models\ADistAgent;
 use App\Models\ADistData;
-use Carbon\Carbon;
 use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use App\Services\TokenService;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 
 class ADistAgentFeedController extends Controller
 {
 
-
+    //Identify token to get token from tokenService
     protected $tokenService;
 
+    //class constructor
     public function __construct(TokenService $tokenService)
     {
-
         $this->tokenService = $tokenService;
     }
 
-
+    //Auto Distributor Index
     public function index()
     {
-        $agents = ADistAgent::all();
+        $agents = ADistAgent::paginate(20);
         return view('autoDistributerByUser.Agent.index', compact('agents'));
     }
 
+    //Create File For an Agent
     public function createFile(ADistAgent $agent)
     {
-       // $agents = ADistAgent::find($agent);
         return view('autoDistributerByUser.AgentFeed.create', compact('agent'));
     }
 
 
+    //Store New File For an Agent
     public function storeFile(Request $request, ADistAgent $agent)
     {
-        
+
         $request->validate([
             'file_name' => 'required|string|max:255',
             'file_upload' => 'required|file|mimes:csv,txt,xlsx|max:5120', // Increased file size limit
@@ -72,10 +71,11 @@ class ADistAgentFeedController extends Controller
         // Process CSV file for mobile numbers
         $this->processCsvFile($filePath, $agent, $file->id);
 
-        return back()->with('success', 'File added and data imported successfully!');
+        return redirect()->route('users.index', $file)->with('success', 'File added and data imported successfully!');
     }
 
-    private function processCsvFile($filePath, $provider, $fileId)
+    //Proccessing CSV File Data
+    private function processCsvFile($filePath, $agent, $fileId)
     {
         $file = Storage::get($filePath);
         $lines = explode("\n", $file);
@@ -94,6 +94,9 @@ class ADistAgentFeedController extends Controller
                     'updated_at' => now(),
                 ];
             }
+            else{
+                Log:info('Mobile Number is Invalid: '.$mobile);
+            }
 
             // Insert in batches to improve performance
             if (count($batchData) >= $batchSize) {
@@ -108,26 +111,31 @@ class ADistAgentFeedController extends Controller
         }
     }
 
+    //Validate If Mobile Number is_KSA
     private function isValidMobile($mobile)
     {
         return preg_match('/^9665[0-9]{8}$/', $mobile); // Validates Saudi mobile numbers
     }
 
-    // Display all files for a agents
+    // Display all files for an Agents
     public function files(ADistAgent $agent)
     {
-        $feeds = $agent->files()->orderBy('created_at', 'desc')->paginate(5); // Change 'created_at' to the correct column if needed
+        $feeds = $agent->files()->orderBy('created_at', 'desc')->paginate(10); // Change 'created_at' to the correct column if needed
         return view('autoDistributerByUser.AgentFeed.feed', compact('agent', 'feeds'));
     }
+
+    //Show Data Inside File
     public function showFileContent($slug)
     {
         // Find the file by slug instead of using route model binding
         $file = ADistFeed::where('slug', $slug)->firstOrFail();
+        $numbers = ADistData::where('feed_id', $file->id)->count();
+        $data = ADistData::where('feed_id', $file->id)->paginate(400);
 
-        $data = ADistData::where('feed_id',$file->id )->paginate(400);
-
-        return view('autoDistributerByUser.AgentFeed.show', compact('file', 'data'));
+        return view('autoDistributerByUser.AgentFeed.show', compact('file', 'data', 'numbers'));
     }
+
+    // Active and Inactine File
     public function updateAllowStatus(Request $request, $slug)
     {
         $file = ADistFeed::where('slug', $slug)->firstOrFail();
@@ -148,4 +156,42 @@ class ADistAgentFeedController extends Controller
 
         return back();
     }
+
+    //Update File : File_name, From, To, Date
+    public function update(Request $request, $slug)
+    {
+        $request->validate([
+            'file_name' => 'required|string|max:255',
+            'from' => 'nullable|date_format:H:i',
+            'to' => 'nullable|date_format:H:i',
+            'date' => 'required|date',
+        ]);
+
+        $file = ADistFeed::where('slug', $slug)->firstOrFail();
+
+        $file->update([
+            'file_name' => $request->file_name,
+            'from' => $request->from,
+            'to' => $request->to,
+            'date' => $request->date,
+        ]);
+
+        return back()->with('success', 'File updated successfully');
+    }
+
+
+    //Delete File with All Data
+    public function destroy($slug)
+    {
+        try {
+            // Find the file by slug
+            $file = ADistFeed::where('slug', $slug)->firstOrFail();
+            $file->delete();
+
+            return back()->with('success', 'File deleted successfully');
+        } catch (\Exception $e) {
+            return back()->with('wrong', 'No Query Results For');
+        }
+    }
+
 }

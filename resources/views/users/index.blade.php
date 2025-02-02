@@ -1,4 +1,4 @@
-@extends('layout.master')
+@extends('layout.main')
 @section('title', '`Users')
 
 @section('content')
@@ -58,11 +58,6 @@
             </tbody>
         </table>
     </div>
-@endsection
-
-@section('scripts')
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
 
     <script>
         function resetPassword(userId, userName) {
@@ -142,3 +137,5 @@
         }
     </script>
 @endsection
+
+ 
