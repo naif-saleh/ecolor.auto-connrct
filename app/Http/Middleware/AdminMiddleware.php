@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Auth;
 
 class AdminMiddleware
 {
-    
+
     /**
      * Permission Ability For Each User
      */
@@ -19,6 +19,6 @@ class AdminMiddleware
         }
 
         // Redirect back with an error if not an admin
-        return redirect()->route('home')->with('error', 'You do not have permission to access this page.');
+        return redirect()->route('index.page')->with('wrong', 'You do not have permission to access this page.');
     }
 }

@@ -82,7 +82,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 
     /**
-     * Auto Dialer Provider Routes
+     * Auto Dialer Provider Routese
      *
      * These routes manage auto dialer providers and their related feeds/files.
      * Functionality includes listing, creating, storing, updating, and deleting
