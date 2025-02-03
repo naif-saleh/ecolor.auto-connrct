@@ -12,7 +12,7 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
-    
+
     /**
      * Active Log Report method
      */
@@ -389,12 +389,12 @@ class ReportController extends Controller
             $query->whereDate('created_at', now()->toDateString()); // Default to today
         }
 
-        if ($dateFrom) {
-            $query->whereDate('created_at', '>=', $dateFrom);
-        }
-
-        if ($dateTo) {
-            $query->whereDate('created_at', '<=', $dateTo);
+        // Apply date range filter
+        if ($dateFrom && $dateTo) {
+            $query->whereBetween('created_at', [
+                \Carbon\Carbon::parse($dateFrom)->startOfDay(),
+                \Carbon\Carbon::parse($dateTo)->endOfDay()
+            ]);
         }
 
         // Paginate the results
