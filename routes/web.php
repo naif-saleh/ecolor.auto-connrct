@@ -169,24 +169,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // // Export Auto Distributer...........................................................................................................
     Route::get('auto-distributer-report/export', [ReportController::class, 'exportAutoDistributerReport'])->name('auto_distributer.report.export');
 
-    // AutoDailer..........................................................................................................................
-    Route::get('auto-dailer/files', [AutoDailerFileController::class, 'index'])->name('autodailers.files.index');
-    Route::get('autodailers/providers', [AutoDailerFileController::class, 'providers'])->name('autodailers.providers');
-    Route::get('autodailers/files/show/{slug}', [AutoDailerFileController::class, 'showFile'])->name('autodailers.files.show');
-    // Route::put('autodailers/files/update/{slug}', [AutoDailerFileController::class, 'updateFile'])->name('autodailers.files.update');
-    Route::delete('autodailers/files/delete/{slug}', [AutoDailerFileController::class, 'deleteFile'])->name('autodailers.files.delete');
-    Route::get('autodailers/files/{slug}', [AutoDailerFileController::class, 'show'])->name('autodailers.files.show');
-    Route::post('auto-dailer/upload-csv', [AutoDailerFileController::class, 'uploadCsv'])->name('autodailers.upload.csv');
-    Route::delete('/autodailer-file/{id}', [AutoDailerFileController::class, 'deleteFile'])->name('autodailer.delete');
-    // Route::get('/auto-dailer/{slug}/edit', [AutoDailerFileController::class, 'edit'])->name('autodailer.edit');
-    Route::put('/auto-dailer/{id}', [AutoDailerFileController::class, 'updateAutoDailer'])->name('autoDailer.update');
-
-    // download File....................................................................................................................
-    Route::get('auto-dailer/download-processed-file/{fileId}', [AutoDailerFileController::class, 'downloadUploadedFile'])->name('autodailers.download.processed.files');
-    // Update value if file done or not.................................................................................................
-    Route::post('autodailers/files/{slug}/allow', [AutoDailerFileController::class, 'updateAllowStatus'])->name('autodailers.files.allow');
-    // Download Example csv.............................................................................................................
-    Route::get('/download-example-csv', [AutoDailerFileController::class, 'downloadExampleCsv'])->name('download.example.csv');
 
     //    Manager Dashboard........................................................................................................
     Route::get('manager/dashboard', [DashboardController::class, 'getCallManagerStatisticsAutoDailer'])->name('manager.dashboard');
