@@ -24,7 +24,7 @@ use App\Http\Controllers\HomeController;
  * - Unauthenticated → Shows the login page.
  */
 
- Route::get('/', function () {
+Route::get('/', function () {
     if (Auth::check()) {
         $user = Auth::user();
 
@@ -44,12 +44,12 @@ use App\Http\Controllers\HomeController;
     return view('auth.login');
 });
 
- // Ensure the index route is defined outside the condition
+// Ensure the index route is defined outside the condition
 
 
- Route::get('/error',  function(){
+Route::get('/error',  function () {
     return view('404');
- });
+});
 
 // User Management..........................................................................................................................
 Route::middleware(['auth', 'admin'])->group(function () {
@@ -112,6 +112,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::put('/auto-dailer/{slug}', [ADialProviderFeedController::class, 'update'])->name('autoDailer.update');
     Route::get('/providers/feeds/{slug}', [ADialProviderFeedController::class, 'showFileContent'])->name('provider.files.show');
     Route::post('/providers/feeds/{slug}/allow', [ADialProviderFeedController::class, 'updateAllowStatus'])->name('autodailers.files.allow');
+    //Import CSV File Using Drop Zone
+    Route::post('/providers/feeds/upload-file', [ADialProviderFeedController::class, 'importCsvData'])->name('autodailers.file.csv.dropzone.upload');
 
     /**
      * Auto Distributor User Routes
@@ -136,6 +138,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/agents/feeds/{slug}/allow', [ADistAgentFeedController::class, 'updateAllowStatus'])->name('users.files.allow');
     Route::put('/agents/feed/{slug}', [ADistAgentFeedController::class, 'update'])->name('users.feed.update');
     Route::delete('/agent/feed/{slug}', [ADistAgentFeedController::class, 'destroy'])->name('users.feed.delete');
+    //Import CSV File Using Drop Zone
+    Route::post('/agents/feeds/upload-file', [ADistAgentFeedController::class, 'importCsvData'])->name('users.file.csv.dropzone.upload');
 
 
 

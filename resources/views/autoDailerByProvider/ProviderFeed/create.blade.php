@@ -37,6 +37,7 @@
             </div>
 
             <button type="submit" class="btn btn-success">Save File</button>
+            <a href="/providers" class="btn btn-dark">Back</a>
         </form>
     </div>
 @endsection

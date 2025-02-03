@@ -7,12 +7,14 @@ use Illuminate\Http\Request;
 use App\Models\ADistFeed;
 use App\Models\ADistAgent;
 use App\Models\ADistData;
-use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
 use App\Services\TokenService;
 use Illuminate\Support\Facades\Storage;
+use App\Models\ActivityLog;
+ use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class ADistAgentFeedController extends Controller
 {
@@ -193,5 +195,124 @@ class ADistAgentFeedController extends Controller
             return back()->with('wrong', 'No Query Results For');
         }
     }
+
+     //Import Huge Count of Numbers to all Providers Directlly From CSV File
+     public function importCsvData(Request $request)
+     {
+         $errors = [];
+         $successCount = 0;
+
+         if (($handle = fopen($request->file, 'r')) !== false) {
+             $header = fgetcsv($handle);
+
+             if (!$header) {
+                 $errors[] = "Failed to read the CSV header.";
+                 return response()->json(['errors' => $errors], 422);
+             }
+
+             DB::beginTransaction();
+
+             try {
+                 Log::info('CSV Import Started', ['file' => $request->file->getClientOriginalName()]);
+
+                 while (($data = fgetcsv($handle)) !== false) {
+                     if ($data === false) {
+                         $errors[] = "Invalid row in CSV file.";
+                         continue;
+                     }
+
+                     list($mobile, $name, $extension, $from, $to, $date) = $data;
+
+                     //   Validate Mobile Number (Must be KSA Format)
+                     if (!preg_match('/^9665[0-9]{8}$/', $mobile)) {
+                         $errors[] = "Invalid Saudi mobile number: $mobile";
+                         continue;
+                     }
+
+                     //   Find or Create Agent
+                     $agent = ADistAgent::firstOrCreate(
+                         ['extension' => $extension],
+                         ['user_id' => auth()->id()]
+                     );
+
+                     //This condition not working
+                     if (!$agent) {
+                         $errors[] = "Failed to find or create agent for extension: $extension";
+                         continue;
+                     }
+
+                     //   Process Date and Time
+                     $currentFeedData = [
+                         'from' => Carbon::createFromFormat('h:i A', $from)->format('H:i:s'),
+                         'to' => Carbon::createFromFormat('h:i A', $to)->format('H:i:s'),
+                         'date' => Carbon::parse($date)->format('Y-m-d'),
+                     ];
+
+                     //  Check if Feed Exists or Create a New One
+                     $feed = ADistFeed::where([
+                         'agent_id' => $agent->id,
+                         'from' => $currentFeedData['from'],
+                         'to' => $currentFeedData['to'],
+                         'date' => $currentFeedData['date'],
+                     ])->first();
+
+                     if (!$feed) {
+                         $slug = Str::uuid();
+                         $feed = ADistFeed::create([
+                             'file_name' => $name,
+                             'slug' => $slug,
+                             'date' => $currentFeedData['date'],
+                             'from' => $currentFeedData['from'],
+                             'to' => $currentFeedData['to'],
+                             'agent_id' => $agent->id,
+                             'uploaded_by' => auth()->id()
+                         ]);
+                     }
+
+                     //  Skip Duplicate Mobile Numbers
+                     if (ADistData::where('mobile', $mobile)->where('feed_id', $feed->id)->exists()) {
+                         $errors[] = "Duplicate mobile number skipped: $mobile";
+                         Log::info('Duplicate mobile number ' . $mobile);
+                         continue;
+                     }
+
+                     //  Store Valid Data
+                     ADistData::create([
+                         'feed_id' => $feed->id,
+                         'mobile' => $mobile,
+                         'state' => 'new',
+                     ]);
+
+                     Log::info('Adding mobile ' . $mobile);
+                     $successCount++;
+                 }
+
+                 fclose($handle);
+
+                 if ($successCount > 0) {
+                     DB::commit(); //   Commit if there are valid rows
+                     Log::info('CSV Import Completed Successfully', ['file' => $request->file->getClientOriginalName()]);
+                 } else {
+                     DB::rollBack(); //  Rollback if no valid records
+                     Log::error('No valid records found. Rolling back.');
+                     return response()->json(['errors' => ["No valid records found. Nothing was imported."]], 422);
+                 }
+
+                 return response()->json([
+                     'message' => "$successCount records imported successfully!",
+                     'errors' => $errors
+                 ], 200);
+             } catch (\Exception $e) {
+                 DB::rollBack(); //   Rollback on error
+                 Log::error('CSV Import Error: ' . $e->getMessage(), ['file' => $request->file->getClientOriginalName(), 'error' => $e->getTraceAsString()]);
+                 fclose($handle);
+                 return response()->json(['errors' => ["Internal server error: " . $e->getMessage()]], 500);
+             }
+         }
+
+         return response()->json(['errors' => ["Failed to open CSV file."]], 422);
+     }
+
+
 
 }

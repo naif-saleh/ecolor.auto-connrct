@@ -17,7 +17,7 @@ class ADistData extends Model
      * @var array
      */
     protected $fillable = [
-        'file_id',
+        'feed_id',
         'mobile',
         'state',
         'call_id',
