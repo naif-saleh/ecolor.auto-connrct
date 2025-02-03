@@ -30,6 +30,8 @@
     <link rel="stylesheet" href="{{ url('assets/vendors/datatables.net-bs4/dataTables.bootstrap4.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url('assets/js/select.dataTables.min.css') }}">
     <!-- End plugin css for this page -->
+    <!-- Sweet Alert -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.6/dist/sweetalert2.min.css">
     <!-- inject:css -->
     <link rel="stylesheet" href="{{ url('assets/css/style.css') }}">
     <!-- endinject -->
@@ -54,10 +56,10 @@
             <div class="navbar-menu-wrapper d-flex align-items-top justify-content-between">
                 <ul class="navbar-nav">
                     <div>
-                       
+
                         <a class="navbar-brand brand-logo-mini" href="{{ route('index.page') }}">
                             <img src="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
-                                width="40" alt="ejaada-logo">
+                                width="30" alt="ejaada-logo">
                         </a>
                     </div>
                     <li class="nav-item fw-semibold d-none d-lg-block ms-0">
@@ -66,7 +68,7 @@
                         @endphp
 
                         <h1 class="welcome-text">
-                            @if ($currentHour < 12)
+                            @if ($currentHour > 12)
                                 Good Morning, <span class="text-black fw-bold">{{ Auth::user()->name }}</span>
                             @else
                                 Good Evening, <span class="text-black fw-bold">{{ Auth::user()->name }}</span>
@@ -227,6 +229,7 @@
 
     <!-- SweetAlert2 -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.7.6/dist/sweetalert2.min.js"></script>
     <!-- jQuery -->
     <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <!-- Bootstrap & Dropzone JS (Include before closing body tag) -->

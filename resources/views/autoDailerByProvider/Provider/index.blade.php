@@ -16,6 +16,7 @@
         @else
             <!-- Providers List -->
             <ul class="list-group mt-3">
+                @include('autoDailerByProvider.__error_message')
                 <div class="table-responsive">
                     <table class="table text-center">
                         <thead>
@@ -241,31 +242,101 @@
             });
         });
 
-        // DropZone Uploading File
         Dropzone.options.fileDropzone = {
-    paramName: "file",
-    maxFilesize: 40, // Max size 40MB
-    acceptedFiles: ".csv", // Accept only CSV files
-    dictDefaultMessage: "Drop your CSV file here or click to upload",
-    dictInvalidFileType: "Only CSV files are allowed!",
-    dictFileTooBig: "File is too large! Max size: 40MB",
+            paramName: "file",
+            maxFilesize: 40, // Max size 40MB
+            acceptedFiles: ".csv", // Accept only CSV files
+            dictDefaultMessage: "Drop your CSV file here or click to upload",
+            dictInvalidFileType: "Only CSV files are allowed!",
+            dictFileTooBig: "File is too large! Max size: 40MB",
 
-    init: function() {
-        this.on("error", function(file, response) {
-            console.log(response); // Debugging: See what response contains
+            init: function() {
+                let progressContainer = document.createElement("div");
+                progressContainer.innerHTML = `
+            <div id="uploadProgress" style="display: none; width: 100%; background: #f3f3f3; border-radius: 5px; margin-top: 10px;">
+                <div id="uploadProgressBar" style="width: 0%; height: 20px; background: #4caf50; border-radius: 5px; text-align: center; color: white; font-weight: bold;">0%</div>
+            </div>
+        `;
+                document.body.appendChild(progressContainer);
 
-            // Check if response is an object and extract error message
-            let errorMessage = typeof response === "object" ? response.message || "Upload failed" : response;
-            alert(errorMessage);
-            // Remove invalid file from Dropzone
-            this.removeFile(file);
-        });
+                let progressBar = document.getElementById("uploadProgressBar");
 
-        this.on("success", function(file, response) {
-            alert("CSV uploaded successfully!");
-        });
-    }
-};
+                this.on("sending", function(file) {
+                    document.getElementById("uploadProgress").style.display = "block"; // Show progress bar
+                    progressBar.style.width = "5%"; // Start at 5%
+                    progressBar.innerText = "5%";
+                });
 
+                this.on("uploadprogress", function(file, progress) {
+                    let simulatedProgress = Math.min(progress + 10, 95); // Simulate smooth movement
+                    progressBar.style.width = simulatedProgress + "%";
+                    progressBar.innerText = Math.round(simulatedProgress) + "%";
+                });
+
+                this.on("success", function(file, response) {
+                    let message = response.message || "CSV uploaded successfully!";
+                    let errorMessages = response.errors || [];
+
+                    let interval = setInterval(() => {
+                        let currentWidth = parseInt(progressBar.style.width);
+                        if (currentWidth < 100) {
+                            progressBar.style.width = (currentWidth + 2) + "%";
+                            progressBar.innerText = (currentWidth + 2) + "%";
+                        } else {
+                            clearInterval(interval);
+                        }
+                    }, 50); // Move smoothly to 100%
+
+                    setTimeout(() => {
+                        if (errorMessages.length > 0) {
+                            let errorList = errorMessages.map(error => `• ${error}`).join("<br>");
+                            Swal.fire({
+                                icon: "warning",
+                                title: "Upload Completed with Issues",
+                                html: errorList,
+                                confirmButtonText: "OK"
+                            }).then(() => {
+                                location.reload(); // Refresh after clicking OK
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: "success",
+                                title: "Upload Successful",
+                                text: message,
+                                confirmButtonText: "OK"
+                            }).then(() => {
+                                location.reload(); // Refresh after clicking OK
+                            });
+                        }
+                    }, 800); // Short delay before showing the message
+                });
+
+                this.on("error", function(file, response) {
+                    let errorMessage = "Upload failed";
+
+                    if (typeof response === "object" && response.errors) {
+                        errorMessage = response.errors.map(error => `• ${error}`).join("<br>");
+                    } else if (typeof response === "string") {
+                        errorMessage = response;
+                    }
+
+                    Swal.fire({
+                        icon: "error",
+                        title: "Upload Error",
+                        html: errorMessage,
+                        confirmButtonText: "OK"
+                    });
+
+                    this.removeFile(file); // Remove file if there's an error
+                });
+
+                this.on("queuecomplete", function() {
+                    setTimeout(() => {
+                        document.getElementById("uploadProgress").style.display =
+                        "none"; // Hide progress bar
+                    }, 1500);
+                });
+            }
+        };
     </script>
 @endsection

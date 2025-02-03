@@ -48,12 +48,5 @@ class ADistFeed extends Model
      * Generate Slug
      *
      */
-    protected static function boot()
-    {
-        parent::boot();
-
-        static::creating(function ($model) {
-            $model->slug = Str::slug($model->file_name . '-' . time());
-        });
-    }
+    
 }
