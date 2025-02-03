@@ -1,4 +1,4 @@
-@extends('layout.master')
+@extends('layout.main')
 @section('title', 'Logs | User Log')
 @section('content')
     <div class="container mt-5">
@@ -6,9 +6,7 @@
             <div class="col-12">
                 <!-- Card Container -->
                 <div class="card shadow-lg border-0">
-                    <div class="card-header bg-primary text-white">
-                        <h3 class="mb-0">User Activity Report</h3>
-                    </div>
+                    
                     <div class="card-body">
                         <!-- Search Bar -->
                         <div class="mb-4">

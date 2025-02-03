@@ -8,6 +8,10 @@ use Illuminate\Support\Facades\Auth;
 
 class AdminMiddleware
 {
+    
+    /**
+     * Permission Ability For Each User
+     */
     public function handle(Request $request, Closure $next)
     {
         if (Auth::check() && (Auth::user()->role === 'admin'|| Auth::user()->role === 'superuser' || Auth::user()->role === 'user' || Auth::user()->role === 'manager' )) {

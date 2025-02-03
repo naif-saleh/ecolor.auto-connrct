@@ -14,22 +14,28 @@ use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
 use Carbon\Carbon;
+use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 
-class MakeCallJob implements ShouldQueue
+
+class MakeCallJob implements  ShouldBeUniqueUntilProcessing
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $feedData;
+    protected $extension;
     protected $tokenService;
 
     /**
      * Create a new job instance.
      */
-    public function __construct($feedData, TokenService $tokenService)
-    {
-        $this->feedData = $feedData;
-        $this->tokenService = $tokenService;
-    }
+    public $uniqueFor = 60;
+
+     public function __construct($feedData, TokenService $tokenService, $extension)
+     {
+         $this->feedData = $feedData;
+         $this->tokenService = $tokenService;
+         $this->extension = $extension;
+     }
 
     /**
      * Execute the job.
@@ -38,56 +44,46 @@ class MakeCallJob implements ShouldQueue
     {
         try {
             $token = $this->tokenService->getToken();
-            $ext = $this->feedData->extension;
+            Log::info("Calling API for extension: " . $this->extension);
 
             $responseState = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
-            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/makecall", [
+            ])->post(config('services.three_cx.api_url') . "/callcontrol/{$this->extension}/makecall", [
                 'destination' => $this->feedData->mobile,
             ]);
 
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
-
-                Log::info("
-                    \t********** Auto Dialer Response Call **********
-                    \tResponse Data:
-                    \t" . print_r($responseData, true) . "
-                    \t***********************************************
-                ");
-
+                Log::info("dadad call id " .  $responseData['result']['callid']. ' mobile ' .$this->feedData->mobile );
                 AutoDailerReport::updateOrCreate(
                     ['call_id' => $responseData['result']['callid']],
                     [
                         'status' => $responseData['result']['status'],
-                        'provider' => $this->feedData->provider,
-                        'extension' => $responseData['result']['dn'],
-                        'phone_number' => $responseData['result']['party_caller_id'],
+                        'provider' => $this->feedData->provider_name,
+                        'extension' => $this->extension,
+                        'phone_number' => $this->feedData->mobile,
                     ]
                 );
 
                 $this->feedData->update([
                     'state' => "Routing",
-                    'call_date' => Carbon::now(),
+                    'call_date' => now(),
                     'call_id' => $responseData['result']['callid'],
-                    'party_dn_type' => $responseData['result']['party_dn_type'] ?? null,
                 ]);
 
-                Log::info("
-                    \t📞 ✅ Auto Dialer Called Successfully for Mobile: " . $this->feedData->mobile . " 📞
-                ");
+                Log::info("📞✅ Call successful for: " . $this->feedData->mobile);
             } else {
-                Log::error("
-                    \t❌ 🚨 Auto Dialer Failed 🚨 ❌
-                    \t| Failed to make call for Mobile Number: " . $this->feedData->mobile . " |
-                    \t| Response: " . $responseState->body() . " |
-                ");
+                Log::error("❌ Failed call: " . $this->feedData->mobile);
             }
         } catch (\Exception $e) {
-            Log::error("
-                \t❌ ❗ Error in Auto Dialer Job ❗ ❌
-                \t| Exception: " . $e->getMessage() . " |
-            ");
+            Log::error("❌ Exception: " . $e->getMessage());
         }
+    }
+    /**
+     * Define unique job key (Ensures uniqueness for each mobile)
+     */
+    public function uniqueId(): string
+    {
+        return $this->feedData->mobile . "."; // Unique identifier
     }
 }

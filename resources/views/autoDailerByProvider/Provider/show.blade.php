@@ -1,4 +1,5 @@
-@extends('layout.master')
+@extends('layout.main')
+@section('title', 'Dialer | Files of {{$$provider->name}}')
 
 @section('content')
     <div class="container mt-5">

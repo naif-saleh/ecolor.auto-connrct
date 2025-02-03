@@ -8,6 +8,16 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class AutoDailerReport extends Model
 {
     use HasFactory;
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * These fields can be safely filled using mass assignment methods
+     * like create() and fill(). Ensure only the necessary fields are
+     * included to prevent mass assignment vulnerabilities.
+     *
+     * @var array
+     */
     protected $fillable = [
         'call_id',
         'status',
@@ -18,8 +28,4 @@ class AutoDailerReport extends Model
     ];
 
 
-    // public function providerFeed()
-    // {
-    //     return $this->belongsTo(AutoDailerProviderFeed::class, 'call_id', 'call_id');
-    // }
 }

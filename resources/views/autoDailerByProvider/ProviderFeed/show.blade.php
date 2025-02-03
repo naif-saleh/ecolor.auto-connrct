@@ -1,34 +1,49 @@
-@extends('layout.master')
-
+@extends('layout.main')
+@section('title', 'Dialer | mobiles of ' . $file->file_name)
 @section('content')
-    <div class="container mt-5">
+    <div class="container">
+        <div class="d-flex justify-content-between">
+            <h2>File Name: {{ $file->file_name }} contains <u>{{ $numbers }}</u> Numbers</h2>
+            <a href="{{ route('provider.files.index', $file->provider_id) }}" class="btn btn-primary mt-2">Back</a>
+        </div>
 
-
-        <h3>Feed File: {{ $feedFile->file_name }}</h3>
-        <h5>From: {{ \Carbon\Carbon::parse($feedFile->from)->addHours(3)->format('H:i:s') }} | To: {{ \Carbon\Carbon::parse($feedFile->to)->addHours(3)->format('H:i:s') }} | Date: {{ $feedFile->date }}</h5>
-
-        <div class="mb-3">
-            <h4>Mobile Numbers</h4>
+        @if (!empty($file))
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>Mobile</th>
-                        <th>Status</th>
+                        <th>#</th>
+                        <th>Mobile Number</th>
+                        <th>state</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($feeds as $feed)
+                    @foreach ($data as $row)
                         <tr>
-                            <td>{{ $feed->mobile }}</td>
-                            <td>{{ $feed->state }}</td>
+                            <td>{{ $row->id }}</td>
+                            <td>{{ $row->mobile ?? 'N/A' }}</td>
+                            <td>{{ $row->state ?? 'N/A' }}</td>
                         </tr>
                     @endforeach
                 </tbody>
             </table>
+        @else
+            <p>No data found in this file.</p>
+        @endif
+        <div class="pagination-wrapper d-flex justify-content-center mt-4">
+            <ul class="pagination">
+                <li class="page-item {{ $data->onFirstPage() ? 'disabled' : '' }}">
+                    <a class="page-link" href="{{ $data->previousPageUrl() }}" tabindex="-1" aria-disabled="true">Previous</a>
+                </li>
+                @foreach ($data->getUrlRange(1, $data->lastPage()) as $page => $url)
+                    <li class="page-item {{ $data->currentPage() == $page ? 'active' : '' }}">
+                        <a class="page-link" href="{{ $url }}">{{ $page }}</a>
+                    </li>
+                @endforeach
+                <li class="page-item {{ $data->hasMorePages() ? '' : 'disabled' }}">
+                    <a class="page-link" href="{{ $data->nextPageUrl() }}">Next</a>
+                </li>
+            </ul>
         </div>
 
-
-        <a href="{{ route('autoDialerProviders.show', $feedFile->id) }}" class="btn btn-secondary">Back to
-            Provider</a>
     </div>
 @endsection

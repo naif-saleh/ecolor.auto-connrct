@@ -1,198 +1,5 @@
-@extends('layout.master')
-@section('style')
-    <style>
-        /* Export Button */
-        .btn-modern-export {
-            background: linear-gradient(to right, #4caf50, #81c784);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-weight: bold;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.3s, box-shadow 0.3s;
-        }
-
-        .btn-modern-export:hover {
-            background: linear-gradient(to right, #388e3c, #66bb6a);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        /* Filter Buttons */
-        .btn-modern-filter {
-            background: #f1f3f4;
-            color: #555;
-            border: 1px solid #ddd;
-            padding: 8px 16px;
-            border-radius: 20px;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: all 0.3s;
-        }
-
-        .btn-modern-filter:hover {
-            background: #e0e0e0;
-            border-color: #ccc;
-        }
-
-        .btn-modern-filter.active {
-            background: #007bff;
-            color: white;
-            border-color: #007bff;
-        }
-
-        /* Form Inputs and Dropdown */
-        .form-modern {
-            border: 1px solid #ddd;
-            border-radius: 20px;
-            padding: 8px 16px;
-            font-size: 0.9rem;
-            background-color: #fff;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-            transition: box-shadow 0.3s;
-        }
-
-        .form-modern:focus {
-            border-color: #007bff;
-            box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-        }
-
-        /* Apply Button */
-        .btn-modern-apply {
-            background: linear-gradient(to right, #007bff, #0056b3);
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 30px;
-            font-weight: bold;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.3s, box-shadow 0.3s;
-        }
-
-        .btn-modern-apply:hover {
-            background: linear-gradient(to right, #0056b3, #003580);
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-        }
-
-        .btn-soft-primary {
-            background-color: #eaf4ff;
-            color: #007bff;
-            border: 1px solid #007bff;
-            transition: all 0.3s ease;
-        }
-
-        .btn-soft-primary:hover {
-            background-color: #007bff;
-            color: #fff;
-        }
-
-        /* Centering the statistics */
-        .row.mb-5.text-center.justify-content-center {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            flex-wrap: wrap;
-        }
-
-        /* Each card styling */
-        .card {
-            border-radius: 12px;
-            overflow: hidden;
-            background-color: #f8f9fa;
-            border: 1px solid #ddd;
-        }
-
-        .card-body {
-            padding: 20px;
-        }
-
-        .card h5 {
-            font-size: 1.2rem;
-            font-weight: 500;
-        }
-
-        .card h3 {
-            font-size: 2.5rem;
-            font-weight: bold;
-        }
-
-        /* Specific color styling for the cards */
-        .card .text-primary {
-            color: #007bff;
-        }
-
-        .card .text-success {
-            color: #28a745;
-        }
-
-        .card .text-warning {
-            color: #ffc107;
-        }
-
-        /* Flexbox for the first row */
-        .filter-buttons {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-        }
-
-        .filter-form {
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-
-        /* Styling for the form buttons and filters */
-        .filter-buttons .btn,
-        .filter-form .form-modern,
-        .filter-form button {
-            margin: 5px;
-        }
-
-        /* Custom Pagination Styles */
-        .pagination {
-            margin-top: 10px;
-            display: flex;
-            justify-content: center;
-            gap: 5px;
-        }
-
-        .pagination .page-item {
-            margin: 0;
-        }
-
-        .pagination .page-link {
-            border-radius: 50px;
-            /* Rounded corners */
-            border: 1px solid #dee2e6;
-            /* Light border */
-            padding: 8px 16px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .pagination .page-link:hover {
-            background-color: #007bff;
-            /* Blue background on hover */
-            color: white;
-        }
-
-        .pagination .page-item.active .page-link {
-            background-color: #007bff;
-            border-color: #007bff;
-            color: white;
-        }
-
-        .pagination .page-item.disabled .page-link {
-            background-color: #f8f9fa;
-            color: #6c757d;
-        }
-    </style>
-@endsection
+@extends('layout.main')
+ 
 @section('title', 'Auto Dailer | Report')
 @section('content')
     <div class="container">
@@ -330,6 +137,7 @@
                                 <th>Provider</th>
                                 <th>Extension</th>
                                 <th>Status</th>
+                                <th>Duration</th>
                                 <th>Called At - Date</th>
                                 <th>Called At - Time</th>
                             </tr>
@@ -362,6 +170,7 @@
                                             {{ ucfirst($status) }}
                                         </span>
                                     </td>
+                                    <td>{{$report->duration_time ? $report->duration_time : '-'}}</td>
                                     <td>{{ $report->created_at->addHours(3)->format('Y-m-d') }}</td> <!-- For Date -->
                                     <td>{{ $report->created_at->addHours(3)->format('H:i:s') }}</td> <!-- For Time -->
 
