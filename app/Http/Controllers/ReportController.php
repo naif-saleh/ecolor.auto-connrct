@@ -89,7 +89,7 @@ class ReportController extends Controller
         }
 
         // Apply pagination after filters
-        $reports = $query->paginate(20);
+        $reports = $query->orderBy('created_at', 'desc')->paginate(50);
 
         // Calculate counts for overall report
         $totalCount = AutoDailerReport::count();
@@ -251,7 +251,7 @@ class ReportController extends Controller
         }
 
         // Apply pagination
-        $reports = $query->paginate(50);
+        $reports = $query->orderBy('created_at', 'desc')->paginate(50);
 
         // Calculate counts for overall report
         $totalCount = AutoDistributerReport::count();
@@ -398,7 +398,7 @@ class ReportController extends Controller
         }
 
         // Paginate the results
-        $reports = $query->paginate(100);
+        $reports = $query->orderBy('created_at', 'desc')->paginate(50);
 
         // Calculate statistics
         $totalCount = (clone $query)->count();
