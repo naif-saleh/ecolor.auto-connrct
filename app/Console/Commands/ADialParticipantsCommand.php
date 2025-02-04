@@ -43,7 +43,7 @@ class ADialParticipantsCommand extends Command
      */
     public function handle()
     {
-        Log::info("
+        Log::info("ADIAL
         \t-----------------------------------------------------------------------
         \t\t\t********** Auto Dialer **********\n
         \t-----------------------------------------------------------------------
@@ -65,22 +65,22 @@ class ADialParticipantsCommand extends Command
                 ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
 
                 if (!$responseState->successful()) {
-                    Log::error("Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
+                    Log::error("ADIAL Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
                     continue;
                 }
 
                 $participants = $responseState->json();
 
                 if (empty($participants)) {
-                    Log::warning("⚠️ No participants found for extension {$ext_from}");
+                    Log::warning("ADIAL ⚠️ No participants found for extension {$ext_from}");
                     continue;
                 }
 
-                Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
+                Log::info("ADIAL ✅ Auto Dialer Participants Response: " . print_r($participants, true));
 
                 foreach ($participants as $participant_data) {
                     try {
-                        Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
+                        Log::info("ADIAL ✅ Auto Dialer Participants Response: " . print_r($participants, true));
                         $filter = "contains(Caller, '{$participant_data['dn']}')";
                         $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
@@ -90,7 +90,8 @@ class ADialParticipantsCommand extends Command
 
                         if ($activeCallsResponse->successful()) {
                             $activeCalls = $activeCallsResponse->json();
-                            Log::info("✅ Dial:Active Calls Response: " . print_r($activeCalls, True));
+                            Log::info("ADIAL ✅ Active Calls Response: " . print_r($activeCalls, true));
+
 
                             foreach ($activeCalls['value'] as $call) {
                                 if ($call['Status'] === 'Talking') {
@@ -103,27 +104,33 @@ class ADialParticipantsCommand extends Command
                                         'status' => $call['Status'],
                                         'duration_time' => $durationTime
                                     ]);
+                                    $aDialData = ADialData::where('call_id', $call['Id'])->first();
+                                    $status = AutoDailerReport::where('call_id', $call['Id'])->value('status');
+
+                                    if ($aDialData && $status) {
+                                        $aDialData->state = $status;
+                                        $aDialData->save();
+                                    }
+
                                 } else {
                                     AutoDailerReport::where('call_id', $call['Id'])->update([
                                         'status' => $call['Status']
                                     ]);
-                                    ADialData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
-                                    Log::info("✅ Updated status for Call ID {$call['Id']} to: {$call['Status']}");
-                                }
+                      }
                             }
                         } else {
-                            Log::error("❌ Failed to fetch active calls. Response: " . $activeCallsResponse->body());
+                            Log::error("ADIAL ❌ Failed to fetch active calls. Response: " . $activeCallsResponse->body());
                         }
                     } catch (\Exception $e) {
-                        Log::error("❌ Failed to process participant data for call ID " . ($participant_data['callid'] ?? 'N/A') . ": " . $e->getMessage());
+                        Log::error("ADIAL ❌ Failed to process participant data for call ID " . ($participant_data['callid'] ?? 'N/A') . ": " . $e->getMessage());
                     }
                 }
             } catch (\Exception $e) {
-                Log::error("❌ Failed fetching participants for provider {$ext_from}: " . $e->getMessage());
+                Log::error("ADIAL ❌ Failed fetching participants for provider {$ext_from}: " . $e->getMessage());
             }
         }
 
 
-        Log::info("✅ Auto Dialer command execution completed.");
+        Log::info("ADIAL ✅ Auto Dialer command execution completed.");
     }
 }
