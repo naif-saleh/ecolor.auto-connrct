@@ -102,12 +102,20 @@ class ADistParticipantsCommand extends Command
                                         'status' => $call['Status'],
                                         'duration_time' => $durationTime
                                     ]);
+
+                                    $aADistData = ADistData::where('call_id', $call['Id'])->first();
+                                    $status = AutoDistributerReport::where('call_id', $call['Id'])->value('status');
+                                    
+                                    if ($aADistData && $status) {
+                                        $aADistData->state = $status;
+                                        $aADistData->save();
+                                    }
+
+
                                 } else {
                                     AutoDistributerReport::where('call_id', $call['Id'])->update([
                                         'status' => $call['Status']
                                     ]);
-                                    ADistData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
-                                    Log::info("✅ Updated status for Call ID {$call['Id']} to: {$call['Status']}");
                                 }
                             }
                         } else {

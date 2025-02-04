@@ -41,7 +41,7 @@ class ADialMakeCallCommand extends Command
      */
     public function handle()
     {
-        Log::info('ADialMakeCallCommand executed at ' . now());
+        Log::info('ADial MakeCallCommand executed at ' . now());
 
         // Fetch all providers
         $providers = ADialProvider::all();
@@ -61,7 +61,7 @@ class ADialMakeCallCommand extends Command
 
                 if (now()->between($from, $to)) {
                 
-                    Log::info("✅ File ID {$file->id} is within range, processing calls...");
+                    Log::info("ADIAL ✅ File ID {$file->id} is within range, processing calls...");
 
                     ADialData::where('feed_id', $file->id)
                         ->where('state', 'new')
@@ -72,7 +72,7 @@ class ADialMakeCallCommand extends Command
                                     $token = app(TokenService::class);
                                     $job = dispatch(new MakeCallJob($feedData, $token, $provider->extension));
                                 } catch (\Exception $e) {
-                                    Log::error("❌ Error in dispatching call: " . $e->getMessage());
+                                    Log::error("ADIAL ❌ Error in dispatching call: " . $e->getMessage());
                                 }
                             }
                         });
@@ -80,10 +80,10 @@ class ADialMakeCallCommand extends Command
                     // Mark file as done if all calls are processed
                     if (!ADialData::where('feed_id', $file->id)->where('state', 'new')->exists()) {
                         $file->update(['is_done' => true]);
-                        Log::info("✅✅✅ All numbers called for File ID: {$file->id}");
+                        Log::info("ADIAL ✅✅✅ All numbers called for File ID: {$file->id}");
                     }
                 } else {
-                    Log::info("❌ File ID {$file->id} is NOT within range.");
+                    Log::info("ADIAL ❌ File ID {$file->id} is NOT within range.");
                 }
             }
         }
