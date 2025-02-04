@@ -17,7 +17,7 @@ use Carbon\Carbon;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 
 
-class MakeCallJob implements  ShouldBeUniqueUntilProcessing
+class MakeCallJob implements ShouldBeUniqueUntilProcessing
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
@@ -30,12 +30,12 @@ class MakeCallJob implements  ShouldBeUniqueUntilProcessing
      */
     public $uniqueFor = 60;
 
-     public function __construct($feedData, TokenService $tokenService, $extension)
-     {
-         $this->feedData = $feedData;
-         $this->tokenService = $tokenService;
-         $this->extension = $extension;
-     }
+    public function __construct($feedData, TokenService $tokenService, $extension)
+    {
+        $this->feedData = $feedData;
+        $this->tokenService = $tokenService;
+        $this->extension = $extension;
+    }
 
     /**
      * Execute the job.
@@ -49,27 +49,41 @@ class MakeCallJob implements  ShouldBeUniqueUntilProcessing
             $responseState = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
             ])->post(config('services.three_cx.api_url') . "/callcontrol/{$this->extension}/makecall", [
-                'destination' => $this->feedData->mobile,
-            ]);
+                        'destination' => $this->feedData->mobile,
+                    ]);
 
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
-                Log::info("dadad call id " .  $responseData['result']['callid']. ' mobile ' .$this->feedData->mobile );
-                AutoDailerReport::updateOrCreate(
-                    ['call_id' => $responseData['result']['callid']],
-                    [
-                        'status' => $responseData['result']['status'],
-                        'provider' => $this->feedData->provider_name,
-                        'extension' => $this->extension,
-                        'phone_number' => $this->feedData->mobile,
-                    ]
-                );
+                Log::info("dadad call id " . $responseData['result']['callid'] . ' mobile ' . $this->feedData->mobile);
 
-                $this->feedData->update([
-                    'state' => "Routing",
-                    'call_date' => now(),
-                    'call_id' => $responseData['result']['callid'],
-                ]);
+                $filter = "contains(Caller, '{$responseData['result']['dn']}')";
+                $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+
+                $activeCallsResponse = Http::withHeaders([
+                    'Authorization' => 'Bearer ' . $token,
+                ])->get($url);
+
+                if ($activeCallsResponse->successful()) {
+                    $activeCalls = $activeCallsResponse->json();
+                    foreach ($activeCalls['value'] as $call) {
+                        AutoDailerReport::updateOrCreate(
+                            ['call_id' => $responseData['result']['callid']],
+                            [
+                                'status' => $call['Status'],
+                                'provider' => $this->feedData->provider_name,
+                                'extension' => $this->extension,
+                                'phone_number' => $this->feedData->mobile,
+                            ]
+                        );
+
+                        $this->feedData->update([
+                            'state' => $call['Status'],
+                            'call_date' => now(),
+                            'call_id' => $responseData['result']['callid'],
+                        ]);
+                    }
+
+                }
 
                 Log::info("📞✅ Call successful for: " . $this->feedData->mobile);
             } else {

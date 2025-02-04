@@ -90,7 +90,7 @@ class ADialParticipantsCommand extends Command
 
                         if ($activeCallsResponse->successful()) {
                             $activeCalls = $activeCallsResponse->json();
-                            Log::info("✅ Active Calls Response: " . print_r($activeCalls, true));
+                            Log::info("✅ Dial:Active Calls Response: " . print_r($activeCalls, True));
 
                             foreach ($activeCalls['value'] as $call) {
                                 if ($call['Status'] === 'Talking') {
