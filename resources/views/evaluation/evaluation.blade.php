@@ -285,7 +285,7 @@
                         <thead>
                             <tr>
                                 <th><i class="fa-solid fa-hashtag"></i></th>
-                                <th><i class="fa-solid fa-mobile"></i>Mobile</th>
+                                <th><i class="fa-solid fa-mobile"></i> Mobile</th>
                                 <th><i class="fa-solid fa-thumbs-up m-1"></i> \ <i class="fa-solid fa-thumbs-down"></i> Is Satisfied</th>
                                 <th><i class="fa-solid fa-calendar-days"></i> Called At - Date</th>
                                 <th><i class="fa-solid fa-clock"></i> Called At - Time</th>
