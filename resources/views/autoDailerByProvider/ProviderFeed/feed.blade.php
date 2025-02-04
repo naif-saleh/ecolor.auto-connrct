@@ -2,10 +2,7 @@
 @section('title', 'Dialer | Files for ' . $provider->name)
 
 @section('content')
-
-    <style>
-        
-    </style>
+    @include('layout.__activetion_message')
     <div class="container">
         <h2 class="mb-4">Files for Provider: <u>{{ $provider->name }}</u></h2>
         <a href="{{ route('provider.files.create', $provider) }}" class="btn btn-primary  mb-2"><i
@@ -44,30 +41,24 @@
                                 <td>{{ $file->user->name ?? 'Unknown' }}</td>
 
                                 <td>
-                                    <!-- Switch with better design -->
                                     <form action="{{ route('autodailers.files.allow', $file->slug) }}" method="POST"
                                         id="allowForm{{ $file->slug }}">
                                         @csrf
-                                        <div class="d-flex align-items-center gap-2">
-                                            <!-- Status Label -->
-                                            <span id="statusText{{ $file->slug }}"
-                                                class="badge rounded-pill px-3 py-1 fw-bold
-                                                        {{ $file->allow ? 'bg-success-subtle border border-success-subtle text-success-emphasis' : 'bg-danger-subtle border border-danger-subtle text-danger-emphasis' }}">
-                                                <i
-                                                    class="{{ $file->allow ? 'fa fa-check-circle' : 'fa fa-exclamation-circle' }}"></i>
-                                                {{ $file->allow ? 'Active' : 'Inactive' }}
-                                            </span>
-                                            <!-- Custom Switch -->
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input custom-switch" type="checkbox"
-                                                    id="allowSwitch{{ $file->slug }}" name="allow"
-                                                    {{ $file->allow ? 'checked' : '' }} data-file-id="{{ $file->slug }}"
-                                                    onchange="this.form.submit()">
-                                            </div>
-
-                                        </div>
+                                        <button type="button" class="toggle-btn {{ $file->allow ? 'btn-on' : 'btn-off' }}"
+                                            id="toggleButton{{ $file->slug }}"
+                                            onclick="toggleStatus('{{ $file->slug }}')">
+                                            <i
+                                                class="{{ $file->allow ? 'fa fa-check-circle' : 'fa-solid fa-circle-xmark' }}"></i>
+                                            <span
+                                                id="statusText{{ $file->slug }}">{{ $file->allow ? 'On' : 'Off' }}</span>
+                                        </button>
+                                        <input type="hidden" name="allow" id="hiddenInput{{ $file->slug }}"
+                                            value="{{ $file->allow ? 1 : 0 }}">
                                     </form>
                                 </td>
+
+
+
                                 <td>
                                     <div>
                                         <span
@@ -185,7 +176,7 @@
                     </tbody>
                 </table>
 
-             @endif
+            @endif
 
         </div>
         <div class="pagination-wrapper d-flex justify-content-center mt-4">
@@ -224,6 +215,29 @@
                     });
                 }
             });
+        }
+
+        function toggleStatus(fileSlug) {
+            let button = document.getElementById(`toggleButton${fileSlug}`);
+            let statusText = document.getElementById(`statusText${fileSlug}`);
+            let hiddenInput = document.getElementById(`hiddenInput${fileSlug}`);
+
+            if (button.classList.contains("btn-on")) {
+                // Change to OFF state
+                button.classList.remove("btn-on");
+                button.classList.add("btn-off");
+                statusText.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Off`;
+                hiddenInput.value = 0;
+            } else {
+                // Change to ON state
+                button.classList.remove("btn-off");
+                button.classList.add("btn-on");
+                statusText.innerHTML = `<i class="fa fa-check-circle"></i> On`;
+                hiddenInput.value = 1;
+            }
+
+            // Submit the form automatically
+            document.getElementById(`allowForm${fileSlug}`).submit();
         }
     </script>
 

@@ -193,7 +193,7 @@
             color: #6c757d;
         }
     </style>
- 
+
 
 @section('title', 'Reports | Evaluation')
 
@@ -255,7 +255,7 @@
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="text-primary">Total Calls</h5>
+                        <h5 class="text-primary"><i class="fa-solid fa-phone-volume"></i> Total Calls</h5>
                         <h3 class="fw-bold">{{ $totalCount }}</h3>
                     </div>
                 </div>
@@ -263,7 +263,7 @@
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="text-success">Satisfied</h5>
+                        <h5 class="text-success"><i class="fa-solid fa-thumbs-up"></i> Satisfied</h5>
                         <h3 class="fw-bold">{{ $satisfiedCount }}</h3>
                     </div>
                 </div>
@@ -271,7 +271,7 @@
             <div class="col-md-4">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="text-danger">Unsatisfied</h5>
+                        <h5 class="text-danger"><i class="fa-solid fa-thumbs-down"></i> Unsatisfied</h5>
                         <h3 class="fw-bold">{{ $unsatisfiedCount }}</h3>
                     </div>
                 </div>
@@ -284,11 +284,11 @@
                     <table class="table table-hover align-middle">
                         <thead>
                             <tr>
-                                <th>No</th>
-                                <th>Mobile</th>
-                                <th>Is Satisfied</th>
-                                <th>Called At - Date</th>
-                                <th>Called At - Time</th>
+                                <th><i class="fa-solid fa-hashtag"></i></th>
+                                <th><i class="fa-solid fa-mobile"></i>Mobile</th>
+                                <th><i class="fa-solid fa-thumbs-up m-1"></i> \ <i class="fa-solid fa-thumbs-down"></i> Is Satisfied</th>
+                                <th><i class="fa-solid fa-calendar-days"></i> Called At - Date</th>
+                                <th><i class="fa-solid fa-clock"></i> Called At - Time</th>
                             </tr>
                         </thead>
                         <tbody>

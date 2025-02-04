@@ -138,6 +138,7 @@ class ADialProviderFeedController extends Controller
                 ];
             } else {
                 Log::info('This mobile not valid ' . $mobile);
+                return redirect('/providers')->with('success', 'Mobile Number Must be KSA Number. This Number is Invalid!');
             }
 
             // Insert in batches to improve performance
@@ -236,6 +237,7 @@ class ADialProviderFeedController extends Controller
         // Handle the 'allow' checkbox as a boolean
         $file->allow = $request->has('allow') ? (bool) $request->allow : false; // Ensure that allow is properly set as a boolean
         $file->save();
+        Log::info('done');
 
         // Active Log Report...............................
         ActivityLog::create([
@@ -247,7 +249,10 @@ class ADialProviderFeedController extends Controller
             'operation_time' => now(),
         ]);
 
-        return back();
+        if($file->allow === false){
+            return back()->with('inactive', 'File is Disactivited ⚠️');
+        }
+        return back()->with('active', 'File is Activited ✅');
     }
 
 
