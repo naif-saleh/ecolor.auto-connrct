@@ -31,7 +31,7 @@ class ADistAgentFeedController extends Controller
     //Auto Distributor Index
     public function index()
     {
-        $agents = ADistAgent::paginate(20);
+        $agents = ADistAgent::all();
         return view('autoDistributerByUser.Agent.index', compact('agents'));
     }
 

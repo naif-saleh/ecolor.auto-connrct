@@ -70,7 +70,7 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                             ['call_id' => $responseData['result']['callid']],
                             [
                                 'status' => $call['Status'],
-                                'provider' => $this->feedData->provider_name,
+                                'provider' => $responseData['result']['dn'],
                                 'extension' => $this->extension,
                                 'phone_number' => $this->feedData->mobile,
                             ]

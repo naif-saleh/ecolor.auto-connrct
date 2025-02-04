@@ -139,7 +139,7 @@ class ADistMakeCallCommand extends Command
                                                                 'call_id' => $responseData['result']['callid'],
                                                             ], [
                                                                 'status' => "Initiating",
-                                                                'provider' => $feedData->user,
+                                                                'provider' => $responseData['result']['dn'],
                                                                 'extension' => $responseData['result']['dn'],
                                                                 'phone_number' => $responseData['result']['party_caller_id'],
                                                             ]);
