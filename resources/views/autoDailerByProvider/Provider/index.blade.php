@@ -1,18 +1,18 @@
 @extends('layout.main')
 @section('title', 'Dialer | Providers')
 @section('content')
-    <div class="container">
-        <h2 class="mb-4">Providers</h2>
-
-        <!-- Button to Navigate to Add Provider Page -->
-        <a href="javascript:void(0);" class="btn btn-primary" onclick="showProviderForm()">Add Provider</a>
+     <div class="container">
+        <h1 class="mt-4 mb-4 mdern-welcome-text">Providers</h1>
+         <!-- Button to Navigate to Add Provider Page -->
+        <a href="javascript:void(0);" class="btn btn-outline-dark" onclick="showProviderForm()"><i class="fa fa-plus"></i> Add Provider</a>
         {{-- Upload CSV File --}}
-        <a href="#" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#uploadModal">Upload File</a>
+        <a href="#" class="btn btn-outline-secondary btn-icon-text" data-bs-toggle="modal" data-bs-target="#uploadModal"><i class="ti-upload btn-icon-prepend"></i> Upload File</a>
+        <a href="larg_auto_diler_file.csv" class="btn btn-info" download><i class="fa-solid fa-download"></i> Auto Dialer Demo File</a>
         @include('autoDailerByProvider.Provider.__Dil_dropZoneUploadFile')
 
         @if ($providers->isEmpty())
 
-            <div class="alert alert-warning mt-4">No Providers Created. Please Create New One</div>
+        <i class="fa-solid fa-circle-exclamation"></i> No Providers Created. Please Create New One</div>
         @else
             <!-- Providers List -->
             <ul class="list-group mt-3">
@@ -21,10 +21,11 @@
                     <table class="table text-center">
                         <thead>
                             <tr>
-                                <th>Provider Name</th>
-                                <th>Provider Extension</th>
-                                <th>Created</th>
-                                <th>Actions</th>
+                                <th><i class="fa-brands fa-nfc-directional"></i> Provider Name</th>
+                                <th><i class="fa-solid fa-phone-volume"></i> Provider Extension</th>
+                                <th><i class="fa-solid fa-calendar-plus"></i> Created</th>
+                                <th><i class="fa-solid fa-square-pen"></i> Last Update</th>
+                                <th><i class="fa-solid fa-gear"></i> Actions</th>
                             </tr>
                         </thead>
                         @foreach ($providers as $provider)
@@ -32,7 +33,8 @@
                                 <tr>
                                     <td>{{ $provider->name }}</td>
                                     <td>{{ $provider->extension ?? 'No Extension' }}</td>
-                                    <td>{{ $provider->updated_at }}</td>
+                                    <td>{{ $provider->created_at->addHour(3) }}</td>
+                                    <td>{{ $provider->updated_at->addHour(3) }}</td>
                                     <td>
                                         <!-- Add File Button -->
                                         <!-- Add File Button with Icon -->

@@ -5,11 +5,17 @@
     <div class="container py-5">
         <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
             <div class="d-flex flex-column flex-md-column align-items-center align-items-md-start">
-                <h2 class="mb-0 text-center text-md-left">Auto Distributer Agents</h2>
-                {{-- Upload CSV File --}}
-                <a href="#" class="btn btn-warning w-auto mt-4" data-bs-toggle="modal"
-                    data-bs-target="#uploadModal">Upload File</a>
-                @include('autoDistributerByUser.Agent.__Dis_dropZoneUploadFile')
+                <h2 class="mb-0 text-center text-md-left mdern-welcome-text">Auto Distributer Agents</h2>
+                <span>
+                    {{-- Upload CSV File --}}
+                    <a href="#" class="btn btn-outline-secondary w-auto mt-4" data-bs-toggle="modal"
+                        data-bs-target="#uploadModal"><i class="ti-upload btn-icon-prepend"></i> Upload File</a>
+                    <a href="larg_auto_distributor_file.csv" class="btn btn-info mt-4" download><i
+                            class="fa-solid fa-download"></i> Auto
+                        Distributor Demo File</a>
+
+                    @include('autoDistributerByUser.Agent.__Dis_dropZoneUploadFile')
+                </span>
             </div>
 
             {{-- Actions Section --}}
@@ -24,7 +30,7 @@
         {{-- Alert for No Users --}}
         @if ($agents->isEmpty())
             <div class="alert alert-warning text-center">
-                No Auto Distributerer Agent found. Click "Import Users" to add one.
+                <i class="fa-solid fa-circle-exclamation"></i>  No Auto Distributerer Agent found. Click "Import Users" to add one.
             </div>
         @else
             {{-- Users Table --}}
@@ -32,10 +38,10 @@
                 <table class="table">
                     <thead>
                         <tr>
-                            <th>Agent Name</th>
-                            <th>Extension</th>
-                            <th>Status</th>
-                            <th>Action</th>
+                            <th><i class="fa-solid fa-user-large"></i> Agent Name</th>
+                            <th><i class="fa-solid fa-phone-volume"></i> Agent Extension</th>
+                            <th><i class="fa-solid fa-user-check"></i> Status</th>
+                            <th><i class="fa-solid fa-gear"></i> Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -48,7 +54,7 @@
                                 <td class="name">{{ $agent->displayName }}</td>
                                 <td class="extension">{{ $agent->extension }}</td>
                                 <td class="status {{ $agent->status === 'Available' ? 'text-success' : 'text-warning' }}">
-                                    {{ $agent->status }}</td>
+                                    <b>{{ $agent->status }} <i class="{{ $agent->status === 'Available' ? 'fa-solid fa-check' : 'fa-solid fa-exclamation' }}"></i></b></td>
 
                                 <td class="d-flex justify-content-start gap-2">
                                     <a href=" {{ route('users.files.create', $agent->id) }}" class="btn btn-primary btn-sm">

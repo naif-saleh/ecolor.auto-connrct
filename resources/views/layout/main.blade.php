@@ -68,7 +68,7 @@
                         @endphp
 
                         <h1 class="welcome-text">
-                            @if ($currentHour > 12)
+                            @if ($currentHour < 12)
                                 Good Morning, <span class="text-black fw-bold">{{ Auth::user()->name }}</span>
                             @else
                                 Good Evening, <span class="text-black fw-bold">{{ Auth::user()->name }}</span>

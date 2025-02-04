@@ -1,5 +1,5 @@
 @extends('layout.main')
- 
+
 @section('title', 'Auto Dailer | Report')
 @section('content')
     <div class="container">
@@ -91,7 +91,7 @@
                         <div class="mb-3">
                             <i class="bi bi-telephone-fill text-primary fs-4"></i>
                         </div>
-                        <h5 class="text-primary fs-6">Total Calls</h5>
+                        <h5 class="text-primary fs-6"><i class="fa-solid fa-phone-volume"></i> Total Calls</h5>
                         <h3 class="fw-bold fs-5">{{ $filter === 'today' ? $todayTotalCount : $totalCount }}</h3>
                     </div>
                 </div>
@@ -104,7 +104,7 @@
                         <div class="mb-3">
                             <i class="bi bi-check-circle-fill text-success fs-4"></i>
                         </div>
-                        <h5 class="text-success fs-6">Answered</h5>
+                        <h5 class="text-success fs-6"><i class="fa-solid fa-phone"></i> Answered</h5>
                         <h3 class="fw-bold fs-5">{{ $filter === 'today' ? $todayAnsweredCount : $answeredCount }}</h3>
                     </div>
                 </div>
@@ -117,7 +117,7 @@
                         <div class="mb-3">
                             <i class="bi bi-x-circle-fill text-warning fs-4"></i>
                         </div>
-                        <h5 class="text-warning fs-6">No Answer</h5>
+                        <h5 class="text-warning fs-6"><i class="fa-solid fa-phone-slash"></i> No Answer</h5>
                         <h3 class="fw-bold fs-5">{{ $filter === 'today' ? $todayNoAnswerCount : $noAnswerCount }}</h3>
                     </div>
                 </div>
@@ -132,14 +132,14 @@
                     <table class="table table-hover align-middle text-center">
                         <thead class="bg-light-primary text-primary">
                             <tr>
-                                <th>#</th>
-                                <th>Mobile</th>
-                                <th>Provider</th>
-                                <th>Extension</th>
-                                <th>Status</th>
-                                <th>Duration</th>
-                                <th>Called At - Date</th>
-                                <th>Called At - Time</th>
+                                <th><i class="fa-solid fa-hashtag"></i></th>
+                                <th><i class="fa-solid fa-mobile"></i> Mobile</th>
+                                <th><i class="fa-brands fa-nfc-directional"></i> Provider</th>
+                                <th><i class="fa-solid fa-phone-volume"></i>  Extension</th>
+                                <th><i class="fa-solid fa-phone"></i>|<i class="fa-solid fa-phone-slash"></i> Status</th>
+                                <th><i class="fa-solid fa-circle-radiation"></i> Duration</th>
+                                <th><i class="fa-solid fa-calendar-days"></i> Called At - Date</th>
+                                <th><i class="fa-solid fa-clock"></i> Called At - Time</th>
                             </tr>
                         </thead>
                         <tbody>

@@ -30,6 +30,7 @@
                 <input type="time" class="form-control" id="to" name="to">
             </div>
 
+            
             <div class="mb-3">
                 <label for="date" class="form-label">Date</label>
                 <input type="date" class="form-control" id="date" name="date" value="{{ now()->toDateString() }}"

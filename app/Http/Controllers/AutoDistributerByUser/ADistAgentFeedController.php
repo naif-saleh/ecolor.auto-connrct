@@ -98,6 +98,7 @@ class ADistAgentFeedController extends Controller
             }
             else{
                 Log:info('Mobile Number is Invalid: '.$mobile);
+                return redirect('/providers')->with('success', 'Mobile Number Must be KSA Number. This Number is Invalid!');
             }
 
             // Insert in batches to improve performance
@@ -156,7 +157,10 @@ class ADistAgentFeedController extends Controller
             'operation_time' => now(),
         ]);
 
-        return back();
+        if($file->allow === false){
+            return back()->with('inactive', 'File is Disactivited ⚠️');
+        }
+        return back()->with('active', 'File is Activited ✅');
     }
 
     //Update File : File_name, From, To, Date
