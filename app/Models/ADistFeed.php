@@ -44,9 +44,33 @@ class ADistFeed extends Model
     }
 
 
-    /**
-     * Generate Slug
+     /**
+     * Define a relationship with the ADialData model.
      *
+     * This method establishes an Eloquent relationship, linking this model
+     * to the ADialData model based on a foreign key. It allows retrieving the
+     * associated ADialData instance for this model.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\Relation
      */
-    
+    public function uploadedData()
+    {
+        return $this->hasMany(ADistData::class, 'feed_id'); // hasMany instead of belongsTo
+    }
+
+
+     /**
+     * Define a relationship with the ADialProvider model.
+     *
+     * This method establishes an Eloquent relationship, linking this model
+     * to the ADialProvider model based on a foreign key. It allows retrieving the
+     * associated ADialProvider instance for this model.
+     *
+     * @return \Illuminate\Database\Eloquent\Relations\Relation
+     */
+    public function agent()
+    {
+        return $this->hasMany(ADistAgent::class, 'id'); // hasMany instead of belongsTo
+    }
+
 }

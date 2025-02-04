@@ -12,7 +12,7 @@
     <link rel="icon"
         href="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
         type="image/png">
-        {{-- Font Awesome --}}
+    {{-- Font Awesome --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
         integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
         crossorigin="anonymous" referrerpolicy="no-referrer" />
@@ -87,11 +87,9 @@
                                 <i class="fa-solid fa-right-from-bracket"></i>
                             </a>
                         </li>
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST"
-                            style="display: none;">
+                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
                             @csrf
                         </form>
-
                     @endif
                 </ul>
 
@@ -168,13 +166,64 @@
                             </div>
                         </li>
                         <li class="nav-item">
-                            <a class="nav-link" href="{{ route('users.system.index') }}" >
-                              <i class="menu-icon mdi mdi-account-circle-outline"></i>
-                              <span class="menu-title">User Pages</span>
+                            <a class="nav-link" href="{{ route('users.system.index') }}">
+                                <i class="menu-icon mdi mdi-account-circle-outline"></i>
+                                <span class="menu-title">User Pages</span>
 
                             </a>
 
-                          </li>
+                        </li>
+                    @elseif (Auth::check() && Auth::user()->isManagerUser())
+                        <nav class="sidebar sidebar-offcanvas" id="sidebar">
+                            <ul class="nav">
+                                <li class="nav-item">
+                                    <a class="nav-link" href="{{ route('index.page') }}">
+                                        <i class="mdi mdi-grid-large menu-icon"></i>
+                                        <span class="menu-title">Dashboard</span>
+                                    </a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="collapse" href="#form-elements"
+                                        aria-expanded="false" aria-controls="form-elements">
+                                        <i class="menu-icon mdi mdi-phone"></i>
+
+                                        <span class="menu-title">Dialer Reports</span>
+                                        <i class="menu-arrow"></i>
+                                    </a>
+                                    <div class="collapse" id="form-elements">
+                                        <ul class="nav flex-column sub-menu">
+                                            <li class="nav-item"><a class="nav-link"
+                                                    href="{{ route('manager.dailer.report.providers') }}">Dialer
+                                                    Provider</a></li>
+                                            <li class="nav-item"><a class="nav-link"
+                                                    href="{{ route('manager.dailer.report.compaign') }}">Dialer
+                                                    Compaign</a></li>
+                                        </ul>
+                                    </div>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link" data-bs-toggle="collapse" href="#form-elements"
+                                        aria-expanded="false" aria-controls="form-elements">
+                                        <i class="menu-icon mdi mdi-phone"></i>
+
+                                        <span class="menu-title">Distributor Reports</span>
+                                        <i class="menu-arrow"></i>
+                                    </a>
+                                    <div class="collapse" id="form-elements">
+                                        <ul class="nav flex-column sub-menu">
+                                            <li class="nav-item"><a class="nav-link"
+                                                    href="{{ route('manager.autodistributor.report.providers') }}">Distributor
+                                                    Provider</a></li>
+                                            <li class="nav-item"><a class="nav-link"
+                                                    href="{{ route('manager.autodistributor.report.compaign') }}">Distributor
+                                                    Compaign</a></li>
+
+                                        </ul>
+                                    </div>
+                                </li>
+                            </ul>
+
+                        </nav>
                     @else
                         <li class="nav-item">
                             <a class="nav-link" data-bs-toggle="collapse" href="#form-elements"

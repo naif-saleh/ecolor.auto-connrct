@@ -11,8 +11,8 @@
         @include('autoDailerByProvider.Provider.__Dil_dropZoneUploadFile')
 
         @if ($providers->isEmpty())
-
-        <i class="fa-solid fa-circle-exclamation"></i> No Providers Created. Please Create New One</div>
+<br>
+         <i> '</i><div class="alert alert-warning"><i class="fa-solid fa-circle-exclamation mt-4"></i> No Providers Created. Please Create New One</div> </div>
         @else
             <!-- Providers List -->
             <ul class="list-group mt-3">

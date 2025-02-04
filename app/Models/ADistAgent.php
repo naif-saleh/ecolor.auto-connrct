@@ -56,4 +56,6 @@ class ADistAgent extends Model
     {
         return $this->hasMany(ADistFeed::class, 'agent_id');
     }
+
+
 }

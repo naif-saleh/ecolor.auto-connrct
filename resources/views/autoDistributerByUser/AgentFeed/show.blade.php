@@ -3,7 +3,7 @@
     <div class="container">
         <div class="d-flex justify-content-between">
             <h2>File Name: {{ $file->file_name }} contains <u>{{ $numbers }}</u> Numbers</h2>
-            <a href="{{ route('users.files.index', $file->agent_id) }}" class="btn btn-primary">Back</a>
+            <a href="{{ route('users.files.index', $file->agent_id) }}" class="btn btn-primary mb-2">Back</a>
 
         </div>
         @if (!empty($file))

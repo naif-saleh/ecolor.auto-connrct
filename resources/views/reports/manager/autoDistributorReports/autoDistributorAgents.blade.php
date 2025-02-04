@@ -1,5 +1,5 @@
 @extends('layout.main')
-@section('title', 'Manager | Auto Dialers Reports per Providers')
+@section('title', 'Manager | Auto Distributor Reports per Providers')
 @section('content')
 
     <div class="container">
@@ -29,10 +29,10 @@
                 <thead>
                     <tr>
                         <th><i class="fa-solid fa-phone-volume"></i> Extension</th>
-                        <th><i class="fa-brands fa-nfc-directional"></i> Provider Name</th>
+                        <th><i class="fa-solid fa-user"></i> Agent Name</th>
                         <th><i class="fa-solid fa-phone"></i> Answered</th>
                         <th><i class="fa-solid fa-phone-slash"></i> Unanswered</th>
-                        <th><i class="fa-solid fa-circle-exclamation"></i> Fail</th>
+                        <th><i class="fa-solid fa-user-xmark"></i> Emplooyee Unanswered</th>
                         <th><i class="fa-solid fa-phone-volume"></i> Total Calls</th>
                         <th><i class="fa-solid fa-hashtag"></i> Total Numbers</th>
                         <th><i class="fa-solid fa-file-arrow-up"></i> Uploads Count</th>

@@ -72,7 +72,7 @@
             </div>
         @endif
 
-        <div class="pagination-wrapper d-flex justify-content-center mt-4">
+        {{-- <div class="pagination-wrapper d-flex justify-content-center mt-4">
             <ul class="pagination">
                 <li class="page-item {{ $agents->onFirstPage() ? 'disabled' : '' }}">
                     <a class="page-link" href="{{ $agents->previousPageUrl() }}" tabindex="-1"
@@ -87,7 +87,7 @@
                     <a class="page-link" href="{{ $agents->nextPageUrl() }}">Next</a>
                 </li>
             </ul>
-        </div>
+        </div> --}}
 
     </div>
 

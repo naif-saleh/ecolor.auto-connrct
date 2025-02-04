@@ -71,7 +71,7 @@ class ADialFeed extends Model
      */
     public function provider()
     {
-        return $this->hasMany(ADialProvider::class, 'provider_id'); // hasMany instead of belongsTo
+        return $this->hasMany(ADialProvider::class, 'id'); // hasMany instead of belongsTo
     }
 
     /**

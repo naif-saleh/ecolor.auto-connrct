@@ -128,7 +128,9 @@ class ADialProviderFeedController extends Controller
         foreach ($lines as $line) {
             $mobile = trim($line); // Assuming each line contains only a mobile number
             Log::info('mobile executed at ' . $mobile);
+
             if ($this->isValidMobile($mobile)) {
+                // If mobile is valid, add to batch data
                 $batchData[] = [
                     'feed_id' => $fileId,
                     'mobile' => $mobile,
@@ -137,8 +139,9 @@ class ADialProviderFeedController extends Controller
                     'updated_at' => now(),
                 ];
             } else {
+                // Log invalid number and continue to the next one
                 Log::info('This mobile not valid ' . $mobile);
-                return redirect('/providers')->with('success', 'Mobile Number Must be KSA Number. This Number is Invalid!');
+                continue; // Skip invalid mobile and move to the next line
             }
 
             // Insert in batches to improve performance
@@ -147,6 +150,9 @@ class ADialProviderFeedController extends Controller
                 $batchData = []; // Reset batch
             }
         }
+
+
+
         // Insert remaining records
         if (!empty($batchData)) {
             ADialData::insert($batchData);
@@ -249,7 +255,7 @@ class ADialProviderFeedController extends Controller
             'operation_time' => now(),
         ]);
 
-        if($file->allow === false){
+        if ($file->allow === false) {
             return back()->with('inactive', 'File is Disactivited ⚠️');
         }
         return back()->with('active', 'File is Activited ✅');
@@ -257,113 +263,118 @@ class ADialProviderFeedController extends Controller
 
 
 
-    //Import Huge Count of Numbers to all Providers Directlly From CSV File
     public function importCsvData(Request $request)
     {
         $errors = [];
         $successCount = 0;
+        $batchSize = 10000;
+        $dataBatch = [];
 
         if (($handle = fopen($request->file, 'r')) !== false) {
             $header = fgetcsv($handle);
 
             if (!$header) {
-                $errors[] = "Failed to read the CSV header.";
-                return response()->json(['errors' => $errors], 422);
+                return response()->stream(function () {
+                    echo json_encode(['errors' => ["Failed to read the CSV header."]]);
+                }, 422, ['Content-Type' => 'application/json']);
             }
 
             DB::beginTransaction();
-
+            DB::disableQueryLog();
             try {
                 Log::info('CSV Import Started', ['file' => $request->file->getClientOriginalName()]);
 
-                while (($data = fgetcsv($handle)) !== false) {
-                    if ($data === false) {
-                        $errors[] = "Invalid row in CSV file.";
-                        continue;
+                return response()->stream(function () use ($handle, &$successCount, &$errors, &$dataBatch, $batchSize) {
+                    echo '{"message": "Processing started", "records": [';
+
+                    $firstRecord = true;
+                    while (($data = fgetcsv($handle)) !== false) {
+                        if ($data === false) continue;
+
+                        list($mobile, $name, $extension, $from, $to, $date) = $data;
+
+                        if (!preg_match('/^9665[0-9]{8}$/', $mobile)) {
+                            $errors[] = "Invalid Saudi mobile number: $mobile";
+                            continue;
+                        }
+
+                        $provider = ADialProvider::firstOrCreate(
+                            ['name' => $name, 'extension' => $extension],
+                            ['user_id' => auth()->id()]
+                        );
+
+                        if (!$provider) {
+                            $errors[] = "Failed to find or create provider for extension: $extension";
+                            continue;
+                        }
+
+                        $currentFeedData = [
+                            'from' => Carbon::createFromFormat('h:i A', $from)->format('H:i:s'),
+                            'to' => Carbon::createFromFormat('h:i A', $to)->format('H:i:s'),
+                            'date' => Carbon::parse($date)->format('Y-m-d'),
+                        ];
+
+                        $feed = ADialFeed::firstOrCreate(
+                            [
+                                'provider_id' => $provider->id,
+                                'from' => $currentFeedData['from'],
+                                'to' => $currentFeedData['to'],
+                                'date' => $currentFeedData['date'],
+                            ],
+                            [
+                                'file_name' => $name,
+                                'slug' => Str::uuid(),
+                                'uploaded_by' => auth()->id()
+                            ]
+                        );
+
+                        if (ADialData::where('mobile', $mobile)->where('feed_id', $feed->id)->exists()) {
+                            $errors[] = "Duplicate mobile number skipped: $mobile";
+                            Log::info('Duplicate mobile number ' . $mobile);
+                            continue;
+                        }
+
+                        $dataBatch[] = [
+                            'feed_id' => $feed->id,
+                            'mobile' => $mobile,
+                            'state' => 'new',
+                            'created_at' => now(),
+                            'updated_at' => now()
+                        ];
+
+                        Log::info('Adding mobile ' . $mobile);
+                        $successCount++;
+
+                        if (!$firstRecord) echo ",";
+                        echo json_encode(["mobile" => $mobile, "status" => "imported"]);
+                        flush();
+                        $firstRecord = false;
+
+                        if (count($dataBatch) >= $batchSize) {
+                            ADialData::insert($dataBatch); // Batch insert
+                            $dataBatch = []; // Clear batch
+                        }
                     }
 
-                    list($mobile, $name, $extension, $from, $to, $date) = $data;
-
-                    //   Validate Mobile Number (Must be KSA Format)
-                    if (!preg_match('/^9665[0-9]{8}$/', $mobile)) {
-                        $errors[] = "Invalid Saudi mobile number: $mobile";
-                        continue;
+                    if (!empty($dataBatch)) {
+                        ADialData::insert($dataBatch); // Insert remaining batch
                     }
 
-                    //   Find or Create Provider
-                    $provider = ADialProvider::firstOrCreate(
-                        ['name' => $name, 'extension' => $extension],
-                        ['user_id' => auth()->id()]
-                    );
+                    fclose($handle);
 
-                    if (!$provider) {
-                        $errors[] = "Failed to find or create provider for extension: $extension";
-                        continue;
+                    echo '], "summary": {"success": ' . $successCount . ', "errors": ' . json_encode($errors) . '}}';
+                    flush();
+
+                    if ($successCount > 0) {
+                        DB::commit();
+                        Log::info('CSV Import Completed Successfully', ['file' => request()->file->getClientOriginalName()]);
+                    } else {
+                        DB::rollBack();
+                        Log::error('No valid records found. Rolling back.');
                     }
-
-                    //   Process Date and Time
-                    $currentFeedData = [
-                        'from' => Carbon::createFromFormat('h:i A', $from)->format('H:i:s'),
-                        'to' => Carbon::createFromFormat('h:i A', $to)->format('H:i:s'),
-                        'date' => Carbon::parse($date)->format('Y-m-d'),
-                    ];
-
-                    //  Check if Feed Exists or Create a New One
-                    $feed = ADialFeed::where([
-                        'provider_id' => $provider->id,
-                        'from' => $currentFeedData['from'],
-                        'to' => $currentFeedData['to'],
-                        'date' => $currentFeedData['date'],
-                    ])->first();
-
-                    if (!$feed) {
-                        $slug = Str::uuid();
-                        $feed = ADialFeed::create([
-                            'file_name' => $name,
-                            'slug' => $slug,
-                            'date' => $currentFeedData['date'],
-                            'from' => $currentFeedData['from'],
-                            'to' => $currentFeedData['to'],
-                            'provider_id' => $provider->id,
-                            'uploaded_by' => auth()->id()
-                        ]);
-                    }
-
-                    //  Skip Duplicate Mobile Numbers
-                    if (ADialData::where('mobile', $mobile)->where('feed_id', $feed->id)->exists()) {
-                        $errors[] = "Duplicate mobile number skipped: $mobile";
-                        Log::info('Duplicate mobile number '.$mobile);
-                        continue;
-                    }
-
-                    //  Store Valid Data
-                    ADialData::create([
-                        'feed_id' => $feed->id,
-                        'mobile' => $mobile,
-                        'state' => 'new',
-                    ]);
-
-                    Log::info('Adding mobile '.$mobile);
-                    $successCount++;
-                }
-
-                fclose($handle);
-
-                if ($successCount > 0) {
-                    DB::commit(); //   Commit if there are valid rows
-                    Log::info('CSV Import Completed Successfully', ['file' => $request->file->getClientOriginalName()]);
-                } else {
-                    DB::rollBack(); //  Rollback if no valid records
-                    Log::error('No valid records found. Rolling back.');
-                    return response()->json(['errors' => ["No valid records found. Nothing was imported."]], 422);
-                }
-
-                return response()->json([
-                    'message' => "$successCount records imported successfully!",
-                    'errors' => $errors
-                ], 200);
+                }, 200, ['Content-Type' => 'application/json']);
             } catch (\Exception $e) {
-                DB::rollBack(); //   Rollback on error
+                DB::rollBack();
                 Log::error('CSV Import Error: ' . $e->getMessage(), ['file' => $request->file->getClientOriginalName(), 'error' => $e->getTraceAsString()]);
                 fclose($handle);
                 return response()->json(['errors' => ["Internal server error: " . $e->getMessage()]], 500);
