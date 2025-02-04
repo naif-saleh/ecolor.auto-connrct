@@ -52,7 +52,7 @@ class ReportController extends Controller
         // Map filter values to database values
         $statusMap = [
             'answered' => ['Talking', 'Wexternalline'],
-            'no answer' => ['Wspecialmenu', 'no answer', 'Dialing'],
+            'no answer' => ['Wspecialmenu', 'no answer', 'Dialing', 'Routing'],
         ];
 
         $query = AutoDailerReport::query();
@@ -94,7 +94,7 @@ class ReportController extends Controller
         // Calculate counts for overall report
         $totalCount = AutoDailerReport::count();
         $answeredCount = AutoDailerReport::whereIn('status', ['Wextension', 'Wexternalline', "Talking"])->count();
-        $noAnswerCount = AutoDailerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer'])->count();
+        $noAnswerCount = AutoDailerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer','Routing'])->count();
 
         // Calculate counts for "Today"
         $todayTotalCount = AutoDailerReport::whereDate('created_at', now()->toDateString())->count();
@@ -102,7 +102,7 @@ class ReportController extends Controller
             ->whereIn('status', ['Wextension', 'Wexternalline', "Talking"])
             ->count();
         $todayNoAnswerCount = AutoDailerReport::whereDate('created_at', now()->toDateString())
-            ->whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer'])
+            ->whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer','Routing'])
             ->count();
 
         // Fetch distinct providers for the filter dropdown
@@ -138,7 +138,7 @@ class ReportController extends Controller
 
         $statusMap = [
             'answered' => ['Wexternalline', 'Talking'],
-            'no answer' => ['no answer', 'Dialing'],
+            'no answer' => ['no answer', 'Dialing','Routing'],
         ];
 
         $query = AutoDailerReport::query();
