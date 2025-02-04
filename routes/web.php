@@ -9,7 +9,7 @@ use App\Http\Controllers\AutoDailerByProvider\ADialProviderFeedController;
 use App\Http\Controllers\AutoDistributerByUser\ADistAgentFeedController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
-
+use App\Http\Controllers\ManagerReportController;
 /**
  * Root Route Handling
  *
@@ -28,7 +28,7 @@ Route::get('/', function () {
     if (Auth::check()) {
         $user = Auth::user();
 
-        if ($user->isSuperUser() || $user->isAdmin() || $user->isUser()) {
+        if ($user->isSuperUser() || $user->isAdmin() || $user->isUser() || $user->isManagerUser()) {
             return redirect()->route('index.page'); // Redirect if Admin/Superuser
         }
 
@@ -146,17 +146,17 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // Manager Reports...................................................................................................................
 
     // Auto Dailer Extensios...............
-    Route::get('manager/auto-dailer/report-extensions', [DashboardController::class, 'managerAutoDailersReports'])->name('manager.auotdailer.report.extension');
+    Route::get('manager/auto-dailer/report-compaign', [ManagerReportController::class, 'dialerReportsCompaign'])->name('manager.dailer.report.compaign');
     // Auto Dailer Providers...............
-    Route::get('manager/auto-dailer/report-providers', [DashboardController::class, 'managerAutoDailersReportsProvider'])->name('manager.auotdailer.report.providers');
-
-
-    // Auto Distributer Extensions...........
-    Route::get('manager/auto-distributor/report-extensions', [DashboardController::class, 'managerAutoDistributorsReports'])->name('manager.autodistributor.report.extension');
+    Route::get('manager/auto-dailer/report-providers', [ManagerReportController::class, 'dialerReportsProviders'])->name('manager.dailer.report.providers');
     // Auto Distributer Providers...............
-    Route::get('manager/auto-distributor/report-providers', [DashboardController::class, 'managerAutoDistributorsReportsProvider'])->name('manager.autodistributor.report.providers');
+    Route::get('manager/auto-distributor/report-providers', [ManagerReportController::class, 'distributorReportsProviders'])->name('manager.autodistributor.report.providers');
     // Auto Distributer Compagin...............
-    Route::get('manager/auto-distributor/report-compagin', [DashboardController::class, 'managerAutoDistributorsReportsCompaign'])->name('manager.autodistributor.report.compaign');
+    Route::get('manager/auto-distributor/report-compagin', [ManagerReportController::class, 'distributorReportsCompaign'])->name('manager.autodistributor.report.compaign');
+
+
+
+
 
     // // Dashboard Statistics....................................................................................................................
     Route::get('/dashboard-calls', [DashboardController::class, 'index'])->name('calls.dashboard');
@@ -186,9 +186,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
 
 
 // Dashboard...................................................................................................................................
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth', 'verified'])->name('dashboard');
+// Route::get('/dashboard', function () {
+//     return view('welcome');
+// })->middleware(['auth', 'verified'])->name('index.page');
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');

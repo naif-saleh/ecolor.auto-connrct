@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Log;
 use App\Services\TokenService;
 use Illuminate\Support\Facades\Storage;
 use App\Models\ActivityLog;
- use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 
 class ADistAgentFeedController extends Controller
@@ -98,8 +98,8 @@ class ADistAgentFeedController extends Controller
             }
             else{
                 Log:info('Mobile Number is Invalid: '.$mobile);
-                return redirect('/providers')->with('success', 'Mobile Number Must be KSA Number. This Number is Invalid!');
-            }
+                continue;
+             }
 
             // Insert in batches to improve performance
             if (count($batchData) >= $batchSize) {

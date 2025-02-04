@@ -10,8 +10,9 @@
 
             {{-- Date Filter --}}
             <div class="d-flex gap-2">
-                <input type="date" id="date-from" class="form-control" value="{{ request('date_from') }}">
-                <input type="date" id="date-to" class="form-control" value="{{ request('date_to') }}">
+                <input type="date" id="date-from" class="form-control" name="date_from" value="{{ request('date_from') }}">
+                <input type="date" id="date-to" class="form-control" name="date_to" value="{{ request('date_to') }}">
+
                 <button class="btn btn-success" id="filter-date-btn">Filter</button>
             </div>
 
@@ -29,14 +30,14 @@
                 <thead>
                     <tr>
 
-                        <th><i class="fa-solid fa-file-fragment"></i> File name</th>
-                        <th><i class="fa-solid fa-clock"></i> Timing</th>
-                        <th><i class="fa-solid fa-phone"></i>|<i class="fa-solid fa-phone-slash"></i> Status</th>
-                        <th><i class="fa-solid fa-phone-volume"></i> No.Extentions</th>
-                        <th><i class="fa-solid fa-user"></i> Agent</th>
-                        <th><i class="fa-solid fa-phone"></i> Answered</th>
-                        <th><i class="fa-solid fa-phone-slash"></i> Unanswered </th>
-                        <th><i class="fa-solid fa-user-xmark"></i> Emplooyee Unanswered </th>
+                        <th><i class="fa-brands fa-nfc-directional"></i> File name</th>
+                        <th><i class="fa-solid fa-clock"></i> timing</th>
+                        <th><i class="fa-solid fa-phone"></i> | <i class="fa-solid fa-phone-slash"></i> Status</th>
+                        <th><i class="fa-solid fa-phone-volume"></i> NO.Extentions</th>
+                        <th><i class="fa-solid fa-phone-volume"></i> provider</th>
+                        <th><i class="fa-solid fa-phone"></i> answered</th>
+                        <th><i class="fa-solid fa-phone-slash"></i>unanswered </th>
+                        <th><i class="fa-solid fa-user-xmark"></i> failed </th>
                         <th><i class="fa-solid fa-square-phone"></i> Total calls</th>
                         <th><i class="fa-solid fa-hashtag"></i> Total Numbers</th>
                     </tr>
@@ -106,26 +107,18 @@
     {{-- JavaScript for Filtering --}}
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Date Range Filtering
             document.getElementById('filter-date-btn').addEventListener('click', function() {
                 let from = document.getElementById('date-from').value;
                 let to = document.getElementById('date-to').value;
-
                 let url = new URL(window.location.href);
 
-                if (from) {
-                    url.searchParams.set('date_from', from);
-                } else {
-                    url.searchParams.delete('date_from');
-                }
+                if (from) url.searchParams.set('date_from', from);
+                else url.searchParams.delete('date_from');
 
-                if (to) {
-                    url.searchParams.set('date_to', to);
-                } else {
-                    url.searchParams.delete('date_to');
-                }
+                if (to) url.searchParams.set('date_to', to);
+                else url.searchParams.delete('date_to');
 
-                window.location.href = url.toString(); // Reload page with new filters
+                window.location.href = url.toString(); // Reload the page with new filters
             });
         });
     </script>
