@@ -11,8 +11,8 @@ class EvaluationsSeeder extends Seeder
     public function run()
     {
         $evaluations = [
-            [1, '000', 'Satisfied', 'ar', '2025-01-13 16:03:14'],
-            [2, '0563989929', 'Satisfied', 'ar', '2025-01-14 08:44:13'],
+
+            [40, '0563989929', 'Satisfied', 'ar', '2025-01-14 08:44:13'],
             [3, '0530086231', 'Satisfied', 'ar', '2025-01-14 08:48:53'],
             [4, '0562015555', 'Satisfied', 'ar', '2025-01-14 09:14:46'],
             [5, '0561167147', 'Satisfied', 'ar', '2025-01-14 09:20:58'],
