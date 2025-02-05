@@ -248,127 +248,146 @@ class ADistAgentFeedController extends Controller
         }
     }
 
-    //Import Huge Count of Numbers to all Providers Directlly From CSV File
     public function importCsvData(Request $request)
     {
         $skippedNumbers = [];
         $successCount = 0;
         $validRows = [];
-
+        $agentCache = [];
+        $feedCache = [];
+        $batchSize = 1000;
+    
         if (($handle = fopen($request->file, 'r')) !== false) {
             $header = fgetcsv($handle);
-
+    
             if (!$header) {
                 return response()->json(['errors' => ["Failed to read the CSV header."]], 422);
             }
-
-            DB::beginTransaction();
-
-            try {
-                Log::info('CSV Import Started', ['file' => $request->file->getClientOriginalName()]);
-
-                $existingExtensions = ADistAgent::pluck('extension')->toArray();
-                $seenNumbers = [];
-
-                while (($data = fgetcsv($handle)) !== false) {
-                    if ($data === false) continue;
-
-                    list($mobile, $name, $extension, $from, $to, $date) = $data;
-
-                    // Check if extension is valid
-                    if (!in_array($extension, $existingExtensions)) {
-                        $skippedNumbers[] = "$mobile - ⚠️ Agent Not Found (Ext: $extension)";
-                        continue;
-                    }
-
-                    // Validate mobile number (only numeric)
-                    if (!preg_match('/^\d+$/', $mobile)) {
-                        $skippedNumbers[] = "$mobile - ❌ Contains non-numeric characters";
-                        continue;
-                    }
-
-                    // Check for duplicate mobile numbers
-                    if (isset($seenNumbers[$mobile])) {
-                        $skippedNumbers[] = "$mobile - 🔁 Duplicate Entry in CSV";
-                        continue;
-                    }
-                    $seenNumbers[$mobile] = true;
-
-                    // Create or fetch agent
-                    $agent = ADistAgent::firstOrCreate(
+    
+            DB::disableQueryLog();
+            Log::info('CSV Import Started', ['file' => $request->file->getClientOriginalName()]);
+    
+            // Preload valid extensions
+            $existingExtensions = ADistAgent::pluck('extension')->flip()->toArray();
+            $seenNumbers = [];
+    
+            while (($data = fgetcsv($handle)) !== false) {
+                if ($data === false) continue;
+    
+                list($mobile, $name, $extension, $from, $to, $date) = $data;
+    
+                // Check if extension is valid
+                if (!isset($existingExtensions[$extension])) {
+                    $skippedNumbers[] = "$mobile - ⚠️ Agent Not Found (Ext: $extension)";
+                    continue;
+                }
+    
+                // Validate mobile number (only numeric)
+                if (!preg_match('/^\d+$/', $mobile)) {
+                    $skippedNumbers[] = "$mobile - ❌ Contains non-numeric characters";
+                    continue;
+                }
+    
+                // Check for duplicate mobile numbers
+                if (isset($seenNumbers[$mobile])) {
+                    $skippedNumbers[] = "$mobile - 🔁 Duplicate Entry in CSV";
+                    continue;
+                }
+                $seenNumbers[$mobile] = true;
+    
+                // Cache agent lookup (avoid repeated queries)
+                if (!isset($agentCache[$extension])) {
+                    $agentCache[$extension] = ADistAgent::firstOrCreate(
                         ['extension' => $extension],
                         ['user_id' => auth()->id()]
                     );
-
-                    // Prepare feed data
-                    $currentFeedData = [
-                        'from' => Carbon::createFromFormat('h:i A', $from)->format('H:i:s'),
-                        'to' => Carbon::createFromFormat('h:i A', $to)->format('H:i:s'),
-                        'date' => Carbon::parse($date)->format('Y-m-d'),
-                    ];
-
-                    // Create feed record
-                    $feed = ADistFeed::firstOrCreate([
+                }
+                $agent = $agentCache[$extension];
+    
+                // Format date and time
+                $fromFormatted = Carbon::createFromFormat('h:i A', $from)->format('H:i:s');
+                $toFormatted = Carbon::createFromFormat('h:i A', $to)->format('H:i:s');
+                $dateFormatted = Carbon::parse($date)->format('Y-m-d');
+    
+                // Cache feed lookup (avoid repeated queries)
+                $feedKey = "{$agent->id}-{$fromFormatted}-{$toFormatted}-{$dateFormatted}";
+                if (!isset($feedCache[$feedKey])) {
+                    $feedCache[$feedKey] = ADistFeed::firstOrCreate([
                         'agent_id' => $agent->id,
-                        'from' => $currentFeedData['from'],
-                        'to' => $currentFeedData['to'],
-                        'date' => $currentFeedData['date'],
+                        'from' => $fromFormatted,
+                        'to' => $toFormatted,
+                        'date' => $dateFormatted,
                     ], [
                         'file_name' => $name,
                         'slug' => Str::uuid(),
                         'uploaded_by' => auth()->id()
                     ]);
-
-                    $validRows[] = [
-                        'feed_id' => $feed->id,
-                        'mobile' => $mobile,
-                        'state' => 'new',
-                    ];
-                    $successCount++;
-
-                    // Insert records in batches (1000 at a time)
-                    if (count($validRows) >= 1000) {
+                }
+                $feed = $feedCache[$feedKey];
+    
+                // Prepare data for batch insert
+                $validRows[] = [
+                    'feed_id' => $feed->id,
+                    'mobile' => $mobile,
+                    'state' => 'new',
+                    'created_at' => now(),
+                    'updated_at' => now()
+                ];
+                $successCount++;
+    
+                // Batch insert every 1000 records
+                if (count($validRows) >= $batchSize) {
+                    DB::transaction(function () use (&$validRows) {
                         ADistData::insert($validRows);
-                        $validRows = [];
-                    }
+                    });
+                    $validRows = []; // Clear batch
                 }
-
-                DB::commit();
-
-                if (count($validRows) > 0) {
-                    ADistData::insert($validRows);
-                }
-
-                if (!empty($skippedNumbers)) {
-                    foreach ($skippedNumbers as $skipped) {
-                        list($mobile, $message) = explode(' - ', $skipped);
-
-                        preg_match('/(Ext: \d+)/', $message, $matches);
-                        $extension = $matches[0] ?? null;
-
-                        // Create or fetch the skipped number record
-                        AdistSkippedNumbers::firstOrCreate([
-                            'mobile' => $mobile,
-                            'message' => $message,
-                            'uploaded_by' => auth()->id(),
-                            'agent_id' => "$feed->agent_id",
-                            'feed_id' => "$feed->id",
-                        ]);
-                    }
-                }
-
-                return response()->json([
-                    'message' => "$successCount records imported successfully!",
-                    'skippedNumbers' => $skippedNumbers, // Add skipped numbers for front-end
-                ], 200);
-            } catch (\Exception $e) {
-                DB::rollBack();
-                Log::error('CSV Import Error: ' . $e->getMessage());
-                fclose($handle);
-                return response()->json(['errors' => ["Internal server error: " . $e->getMessage()]], 500);
             }
+    
+            // Insert remaining records
+            if (!empty($validRows)) {
+                DB::transaction(function () use (&$validRows) {
+                    ADistData::insert($validRows);
+                });
+            }
+    
+            fclose($handle);
+    
+            // Bulk insert skipped numbers instead of looping
+            if (!empty($skippedNumbers)) {
+                $skippedInsertData = [];
+                foreach ($skippedNumbers as $skipped) {
+                    list($mobile, $message) = explode(' - ', $skipped);
+                    preg_match('/(Ext: \d+)/', $message, $matches);
+                    $extension = $matches[0] ?? null;
+                    
+                    $skippedInsertData[] = [
+                        'mobile' => $mobile,
+                        'message' => $message,
+                        'uploaded_by' => auth()->id(),
+                        'agent_id' => $feed->agent_id ?? null,
+                        'feed_id' => $feed->id ?? null,
+                        'created_at' => now(),
+                        'updated_at' => now()
+                    ];
+                }
+    
+                if (!empty($skippedInsertData)) {
+                    DB::transaction(function () use ($skippedInsertData) {
+                        AdistSkippedNumbers::insert($skippedInsertData);
+                    });
+                }
+            }
+    
+            Log::info('CSV Import Completed Successfully', ['file' => $request->file->getClientOriginalName()]);
+    
+            return response()->json([
+                'message' => "$successCount records imported successfully!",
+                'skippedNumbers' => $skippedNumbers
+            ], 200);
         }
-
+    
         return response()->json(['errors' => ["Failed to open CSV file."]], 422);
     }
+    
 }
