@@ -49,41 +49,28 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
             $responseState = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
             ])->post(config('services.three_cx.api_url') . "/callcontrol/{$this->extension}/makecall", [
-                        'destination' => $this->feedData->mobile,
-                    ]);
+                'destination' => $this->feedData->mobile,
+            ]);
 
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
                 Log::info("dadad call id " . $responseData['result']['callid'] . ' mobile ' . $this->feedData->mobile);
 
-                $filter = "contains(Caller, '{$responseData['result']['dn']}')";
-                $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+                AutoDailerReport::updateOrCreate(
+                    ['call_id' => $responseData['result']['callid']],
+                    [
+                        'status' => $responseData['result']['status'],
+                        'provider' => $responseData['result']['dn'],
+                        'extension' => $this->extension,
+                        'phone_number' => $this->feedData->mobile,
+                    ]
+                );
 
-                $activeCallsResponse = Http::withHeaders([
-                    'Authorization' => 'Bearer ' . $token,
-                ])->get($url);
-
-                if ($activeCallsResponse->successful()) {
-                    $activeCalls = $activeCallsResponse->json();
-                    foreach ($activeCalls['value'] as $call) {
-                        AutoDailerReport::updateOrCreate(
-                            ['call_id' => $responseData['result']['callid']],
-                            [
-                                'status' => $call['Status'],
-                                'provider' => $responseData['result']['dn'],
-                                'extension' => $this->extension,
-                                'phone_number' => $this->feedData->mobile,
-                            ]
-                        );
-
-                        $this->feedData->update([
-                            'state' => $call['Status'],
-                            'call_date' => now(),
-                            'call_id' => $responseData['result']['callid'],
-                        ]);
-                    }
-
-                }
+                $this->feedData->update([
+                    'state' => $responseData['result']['status'],
+                    'call_date' => now(),
+                    'call_id' => $responseData['result']['callid'],
+                ]);
 
                 Log::info("📞✅ Call successful for: " . $this->feedData->mobile);
             } else {

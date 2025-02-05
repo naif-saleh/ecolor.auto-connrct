@@ -10,7 +10,7 @@ use App\Models\AutoDailerReport;
 use App\Models\ADialData;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Cache;
-use App\Models\AutoDailerUploadedData;
+use Illuminate\Support\Facades\DB;
 use DateTime;
 use App\Services\TokenService;
 
@@ -93,22 +93,38 @@ class ADialParticipantsCommand extends Command
                             Log::info("✅ Dial:Active Calls Response: " . print_r($activeCalls, True));
 
                             foreach ($activeCalls['value'] as $call) {
-                                if ($call['Status'] === 'Talking') {
+
+                                $status = $call['Status'];
+                                $callId = $call['Id'];
+
+                                $durationTime = null;
+                                $durationRouting = null;
+
+                                if ($status === 'Talking') {
                                     $establishedAt = new DateTime($call['EstablishedAt']);
                                     $serverNow = new DateTime($call['ServerNow']);
-                                    $interval = $establishedAt->diff($serverNow);
-                                    $durationTime = $interval->format('%H:%I:%S');
+                                    $durationTime = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+                                    // Log::info("✅ Duration Time: ".$durationTime);
+                                }
 
-                                    AutoDailerReport::where('call_id', $call['Id'])->update([
-                                        'status' => $call['Status'],
-                                        'duration_time' => $durationTime
-                                    ]);
-                                } else {
-                                    AutoDailerReport::where('call_id', $call['Id'])->update([
-                                        'status' => $call['Status']
-                                    ]);
-                                    ADialData::where('call_id', $call['Id'])->update(['state' => $call['Status']]);
-                                    Log::info("✅ Updated status for Call ID {$call['Id']} to: {$call['Status']}");
+                                if ($status === 'Routing') {
+                                    $establishedAt = new DateTime($call['EstablishedAt']);
+                                    $serverNow = new DateTime($call['ServerNow']);
+                                    $durationRouting = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+                                    // Log::info("✅ Duration Routing: ".$durationRouting);
+                                }
+
+                                DB::beginTransaction();
+                                try {
+                                    AutoDailerReport::where('call_id', $callId)
+                                        ->update(['status' => $status, 'duration_time' => $durationTime, 'duration_routing' => $durationRouting]);
+                                    ADialData::where('call_id', $callId)
+                                        ->update(['state' => $status]);
+                                    // Log::info("✅ mobile status:: " . $status);
+                                    DB::commit();
+                                } catch (\Exception $e) {
+                                    DB::rollBack();
+                                    Log::error("❌ Transaction Failed for call ID {$callId}: " . $e->getMessage());
                                 }
                             }
                         } else {

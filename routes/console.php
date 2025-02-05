@@ -26,21 +26,19 @@ Artisan::command('inspire', function () {
  * User Status Update Commands:
  * - app:ADist-update-user-status-command → Executes every second.
  */
+// Call Commands
+Schedule::command('app:ADial-make-call-command')->everySecond();
+Schedule::command('app:ADist-make-call-command')->everyMinute();
 
- Schedule::command('app:ADial-make-call-command')->everySecond();
- Schedule::command('app:ADist-make-call-command')->everyMinute();
+// Call Status Commands
+Schedule::command('app:ADial-participants-command')->everySecond();
+Schedule::command('app:ADist-participants-command')->everySecond();
 
- // Call Status Commands
- Schedule::command('app:ADial-participants-command')->everySecond();
- Schedule::command('app:ADist-participants-command')->everySecond();
-
- // Update User Status Commands
- Schedule::command('app:ADist-update-user-status-command')->everySecond();
+// Update User Status Commands
+Schedule::command('app:ADist-update-user-status-command')->everySecond();
 
 // BackUp Command
 // Schedule::command('app:back-up-command')->daily();
 // Schedule::command('app:back-up-command')->dailyAt('02:00');
 // Schedule::command('app:back-up-command')->hourlyAt(30); // Run at a specific minute/hour
 // Schedule::command('app:back-up-command')->weekdays(); // Runs on weekdays
-
-

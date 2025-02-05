@@ -120,7 +120,7 @@
             <div class="col-md-2 col-sm-3">
                 <div class="card shadow-sm border-0">
                     <div class="card-body">
-                        <h5 class="text-center text-danger fs-6"><i class="fa-solid fa-user-xmark"></i> Emp - Unanswered</h5>
+                        <h5 class="text-center text-danger fs-6"><i class="fa-solid fa-user-xmark"></i> Unanswered</h5>
                         <h3 class="fw-bold fs-5 text-center">
                             {{ $filter === 'today' ? $todayEmployeeUnanswerCount : $employeeUnanswerCount }}</h3>
                     </div>
@@ -147,7 +147,8 @@
                                 <th><i class="fa-solid fa-user"></i> User</th>
                                 <th><i class="fa-solid fa-phone-volume"></i>  Extension</th>
                                 <th><i class="fa-solid fa-phone m-1"></i>/<i class="fa-solid fa-phone-slash"></i> Status</th>
-                                <th><i class="fa-solid fa-circle-radiation"></i> Duration</th>
+                                <th><i class="fa-solid fa-circle-radiation"></i> Talking</th>
+                                <th><i class="fa-solid fa-circle-radiation"></i> Ringing</th>
                                 <th><i class="fa-solid fa-calendar-days"></i> Called At - Date</th>
                                 <th><i class="fa-solid fa-clock"></i> Called At - Time</th>
                             </tr>
@@ -186,6 +187,7 @@
                                         </span>
                                     </td>
                                     <td>{{$report->duration_time ? $report->duration_time : '-'}}</td>
+                                    <td>{{$report->duration_routing ? $report->duration_routing : '-'}}</td>
                                     <td>{{ $report->created_at->addHours(3)->format('Y-m-d') }}</td> <!-- For Date -->
                                     <td>{{ $report->created_at->addHours(3)->format('H:i:s') }}</td> <!-- For Time -->
 
