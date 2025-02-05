@@ -7,7 +7,12 @@
         <a href="{{ route('users.files.create', $agent) }}" class="btn btn-primary mb-2">Add File</a>
         <!-- Back to agents list -->
         <a href="{{ route('users.index') }}" class="btn btn-dark mb-2">Back to Agents</a>
-
+        {{-- @if ($skippingNumbers->empty())
+        <a href="{{ route('users.files.downloadSkippedNumbers', $file->slug) }}"
+            class="btn btn-primary btn-sm mx-1" title="Download Skipped Numbers">
+            <i class="fa fa-download"></i> No.Skipped
+        </a>
+    @endif --}}
         <!-- Files List -->
         <div class="table-responsive shadow-sm rounded">
             @if ($feeds->isEmpty())
@@ -113,7 +118,10 @@
 
                                     </div>
 
+
+
                                 </td>
+
                                 <td>{{ $file->created_at->addHours(3) }}</td>
                             </tr>
 
@@ -233,6 +241,16 @@
 
             // Submit the form automatically
             document.getElementById(`allowForm${fileSlug}`).submit();
+        }
+
+
+        function toggleSkippedNumbers(slug) {
+            let skippedNumbersDiv = document.getElementById(`skippedNumbers${slug}`);
+            if (skippedNumbersDiv.style.display === "none") {
+                skippedNumbersDiv.style.display = "block";
+            } else {
+                skippedNumbersDiv.style.display = "none";
+            }
         }
     </script>
 @endsection
