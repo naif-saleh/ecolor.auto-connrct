@@ -168,7 +168,7 @@ class ADialProviderFeedController extends Controller
     // Display all files for a provider
     public function files(ADialProvider $provider)
     {
-        $files = $provider->files()->orderBy('created_at', 'desc')->paginate(5); // Change 'created_at' to the correct column if needed
+        $files = $provider->files()->orderBy('date', 'desc')->paginate(5); // Change 'created_at' to the correct column if needed
         // Relationship defined in the provider model
         return view('autoDailerByProvider.ProviderFeed.feed', compact('provider', 'files'));
     }
@@ -269,26 +269,26 @@ class ADialProviderFeedController extends Controller
         $dataBatch = [];
         $providerCache = [];
         $feedCache = [];
-    
+
         if (($handle = fopen($request->file, 'r')) !== false) {
             $header = fgetcsv($handle);
-    
+
             if (!$header) {
                 return response()->json(['errors' => ["Failed to read the CSV header."]], 422);
             }
-    
+
             DB::disableQueryLog();
             Log::info('CSV Import Started', ['file' => $request->file->getClientOriginalName()]);
-    
+
             return response()->stream(function () use ($handle, &$successCount, &$errors, &$dataBatch, $batchSize, &$providerCache, &$feedCache) {
                 echo '{"message": "Processing started", "records": [';
                 $firstRecord = true;
-    
+
                 while (($data = fgetcsv($handle)) !== false) {
                     if ($data === false) continue;
-    
+
                     list($mobile, $name, $extension, $from, $to, $date) = $data;
-    
+
                     // Cache provider lookup (avoid duplicate queries)
                     $providerKey = $name . '-' . $extension;
                     if (!isset($providerCache[$providerKey])) {
@@ -298,12 +298,12 @@ class ADialProviderFeedController extends Controller
                         );
                     }
                     $provider = $providerCache[$providerKey];
-    
+
                     if (!$provider) {
                         $errors[] = "Failed to find or create provider for extension: $extension";
                         continue;
                     }
-    
+
                     // Cache feed lookup (avoid duplicate queries)
                     $feedKey = $provider->id . '-' . $from . '-' . $to . '-' . $date;
                     if (!isset($feedCache[$feedKey])) {
@@ -322,7 +322,7 @@ class ADialProviderFeedController extends Controller
                         );
                     }
                     $feed = $feedCache[$feedKey];
-    
+
                     // Skip duplicates directly without extra queries
                     $dataBatch[] = [
                         'feed_id' => $feed->id,
@@ -331,14 +331,14 @@ class ADialProviderFeedController extends Controller
                         'created_at' => now(),
                         'updated_at' => now()
                     ];
-    
+
                     $successCount++;
-    
+
                     if (!$firstRecord) echo ",";
                     echo json_encode(["mobile" => $mobile, "status" => "imported"]);
                     flush();
                     $firstRecord = false;
-    
+
                     // Batch insert every $batchSize records
                     if (count($dataBatch) >= $batchSize) {
                         DB::transaction(function () use (&$dataBatch) {
@@ -347,23 +347,23 @@ class ADialProviderFeedController extends Controller
                         $dataBatch = []; // Clear batch
                     }
                 }
-    
+
                 // Insert any remaining records
                 if (!empty($dataBatch)) {
                     DB::transaction(function () use (&$dataBatch) {
                         ADialData::insert($dataBatch);
                     });
                 }
-    
+
                 fclose($handle);
-    
+
                 echo '], "summary": {"success": ' . $successCount . ', "errors": ' . json_encode($errors) . '}}';
                 flush();
-    
+
                 Log::info('CSV Import Completed Successfully', ['file' => request()->file->getClientOriginalName()]);
             }, 200, ['Content-Type' => 'application/json']);
         }
-    
+
         return response()->json(['errors' => ["Failed to open CSV file."]], 422);
     }
 }
