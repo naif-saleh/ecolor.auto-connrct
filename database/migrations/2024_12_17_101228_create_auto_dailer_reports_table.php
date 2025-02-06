@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('extension')->require();
             $table->boolean('is_satisfied')->default(false);
             $table->string('duration_time')->nullable();
+            $table->string('duration_routing')->nullable();
             $table->timestamps();
         });
     }

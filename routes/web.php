@@ -140,6 +140,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::delete('/agent/feed/{slug}', [ADistAgentFeedController::class, 'destroy'])->name('users.feed.delete');
     //Import CSV File Using Drop Zone
     Route::post('/agents/feeds/upload-file', [ADistAgentFeedController::class, 'importCsvData'])->name('users.file.csv.dropzone.upload');
+    Route::get('agent/files/{slug}/download-skipped-numbers', [ADistAgentFeedController::class, 'downloadSkippedNumbers'])->name('users.files.downloadSkippedNumbers');
 
 
 

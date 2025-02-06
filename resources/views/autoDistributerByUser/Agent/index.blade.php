@@ -30,7 +30,8 @@
         {{-- Alert for No Users --}}
         @if ($agents->isEmpty())
             <div class="alert alert-warning text-center">
-                <i class="fa-solid fa-circle-exclamation"></i>  No Auto Distributerer Agent found. Click "Import Users" to add one.
+                <i class="fa-solid fa-circle-exclamation"></i> No Auto Distributerer Agent found. Click "Import Users" to
+                add one.
             </div>
         @else
             {{-- Users Table --}}
@@ -54,7 +55,9 @@
                                 <td class="name">{{ $agent->displayName }}</td>
                                 <td class="extension">{{ $agent->extension }}</td>
                                 <td class="status {{ $agent->status === 'Available' ? 'text-success' : 'text-warning' }}">
-                                    <b>{{ $agent->status }} <i class="{{ $agent->status === 'Available' ? 'fa-solid fa-check' : 'fa-solid fa-exclamation' }}"></i></b></td>
+                                    <b>{{ $agent->status }} <i
+                                            class="{{ $agent->status === 'Available' ? 'fa-solid fa-check' : 'fa-solid fa-exclamation' }}"></i></b>
+                                </td>
 
                                 <td class="d-flex justify-content-start gap-2">
                                     <a href=" {{ route('users.files.create', $agent->id) }}" class="btn btn-primary btn-sm">
@@ -125,60 +128,71 @@
 
         Dropzone.options.fileDropzone = {
             paramName: "file",
-            maxFilesize: 40, // Max size 40MB
-            acceptedFiles: ".csv", // Accept only CSV files
+            maxFilesize: 40,
+            acceptedFiles: ".csv",
             dictDefaultMessage: "Drop your CSV file here or click to upload",
             dictInvalidFileType: "Only CSV files are allowed!",
             dictFileTooBig: "File is too large! Max size: 40MB",
 
             init: function() {
-                let progressContainer = document.createElement("div");
-                progressContainer.innerHTML = `
+                let progressBar = document.createElement("div");
+                progressBar.innerHTML = `
             <div id="uploadProgress" style="display: none; width: 100%; background: #f3f3f3; border-radius: 5px; margin-top: 10px;">
                 <div id="uploadProgressBar" style="width: 0%; height: 20px; background: #4caf50; border-radius: 5px; text-align: center; color: white; font-weight: bold;">0%</div>
             </div>
         `;
-                document.body.appendChild(progressContainer);
+                document.body.appendChild(progressBar);
 
-                let progressBar = document.getElementById("uploadProgressBar");
+                let progress = document.getElementById("uploadProgressBar");
 
                 this.on("sending", function(file) {
-                    document.getElementById("uploadProgress").style.display = "block"; // Show progress bar
-                    progressBar.style.width = "5%"; // Start at 5%
-                    progressBar.innerText = "5%";
+                    document.getElementById("uploadProgress").style.display = "block";
+                    progress.style.width = "5%";
+                    progress.innerText = "5%";
                 });
 
-                this.on("uploadprogress", function(file, progress) {
-                    let simulatedProgress = Math.min(progress + 10, 95); // Simulate smooth movement
-                    progressBar.style.width = simulatedProgress + "%";
-                    progressBar.innerText = Math.round(simulatedProgress) + "%";
+                this.on("uploadprogress", function(file, progressValue) {
+                    let simulatedProgress = Math.min(progressValue + 10, 95);
+                    progress.style.width = simulatedProgress + "%";
+                    progress.innerText = Math.round(simulatedProgress) + "%";
                 });
 
                 this.on("success", function(file, response) {
                     let message = response.message || "CSV uploaded successfully!";
-                    let errorMessages = response.errors || [];
+                    let skippedNumbers = response.skippedNumbers || [];
+                    let csvDownloadUrl = response.csv_url || null;
 
                     let interval = setInterval(() => {
-                        let currentWidth = parseInt(progressBar.style.width);
+                        let currentWidth = parseInt(progress.style.width);
                         if (currentWidth < 100) {
-                            progressBar.style.width = (currentWidth + 2) + "%";
-                            progressBar.innerText = (currentWidth + 2) + "%";
+                            progress.style.width = (currentWidth + 2) + "%";
+                            progress.innerText = (currentWidth + 2) + "%";
                         } else {
                             clearInterval(interval);
                         }
-                    }, 50); // Move smoothly to 100%
+                    }, 50);
 
                     setTimeout(() => {
-                        if (errorMessages.length > 0) {
-                            let errorList = errorMessages.map(error => `• ${error}`).join("<br>");
+                        if (skippedNumbers.length > 0) {
+                            let errorList = skippedNumbers.map(error => `• ${error}`).join("<br>");
                             Swal.fire({
                                 icon: "warning",
                                 title: "Upload Completed with Issues",
-                                html: errorList,
+                                html: `<b>${skippedNumbers.length} numbers skipped:</b><br>${errorList}<br><br>${csvDownloadUrl ? '<a href="'+csvDownloadUrl+'" download class="btn btn-primary">Download Skipped Numbers</a>' : ''}`,
                                 confirmButtonText: "OK"
                             }).then(() => {
-                                location.reload(); // Refresh after clicking OK
+                                location.reload();
                             });
+
+                            // ✅ Auto-download CSV if available
+                            if (csvDownloadUrl) {
+                                let link = document.createElement('a');
+                                link.href = csvDownloadUrl;
+                                link.download = "skipped_numbers.csv";
+                                document.body.appendChild(link);
+                                link.click();
+                                document.body.removeChild(link);
+                            }
                         } else {
                             Swal.fire({
                                 icon: "success",
@@ -186,10 +200,10 @@
                                 text: message,
                                 confirmButtonText: "OK"
                             }).then(() => {
-                                location.reload(); // Refresh after clicking OK
+                                location.reload();
                             });
                         }
-                    }, 800); // Short delay before showing the message
+                    }, 800);
                 });
 
                 this.on("error", function(file, response) {
@@ -208,13 +222,12 @@
                         confirmButtonText: "OK"
                     });
 
-                    this.removeFile(file); // Remove file if there's an error
+                    this.removeFile(file);
                 });
 
                 this.on("queuecomplete", function() {
                     setTimeout(() => {
-                        document.getElementById("uploadProgress").style.display =
-                            "none"; // Hide progress bar
+                        document.getElementById("uploadProgress").style.display = "none";
                     }, 1500);
                 });
             }
