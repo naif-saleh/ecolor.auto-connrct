@@ -134,7 +134,7 @@
                 title: 'Add New Provider',
                 html: `
                 <input type="text" id="providerName" class="swal2-input" placeholder="Provider Name">
-                <input type="text" id="providerExtension" class="swal2-input" placeholder="Provider Extension (optional)">
+                <input type="text" id="providerExtension" class="swal2-input" placeholder="Provider Extension">
             `,
                 showCancelButton: true,
                 confirmButtonText: 'Create Provider',
@@ -147,6 +147,9 @@
                     // Validate inputs (client-side)
                     if (!name) {
                         Swal.showValidationMessage('Provider Name is required');
+                        return false;
+                    }if (!extension) {
+                        Swal.showValidationMessage('Provider Extension is required');
                         return false;
                     }
 

@@ -139,9 +139,9 @@
                             <div class="collapse" id="form-elements">
                                 <ul class="nav flex-column sub-menu">
                                     <li class="nav-item"><a class="nav-link"
-                                            href="{{ route('auto_dailer.report') }}">Dialer Calls</a></li>
+                                            href="{{ route('auto_dailer.report') }}">Auto Dailer Report</a></li>
                                     <li class="nav-item"><a class="nav-link"
-                                            href="{{ route('auto_distributer.report') }}">Distributor Calls</a></li>
+                                            href="{{ route('auto_distributer.report') }}">Auto Distributor Report</a></li>
                                     <li class="nav-item"><a class="nav-link"
                                             href="{{ route('evaluation') }}">Evaluation</a></li>
                                 </ul>

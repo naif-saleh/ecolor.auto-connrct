@@ -10,7 +10,7 @@
                     {{-- Upload CSV File --}}
                     <a href="#" class="btn btn-outline-secondary w-auto mt-4" data-bs-toggle="modal"
                         data-bs-target="#uploadModal"><i class="ti-upload btn-icon-prepend"></i> Upload File</a>
-                    <a href="larg_auto_distributor_file.csv" class="btn btn-info mt-4" download><i
+                        <a href="larg_auto_dist_file .csv" class="btn btn-info mt-4" download><i
                             class="fa-solid fa-download"></i> Auto
                         Distributor Demo File</a>
 
