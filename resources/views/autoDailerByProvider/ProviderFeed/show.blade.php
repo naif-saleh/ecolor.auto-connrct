@@ -11,7 +11,7 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
-                        <th>#</th>
+
                         <th>Mobile Number</th>
                         <th>state</th>
                     </tr>
@@ -19,7 +19,7 @@
                 <tbody>
                     @foreach ($data as $row)
                         <tr>
-                            <td>{{ $row->id }}</td>
+                             
                             <td>{{ $row->mobile ?? 'N/A' }}</td>
                             <td>{{ $row->state ?? 'N/A' }}</td>
                         </tr>
