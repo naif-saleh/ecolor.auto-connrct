@@ -143,7 +143,7 @@
                                     <li class="nav-item"><a class="nav-link"
                                             href="{{ route('auto_distributer.report') }}">Auto Distributor Report</a></li>
                                     <li class="nav-item"><a class="nav-link"
-                                            href="{{ route('evaluation') }}">Evaluation</a></li>
+                                            href="{{ route('evaluation') }}">Evaluation Report</a></li>
                                 </ul>
                             </div>
                         </li>
