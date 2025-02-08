@@ -23,7 +23,7 @@
                 <table class="table table-striped table-hover table-bordered">
                     <thead class="thead-dark">
                         <tr>
-                            <th><i class="fa-solid fa-file"></i> File Name</th>
+                            <th><i class="fa-solid fa-file"></i> Provider</th>
                             <th><i class="fa fa-clock"></i> From</th>
                             <th><i class="fa fa-clock"></i> To</th>
                             <th><i class="fa fa-calendar-day"></i> Date</th>

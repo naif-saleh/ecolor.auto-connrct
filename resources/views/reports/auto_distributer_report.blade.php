@@ -144,7 +144,7 @@
                             <tr>
                                 <th><i class="fa-solid fa-hashtag"></i></th>
                                 <th><i class="fa-solid fa-mobile"></i> Mobile</th>
-                                <th><i class="fa-solid fa-user"></i> User</th>
+                                <th><i class="fa-solid fa-user"></i> Provider</th>
                                 <th><i class="fa-solid fa-phone-volume"></i>  Extension</th>
                                 <th><i class="fa-solid fa-phone m-1"></i>/<i class="fa-solid fa-phone-slash"></i> Status</th>
                                 <th><i class="fa-solid fa-circle-radiation"></i> Talking</th>
