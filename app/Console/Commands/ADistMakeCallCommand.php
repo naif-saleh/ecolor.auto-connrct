@@ -66,7 +66,11 @@ class ADistMakeCallCommand extends Command
 
                                     $activeCalls = $activeCallsResponse->json();
                                     if (!empty($activeCalls['value'])) {
-                                        Log::info("🚫 Extension {$ext} is busy, skipping call to {$feedData->mobile}");
+                                        Log::info("🚫 Extension {$ext} is busy, skipping call to {$feedData->mobile}" , [
+                                            'response' => $activeCalls->json(), // Log the response body
+                                            'status' => $activeCalls->status(), // Log the HTTP status code
+                                            'headers' => $activeCalls->headers(), // Log response headers
+                                        ]);
                                         continue;
                                     }
 
