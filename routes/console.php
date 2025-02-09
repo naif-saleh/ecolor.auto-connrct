@@ -26,9 +26,12 @@ Artisan::command('inspire', function () {
  * User Status Update Commands:
  * - app:ADist-update-user-status-command → Executes every second.
  */
+
+ 
 // Call Commands
 Schedule::command('app:ADial-make-call-command')->everySecond();
 Schedule::command('app:ADist-make-call-command')->everySecond();
+// Schedule::command('app:ADist-make-call-command')->everyMinute();
 
 // Call Status Commands
 Schedule::command('app:ADial-participants-command')->everySecond();
