@@ -60,11 +60,11 @@ class ADistMakeCallCommand extends Command
 
                                     $activeCallsResponse = Http::withHeaders(['Authorization' => "Bearer $token"])->get($url);
                                     if ($activeCallsResponse->failed()) {
-                                        Log::error("❌ Failed to fetch active calls for {$feedData->mobile}" , [
+                                        Log::error("❌ Failed to fetch active calls for {$feedData->mobile}" , print_r([
                                             'response' => $activeCallsResponse->json(),
                                             'status' => $activeCallsResponse->status(),
                                             'headers' => $activeCallsResponse->headers(),
-                                        ]);
+                                        ], true));
                                         continue;
                                     }
 
