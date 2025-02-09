@@ -28,7 +28,7 @@ class ADistMakeCallCommand extends Command
 
     public function handle()
     {
-        Log::info("\n\t********** Auto Distributor Call Execution **********\n");
+        Log::info("\n\t********** Auto Distributor Call Execution Started **********\n");
 
         $agents = ADistAgent::all();
         foreach ($agents as $agent) {
@@ -41,101 +41,113 @@ class ADistMakeCallCommand extends Command
                 $from = Carbon::parse("{$feed->date} {$feed->from}")->subHours(3);
                 $to = Carbon::parse("{$feed->date} {$feed->to}")->subHours(3);
 
-                if (now()->between($from, $to)) {
-                    Log::info("✅ File ID {$feed->id} is within time range");
-
-                    ADistData::where('feed_id', $feed->id)->where('state', 'new')
-                        ->chunk(50, function ($dataChunk) use ($agent) {
-                            foreach ($dataChunk as $feedData) {
-                                try {
-                                    if ($agent->status !== "Available") {
-                                        Log::error("📵 Agent {$agent->id} not available, skipping call to {$feedData->mobile}");
-                                        continue;
-                                    }
-
-                                    $token = $this->tokenService->getToken();
-                                    $ext = $agent->extension;
-                                    $filter = "contains(Caller, '{$ext}')";
-                                    $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
-
-                                    $activeCallsResponse = Http::withHeaders(['Authorization' => "Bearer $token"])->get($url);
-                                    Log:info('ADist Active Call ' . print_r($activeCallsResponse->body(), True));
-                                    if ($activeCallsResponse->failed()) {
-                                        Log::error("❌ ADist Call: Failed to fetch active calls for {$feedData->mobile}" , print_r([
-                                            'response' => $activeCallsResponse->json(),
-                                            'status' => $activeCallsResponse->status(),
-                                            'headers' => $activeCallsResponse->headers(),
-                                        ], true));
-                                        continue;
-                                    }
-
-                                    $activeCalls = $activeCallsResponse->json();
-
-                                    if (!empty($activeCalls['value'])) {
-
-                                        Log::info("🚫 Extension {$ext} is busy, skipping call to {$feedData->mobile}" , print_r([
-                                            'response' => $activeCalls->json(),
-                                            'status' => $activeCalls->status(),
-                                            'headers' => $activeCalls->headers(),
-                                        ], true));
-                                        continue;
-                                    }
-
-                                    $dnDevices = Http::withHeaders(['Authorization' => "Bearer $token"])
-                                        ->get(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices");
-
-                                    if ($dnDevices->failed()) {
-                                        Log::info("❌ Error fetching devices for extension {$ext}" , [
-                                            'response' => $dnDevices->json(),
-                                            'status' => $dnDevices->status(),
-                                            'headers' => $dnDevices->headers(),
-                                        ]);
-
-                                        continue;
-                                    }
-
-
-                                    foreach ($dnDevices->json() as $device) {
-                                        if ($device['user_agent'] !== '3CX Mobile Client') continue;
-
-                                        $responseState = Http::withHeaders(['Authorization' => "Bearer $token"])
-                                            ->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices/{$device['device_id']}/makecall", [
-                                                'destination' => $feedData->mobile,
-                                            ]);
-
-                                        if ($responseState->failed()) {
-                                            Log::error("❌ Failed to make call to {$feedData->mobile}");
-                                            continue;
-                                        }
-
-                                        $responseData = $responseState->json();
-                                        AutoDistributerReport::updateOrCreate([
-                                            'call_id' => $responseData['result']['callid'],
-                                        ], [
-                                            'status' => "Initiating",
-                                            'provider' => $responseData['result']['dn'],
-                                            'extension' => $responseData['result']['dn'],
-                                            'phone_number' => $responseData['result']['party_caller_id'],
-                                        ]);
-
-                                        $feedData->update([
-                                            'state' => "Initiating",
-                                            'call_date' => now(),
-                                            'call_id' => $responseData['result']['callid'],
-                                        ]);
-
-                                        Log::info("📞 Call initiated successfully for {$feedData->mobile}");
-                                        break;
-                                    }
-                                } catch (\Exception $e) {
-                                    Log::error("❌ Error making call: " . $e->getMessage());
-                                }
-                            }
-                        });
-                } else {
-                    Log::info("⏰ File ID {$feed->id} is not within time range");
+                if (!now()->between($from, $to)) {
+                    Log::info("⏰ File ID {$feed->id} is not within time range, skipping.");
+                    continue;
                 }
+
+                Log::info("✅ File ID {$feed->id} is within time range.");
+
+                ADistData::where('feed_id', $feed->id)->where('state', 'new')
+                    ->chunk(50, function ($dataChunk) use ($agent) {
+                        foreach ($dataChunk as $feedData) {
+                            try {
+                                if ($agent->status !== "Available") {
+                                    Log::warning("📵 Agent {$agent->id} not available, skipping call to {$feedData->mobile}");
+                                    continue;
+                                }
+
+                                // 🔑 Get authentication token
+                                $token = $this->tokenService->getToken();
+                                Log::info("🔑 Token Retrieved: " . substr($token, 0, 20) . "... (trimmed)");
+
+                                $ext = $agent->extension;
+                                $filter = "contains(Caller, '{$ext}')";
+                                $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+
+                                // 🌐 Log API URL before request
+                                Log::info("🌐 Checking Active Calls for Extension: {$ext}");
+                                Log::info("🔗 API URL: " . $url);
+
+                                $activeCallsResponse = Http::withHeaders(['Authorization' => "Bearer $token"])->get($url);
+
+                                if ($activeCallsResponse->failed()) {
+                                    Log::error("❌ API Request Failed for Active Calls!");
+                                    Log::error("🔴 Status Code: " . $activeCallsResponse->status());
+                                    Log::error("🔴 Response Headers: " . print_r($activeCallsResponse->headers(), true));
+                                    Log::error("🔴 Response Body: " . $activeCallsResponse->body());
+                                    continue;
+                                }
+
+                                $activeCalls = $activeCallsResponse->json();
+                                if (!empty($activeCalls['value'])) {
+                                    Log::warning("🚫 Extension {$ext} is already on a call, skipping call to {$feedData->mobile}");
+                                    continue;
+                                }
+
+                                // 📡 Fetch DN Devices
+                                Log::info("📡 Fetching DN Devices for Extension {$ext}");
+                                $dnDevicesResponse = Http::withHeaders(['Authorization' => "Bearer $token"])
+                                    ->get(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices");
+
+                                if ($dnDevicesResponse->failed()) {
+                                    Log::error("❌ Failed to fetch DN devices for extension {$ext}");
+                                    Log::error("🔴 Status Code: " . $dnDevicesResponse->status());
+                                    Log::error("🔴 Response Headers: " . print_r($dnDevicesResponse->headers(), true));
+                                    Log::error("🔴 Response Body: " . $dnDevicesResponse->body());
+                                    continue;
+                                }
+
+                                $dnDevices = $dnDevicesResponse->json();
+                                Log::info("✅ DN Devices Retrieved: " . print_r($dnDevices, true));
+
+                                foreach ($dnDevices as $device) {
+                                    if ($device['user_agent'] !== '3CX Mobile Client') continue;
+
+                                    // 📞 Initiate Call
+                                    Log::info("📞 Initiating call from {$ext} to {$feedData->mobile}...");
+                                    $callResponse = Http::withHeaders(['Authorization' => "Bearer $token"])
+                                        ->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices/{$device['device_id']}/makecall", [
+                                            'destination' => $feedData->mobile,
+                                        ]);
+
+                                    if ($callResponse->failed()) {
+                                        Log::error("❌ Call initiation failed for {$feedData->mobile}");
+                                        Log::error("🔴 Status Code: " . $callResponse->status());
+                                        Log::error("🔴 Response Headers: " . print_r($callResponse->headers(), true));
+                                        Log::error("🔴 Response Body: " . $callResponse->body());
+                                        continue;
+                                    }
+
+                                    $responseData = $callResponse->json();
+                                    Log::info("✅ Call Initiated Successfully: " . print_r($responseData, true));
+
+                                    AutoDistributerReport::updateOrCreate([
+                                        'call_id' => $responseData['result']['callid'],
+                                    ], [
+                                        'status' => "Initiating",
+                                        'provider' => $responseData['result']['dn'],
+                                        'extension' => $responseData['result']['dn'],
+                                        'phone_number' => $responseData['result']['party_caller_id'],
+                                    ]);
+
+                                    $feedData->update([
+                                        'state' => "Initiating",
+                                        'call_date' => now(),
+                                        'call_id' => $responseData['result']['callid'],
+                                    ]);
+
+                                    Log::info("📞 Call to {$feedData->mobile} is in 'Initiating' state.");
+                                    break;
+                                }
+                            } catch (\Exception $e) {
+                                Log::error("❌ Exception during call process: " . $e->getMessage());
+                            }
+                        }
+                    });
             }
         }
+
+        Log::info("\n\t********** Auto Distributor Call Execution Completed **********\n");
     }
 }
