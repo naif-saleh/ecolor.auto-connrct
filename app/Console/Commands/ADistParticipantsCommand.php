@@ -81,7 +81,7 @@ class ADistParticipantsCommand extends Command
                             ->update(['status' => $status, 'duration_time' => $durationTime, 'duration_routing' => $durationRouting]);
                         ADistData::where('call_id', $callId)
                             ->update(['state' => $status]);
-                        Log::info("✅ mobile status:: ".$status);
+                        Log::info("✅ mobile status:: ".$status." Mobile:" .$call['Callee']);
                         DB::commit();
                     } catch (\Exception $e) {
                         DB::rollBack();
