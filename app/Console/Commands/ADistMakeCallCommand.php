@@ -60,16 +60,20 @@ class ADistMakeCallCommand extends Command
 
                                     $activeCallsResponse = Http::withHeaders(['Authorization' => "Bearer $token"])->get($url);
                                     if ($activeCallsResponse->failed()) {
-                                        Log::error("❌ Failed to fetch active calls for {$feedData->mobile}");
+                                        Log::error("❌ Failed to fetch active calls for {$feedData->mobile}" , [
+                                            'response' => $activeCallsResponse->json(),
+                                            'status' => $activeCallsResponse->status(),
+                                            'headers' => $activeCallsResponse->headers(),
+                                        ]);
                                         continue;
                                     }
 
                                     $activeCalls = $activeCallsResponse->json();
                                     if (!empty($activeCalls['value'])) {
                                         Log::info("🚫 Extension {$ext} is busy, skipping call to {$feedData->mobile}" , [
-                                            'response' => $activeCalls->json(), // Log the response body
-                                            'status' => $activeCalls->status(), // Log the HTTP status code
-                                            'headers' => $activeCalls->headers(), // Log response headers
+                                            'response' => $activeCalls->json(),
+                                            'status' => $activeCalls->status(),
+                                            'headers' => $activeCalls->headers(),
                                         ]);
                                         continue;
                                     }
@@ -79,9 +83,9 @@ class ADistMakeCallCommand extends Command
 
                                     if ($dnDevices->failed()) {
                                         Log::error("❌ Error fetching devices for extension {$ext}", [
-                                            'response' => $activeCalls->json(), // Log the response body
-                                            'status' => $activeCalls->status(), // Log the HTTP status code
-                                            'headers' => $activeCalls->headers(), // Log response headers
+                                            'response' => $activeCalls->json(),
+                                            'status' => $activeCalls->status(),
+                                            'headers' => $activeCalls->headers(),
                                         ]);
                                         continue;
                                     }
