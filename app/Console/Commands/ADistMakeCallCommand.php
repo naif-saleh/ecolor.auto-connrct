@@ -70,11 +70,12 @@ class ADistMakeCallCommand extends Command
 
                                     $activeCalls = $activeCallsResponse->json();
                                     if (!empty($activeCalls['value'])) {
-                                        Log::info("🚫 Extension {$ext} is busy, skipping call to {$feedData->mobile}" , [
+
+                                        Log::info("🚫 Extension {$ext} is busy, skipping call to {$feedData->mobile}" , print_r([
                                             'response' => $activeCalls->json(),
                                             'status' => $activeCalls->status(),
                                             'headers' => $activeCalls->headers(),
-                                        ]);
+                                        ], true));
                                         continue;
                                     }
 
@@ -82,11 +83,12 @@ class ADistMakeCallCommand extends Command
                                         ->get(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices");
 
                                     if ($dnDevices->failed()) {
-                                        Log::error("❌ Error fetching devices for extension {$ext}", [
+                                        Log::info("❌ Error fetching devices for extension {$ext}" , [
                                             'response' => $activeCalls->json(),
                                             'status' => $activeCalls->status(),
                                             'headers' => $activeCalls->headers(),
                                         ]);
+
                                         continue;
                                     }
 
