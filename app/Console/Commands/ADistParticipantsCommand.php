@@ -29,7 +29,7 @@ class ADistParticipantsCommand extends Command
     {
         Log::info("\n\t********** Auto Dialer - Participant Command Executed at " . now() . " **********");
 
-       $agents = ADistAgent::all();
+    //    $agents = ADistAgent::all();
         try {
             $token = $this->tokenService->getToken();
 
@@ -48,9 +48,9 @@ class ADistParticipantsCommand extends Command
                 return;
             }
 
-            Log::info("✅ Active Calls Retrieved: " . print_r($activeCalls, true));
+            // Log::info("✅ Active Calls Retrieved: " . print_r($activeCalls, true));
 
-           foreach ($agents as $agent) {
+        //    foreach ($agents as $agent) {
                 // Log::info("✅ Agent Mobile: " . $agent->mobile);
                 foreach ($activeCalls['value'] as $call) {
                     // Log::info("✅ Active Calls Retrieved: " . print_r($activeCalls, true));
@@ -89,7 +89,7 @@ class ADistParticipantsCommand extends Command
                     }
                 }
 
-            }
+            // }
         } catch (\Exception $e) {
             Log::error("❌ General error in fetching active calls: " . $e->getMessage());
         }
