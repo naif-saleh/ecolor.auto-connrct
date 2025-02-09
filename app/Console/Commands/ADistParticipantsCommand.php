@@ -48,7 +48,7 @@ class ADistParticipantsCommand extends Command
                 return;
             }
 
-            // Log::info("✅ Active Calls Retrieved: " . print_r($activeCalls, true));
+            Log::info("Active Calls Retrieved: " . print_r($activeCalls, true));
 
         //    foreach ($agents as $agent) {
                 // Log::info("✅ Agent Mobile: " . $agent->mobile);
@@ -81,7 +81,7 @@ class ADistParticipantsCommand extends Command
                             ->update(['status' => $status, 'duration_time' => $durationTime, 'duration_routing' => $durationRouting]);
                         ADistData::where('call_id', $callId)
                             ->update(['state' => $status]);
-                        // Log::info("✅ mobile status:: ".$status);
+                        Log::info("✅ mobile status:: ".$status);
                         DB::commit();
                     } catch (\Exception $e) {
                         DB::rollBack();
