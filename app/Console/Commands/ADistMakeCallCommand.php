@@ -79,9 +79,9 @@ class ADistMakeCallCommand extends Command
 
                                     if ($dnDevices->failed()) {
                                         Log::error("❌ Error fetching devices for extension {$ext}", [
-                                            'response' => $dnDevices->json(), // Log the response body
-                                            'status' => $dnDevices->status(), // Log the HTTP status code
-                                            'headers' => $dnDevices->headers(), // Log response headers
+                                            'response' => $activeCalls->json(), // Log the response body
+                                            'status' => $activeCalls->status(), // Log the HTTP status code
+                                            'headers' => $activeCalls->headers(), // Log response headers
                                         ]);
                                         continue;
                                     }
