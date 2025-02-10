@@ -29,28 +29,35 @@ class ADistParticipantsCommand extends Command
     {
         Log::info("\n\t********** Auto Dialer - Participant Command Executed at " . now() . " **********");
 
-    //    $agents = ADistAgent::all();
-        try {
-            $token = $this->tokenService->getToken();
+        $agents = ADistAgent::all();
+        foreach ($agents as $agent) {
+            try {
+                $token = $this->tokenService->getToken();
 
-            $activeCallsResponse = Http::withHeaders(['Authorization' => 'Bearer ' . $token])
-                ->get(config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls");
+                $ext = $agent->extension;
+                $filter = "contains(Caller, '{$ext}')";
+                $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
-            if (!$activeCallsResponse->successful()) {
-                Log::error("❌ Failed to fetch active calls. Response: " . $activeCallsResponse->body());
-                return;
-            }
+                $activeCallsResponse = Http::withHeaders(['Authorization' => "Bearer $token"])->get($url);
 
-            $activeCalls = $activeCallsResponse->json();
+                // $activeCallsResponse = Http::withHeaders(['Authorization' => 'Bearer ' . $token])
+                //     ->get(config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls");
 
-            if (empty($activeCalls['value'])) {
-                Log::info("ℹ️ No active calls at the moment.");
-                return;
-            }
+                if (!$activeCallsResponse->successful()) {
+                    Log::error("❌ Failed to fetch active calls. Response: " . $activeCallsResponse->body());
+                    return;
+                }
 
-            Log::info("Active Calls Retrieved: " . print_r($activeCalls, true));
+                $activeCalls = $activeCallsResponse->json();
 
-        //    foreach ($agents as $agent) {
+                if (empty($activeCalls['value'])) {
+                    Log::info("ℹ️ No active calls at the moment.");
+                    return;
+                }
+
+                Log::info("Active Calls Retrieved: " . print_r($activeCalls, true));
+
+
                 // Log::info("✅ Agent Mobile: " . $agent->mobile);
                 foreach ($activeCalls['value'] as $call) {
                     // Log::info("✅ Active Calls Retrieved: " . print_r($activeCalls, true));
@@ -81,19 +88,17 @@ class ADistParticipantsCommand extends Command
                             ->update(['status' => $status, 'duration_time' => $durationTime, 'duration_routing' => $durationRouting]);
                         ADistData::where('call_id', $callId)
                             ->update(['state' => $status]);
-                        Log::info("✅ mobile status:: ".$status." Mobile:" .$call['Callee']);
+                        Log::info("✅ mobile status:: " . $status . " Mobile:" . $call['Callee']);
                         DB::commit();
                     } catch (\Exception $e) {
                         DB::rollBack();
                         Log::error("❌ Transaction Failed for call ID {$callId}: " . $e->getMessage());
                     }
                 }
-
-            // }
-        } catch (\Exception $e) {
-            Log::error("❌ General error in fetching active calls: " . $e->getMessage());
+            } catch (\Exception $e) {
+                Log::error("❌ General error in fetching active calls: " . $e->getMessage());
+            }
         }
-
         Log::info("✅ Auto Dialer command execution completed.");
     }
 }
