@@ -28,7 +28,7 @@ class ADistMakeCallCommand extends Command
 
     public function handle()
     {
-        Log::info("ADistMakeCallCommand Auto Distributor Call Execution  " . Carbon::now());
+        Log::info('ADistMakeCallCommand executed at ' . Carbon::now());
 
         $agents = ADistAgent::all();
         foreach ($agents as $agent) {

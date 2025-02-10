@@ -41,7 +41,7 @@ class ADialMakeCallCommand extends Command
      */
     public function handle()
     {
-        Log::info('ADial MakeCallCommand executed at ' . now());
+        Log::info('ADialMakeCallCommand executed at ' . Carbon::now());
 
         // Fetch all providers
         $providers = ADialProvider::all();

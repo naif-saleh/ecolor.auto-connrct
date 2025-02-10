@@ -43,6 +43,8 @@ class ADialParticipantsCommand extends Command
      */
     public function handle()
     {
+
+        Log::info('ADialParticipantsCommand executed at ' . Carbon::now());
         Log::info("
         \t-----------------------------------------------------------------------
         \t\t\t********** Auto Dialer **********\n

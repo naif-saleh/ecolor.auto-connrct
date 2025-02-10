@@ -27,7 +27,8 @@ class ADistParticipantsCommand extends Command
 
     public function handle()
     {
-        Log::info("ADistParticipantsCommand Participant Command Executed "  . Carbon::now());
+        Log::info('ADistParticipantsCommand executed at ' . Carbon::now());
+
 
         $agents = ADistAgent::all();
         // foreach ($agents as $agent) {

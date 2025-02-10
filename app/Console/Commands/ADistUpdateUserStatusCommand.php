@@ -9,6 +9,7 @@ use App\Models\ADistAgent;
 use App\Models\AutoDistributerFeedFile;
 use Illuminate\Support\Facades\Cache;
 use App\Services\TokenService;
+use Carbon\Carbon;
 
 
 class ADistUpdateUserStatusCommand extends Command
@@ -39,6 +40,8 @@ class ADistUpdateUserStatusCommand extends Command
      */
     public function handle()
     {
+        Log::info('ADistUpdateUserStatusCommand executed at ' . Carbon::now());
+
         try {
             $token = $this->tokenService->getToken();
             // Fetch user data from 3CX API
