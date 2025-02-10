@@ -45,13 +45,7 @@ class ADialParticipantsCommand extends Command
     {
 
         Log::info('ADialParticipantsCommand executed at ' . Carbon::now());
-        Log::info("
-        \t-----------------------------------------------------------------------
-        \t\t\t********** Auto Dialer **********\n
-        \t-----------------------------------------------------------------------
-        \t| 📞 ✅ ParticipantCommand executed at " . now() . "            |
-        \t-----------------------------------------------------------------------
-    ");
+
         // Fetch all providers
         $providers = ADialProvider::all();
 
