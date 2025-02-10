@@ -49,7 +49,7 @@ class ADistMakeCallCommand extends Command
                             foreach ($dataChunk as $feedData) {
                                 try {
                                     if ($agent->status !== "Available") {
-                                        Log::error("📵 Agent {$agent->id} not available, skipping call to {$feedData->mobile}");
+                                        Log::error("📵 Agent {$agent->extension} not available, skipping call to {$feedData->mobile}");
                                         continue;
                                     }
 
@@ -59,8 +59,8 @@ class ADistMakeCallCommand extends Command
                                     $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
                                     $activeCallsResponse = Http::withHeaders(['Authorization' => "Bearer $token"])->get($url);
-                                    Log:
-                                    info('ADist Active Call ' . print_r($activeCallsResponse->body(), True));
+
+
                                     if ($activeCallsResponse->failed()) {
                                         Log::error("❌ ADist Call: Failed to fetch active calls for {$feedData->mobile}", print_r([
                                             'response' => $activeCallsResponse->json(),
@@ -71,7 +71,7 @@ class ADistMakeCallCommand extends Command
                                     }
 
                                     $activeCalls = $activeCallsResponse->json();
-
+                                    Log:info('ADist Active Call ' . print_r($activeCalls, True));
                                     if (!empty($activeCalls['value'])) {
 
                                         Log::info("🚫 Extension {$ext} is busy, skipping call to {$feedData->mobile}", print_r([
