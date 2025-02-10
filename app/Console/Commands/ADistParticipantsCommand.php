@@ -30,18 +30,18 @@ class ADistParticipantsCommand extends Command
         Log::info("\n\t********** Auto Dialer - Participant Command Executed at " . now() . " **********");
 
         $agents = ADistAgent::all();
-        foreach ($agents as $agent) {
+        // foreach ($agents as $agent) {
             try {
                 $token = $this->tokenService->getToken();
 
-                $ext = $agent->extension;
-                $filter = "contains(Caller, '{$ext}')";
-                $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+                // $ext = $agent->extension;
+                // $filter = "contains(Caller, '{$ext}')";
+                // $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
-                $activeCallsResponse = Http::withHeaders(['Authorization' => "Bearer $token"])->get($url);
+                // $activeCallsResponse = Http::withHeaders(['Authorization' => "Bearer $token"])->get($url);
 
-                // $activeCallsResponse = Http::withHeaders(['Authorization' => 'Bearer ' . $token])
-                //     ->get(config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls");
+                $activeCallsResponse = Http::withHeaders(['Authorization' => 'Bearer ' . $token])
+                    ->get(config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls");
 
                 if (!$activeCallsResponse->successful()) {
                     Log::error("❌ Failed to fetch active calls. Response: " . $activeCallsResponse->body());
@@ -98,7 +98,7 @@ class ADistParticipantsCommand extends Command
             } catch (\Exception $e) {
                 Log::error("❌ General error in fetching active calls: " . $e->getMessage());
             }
-        }
+        // }
         Log::info("✅ Auto Dialer command execution completed.");
     }
 }
