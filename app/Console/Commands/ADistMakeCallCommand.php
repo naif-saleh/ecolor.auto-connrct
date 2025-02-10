@@ -62,11 +62,7 @@ class ADistMakeCallCommand extends Command
                                     Log:
                                     info('ADist Active Call ' . print_r($activeCallsResponse->body(), True));
                                     if ($activeCallsResponse->failed()) {
-                                        Log::error("ADistMakeCallCommand ❌ ADist Call: Failed to fetch active calls for {$feedData->mobile}", print_r([
-                                            'response' => $activeCallsResponse->json(),
-                                            'status' => $activeCallsResponse->status(),
-                                            'headers' => $activeCallsResponse->headers(),
-                                        ], true));
+                                        Log::error("ADistMakeCallCommand ❌ ADist Call: Failed to fetch active calls for {$feedData->mobile}");
                                         continue;
                                     }
 
