@@ -27,7 +27,7 @@ class ADistParticipantsCommand extends Command
 
     public function handle()
     {
-        Log::info("\n\t********** Auto Dialer - Participant Command Executed at " . now() . " **********");
+        Log::info("ADistParticipantsCommand \n\t********** - Participant Command Executed at " . now() . " **********");
 
         $agents = ADistAgent::all();
         // foreach ($agents as $agent) {
@@ -44,23 +44,23 @@ class ADistParticipantsCommand extends Command
                     ->get(config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls");
 
                 if (!$activeCallsResponse->successful()) {
-                    Log::error("❌ Failed to fetch active calls. Response: " . $activeCallsResponse->body());
+                    Log::error("ADistParticipantsCommand ❌ Failed to fetch active calls. Response: " . $activeCallsResponse->body());
                     return;
                 }
 
                 $activeCalls = $activeCallsResponse->json();
 
                 if (empty($activeCalls['value'])) {
-                    Log::info("ℹ️ No active calls at the moment.");
+                    Log::info("ADistParticipantsCommand ℹ️ No active calls at the moment.");
                     return;
                 }
 
-                Log::info("Active Calls Retrieved: " . print_r($activeCalls, true));
+                Log::info("ADistParticipantsCommand Active Calls Retrieved: " . print_r($activeCalls, true));
 
 
-                // Log::info("✅ Agent Mobile: " . $agent->mobile);
+                // Log::info("ADistParticipantsCommand ✅ Agent Mobile: " . $agent->mobile);
                 foreach ($activeCalls['value'] as $call) {
-                    // Log::info("✅ Active Calls Retrieved: " . print_r($activeCalls, true));
+                    // Log::info("ADistParticipantsCommand ✅ Active Calls Retrieved: " . print_r($activeCalls, true));
 
                     $status = $call['Status'];
                     $callId = $call['Id'];
@@ -72,14 +72,14 @@ class ADistParticipantsCommand extends Command
                         $establishedAt = new DateTime($call['EstablishedAt']);
                         $serverNow = new DateTime($call['ServerNow']);
                         $durationTime = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-                        // Log::info("✅ Duration Time: ".$durationTime);
+                        // Log::info("ADistParticipantsCommand ✅ Duration Time: ".$durationTime);
                     }
 
                     if ($status === 'Routing') {
                         $establishedAt = new DateTime($call['EstablishedAt']);
                         $serverNow = new DateTime($call['ServerNow']);
                         $durationRouting = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-                        // Log::info("✅ Duration Routing: ".$durationRouting);
+                        // Log::info("ADistParticipantsCommand ✅ Duration Routing: ".$durationRouting);
                     }
 
                     DB::beginTransaction();
@@ -88,17 +88,17 @@ class ADistParticipantsCommand extends Command
                             ->update(['status' => $status, 'duration_time' => $durationTime, 'duration_routing' => $durationRouting]);
                         ADistData::where('call_id', $callId)
                             ->update(['state' => $status]);
-                        Log::info("✅ mobile status:: " . $status . " Mobile:" . $call['Callee']);
+                        Log::info("ADistParticipantsCommand ✅ mobile status:: " . $status . " Mobile:" . $call['Callee']);
                         DB::commit();
                     } catch (\Exception $e) {
                         DB::rollBack();
-                        Log::error("❌ Transaction Failed for call ID {$callId}: " . $e->getMessage());
+                        Log::error("ADistParticipantsCommand ❌ Transaction Failed for call ID {$callId}: " . $e->getMessage());
                     }
                 }
             } catch (\Exception $e) {
-                Log::error("❌ General error in fetching active calls: " . $e->getMessage());
+                Log::error("ADistParticipantsCommand ❌ General error in fetching active calls: " . $e->getMessage());
             }
         // }
-        Log::info("✅ Auto Dialer command execution completed.");
+        Log::info("ADistParticipantsCommand ✅ Auto Dialer command execution completed.");
     }
 }
