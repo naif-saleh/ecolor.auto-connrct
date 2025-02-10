@@ -62,11 +62,11 @@ class ADistMakeCallCommand extends Command
 
 
                                     if ($activeCallsResponse->failed()) {
-                                        Log::error("❌ ADist Call: Failed to fetch active calls for {$feedData->mobile}", print_r([
-                                            'response' => $activeCallsResponse->json(),
-                                            'status' => $activeCallsResponse->status(),
-                                            'headers' => $activeCallsResponse->headers(),
-                                        ], true));
+                                        // Log::error("❌ ADist Call: Failed to fetch active calls for {$feedData->mobile}", print_r([
+                                        //     'response' => $activeCallsResponse->json(),
+                                        //     'status' => $activeCallsResponse->status(),
+                                        //     'headers' => $activeCallsResponse->headers(),
+                                        // ], true));
                                         continue;
                                     }
 
@@ -74,11 +74,11 @@ class ADistMakeCallCommand extends Command
                                     Log:info('ADist Active Call ' . print_r($activeCalls, True));
                                     if (!empty($activeCalls['value'])) {
 
-                                        Log::info("🚫 Extension {$ext} is busy, skipping call to {$feedData->mobile}", print_r([
-                                            'response' => $activeCalls,
-                                            'status' => $activeCalls->status(),
-                                            'headers' => $activeCalls->headers(),
-                                        ], true));
+                                        // Log::info("🚫 Extension {$ext} is busy, skipping call to {$feedData->mobile}", print_r([
+                                        //     'response' => $activeCalls,
+                                        //     'status' => $activeCalls->status(),
+                                        //     'headers' => $activeCalls->headers(),
+                                        // ], true));
                                         continue;
                                     }
 
@@ -86,11 +86,11 @@ class ADistMakeCallCommand extends Command
                                         ->get(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices");
 
                                     if ($dnDevices->failed()) {
-                                        Log::info("❌ Error fetching devices for extension {$ext}", [
-                                            'response' => $dnDevices->json(),
-                                            'status' => $dnDevices->status(),
-                                            'headers' => $dnDevices->headers(),
-                                        ]);
+                                        // Log::info("❌ Error fetching devices for extension {$ext}", [
+                                        //     'response' => $dnDevices->json(),
+                                        //     'status' => $dnDevices->status(),
+                                        //     'headers' => $dnDevices->headers(),
+                                        // ]);
 
                                         continue;
                                     }
