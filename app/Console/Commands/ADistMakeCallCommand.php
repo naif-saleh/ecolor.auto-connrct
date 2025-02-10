@@ -28,7 +28,7 @@ class ADistMakeCallCommand extends Command
 
     public function handle()
     {
-        Log::info("ADistMakeCallCommand Auto Distributor Call Execution  " . Carbon::now() );
+        Log::info("ADistMakeCallCommand Auto Distributor Call Execution  " . Carbon::now());
 
         $agents = ADistAgent::all();
         foreach ($agents as $agent) {
@@ -74,11 +74,7 @@ class ADistMakeCallCommand extends Command
 
                                     if (!empty($activeCalls['value'])) {
 
-                                        Log::info("ADistMakeCallCommand 🚫 Extension {$ext} is busy, skipping call to {$feedData->mobile}", print_r([
-                                            'response' => $activeCalls,
-                                            'status' => $activeCalls->status(),
-                                            'headers' => $activeCalls->headers(),
-                                        ], true));
+                                        Log::info("ADistMakeCallCommand 🚫 Extension {$ext} is busy, skipping call to {$feedData->mobile}", print_r($activeCalls, true));
                                         continue;
                                     }
 
@@ -86,11 +82,7 @@ class ADistMakeCallCommand extends Command
                                         ->get(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices");
 
                                     if ($dnDevices->failed()) {
-                                        Log::info("ADistMakeCallCommand ❌ Error fetching devices for extension {$ext}", [
-                                            'response' => $dnDevices->json(),
-                                            'status' => $dnDevices->status(),
-                                            'headers' => $dnDevices->headers(),
-                                        ]);
+                                        Log::info("ADistMakeCallCommand ❌ Error fetching devices for extension {$ext}");
 
                                         continue;
                                     }
