@@ -94,7 +94,7 @@ class ADistMakeCallCommand extends Command
                         ->where('state', 'new')
                         ->first();
 
-                    $feedData->update(['state' => 'Initiating']);
+                    //$feedData->update(['state' => 'Initiating']);
 
                     try {
                         if ($agent->status !== "Available") {
