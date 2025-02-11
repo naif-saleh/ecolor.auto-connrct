@@ -70,7 +70,7 @@ class ADistMakeCallCommand extends Command
                 }
 
                 if ($isAgentBusy) {
-                    continue; // Skip this agent if they are busy
+                    continue;
                 }
 
                 $feeds = ADistFeed::where('agent_id', $agent->id)
@@ -89,16 +89,11 @@ class ADistMakeCallCommand extends Command
 
                     Log::info("ADistMakeCallCommand ✅ File ID {$feed->id} is within time range");
 
-                    // Fetch only one new call (to prevent multiple calls for the same number)
+                    // Fetch only one new call
                     $feedData = ADistData::where('feed_id', $feed->id)
                         ->where('state', 'new')
-                        ->first(); // ✅ Use first() to avoid duplicate calls
+                        ->first();
 
-                    if (!$feedData) {
-                        continue;
-                    }
-
-                    // Locking Mechanism: Mark the call as "Initiating" immediately to prevent duplicate calls
                     $feedData->update(['state' => 'Initiating']);
 
                     try {
