@@ -4,7 +4,8 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\ADistAgent;
@@ -30,7 +31,15 @@ class ADistMakeCallCommand extends Command
     {
         Log::info('ADistMakeCallCommand executed at ' . Carbon::now());
 
+        $client = new Client([
+            'base_uri' => config('services.three_cx.api_url'),
+            'headers' => [
+                'Accept' => 'application/json'
+            ],
+        ]);
+
         $agents = ADistAgent::all();
+
         foreach ($agents as $agent) {
             $feeds = ADistFeed::where('agent_id', $agent->id)
                 ->whereDate('date', today())
@@ -44,82 +53,87 @@ class ADistMakeCallCommand extends Command
                 if (now()->between($from, $to)) {
                     Log::info("ADistMakeCallCommand ✅ File ID {$feed->id} is within time range");
 
-                   $feed = ADistData::where('feed_id', $feed->id)->where('state', 'new')->get();
-                        // ->chunk(50, function ($dataChunk) use ($agent) {
-                            foreach ($feed as $feedData) {
+                    $feedDataList = ADistData::where('feed_id', $feed->id)->where('state', 'new')->get();
+
+                    foreach ($feedDataList as $feedData) {
+                        try {
+                            if ($agent->status !== "Available") {
+                                Log::error("ADistMakeCallCommand 📵 Agent {$agent->id} not available, skipping call to {$feedData->mobile}");
+                                continue;
+                            }
+
+                            $token = $this->tokenService->getToken();
+                            $ext = $agent->extension;
+                            $filter = "contains(Caller, '{$ext}')";
+                            $url = "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+
+                            try {
+                                $response = $client->get($url, [
+                                    'headers' => ['Authorization' => "Bearer $token"]
+                                ]);
+
+                                $activeCalls = json_decode($response->getBody(), true);
+                                Log::info('ADist Active Call ' . print_r($activeCalls, true));
+
+                                if (!empty($activeCalls['value'])) {
+                                    Log::info("ADistMakeCallCommand 🚫 Extension {$ext} is busy, skipping call to {$feedData->mobile}");
+                                    continue;
+                                }
+                            } catch (RequestException $e) {
+                                Log::error("ADistMakeCallCommand ❌ Failed to fetch active calls: " . $e->getMessage());
+                                continue;
+                            }
+
+                            // Fetch devices
+                            try {
+                                $devicesResponse = $client->get("/callcontrol/{$ext}/devices", [
+                                    'headers' => ['Authorization' => "Bearer $token"]
+                                ]);
+
+                                $dnDevices = json_decode($devicesResponse->getBody(), true);
+                            } catch (RequestException $e) {
+                                Log::error("ADistMakeCallCommand ❌ Error fetching devices for extension {$ext}: " . $e->getMessage());
+                                continue;
+                            }
+
+                            foreach ($dnDevices as $device) {
+                                if ($device['user_agent'] !== '3CX Mobile Client') continue;
+
                                 try {
-                                    if ($agent->status !== "Available") {
-                                        Log::error("ADistMakeCallCommand 📵 Agent {$agent->id} not available, skipping call to {$feedData->mobile}");
-                                        continue;
-                                    }
+                                    $callResponse = $client->post("/callcontrol/{$ext}/devices/{$device['device_id']}/makecall", [
+                                        'headers' => ['Authorization' => "Bearer $token"],
+                                        'json' => [
+                                            'destination' => $feedData->mobile,
+                                        ],
+                                    ]);
 
-                                    $token = $this->tokenService->getToken();
-                                    $ext = $agent->extension;
-                                    $filter = "contains(Caller, '{$ext}')";
-                                    $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+                                    $responseData = json_decode($callResponse->getBody(), true);
 
-                                    $activeCallsResponse = Http::withHeaders(['Authorization' => "Bearer $token"])->get($url);
+                                    AutoDistributerReport::updateOrCreate([
+                                        'call_id' => $responseData['result']['callid'],
+                                    ], [
+                                        'status' => "Initiating",
+                                        'provider' => $responseData['result']['dn'],
+                                        'extension' => $responseData['result']['dn'],
+                                        'phone_number' => $responseData['result']['party_caller_id'],
+                                    ]);
 
-                                    if ($activeCallsResponse->failed()) {
-                                        Log::error("ADistMakeCallCommand ❌ ADist Call: Failed to fetch active calls for {$feedData->mobile}");
-                                        continue;
-                                    }
+                                    $feedData->update([
+                                        'state' => "Initiating",
+                                        'call_date' => now(),
+                                        'call_id' => $responseData['result']['callid'],
+                                    ]);
 
-                                    $activeCalls = $activeCallsResponse->json();
-                                    Log:info('ADist Active Call ' . print_r($activeCalls, True));
-                                    if (!empty($activeCalls['value'])) {
-
-                                        Log::info("ADistMakeCallCommand 🚫 Extension {$ext} is busy, skipping call to {$feedData->mobile}");
-                                        continue;
-                                    }
-
-                                    $dnDevices = Http::withHeaders(['Authorization' => "Bearer $token"])
-                                        ->get(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices");
-
-                                    if ($dnDevices->failed()) {
-                                        Log::info("ADistMakeCallCommand ❌ Error fetching devices for extension {$ext}");
-
-                                        continue;
-                                    }
-
-
-                                    foreach ($dnDevices->json() as $device) {
-                                        if ($device['user_agent'] !== '3CX Mobile Client') continue;
-
-                                        $responseState = Http::withHeaders(['Authorization' => "Bearer $token"])
-                                            ->post(config('services.three_cx.api_url') . "/callcontrol/{$ext}/devices/{$device['device_id']}/makecall", [
-                                                'destination' => $feedData->mobile,
-                                            ]);
-
-                                        if ($responseState->failed()) {
-                                            Log::error("ADistMakeCallCommand ❌ Failed to make call to {$feedData->mobile}");
-                                            continue;
-                                        }
-
-                                        $responseData = $responseState->json();
-                                        AutoDistributerReport::updateOrCreate([
-                                            'call_id' => $responseData['result']['callid'],
-                                        ], [
-                                            'status' => "Initiating",
-                                            'provider' => $responseData['result']['dn'],
-                                            'extension' => $responseData['result']['dn'],
-                                            'phone_number' => $responseData['result']['party_caller_id'],
-                                        ]);
-
-                                        $feedData->update([
-                                            'state' => "Initiating",
-                                            'call_date' => now(),
-                                            'call_id' => $responseData['result']['callid'],
-                                        ]);
-
-                                        Log::info("ADistMakeCallCommand 📞 Call initiated successfully for {$feedData->mobile}");
-                                        break;
-                                    }
-                                } catch (\Exception $e) {
-                                    Log::error("ADistMakeCallCommand ❌ Error making call: " . $e->getMessage());
+                                    Log::info("ADistMakeCallCommand 📞 Call initiated successfully for {$feedData->mobile}");
+                                    break;
+                                } catch (RequestException $e) {
+                                    Log::error("ADistMakeCallCommand ❌ Failed to make call to {$feedData->mobile}: " . $e->getMessage());
                                 }
                             }
-                        // });
+                        } catch (\Exception $e) {
+                            Log::error("ADistMakeCallCommand ❌ Error making call: " . $e->getMessage());
+                        }
+                    }
                 } else {
                     Log::info("ADistMakeCallCommand ⏰ File ID {$feed->id} is not within time range");
                 }

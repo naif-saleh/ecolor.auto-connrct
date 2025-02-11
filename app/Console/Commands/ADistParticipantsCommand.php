@@ -12,6 +12,9 @@ use Illuminate\Support\Facades\DB;
 use App\Models\AutoDistributerReport;
 use DateTime;
 use App\Services\TokenService;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+
 
 class ADistParticipantsCommand extends Command
 {
@@ -30,76 +33,79 @@ class ADistParticipantsCommand extends Command
         Log::info('ADistParticipantsCommand executed at ' . Carbon::now());
 
 
-        // $agents = ADistAgent::all();
-        // foreach ($agents as $agent) {
+
+        try {
+            $client = new Client([
+                'base_uri' => config('services.three_cx.api_url'),
+                'headers' => [
+                    'Accept' => 'application/json'
+                ],
+            ]);
+
+            $token = $this->tokenService->getToken();
+
+            // Fetch Active Calls
             try {
-                $token = $this->tokenService->getToken();
+                $response = $client->get('/xapi/v1/ActiveCalls', [
+                    'headers' => ['Authorization' => "Bearer $token"]
+                ]);
 
-                // $ext = $agent->extension;
-                // $filter = "contains(Caller, '{$ext}')";
-                // $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+                $activeCalls = json_decode($response->getBody(), true);
+            } catch (RequestException $e) {
+                Log::error("ADistParticipantsCommand ❌ Failed to fetch active calls: " . $e->getMessage());
+                return;
+            }
 
-                // $activeCallsResponse = Http::withHeaders(['Authorization' => "Bearer $token"])->get($url);
+            if (empty($activeCalls['value'])) {
+                Log::info("ADistParticipantsCommand ℹ️ No active calls at the moment.");
+                return;
+            }
 
-                $activeCallsResponse = Http::withHeaders(['Authorization' => 'Bearer ' . $token])
-                    ->get(config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls");
+            Log::info("ADistParticipantsCommand Active Calls Retrieved: " . print_r($activeCalls, true));
 
-                if (!$activeCallsResponse->successful()) {
-                    Log::error("ADistParticipantsCommand ❌ Failed to fetch active calls.");
-                    return;
-                }
+            foreach ($activeCalls['value'] as $call) {
+                $status = $call['Status'];
+                $callId = $call['Id'];
 
-                $activeCalls = $activeCallsResponse->json();
+                $durationTime = null;
+                $durationRouting = null;
 
-                if (empty($activeCalls['value'])) {
-                    Log::info("ADistParticipantsCommand ℹ️ No active calls at the moment.");
-                    return;
-                }
-
-                Log::info("ADistParticipantsCommand Active Calls Retrieved: " . print_r($activeCalls, true));
-
-
-                // Log::info("ADistParticipantsCommand ✅ Agent Mobile: " . $agent->mobile);
-                foreach ($activeCalls['value'] as $call) {
-                    // Log::info("ADistParticipantsCommand ✅ Active Calls Retrieved: " . print_r($activeCalls, true));
-
-                    $status = $call['Status'];
-                    $callId = $call['Id'];
-
-                    $durationTime = null;
-                    $durationRouting = null;
+                if ($status === 'Talking' || $status === 'Routing') {
+                    $establishedAt = new DateTime($call['EstablishedAt']);
+                    $serverNow = new DateTime($call['ServerNow']);
+                    $duration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
 
                     if ($status === 'Talking') {
-                        $establishedAt = new DateTime($call['EstablishedAt']);
-                        $serverNow = new DateTime($call['ServerNow']);
-                        $durationTime = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-                        // Log::info("ADistParticipantsCommand ✅ Duration Time: ".$durationTime);
-                    }
-
-                    if ($status === 'Routing') {
-                        $establishedAt = new DateTime($call['EstablishedAt']);
-                        $serverNow = new DateTime($call['ServerNow']);
-                        $durationRouting = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-                        // Log::info("ADistParticipantsCommand ✅ Duration Routing: ".$durationRouting);
-                    }
-
-                    DB::beginTransaction();
-                    try {
-                        AutoDistributerReport::where('call_id', $callId)
-                            ->update(['status' => $status, 'duration_time' => $durationTime, 'duration_routing' => $durationRouting]);
-                        ADistData::where('call_id', $callId)
-                            ->update(['state' => $status]);
-                        Log::info("ADistParticipantsCommand ✅ mobile status:: " . $status . " Mobile:" . $call['Callee']);
-                        DB::commit();
-                    } catch (\Exception $e) {
-                        DB::rollBack();
-                        Log::error("ADistParticipantsCommand ❌ Transaction Failed for call ID {$callId}: " . $e->getMessage());
+                        $durationTime = $duration;
+                    } elseif ($status === 'Routing') {
+                        $durationRouting = $duration;
                     }
                 }
-            } catch (\Exception $e) {
-                Log::error("ADistParticipantsCommand ❌ General error in fetching active calls: " . $e->getMessage());
+
+                // Transaction to update database
+                DB::beginTransaction();
+                try {
+                    AutoDistributerReport::where('call_id', $callId)
+                        ->update([
+                            'status' => $status,
+                            'duration_time' => $durationTime,
+                            'duration_routing' => $durationRouting
+                        ]);
+
+                    ADistData::where('call_id', $callId)
+                        ->update(['state' => $status]);
+
+                    Log::info("ADistParticipantsCommand ✅ Mobile status: {$status}, Mobile: " . $call['Callee']);
+
+                    DB::commit();
+                } catch (\Exception $e) {
+                    DB::rollBack();
+                    Log::error("ADistParticipantsCommand ❌ Transaction Failed for call ID {$callId}: " . $e->getMessage());
+                }
             }
-        // }
+        } catch (\Exception $e) {
+            Log::error("ADistParticipantsCommand ❌ General error in fetching active calls: " . $e->getMessage());
+        }
         Log::info("ADistParticipantsCommand ✅ Auto Dialer command execution completed.");
     }
 }
