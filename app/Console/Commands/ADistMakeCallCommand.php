@@ -148,7 +148,7 @@ class ADistMakeCallCommand extends Command
                             }
                         }
                     } catch (\Exception $e) {
-                        Log::error("ADistMakeCallCommand ❌ General error making call: " . $e->getMessage());
+                        Log::error("ADistMakeCallCommand General error making call: " . $e->getMessage());
                     }
                 }
             }
