@@ -62,7 +62,7 @@ class ADistMakeCallCommand extends Command
                 // Check if the agent already has an active call
                 $isAgentBusy = false;
                 foreach ($activeCallsList as $call) {
-                    if ($call['Agent'] === (string) $agent->extension) {
+                    if ($call['Caller'] === (string) $agent->extension) {
                         $isAgentBusy = true;
                         Log::info("ADistMakeCallCommand 🚫 Agent {$agent->id} ({$agent->extension}) is already in a call.");
                         break;
