@@ -89,10 +89,17 @@ class ADistMakeCallCommand extends Command
 
                     Log::info("ADistMakeCallCommand ✅ File ID {$feed->id} is within time range");
 
-                    $feedData = ADistData::where('feed_id', $feed->id)->where('state', 'new')->first();
+                    // Fetch only one new call (to prevent multiple calls for the same number)
+                    $feedData = ADistData::where('feed_id', $feed->id)
+                        ->where('state', 'new')
+                        ->first(); // ✅ Use first() to avoid duplicate calls
+
                     if (!$feedData) {
                         continue;
                     }
+
+                    // Locking Mechanism: Mark the call as "Initiating" immediately to prevent duplicate calls
+                    $feedData->update(['state' => 'Initiating']);
 
                     try {
                         if ($agent->status !== "Available") {
@@ -139,7 +146,8 @@ class ADistMakeCallCommand extends Command
                                 ]);
 
                                 Log::info("ADistMakeCallCommand 📞 Call initiated successfully for {$feedData->mobile}");
-                                break;
+
+                                break; // ✅ Stop after making one call
                             } catch (RequestException $e) {
                                 Log::error("ADistMakeCallCommand ❌ Failed to make call to {$feedData->mobile}: " . $e->getMessage());
                             }
