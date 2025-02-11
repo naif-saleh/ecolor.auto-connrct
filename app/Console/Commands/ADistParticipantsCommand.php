@@ -69,18 +69,23 @@ class ADistParticipantsCommand extends Command
 
                 $durationTime = null;
                 $durationRouting = null;
+                $durationRinging = null; // To track ringing duration
 
-                if ($status === 'Talking' || $status === 'Routing') {
+                if ($status === 'Talking' || $status === 'Routing' || $status === 'Ringing') {
                     $establishedAt = new DateTime($call['EstablishedAt']);
                     $serverNow = new DateTime($call['ServerNow']);
                     $duration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
 
+                    // Set duration based on the status
                     if ($status === 'Talking') {
                         $durationTime = $duration;
                     } elseif ($status === 'Routing') {
                         $durationRouting = $duration;
+                    } elseif ($status === 'Ringing') {
+                        $durationRinging = $duration;
                     }
                 }
+
 
                 // Transaction to update database
                 DB::beginTransaction();
@@ -89,7 +94,8 @@ class ADistParticipantsCommand extends Command
                         ->update([
                             'status' => $status,
                             'duration_time' => $durationTime,
-                            'duration_routing' => $durationRouting
+                            'duration_routing' => $durationRouting,
+                            'duration_ringing' => $durationRinging
                         ]);
 
                     ADistData::where('call_id', $callId)
