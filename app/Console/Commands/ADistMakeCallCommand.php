@@ -146,18 +146,15 @@ class ADistMakeCallCommand extends Command
                             } catch (RequestException $e) {
                                 Log::error("ADistMakeCallCommand ❌ Failed to make call to {$feedData->mobile}: " . $e->getMessage());
                             }
-
-
                         }
                     } catch (\Exception $e) {
                         Log::error("ADistMakeCallCommand General error making call: " . $e->getMessage());
                     }
-
-                }
-                // Mark file as done if all calls are processed
-                if (!ADistData::where('feed_id', $feed->id)->where('state', 'new')->exists()) {
-                    $feed->update(['is_done' => true]);
-                    Log::info("ADIAL ✅✅✅ All numbers called for feed ID: {$feed->id}");
+                    // Mark file as done if all calls are processed
+                    if (!ADistData::where('feed_id', $feed->id)->where('state', 'new')->exists()) {
+                        $feed->update(['is_done' => true]);
+                        Log::info("ADIAL ✅✅✅ All numbers called for feed ID: {$feed->id}");
+                    }
                 }
             }
         } catch (\Exception $e) {
