@@ -45,12 +45,12 @@ class ADistParticipantsCommand extends Command
                     ->get(config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls");
 
                 if (!$activeCallsResponse->successful()) {
-                    Log::error("ADistParticipantsCommand ❌ Failed to fetch active calls. Response: " . $activeCallsResponse->body());
+                    Log::error("ADistParticipantsCommand ❌ Failed to fetch active calls.");
                     return;
                 }
 
                 $activeCalls = $activeCallsResponse->json();
-
+                
                 if (empty($activeCalls['value'])) {
                     Log::info("ADistParticipantsCommand ℹ️ No active calls at the moment.");
                     return;
