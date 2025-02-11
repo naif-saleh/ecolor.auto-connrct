@@ -44,9 +44,9 @@ class ADistMakeCallCommand extends Command
                 if (now()->between($from, $to)) {
                     Log::info("ADistMakeCallCommand ✅ File ID {$feed->id} is within time range");
 
-                    ADistData::where('feed_id', $feed->id)->where('state', 'new')
-                        ->chunk(50, function ($dataChunk) use ($agent) {
-                            foreach ($dataChunk as $feedData) {
+                   $feed = ADistData::where('feed_id', $feed->id)->where('state', 'new')->get();
+                        // ->chunk(50, function ($dataChunk) use ($agent) {
+                            foreach ($feed as $feedData) {
                                 try {
                                     if ($agent->status !== "Available") {
                                         Log::error("ADistMakeCallCommand 📵 Agent {$agent->id} not available, skipping call to {$feedData->mobile}");
@@ -119,7 +119,7 @@ class ADistMakeCallCommand extends Command
                                     Log::error("ADistMakeCallCommand ❌ Error making call: " . $e->getMessage());
                                 }
                             }
-                        });
+                        // });
                 } else {
                     Log::info("ADistMakeCallCommand ⏰ File ID {$feed->id} is not within time range");
                 }

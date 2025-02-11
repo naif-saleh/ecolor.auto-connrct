@@ -30,7 +30,7 @@ class ADistParticipantsCommand extends Command
         Log::info('ADistParticipantsCommand executed at ' . Carbon::now());
 
 
-        $agents = ADistAgent::all();
+        // $agents = ADistAgent::all();
         // foreach ($agents as $agent) {
             try {
                 $token = $this->tokenService->getToken();
@@ -50,7 +50,7 @@ class ADistParticipantsCommand extends Command
                 }
 
                 $activeCalls = $activeCallsResponse->json();
-                
+
                 if (empty($activeCalls['value'])) {
                     Log::info("ADistParticipantsCommand ℹ️ No active calls at the moment.");
                     return;
