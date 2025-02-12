@@ -43,30 +43,27 @@ class ADistMakeCallCommand extends Command
             $token = $this->tokenService->getToken();
 
             // Get active calls
-            try {
-                $activeResponse = $client->get('/xapi/v1/ActiveCalls', [
-                    'headers' => ['Authorization' => "Bearer $token"],
-                    'timeout' => 3
-                ]);
 
-                $activeCalls = json_decode($activeResponse->getBody(), true);
+            $activeResponse = $client->get('/xapi/v1/ActiveCalls', [
+                'headers' => ['Authorization' => "Bearer $token"],
+                'timeout' => 3
+            ]);
 
-                // Check for ANY active or in-progress calls for agents
-                $activeSysCalls = AutoDistributerReport::whereIn('status', ['Initiating', 'InProgress', 'Ringing'])
-                    ->where(function ($query) {
-                        $query->where('created_at', '>=', now()->subMinutes(60)) // Check last hour for InProgress calls
-                            ->orWhere(function ($q) {
-                                $q->where('status', 'Initiating')
-                                   ->where('created_at', '>=', now()->subSeconds(30)); // Only recent initiating calls
-                            });
-                    })
-                    ->whereNotIn('status', ['Ended', 'Completed', 'Failed', 'NoAnswer'])
-                    ->get();
+            $activeCalls = json_decode($activeResponse->getBody(), true);
 
-            } catch (RequestException $e) {
-                Log::error("ADistMakeCallCommand ❌ Failed to fetch call status: " . $e->getMessage());
-                return;
-            }
+            // Check for ANY active or in-progress calls for agents
+            $activeSysCalls = AutoDistributerReport::whereIn('status', ['Initiating', 'InProgress', 'Ringing'])
+                ->where(function ($query) {
+                    $query->where('created_at', '>=', now()->subMinutes(60)) // Check last hour for InProgress calls
+                        ->orWhere(function ($q) {
+                            $q->where('status', 'Initiating')
+                                ->where('created_at', '>=', now()->subSeconds(30)); // Only recent initiating calls
+                        });
+                })
+                ->whereNotIn('status', ['Ended', 'Completed', 'Failed', 'NoAnswer'])
+                ->get();
+
+
 
             $activeCallsList = $activeCalls['value'] ?? [];
             Log::info("ADistMakeCallCommand Active Calls Retrieved: " . print_r($activeCallsList, true));
@@ -103,10 +100,10 @@ class ADistMakeCallCommand extends Command
                     ->where(function ($query) {
                         $query->where(function ($q) {
                             $q->where('status', 'InProgress')
-                              ->where('created_at', '>=', now()->subMinutes(60));
+                                ->where('created_at', '>=', now()->subMinutes(60));
                         })->orWhere(function ($q) {
                             $q->whereIn('status', ['Initiating', 'Ringing'])
-                              ->where('created_at', '>=', now()->subSeconds(30));
+                                ->where('created_at', '>=', now()->subSeconds(30));
                         });
                     })
                     ->whereNotIn('status', ['Ended', 'Completed', 'Failed', 'NoAnswer'])
@@ -195,7 +192,7 @@ class ADistMakeCallCommand extends Command
                                 $responseData = json_decode($responseState->getBody(), true);
 
                                 // Update records in transaction
-                                DB::transaction(function() use ($responseData, $feedData) {
+                                DB::transaction(function () use ($responseData, $feedData) {
                                     AutoDistributerReport::create([
                                         'call_id' => $responseData['result']['callid'],
                                         'status' => "Initiating",
@@ -229,7 +226,6 @@ class ADistMakeCallCommand extends Command
                                 ->where('state', 'new');
                         })
                         ->update(['is_done' => true]);
-
                 } finally {
                     Cache::forget($lockKey);
                 }
