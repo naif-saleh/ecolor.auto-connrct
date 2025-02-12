@@ -51,9 +51,14 @@ class ADistMakeCallCommand extends Command
 
                 $activeCalls = json_decode($activeResponse->getBody(), true);
 
-                // Check recent pending calls
+                // Check recent pending calls and active calls in our system
                 $pendingCalls = AutoDistributerReport::where('status', 'Initiating')
                     ->where('created_at', '>=', now()->subSeconds(30))
+                    ->get();
+
+                // Also check for any calls that are in progress (not just initiating)
+                $activeSysCalls = AutoDistributerReport::whereIn('status', ['Initiating', 'InProgress', 'Ringing'])
+                    ->where('created_at', '>=', now()->subMinutes(60))  // Check last hour to be safe
                     ->get();
 
             } catch (RequestException $e) {
@@ -64,50 +69,83 @@ class ADistMakeCallCommand extends Command
             $activeCallsList = $activeCalls['value'] ?? [];
             Log::info("ADistMakeCallCommand Active Calls Retrieved: " . print_r($activeCallsList, true));
 
-            // Track busy extensions
+            // Enhanced busy extensions tracking with reason logging
             $busyExtensions = [];
+            $busyReasons = []; // Track why each extension is busy
+
+            // Track from 3CX active calls
             foreach ($activeCallsList as $call) {
                 $busyExtensions[$call['Caller']] = true;
+                $busyReasons[$call['Caller']] = "Active 3CX call as caller with {$call['Callee']}";
+
+                // Also mark the destination as busy if it's an internal extension
+                if (isset($call['Callee']) && strlen($call['Callee']) <= 6) {
+                    $busyExtensions[$call['Callee']] = true;
+                    $busyReasons[$call['Callee']] = "Active 3CX call as receiver from {$call['Caller']}";
+                }
             }
 
+            // Track from pending calls
             foreach ($pendingCalls as $call) {
                 $busyExtensions[$call->extension] = true;
+                $busyReasons[$call->extension] = "Pending call initiated at {$call->created_at}";
+            }
+
+            // Track from active system calls
+            foreach ($activeSysCalls as $call) {
+                $busyExtensions[$call->extension] = true;
+                $busyReasons[$call->extension] = "Active system call in {$call->status} status since {$call->created_at}";
             }
 
             // Get available agents
             $agents = ADistAgent::all();
 
             foreach ($agents as $agent) {
-                // Check if agent is busy
+                // Log current agent processing
+                Log::info("ADistMakeCallCommand Processing Agent {$agent->id} ({$agent->extension})");
+
+                // Check and log 3CX/System call status
                 if (isset($busyExtensions[$agent->extension])) {
-                    Log::info("ADistMakeCallCommand Agent {$agent->id} ({$agent->extension}) is busy with active or pending call.");
+                    Log::info("ADistMakeCallCommand ⚠️ Agent {$agent->id} ({$agent->extension}) is busy: {$busyReasons[$agent->extension]}");
                     continue;
                 }
 
-                // Check if agent is available
-                if ($agent->status !== "Available") {
-                    Log::info("ADistMakeCallCommand Agent {$agent->id} ({$agent->extension}) not available");
+                // Check for active calls in our system
+                $activeSystemCall = AutoDistributerReport::where('extension', $agent->extension)
+                    ->whereIn('status', ['Initiating', 'InProgress', 'Ringing'])
+                    ->where('created_at', '>=', now()->subMinutes(60))
+                    ->first();
+
+                if ($activeSystemCall) {
+                    Log::info("ADistMakeCallCommand ⚠️ Agent {$agent->id} ({$agent->extension}) has active system call: Status {$activeSystemCall->status} since {$activeSystemCall->created_at}");
                     continue;
                 }
 
                 // Check for pending calls
-                $hasPendingCall = ADistData::where('state', 'Initiating')
+                $pendingCall = ADistData::where('state', 'Initiating')
                     ->where('updated_at', '>=', now()->subSeconds(30))
                     ->whereExists(function ($query) use ($agent) {
                         $query->from('a_dist_feeds')
                             ->whereColumn('a_dist_feeds.id', 'a_dist_data.feed_id')
                             ->where('a_dist_feeds.agent_id', $agent->id);
                     })
-                    ->exists();
+                    ->first();
 
-                if ($hasPendingCall) {
-                    Log::info("ADistMakeCallCommand Agent {$agent->id} ({$agent->extension}) is busy with active or pending call.");
+                if ($pendingCall) {
+                    Log::info("ADistMakeCallCommand ⚠️ Agent {$agent->id} ({$agent->extension}) has pending call initiated at {$pendingCall->updated_at}");
+                    continue;
+                }
+
+                // Check if agent is available
+                if ($agent->status !== "Available") {
+                    Log::info("ADistMakeCallCommand Agent {$agent->id} ({$agent->extension}) not available - Status: {$agent->status}");
                     continue;
                 }
 
                 // Use lock to prevent race conditions
                 $lockKey = "agent_call_lock_{$agent->id}";
                 if (!Cache::add($lockKey, true, now()->addSeconds(10))) {
+                    Log::info("ADistMakeCallCommand Agent {$agent->id} ({$agent->extension}) is locked by another process");
                     continue;
                 }
 
@@ -138,6 +176,12 @@ class ADistMakeCallCommand extends Command
                         }
 
                         try {
+                            // Final busy check before making the call
+                            if (isset($busyExtensions[$agent->extension])) {
+                                Log::info("ADistMakeCallCommand ⚠️ Agent {$agent->id} ({$agent->extension}) became busy before call initiation: {$busyReasons[$agent->extension]}");
+                                continue;
+                            }
+
                             // Get devices
                             $devicesResponse = $client->get("/callcontrol/{$agent->extension}/devices", [
                                 'headers' => ['Authorization' => "Bearer $token"],
@@ -148,12 +192,6 @@ class ADistMakeCallCommand extends Command
 
                             foreach ($dnDevices as $device) {
                                 if ($device['user_agent'] !== '3CX Mobile Client') continue;
-
-                                // Final check before making call
-                                if (isset($busyExtensions[$agent->extension])) {
-                                    Log::info("ADistMakeCallCommand Agent {$agent->id} ({$agent->extension}) became busy before call initiation");
-                                    continue;
-                                }
 
                                 // Make the call
                                 $responseState = $client->post("/callcontrol/{$agent->extension}/devices/{$device['device_id']}/makecall", [
