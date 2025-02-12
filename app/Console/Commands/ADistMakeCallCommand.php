@@ -53,7 +53,7 @@ class ADistMakeCallCommand extends Command
 
                 // Only check very recent pending calls (last 30 seconds)
                 $pendingCalls = AutoDistributerReport::where('status', 'Initiating')
-                    ->where('created_at', '>=', now()->subSeconds(30))
+                    ->where('created_at', '>=', now()->subSeconds(60))
                     ->get();
 
             } catch (RequestException $e) {
@@ -83,7 +83,7 @@ class ADistMakeCallCommand extends Command
 
                 // Quick check for very recent pending calls
                 $hasPendingCall = ADistData::where('state', 'Initiating')
-                    ->where('updated_at', '>=', now()->subSeconds(30))
+                    ->where('updated_at', '>=', now()->subSeconds(60))
                     ->whereExists(function ($query) use ($agent) {
                         $query->from('a_dist_feeds')
                             ->whereColumn('a_dist_feeds.id', 'a_dist_data.feed_id')
