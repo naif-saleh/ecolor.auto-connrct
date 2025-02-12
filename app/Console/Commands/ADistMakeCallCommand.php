@@ -44,6 +44,7 @@ class ADistMakeCallCommand extends Command
 
             // Get active calls
             try {
+                $token = $this->tokenService->getToken();
                 $activeResponse = $client->get('/xapi/v1/ActiveCalls', [
                     'headers' => ['Authorization' => "Bearer $token"],
                     'timeout' => 3
