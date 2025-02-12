@@ -70,17 +70,12 @@ class ADistParticipantsCommand extends Command
                 $durationTime = null;
                 $durationRouting = null;
 
-                if ($status === 'Talking' || $status === 'Routing') {
+
                     $establishedAt = new DateTime($call['EstablishedAt']);
                     $serverNow = new DateTime($call['ServerNow']);
                     $duration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
 
-                    if ($status === 'Talking') {
-                        $durationTime = $duration;
-                    } elseif ($status === 'Routing') {
-                        $durationRouting = $duration;
-                    }
-                }
+
 
                 // Transaction to update database
                 DB::beginTransaction();
@@ -88,8 +83,8 @@ class ADistParticipantsCommand extends Command
                     AutoDistributerReport::where('call_id', $callId)
                         ->update([
                             'status' => $status,
-                            'duration_time' => $durationTime,
-                            'duration_routing' => $durationRouting
+                            'duration_time' => $duration,
+                            'duration_routing' => $duration
                         ]);
 
                     ADistData::where('call_id', $callId)
