@@ -71,14 +71,14 @@ class ADistMakeCallCommand extends Command
             foreach ($agents as $agent) {
                 Log::info("ADistMakeCallCommand Processing Agent {$agent->id} ({$agent->extension})");
 
-                // Enhanced active call check (Includes answered calls)
+                // Ensure agent is not on an active call
                 $activeSystemCall = AutoDistributerReport::where('extension', $agent->extension)
                     ->whereIn('status', ['Initiating', 'InProgress', 'Ringing', 'Answered'])
                     ->whereNotIn('status', ['Ended', 'Completed', 'Failed', 'NoAnswer'])
                     ->exists();
 
                 if ($activeSystemCall) {
-                    Log::info("ADistMakeCallCommand ⚠️ Agent {$agent->id} ({$agent->extension}) has an active or answered call");
+                    Log::info("ADistMakeCallCommand ⚠️ Agent {$agent->id} ({$agent->extension}) is currently on a call");
                     continue;
                 }
 
@@ -150,7 +150,7 @@ class ADistMakeCallCommand extends Command
 
                             $responseData = json_decode($responseState->getBody(), true);
 
-                            DB::transaction(function () use ($responseData, $feedData) {
+                            DB::transaction(function () use ($responseData, $feedData, $agent) {
                                 AutoDistributerReport::create([
                                     'call_id' => $responseData['result']['callid'],
                                     'status' => "Answered",
@@ -165,6 +165,9 @@ class ADistMakeCallCommand extends Command
                                     'call_date' => now(),
                                     'call_id' => $responseData['result']['callid'],
                                 ]);
+
+                                // Ensure agent is set back to available after call completion
+                                ADistAgent::where('id', $agent->id)->update(['status' => 'Available']);
                             });
 
                             Log::info("ADistMakeCallCommand 📞 Call initiated for {$feedData->mobile} by Agent {$agent->id} ({$agent->extension})");
@@ -178,6 +181,7 @@ class ADistMakeCallCommand extends Command
         } catch (\Exception $e) {
             Log::error("ADistMakeCallCommand ❌ General error: " . $e->getMessage());
         }
+
 
 
     }
