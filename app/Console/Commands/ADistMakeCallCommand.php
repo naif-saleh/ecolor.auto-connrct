@@ -54,7 +54,7 @@ class ADistMakeCallCommand extends Command
             // Check for ANY active or in-progress calls for agents
             $activeSysCalls = AutoDistributerReport::whereIn('status', ['Initiating', 'InProgress', 'Ringing'])
                 ->where(function ($query) {
-                    $query->where('created_at', '>=', now()->subMinutes(60)) // Check last hour for InProgress calls
+                    $query->where('created_at', '>=', now()->subSeconds(10)) // Check last hour for InProgress calls
                         ->orWhere(function ($q) {
                             $q->where('status', 'Initiating')
                                 ->where('created_at', '>=', now()->subSeconds(30)); // Only recent initiating calls
