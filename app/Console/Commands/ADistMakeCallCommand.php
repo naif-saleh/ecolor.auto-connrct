@@ -40,23 +40,18 @@ class ADistMakeCallCommand extends Command
 
             $token = $this->tokenService->getToken();
 
-            // ✅ Auto-reset stale calls (older than 2 minutes)
-            AutoDistributerReport::whereIn('status', ['Initiating', 'InProgress', 'Ringing'])
-                ->where('created_at', '<', now()->subMinutes(2))
-                ->update(['status' => 'Ended']);
-
-            // ✅ Get latest active calls from 3CX API
-            $activeCallsResponse = $client->get('/xapi/v1/ActiveCalls', [
+            // Get active calls
+            $activeResponse = $client->get('/xapi/v1/ActiveCalls', [
                 'headers' => ['Authorization' => "Bearer $token"],
                 'timeout' => 3
             ]);
 
-            $activeCalls = json_decode($activeCallsResponse->getBody(), true);
+            $activeCalls = json_decode($activeResponse->getBody(), true);
             $activeCallsList = $activeCalls['value'] ?? [];
 
-            Log::info("📞 Active calls from 3CX API: " . print_r($activeCallsList, true));
+            Log::info("ADistMakeCallCommand Active Calls Retrieved: " . print_r($activeCallsList, true));
 
-            // ✅ Track busy extensions
+            // Track busy agents
             $busyExtensions = [];
             $busyReasons = [];
 
@@ -70,34 +65,40 @@ class ADistMakeCallCommand extends Command
                 }
             }
 
-            // ✅ Get agents
+            // Get available agents
             $agents = ADistAgent::all();
 
             foreach ($agents as $agent) {
-                Log::info("🔍 Checking agent {$agent->id} ({$agent->extension})");
+                Log::info("ADistMakeCallCommand Processing Agent {$agent->id} ({$agent->extension})");
 
-                // ✅ Final busy check before processing the agent
-                $isBusy = isset($busyExtensions[$agent->extension]);
+                // Enhanced active call check (Includes answered calls)
+                $activeSystemCall = AutoDistributerReport::where('extension', $agent->extension)
+                    ->whereIn('status', ['Initiating', 'InProgress', 'Ringing', 'Answered'])
+                    ->whereNotIn('status', ['Ended', 'Completed', 'Failed', 'NoAnswer'])
+                    ->exists();
 
-                if ($isBusy) {
-                    Log::warning("⚠️ Agent {$agent->id} ({$agent->extension}) is STILL busy. Reason: " . ($busyReasons[$agent->extension] ?? 'Unknown'));
+                if ($activeSystemCall) {
+                    Log::info("ADistMakeCallCommand ⚠️ Agent {$agent->id} ({$agent->extension}) has an active or answered call");
+                    continue;
+                }
+
+                if (isset($busyExtensions[$agent->extension])) {
+                    Log::info("ADistMakeCallCommand ⚠️ Agent {$agent->id} ({$agent->extension}) is busy: {$busyReasons[$agent->extension]}");
                     continue;
                 }
 
                 if ($agent->status !== "Available") {
-                    Log::info("⏳ Agent {$agent->id} ({$agent->extension}) is not available - Status: {$agent->status}");
+                    Log::info("ADistMakeCallCommand Agent {$agent->id} ({$agent->extension}) not available - Status: {$agent->status}");
                     continue;
                 }
 
-                // ✅ Lock agent to prevent race conditions
                 $lockKey = "agent_call_lock_{$agent->id}";
                 if (!Cache::add($lockKey, true, now()->addSeconds(10))) {
-                    Log::info("🚫 Agent {$agent->id} ({$agent->extension}) is locked by another process");
+                    Log::info("ADistMakeCallCommand Agent {$agent->id} ({$agent->extension}) is locked by another process");
                     continue;
                 }
 
                 try {
-                    // ✅ Find eligible feeds
                     $feeds = ADistFeed::where('agent_id', $agent->id)
                         ->whereDate('date', today())
                         ->where('allow', true)
@@ -112,92 +113,72 @@ class ADistMakeCallCommand extends Command
                             continue;
                         }
 
-                        // ✅ Get one new call
                         $feedData = ADistData::where('feed_id', $feed->id)
                             ->where('state', 'new')
                             ->lockForUpdate()
                             ->first();
 
                         if (!$feedData) {
-                            Cache::forget($lockKey);
-                            Log::info("✅ Unlocking agent {$agent->id} ({$agent->extension}) - No available call data.");
                             continue;
                         }
 
-                        try {
-                            // ✅ Final verification before making the call
-                            $finalCheck = AutoDistributerReport::where('extension', $agent->extension)
-                                ->whereIn('status', ['Initiating', 'InProgress', 'Ringing'])
-                                ->whereNotIn('status', ['Ended', 'Completed', 'Failed', 'NoAnswer'])
-                                ->exists();
+                        $finalCheck = AutoDistributerReport::where('extension', $agent->extension)
+                            ->whereIn('status', ['Initiating', 'InProgress', 'Ringing', 'Answered'])
+                            ->whereNotIn('status', ['Ended', 'Completed', 'Failed', 'NoAnswer'])
+                            ->exists();
 
-                            if ($finalCheck) {
-                                Log::info("⚠️ Agent {$agent->id} ({$agent->extension}) became busy before call initiation");
-                                continue;
-                            }
+                        if ($finalCheck) {
+                            Log::info("ADistMakeCallCommand ⚠️ Agent {$agent->id} ({$agent->extension}) became busy before call initiation");
+                            continue;
+                        }
 
-                            // ✅ Get agent devices
-                            $devicesResponse = $client->get("/callcontrol/{$agent->extension}/devices", [
+                        $devicesResponse = $client->get("/callcontrol/{$agent->extension}/devices", [
+                            'headers' => ['Authorization' => "Bearer $token"],
+                            'timeout' => 2
+                        ]);
+
+                        $dnDevices = json_decode($devicesResponse->getBody(), true);
+
+                        foreach ($dnDevices as $device) {
+                            if ($device['user_agent'] !== '3CX Mobile Client') continue;
+
+                            $responseState = $client->post("/callcontrol/{$agent->extension}/devices/{$device['device_id']}/makecall", [
                                 'headers' => ['Authorization' => "Bearer $token"],
+                                'json' => ['destination' => $feedData->mobile],
                                 'timeout' => 2
                             ]);
 
-                            $dnDevices = json_decode($devicesResponse->getBody(), true);
+                            $responseData = json_decode($responseState->getBody(), true);
 
-                            foreach ($dnDevices as $device) {
-                                if ($device['user_agent'] !== '3CX Mobile Client') continue;
-
-                                // ✅ Make the call
-                                $responseState = $client->post("/callcontrol/{$agent->extension}/devices/{$device['device_id']}/makecall", [
-                                    'headers' => ['Authorization' => "Bearer $token"],
-                                    'json' => ['destination' => $feedData->mobile],
-                                    'timeout' => 2
+                            DB::transaction(function () use ($responseData, $feedData) {
+                                AutoDistributerReport::create([
+                                    'call_id' => $responseData['result']['callid'],
+                                    'status' => "Answered",
+                                    'provider' => $responseData['result']['dn'],
+                                    'extension' => $responseData['result']['dn'],
+                                    'phone_number' => $responseData['result']['party_caller_id'],
+                                    'attempt_time' => now(),
                                 ]);
 
-                                $responseData = json_decode($responseState->getBody(), true);
+                                $feedData->update([
+                                    'state' => "Answered",
+                                    'call_date' => now(),
+                                    'call_id' => $responseData['result']['callid'],
+                                ]);
+                            });
 
-                                // ✅ Update records in a transaction
-                                DB::transaction(function () use ($responseData, $feedData) {
-                                    AutoDistributerReport::create([
-                                        'call_id' => $responseData['result']['callid'],
-                                        'status' => "Initiating",
-                                        'provider' => $responseData['result']['dn'],
-                                        'extension' => $responseData['result']['dn'],
-                                        'phone_number' => $responseData['result']['party_caller_id'],
-                                        'attempt_time' => now(),
-                                    ]);
-
-                                    $feedData->update([
-                                        'state' => "Initiating",
-                                        'call_date' => now(),
-                                        'call_id' => $responseData['result']['callid'],
-                                    ]);
-                                });
-
-                                Log::info("📞 Call initiated for {$feedData->mobile} by Agent {$agent->id} ({$agent->extension})");
-                                break 3; // ✅ Exit all loops after a successful call
-                            }
-                        } catch (RequestException $e) {
-                            Log::error("❌ Call failed for {$feedData->mobile}: " . $e->getMessage());
+                            Log::info("ADistMakeCallCommand 📞 Call initiated for {$feedData->mobile} by Agent {$agent->id} ({$agent->extension})");
+                            break 3;
                         }
                     }
-
-                    // ✅ Mark feeds as done if no more new calls
-                    ADistFeed::where('agent_id', $agent->id)
-                        ->whereDate('date', today())
-                        ->whereNotExists(function ($query) {
-                            $query->from('a_dist_data')
-                                ->whereColumn('feed_id', 'a_dist_feeds.id')
-                                ->where('state', 'new');
-                        })
-                        ->update(['is_done' => true]);
                 } finally {
                     Cache::forget($lockKey);
                 }
             }
         } catch (\Exception $e) {
-            Log::error("❌ General error: " . $e->getMessage());
+            Log::error("ADistMakeCallCommand ❌ General error: " . $e->getMessage());
         }
+
 
     }
 }
