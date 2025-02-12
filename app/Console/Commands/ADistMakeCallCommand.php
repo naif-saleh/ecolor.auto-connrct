@@ -100,10 +100,10 @@ class ADistMakeCallCommand extends Command
                     ->where(function ($query) {
                         $query->where(function ($q) {
                             $q->where('status', 'InProgress')
-                                ->where('created_at', '>=', now()->subMinutes(60));
+                                ->where('created_at', '>=', now()->subSeconds(60));
                         })->orWhere(function ($q) {
                             $q->whereIn('status', ['Initiating', 'Ringing'])
-                                ->where('created_at', '>=', now()->subSeconds(30));
+                                ->where('created_at', '>=', now()->subSeconds(60));
                         });
                     })
                     ->whereNotIn('status', ['Ended', 'Completed', 'Failed', 'NoAnswer'])
