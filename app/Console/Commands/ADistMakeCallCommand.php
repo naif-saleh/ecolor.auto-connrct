@@ -80,7 +80,7 @@ class ADistMakeCallCommand extends Command
                 // Ensure agent is not on an active call
                 $activeSystemCall = AutoDistributerReport::where('extension', $agent->extension)
                     ->whereIn('status', ['Initiating', 'InProgress', 'Ringing'])
-                    ->whereNotIn('status', ['Ended', 'Completed', 'Failed', 'NoAnswer'])
+                   
                     ->exists();
 
                 if ($activeSystemCall) {
