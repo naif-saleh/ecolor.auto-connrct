@@ -65,6 +65,12 @@ class ADistMakeCallCommand extends Command
                 }
             }
 
+            // Ensure completed calls are cleared from the busy list
+            $endedCalls = AutoDistributerReport::whereIn('status', ['Ended', 'Completed', 'Failed', 'NoAnswer'])->get();
+            foreach ($endedCalls as $call) {
+                unset($busyExtensions[$call->extension]);
+            }
+
             // Get available agents
             $agents = ADistAgent::all();
 
@@ -154,7 +160,7 @@ class ADistMakeCallCommand extends Command
                                 AutoDistributerReport::create([
                                     'call_id' => $responseData['result']['callid'],
                                     'status' => "Answered",
-                                    'provider' => $responseData['result']['dn'],
+                                    'provider' => $feedData->file->file_name,
                                     'extension' => $responseData['result']['dn'],
                                     'phone_number' => $responseData['result']['party_caller_id'],
                                     'attempt_time' => now(),
@@ -165,9 +171,6 @@ class ADistMakeCallCommand extends Command
                                     'call_date' => now(),
                                     'call_id' => $responseData['result']['callid'],
                                 ]);
-
-                                // Ensure agent is set back to available after call completion
-                                ADistAgent::where('id', $agent->id)->update(['status' => 'Available']);
                             });
 
                             Log::info("ADistMakeCallCommand 📞 Call initiated for {$feedData->mobile} by Agent {$agent->id} ({$agent->extension})");
