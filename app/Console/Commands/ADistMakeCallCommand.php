@@ -43,7 +43,7 @@ class ADistMakeCallCommand extends Command
             $token = $this->tokenService->getToken();
 
             // Get active calls
-            try {
+
                 $activeResponse = $client->get('/xapi/v1/ActiveCalls', [
                     'headers' => ['Authorization' => "Bearer $token"],
                     'timeout' => 3
@@ -62,10 +62,7 @@ class ADistMakeCallCommand extends Command
                     ->whereNotIn('status', ['Ended', 'Completed', 'Failed', 'NoAnswer'])  // Explicitly exclude finished calls
                     ->get();
 
-            } catch (RequestException $e) {
-                Log::error("ADistMakeCallCommand ❌ Failed to fetch call status: " . $e->getMessage());
-                return;
-            }
+            
 
             $activeCallsList = $activeCalls['value'] ?? [];
             Log::info("ADistMakeCallCommand Active Calls Retrieved: " . print_r($activeCallsList, true));
