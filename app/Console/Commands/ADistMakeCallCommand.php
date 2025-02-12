@@ -83,10 +83,7 @@ class ADistMakeCallCommand extends Command
                     ->whereNotIn('status', ['Ended', 'Completed', 'Failed', 'NoAnswer'])
                     ->exists();
 
-                if ($activeSystemCall) {
-                    Log::info("ADistMakeCallCommand ⚠️ Agent {$agent->id} ({$agent->extension}) is currently on a call");
-                    continue;
-                }
+                 
 
                 if (isset($busyExtensions[$agent->extension])) {
                     Log::info("ADistMakeCallCommand ⚠️ Agent {$agent->id} ({$agent->extension}) is busy: {$busyReasons[$agent->extension]}");
