@@ -207,7 +207,7 @@ class ADistMakeCallCommand extends Command
                                     AutoDistributerReport::create([
                                         'call_id' => $responseData['result']['callid'],
                                         'status' => "Initiating",
-                                        'provider' => $responseData['result']['dn'],
+                                        'provider' => $feedData->file->file_name,
                                         'extension' => $responseData['result']['dn'],
                                         'phone_number' => $responseData['result']['party_caller_id'],
                                         'attempt_time' => now(),
