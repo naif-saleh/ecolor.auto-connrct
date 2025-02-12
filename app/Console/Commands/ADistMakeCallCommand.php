@@ -42,37 +42,33 @@ class ADistMakeCallCommand extends Command
 
             $token = $this->tokenService->getToken();
 
-            // Get active calls
+            // Get active calls from 3CX - this is our primary source of truth
+            try {
+                $activeResponse = $client->get('/xapi/v1/ActiveCalls', [
+                    'headers' => ['Authorization' => "Bearer $token"],
+                    'timeout' => 3
+                ]);
 
-            $activeResponse = $client->get('/xapi/v1/ActiveCalls', [
-                'headers' => ['Authorization' => "Bearer $token"],
-                'timeout' => 3
-            ]);
+                $activeCalls = json_decode($activeResponse->getBody(), true);
 
-            $activeCalls = json_decode($activeResponse->getBody(), true);
+                // Only check very recent initiating calls (last 15 seconds) to prevent overlap
+                $pendingCalls = AutoDistributerReport::where('status', 'Initiating')
+                    ->where('created_at', '>=', now()->subSeconds(15))
+                    ->get();
 
-            // Check for ANY active or in-progress calls for agents
-            $activeSysCalls = AutoDistributerReport::whereIn('status', ['Initiating', 'InProgress', 'Ringing'])
-                ->where(function ($query) {
-                    $query->where('created_at', '>=', now()->subSeconds(10)) // Check last hour for InProgress calls
-                        ->orWhere(function ($q) {
-                            $q->where('status', 'Initiating')
-                                ->where('created_at', '>=', now()->subSeconds(30)); // Only recent initiating calls
-                        });
-                })
-                ->whereNotIn('status', ['Ended', 'Completed', 'Failed', 'NoAnswer'])
-                ->get();
-
-
+            } catch (RequestException $e) {
+                Log::error("ADistMakeCallCommand ❌ Failed to fetch call status: " . $e->getMessage());
+                return;
+            }
 
             $activeCallsList = $activeCalls['value'] ?? [];
             Log::info("ADistMakeCallCommand Active Calls Retrieved: " . print_r($activeCallsList, true));
 
-            // Enhanced busy extensions tracking with reason logging
+            // Track busy extensions - ONLY from current 3CX active calls and very recent initiating calls
             $busyExtensions = [];
             $busyReasons = [];
 
-            // Track from 3CX active calls
+            // Track from current 3CX active calls
             foreach ($activeCallsList as $call) {
                 $busyExtensions[$call['Caller']] = true;
                 $busyReasons[$call['Caller']] = "Active 3CX call as caller with {$call['Callee']}";
@@ -83,10 +79,10 @@ class ADistMakeCallCommand extends Command
                 }
             }
 
-            // Track from active system calls - enhanced check for InProgress
-            foreach ($activeSysCalls as $call) {
+            // Only track very recent pending calls to prevent overlap
+            foreach ($pendingCalls as $call) {
                 $busyExtensions[$call->extension] = true;
-                $busyReasons[$call->extension] = "Active system call in {$call->status} status since {$call->created_at}";
+                $busyReasons[$call->extension] = "Pending call initiated at {$call->created_at}";
             }
 
             // Get available agents
@@ -95,26 +91,7 @@ class ADistMakeCallCommand extends Command
             foreach ($agents as $agent) {
                 Log::info("ADistMakeCallCommand Processing Agent {$agent->id} ({$agent->extension})");
 
-                // Enhanced active call check including InProgress state
-                $activeSystemCall = AutoDistributerReport::where('extension', $agent->extension)
-                    ->where(function ($query) {
-                        $query->where(function ($q) {
-                            $q->where('status', 'InProgress')
-                                ->where('created_at', '>=', now()->subMinutes(60));
-                        })->orWhere(function ($q) {
-                            $q->whereIn('status', ['Initiating', 'Ringing'])
-                                ->where('created_at', '>=', now()->subSeconds(30));
-                        });
-                    })
-                    ->whereNotIn('status', ['Ended', 'Completed', 'Failed', 'NoAnswer'])
-                    ->first();
-
-                if ($activeSystemCall) {
-                    Log::info("ADistMakeCallCommand ⚠️ Agent {$agent->id} ({$agent->extension}) has active call: Status {$activeSystemCall->status} since {$activeSystemCall->created_at}");
-                    continue;
-                }
-
-                // Check if agent is currently busy in 3CX
+                // Check ONLY current 3CX status and very recent pending calls
                 if (isset($busyExtensions[$agent->extension])) {
                     Log::info("ADistMakeCallCommand ⚠️ Agent {$agent->id} ({$agent->extension}) is busy: {$busyReasons[$agent->extension]}");
                     continue;
@@ -160,13 +137,8 @@ class ADistMakeCallCommand extends Command
                         }
 
                         try {
-                            // Final busy check before making the call
-                            $finalCheck = AutoDistributerReport::where('extension', $agent->extension)
-                                ->whereIn('status', ['Initiating', 'InProgress', 'Ringing'])
-                                ->whereNotIn('status', ['Ended', 'Completed', 'Failed', 'NoAnswer'])
-                                ->exists();
-
-                            if ($finalCheck) {
+                            // Final check - ONLY check current 3CX status
+                            if (isset($busyExtensions[$agent->extension])) {
                                 Log::info("ADistMakeCallCommand ⚠️ Agent {$agent->id} ({$agent->extension}) became busy before call initiation");
                                 continue;
                             }
@@ -192,7 +164,7 @@ class ADistMakeCallCommand extends Command
                                 $responseData = json_decode($responseState->getBody(), true);
 
                                 // Update records in transaction
-                                DB::transaction(function () use ($responseData, $feedData) {
+                                DB::transaction(function() use ($responseData, $feedData) {
                                     AutoDistributerReport::create([
                                         'call_id' => $responseData['result']['callid'],
                                         'status' => "Initiating",
@@ -226,6 +198,7 @@ class ADistMakeCallCommand extends Command
                                 ->where('state', 'new');
                         })
                         ->update(['is_done' => true]);
+
                 } finally {
                     Cache::forget($lockKey);
                 }
