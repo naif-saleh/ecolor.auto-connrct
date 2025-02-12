@@ -125,7 +125,7 @@ class ADistAgentFeedController extends Controller
     // Display all files for an Agents
     public function files(ADistAgent $agent)
     {
-        $feeds = $agent->files()->orderBy('date', 'desc')->paginate(10); // Change 'created_at' to the correct column if needed
+        $feeds = $agent->files()->orderBy('created_at', 'desc')->paginate(10);
         return view('autoDistributerByUser.AgentFeed.feed', compact('agent', 'feeds'));
     }
 
