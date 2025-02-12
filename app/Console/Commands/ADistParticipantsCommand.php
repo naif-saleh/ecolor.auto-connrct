@@ -67,52 +67,35 @@ class ADistParticipantsCommand extends Command
                 $status = $call['Status'];
                 $callId = $call['Id'];
 
-                // Initialize variables
-                $routing = null;
-                $talking = null;
+                $durationTime = null;
+                $durationRouting = null;
 
-                // Get existing report to preserve previous values
-                $existingReport = AutoDistributerReport::where('call_id', $callId)->first();
+                if ($status === 'Talking' || $status === 'Routing') {
+                    $establishedAt = new DateTime($call['EstablishedAt']);
+                    $serverNow = new DateTime($call['ServerNow']);
+                    $duration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
 
-                // Calculate times based on status
-                $establishedAt = new DateTime($call['EstablishedAt']);
-                $serverNow = new DateTime($call['ServerNow']);
-
-                if ($status === "Routing") {
-                    $routing = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-                    // Preserve existing talking time if any
-                    $talking = $existingReport ? $existingReport->duration_time : null;
-                }
-
-                if ($status === "Talking") {
-                    $talking = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-                    // Preserve the last routing time
-                    $routing = $existingReport ? $existingReport->duration_routing : null;
+                    if ($status === 'Talking') {
+                        $durationTime = $duration;
+                    } elseif ($status === 'Routing') {
+                        $durationRouting = $duration;
+                    }
                 }
 
                 // Transaction to update database
                 DB::beginTransaction();
                 try {
-                    // Update report with new values while preserving existing ones
-                    $updateData = [
-                        'status' => $status
-                    ];
-
-                    // Only update times if they are not null
-                    if ($routing !== null) {
-                        $updateData['duration_routing'] = $routing;
-                    }
-                    if ($talking !== null) {
-                        $updateData['duration_time'] = $talking;
-                    }
-
                     AutoDistributerReport::where('call_id', $callId)
-                        ->update($updateData);
+                        ->update([
+                            'status' => $status,
+                            'duration_time' => $durationTime,
+                            'duration_routing' => $durationRouting
+                        ]);
 
                     ADistData::where('call_id', $callId)
                         ->update(['state' => $status]);
 
-                    Log::info("ADistParticipantsCommand ✅ Call ID: {$callId}, Status: {$status}, Routing: {$routing}, Talking: {$talking}");
+                    Log::info("ADistParticipantsCommand ✅ Mobile status: {$status}, Mobile: " . $call['Callee']);
 
                     DB::commit();
                 } catch (\Exception $e) {
