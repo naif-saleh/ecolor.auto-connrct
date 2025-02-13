@@ -53,7 +53,7 @@ class ADistMakeCallCommand extends Command
                 // ✅ Check if agent is currently in a call
                 $isBusy = false;
                 foreach ($participants as $p) {
-                    if (isset($p['callstate']) && in_array($p['status'], ['Connected', 'Dialing', 'Ringing'])) {
+                    if (isset($p['status']) && in_array($p['status'], ['Connected', 'Dialing', 'Ringing'])) {
                         $isBusy = true;
                         break;
                     }
