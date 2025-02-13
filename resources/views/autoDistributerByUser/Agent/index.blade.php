@@ -250,7 +250,7 @@
                             <td>${feed.file_name}</td>
                             <td>${feed.from}</td>
                             <td>${feed.to}</td>
-                            <td style={"color:${feed.allow === 1 ? 'green' : 'red'}"}> ${feed.allow === 1 ? "Active" : "Disactive"}</td>
+                            <td class="${feed.allow === 1 ? "bg-green" : "bg-red"}"> ${feed.allow === 1 ? "Active" : "Disactive"}</td>
                             <td>${feed.created_at}</td>
 
                         </tr>
