@@ -251,6 +251,7 @@
                             <td>${feed.from}</td>
                             <td>${feed.to}</td>
                             <td style={"color:${feed.allow === 1 ? 'green' : 'red'}"}> ${feed.allow === 1 ? "Active" : "Disactive"}</td>
+                            <td>${feed.created_at}</td>
 
                         </tr>
                     `;

@@ -2,7 +2,7 @@
     <div class="modal-dialog modal-lg">
         <div class="modal-content rounded-3 shadow-lg">
             <div class="modal-header border-bottom-0">
-                 
+
                 {{-- <button type="button" class="close text-muted" data-dismiss="modal">&times;</button> --}}
             </div>
             <div class="modal-body">
@@ -25,6 +25,8 @@
                             <th scope="col">From</th>
                             <th scope="col">To</th>
                             <th scope="col">Allow</th>
+                            <th scope="col">Created At</th>
+
                         </tr>
                     </thead>
                     <tbody id="feedList">
