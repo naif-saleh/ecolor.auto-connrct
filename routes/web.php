@@ -7,9 +7,12 @@ use App\Http\Controllers\UserController;
 use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AutoDailerByProvider\ADialProviderFeedController;
 use App\Http\Controllers\AutoDistributerByUser\ADistAgentFeedController;
+use App\Http\Controllers\AutoDistributerByUser\AdistFeedController;
+
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ManagerReportController;
+
 /**
  * Root Route Handling
  *
@@ -142,7 +145,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/agents/feeds/upload-file', [ADistAgentFeedController::class, 'importCsvData'])->name('users.file.csv.dropzone.upload');
     Route::get('agent/files/{slug}/download-skipped-numbers', [ADistAgentFeedController::class, 'downloadSkippedNumbers'])->name('users.files.downloadSkippedNumbers');
 
-
+    Route::get('/today-feeds', [ADistFeedController::class, 'getTodayFeeds']);
+    Route::post('/update-feed-status', [ADistFeedController::class, 'updateFeedStatus']);
+    Route::post('/delete-feeds', [ADistFeedController::class, 'deleteFeeds']);
 
     // Manager Reports...................................................................................................................
 
