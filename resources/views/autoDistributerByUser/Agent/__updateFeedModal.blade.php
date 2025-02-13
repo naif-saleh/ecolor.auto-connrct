@@ -36,11 +36,16 @@
                 </table>
             </div>
             <div class="modal-footer border-top-0 d-flex justify-content-between">
-                <button class="btn btn-outline-success rounded-pill px-4" onclick="updateStatus(1)">
-                    <i class="fa fa-check-circle"></i> Mark as On
-                </button>
-                <button class="btn btn-outline-danger rounded-pill px-4" onclick="updateStatus(0)">
-                    <i class="fa fa-times-circle"></i> Mark as Off
+                <span class="d-flex w-full">
+                    <button class="btn btn-outline-success rounded-pill mx-2" onclick="updateStatus(1)">
+                        <i class="fa fa-check-circle"></i> Active
+                    </button>
+                    <button class="btn btn-outline-warning rounded-pill mx-2" onclick="updateStatus(0)">
+                        <i class="fa fa-times-circle"></i> Disactive
+                    </button>
+                </span>
+                <button class="btn btn-outline-danger rounded-pill px-4" onclick="deleteFeeds()">
+                    <i class="fa fa-trash"></i> Delete File
                 </button>
             </div>
         </div>
@@ -54,40 +59,51 @@
         border-radius: 10px;
         overflow: hidden;
     }
+
     .modal-header {
         background-color: #007bff;
         color: white;
         font-weight: bold;
     }
+
     .modal-body {
         padding: 30px;
         color: #444;
     }
-    .table th, .table td {
+
+    .table th,
+    .table td {
         text-align: center;
         padding: 12px;
     }
+
     .table th {
         background-color: #007bff;
         color: white;
     }
+
     .table tbody tr:hover {
         background-color: #f1f1f1;
     }
+
     .form-check-label {
         font-size: 16px;
     }
+
     .modal-footer {
         background-color: #f1f1f1;
     }
+
     .btn-outline-success,
     .btn-outline-danger {
         width: 48%;
     }
+
     .btn-outline-success:hover {
         background-color: #28a745;
         color: white;
     }
+
     .btn-outline-danger:hover {
         background-color: #dc3545;
         color: white;

@@ -293,6 +293,38 @@
                 })
                 .catch(error => console.error('Error:', error));
         }
+
+        // Delete selected feeds
+        function deleteFeeds() {
+            let selectedFeeds = [...document.querySelectorAll('.feed-checkbox:checked')].map(cb => cb.value);
+
+            if (selectedFeeds.length === 0) {
+                alert('Please select at least one feed to delete.');
+                return;
+            }
+
+            if (!confirm('Are you sure you want to delete the selected feeds?')) {
+                return;
+            }
+
+            fetch('api/delete-feeds', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        feed_ids: selectedFeeds
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    $('#feedModal').modal('hide');
+                    fetchTodayFeeds(); // Refresh the feed list
+                })
+                .catch(error => console.error('Error:', error));
+        }
     </script>
 
 @endsection

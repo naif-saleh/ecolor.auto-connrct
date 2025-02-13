@@ -30,7 +30,7 @@ class AdistFeedController extends Controller
 
             // Update the feed allow
             $updated = ADistFeed::whereIn('id', $request->feed_ids)
-                                ->update(['allow' => $request->status]);
+                ->update(['allow' => $request->status]);
 
             // If no rows are updated, return an error response
             if ($updated === 0) {
@@ -46,4 +46,28 @@ class AdistFeedController extends Controller
     }
 
 
+    public function deleteFeeds(Request $request)
+    {
+        try {
+            // Validate the incoming request
+            $request->validate([
+                'feed_ids' => 'required|array',
+                'feed_ids.*' => 'exists:a_dist_feeds,id',
+            ]);
+
+            // Delete the selected feeds
+            $deleted = ADistFeed::whereIn('id', $request->feed_ids)->delete();
+
+            // If no rows are deleted, return an error response
+            if ($deleted === 0) {
+                return response()->json(['error' => 'No records deleted'], 400);
+            }
+
+            return response()->json(['message' => 'Feeds deleted successfully!']);
+        } catch (\Exception $e) {
+            // Log the error for debugging
+            Log::error('Error deleting feeds', ['error' => $e->getMessage()]);
+            return response()->json(['error' => 'An error occurred while deleting the feeds.'], 500);
+        }
+    }
 }
