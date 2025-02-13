@@ -29,16 +29,16 @@ Artisan::command('inspire', function () {
 
 
 // // Call Commands
-// Schedule::command('app:ADial-make-call-command')->everySecond();
-Schedule::command('app:ADist-make-call-command')->everyMinute();
+Schedule::command('app:ADial-make-call-command')->everySecond();
+Schedule::command('app:ADist-make-call-command')->everySecond();
 // // Schedule::command('app:ADist-make-call-command')->everyMinute();
 
 // // Call Status Commands
-// Schedule::command('app:ADial-participants-command')->everySecond()->runInBackground();
-// Schedule::command('app:ADist-participants-command')->everySecond()->runInBackground();
+Schedule::command('app:ADial-participants-command')->everySecond()->runInBackground();
+Schedule::command('app:ADist-participants-command')->everySecond()->runInBackground();
 
 // // Update User Status Commands
-// Schedule::command('app:ADist-update-user-status-command')->everySecond();
+Schedule::command('app:ADist-update-user-status-command')->everySecond();
 
 // BackUp Command
 // Schedule::command('app:back-up-command')->daily();
