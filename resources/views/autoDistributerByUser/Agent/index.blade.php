@@ -237,11 +237,11 @@
 
         // Update feeds
         function fetchTodayFeeds() {
-            fetch('/api/today-feeds')
+            fetch('api/today-feeds')
                 .then(response => response.json())
                 .then(feeds => {
                     let feedList = document.getElementById('feedList');
-                    feedList.innerHTML = ''; // Clear previous data
+                    feedList.innerHTML = '';
 
                     feeds.forEach(feed => {
                         feedList.innerHTML += `
@@ -256,7 +256,7 @@
                     `;
                     });
 
-                    $('#feedModal').modal('show'); // Show modal
+                    $('#feedModal').modal('show');
                 });
         }
 
@@ -274,7 +274,7 @@
                 return;
             }
 
-            fetch('/api/update-feed-status', {
+            fetch('api/update-feed-status', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
