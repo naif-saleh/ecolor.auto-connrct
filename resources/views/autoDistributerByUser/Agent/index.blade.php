@@ -10,10 +10,11 @@
                     {{-- Upload CSV File --}}
                     <a href="#" class="btn btn-outline-secondary w-auto mt-4" data-bs-toggle="modal"
                         data-bs-target="#uploadModal"><i class="ti-upload btn-icon-prepend"></i> Upload File</a>
-                        <a href="larg_auto_dist_file .csv" class="btn btn-info mt-4" download><i
+                    <a href="larg_auto_dist_file .csv" class="btn btn-info mt-4" download><i
                             class="fa-solid fa-download"></i> Auto
                         Distributor Demo File</a>
-
+                    <button class="btn btn-primary mt-4" onclick="fetchTodayFeeds()">Update Feeds</button>
+                    @include('autoDistributerByUser.Agent.__updateFeedModal')
                     @include('autoDistributerByUser.Agent.__Dis_dropZoneUploadFile')
                 </span>
             </div>
@@ -232,6 +233,65 @@
                 });
             }
         };
+
+
+        // Update feeds
+        function fetchTodayFeeds() {
+            fetch('/api/today-feeds')
+                .then(response => response.json())
+                .then(feeds => {
+                    let feedList = document.getElementById('feedList');
+                    feedList.innerHTML = ''; // Clear previous data
+
+                    feeds.forEach(feed => {
+                        feedList.innerHTML += `
+                        <tr>
+                            <td><input type="checkbox" class="feed-checkbox" value="${feed.id}"></td>
+                            <td>${feed.file_name}</td>
+                            <td>${feed.from}</td>
+                            <td>${feed.to}</td>
+                            <td style={"color:${feed.allow === 1 ? 'green' : 'red'}"}> ${feed.allow === 1 ? "Active" : "Disactive"}</td>
+
+                        </tr>
+                    `;
+                    });
+
+                    $('#feedModal').modal('show'); // Show modal
+                });
+        }
+
+        function toggleSelectAll() {
+            let checkboxes = document.querySelectorAll('.feed-checkbox');
+            let selectAll = document.getElementById('selectAll').checked;
+            checkboxes.forEach(checkbox => checkbox.checked = selectAll);
+        }
+
+        function updateStatus(status) {
+            let selectedFeeds = [...document.querySelectorAll('.feed-checkbox:checked')].map(cb => cb.value);
+
+            if (selectedFeeds.length === 0) {
+                alert('Please select at least one file.');
+                return;
+            }
+
+            fetch('/api/update-feed-status', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                        feed_ids: selectedFeeds,
+                        status
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    alert(data.message);
+                    $('#feedModal').modal('hide');
+                })
+                .catch(error => console.error('Error:', error));
+        }
     </script>
 
 @endsection

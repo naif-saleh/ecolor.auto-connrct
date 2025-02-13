@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use App\Http\Controllers\ApiController;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AutoDistributerByUser\AdistFeedController;
 
 /**
  * Authenticated Routes (Protected by Sanctum)
@@ -18,7 +19,10 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
     return $request->user();
 });
 
-
+Route::middleware('api')->group(function () {
+    Route::get('today-feeds', [ADistFeedController::class, 'getTodayFeeds']);
+    Route::post('update-feed-status', [ADistFeedController::class, 'updateFeedStatus']);
+});
 /**
  * API Routes within the 'api' middleware group.
  *
