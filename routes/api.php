@@ -22,7 +22,7 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 Route::middleware('api')->group(function () {
     Route::get('today-feeds', [ADistFeedController::class, 'getTodayFeeds']);
     Route::post('update-feed-status', [ADistFeedController::class, 'updateFeedStatus']);
-    Route::post('api/delete-feeds', [ADistFeedController::class, 'deleteFeeds']);
+    Route::post('delete-feeds', [ADistFeedController::class, 'deleteFeeds']);
 });
 /**
  * API Routes within the 'api' middleware group.
