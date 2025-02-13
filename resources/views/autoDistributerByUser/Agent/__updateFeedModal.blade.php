@@ -1,3 +1,4 @@
+@extends('layout.dropZone')
 <div id="feedModal" class="modal fade" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content rounded-3 shadow-lg">
