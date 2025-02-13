@@ -237,7 +237,7 @@
 
         // Update feeds
         function fetchTodayFeeds() {
-            fetch('today-feeds')
+            fetch('/today-feeds')
                 .then(response => response.json())
                 .then(feeds => {
                     let feedList = document.getElementById('feedList');
@@ -275,7 +275,7 @@
                 return;
             }
 
-            fetch('update-feed-status', {
+            fetch('/update-feed-status', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -307,7 +307,7 @@
                 return;
             }
 
-            fetch('delete-feeds', {
+            fetch('/delete-feeds', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
