@@ -96,7 +96,6 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                         Log::error("Authentication failed for 3CX API. Token may be expired or invalid.");
                         $token = $this->tokenService->getToken();
 
-                        // Retry with new token
                         $responseState = Http::withHeaders([
                             'Authorization' => 'Bearer ' . $token,
                         ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
@@ -139,7 +138,10 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                                 foreach ($activeCalls['value'] as $call) {
                                     $status = $call['Status'];
                                     $callId = $call['Id'];
-
+                                    if (!$callId || !$status) {
+                                        Log::error("Missing call ID or status in API response");
+                                        return;
+                                    }
                                     // Get current record to preserve existing values
                                     $currentReport = AutoDailerReport::where('call_id', $callId)->first();
                                     $durationTime = $currentReport ? $currentReport->duration_time : null;
