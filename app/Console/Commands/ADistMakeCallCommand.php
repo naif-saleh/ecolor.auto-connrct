@@ -42,10 +42,16 @@ class ADistMakeCallCommand extends Command
                 ]);
 
                 // ✅ Check active calls for agent
-                $participantResponse = $client->get("/callcontrol/{$agent->extension}/participants/", [
-                    'headers' => ['Authorization' => "Bearer $token"],
-                    'timeout' => 3
-                ]);
+                try {
+                    $participantResponse = $client->get("/callcontrol/{$agent->extension}/participants/", [
+                        'headers' => ['Authorization' => "Bearer $token"],
+                        'timeout' => 10
+                    ]);
+                } catch (\GuzzleHttp\Exception\RequestException $e) {
+                    Log::error("API Request Failed: " . $e->getMessage());
+                    return response()->json(['error' => 'Unable to fetch participants'], 500);
+                }
+
 
                 $participants = json_decode($participantResponse->getBody(), true);
                 Log::info("📞 3CX API Response: " . print_r($participants, true));
