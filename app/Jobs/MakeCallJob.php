@@ -82,11 +82,30 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                 $ext_from = $provider->extension;
 
                 try {
-
+                    if (empty($token)) {
+                        Log::error("Empty token for 3CX API access");
+                        continue;
+                    }
 
                     $responseState = Http::withHeaders([
                         'Authorization' => 'Bearer ' . $token,
                     ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
+
+                    // Handle 401 specifically
+                    if ($responseState->status() === 401) {
+                        Log::error("Authentication failed for 3CX API. Token may be expired or invalid.");
+                        $token = $this->tokenService->getToken();
+
+                        // Retry with new token
+                        $responseState = Http::withHeaders([
+                            'Authorization' => 'Bearer ' . $token,
+                        ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
+
+                        if (!$responseState->successful()) {
+                            Log::error("Failed to fetch participants even after token refresh. HTTP Status: {$responseState->status()}");
+                            continue;
+                        }
+                    }
 
                     if (!$responseState->successful()) {
                         Log::error("Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
@@ -94,6 +113,7 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                     }
 
                     $participants = $responseState->json();
+
 
                     if (empty($participants)) {
                         Log::warning("⚠️ No participants found for extension {$ext_from}");
