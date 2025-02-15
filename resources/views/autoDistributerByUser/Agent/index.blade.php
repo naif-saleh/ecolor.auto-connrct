@@ -248,7 +248,7 @@
                         <tr>
                             <td><input type="checkbox" class="feed-checkbox" value="${feed.id}"></td>
                             <td>${feed.file_name}</td>
-                            <td>${feed.file.extension}</td>
+                            <td>ss</td>
                             <td>${feed.from}</td>
                             <td>${feed.to}</td>
                             <td>${feed.date}</td>
