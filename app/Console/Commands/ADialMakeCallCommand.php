@@ -89,7 +89,7 @@ class ADialMakeCallCommand extends Command
         }
 
         Log::info('📞✅ ADialMakeCallCommand execution completed at ' . now());
-        return 0;
+
     }
 
 }

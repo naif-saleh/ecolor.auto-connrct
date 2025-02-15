@@ -194,6 +194,8 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
         } catch (\Exception $e) {
             Log::error("❌ Exception: " . $e->getMessage());
         }
+
+        return 0;
     }
     /**
      * Define unique job key (Ensures uniqueness for each mobile)
