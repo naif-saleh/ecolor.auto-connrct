@@ -70,7 +70,7 @@ class ADistFeed extends Model
      */
     public function agent()
     {
-        return $this->hasMany(ADistAgent::class, 'id'); // hasMany instead of belongsTo
+        return $this->belongsTo(ADistAgent::class, 'agent_id', 'id');
     }
 
 }
