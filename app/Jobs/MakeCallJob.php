@@ -81,7 +81,7 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                 $ext_from = $provider->extension;
 
                 try {
-                    $token = $this->tokenService->getToken();
+                    
 
                     $responseState = Http::withHeaders([
                         'Authorization' => 'Bearer ' . $token,
