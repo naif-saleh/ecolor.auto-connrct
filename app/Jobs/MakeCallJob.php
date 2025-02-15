@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
 use DateTime;
 use App\Models\ADialData;
+
 class MakeCallJob implements ShouldBeUniqueUntilProcessing
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -119,30 +120,28 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                                     $status = $call['Status'];
                                     $callId = $call['Id'];
 
-                                    // Keep existing values by default
-                                    $durationTime = null;
-                                    $durationRouting = null;
-
-                                    // First, get the current record to preserve existing values
+                                    // Get current record to preserve existing values
                                     $currentReport = AutoDailerReport::where('call_id', $callId)->first();
-                                    if ($currentReport) {
-                                        $durationTime = $currentReport->duration_time;
-                                        $durationRouting = $currentReport->duration_routing;
-                                    }
+                                    $durationTime = $currentReport ? $currentReport->duration_time : null;
+                                    $durationRouting = $currentReport ? $currentReport->duration_routing : null;
 
-                                    // Then update based on current status
-                                    if ($status === 'Talking') {
+                                    // Update the appropriate duration based on current status
+                                    $serverNow = new DateTime($call['ServerNow']);
+
+                                    if ($status === 'Talking' && isset($call['EstablishedAt'])) {
                                         $establishedAt = new DateTime($call['EstablishedAt']);
-                                        $serverNow = new DateTime($call['ServerNow']);
                                         $durationTime = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-                                        // Log::info("✅ Duration Time: ".$durationTime);
                                     }
 
-                                    if ($status === 'Routing') {
+                                    if ($status === 'Routing' && isset($call['EstablishedAt'])) {
                                         $establishedAt = new DateTime($call['EstablishedAt']);
-                                        $serverNow = new DateTime($call['ServerNow']);
                                         $durationRouting = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-                                        // Log::info("✅ Duration Routing: ".$durationRouting);
+                                    }
+
+                                    // For the table display, you might also want to handle "Ringing" status
+                                    if ($status === 'Ringing' && isset($call['EstablishedAt'])) {
+                                        $establishedAt = new DateTime($call['EstablishedAt']);
+                                        $durationRouting = $establishedAt->diff($serverNow)->format('%H:%I:%S');
                                     }
 
                                     DB::beginTransaction();
@@ -155,7 +154,6 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                                             ]);
                                         ADialData::where('call_id', $callId)
                                             ->update(['state' => $status]);
-                                        // Log::info("✅ mobile status:: " . $status);
                                         DB::commit();
                                     } catch (\Exception $e) {
                                         DB::rollBack();
