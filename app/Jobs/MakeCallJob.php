@@ -3,7 +3,7 @@
 namespace App\Jobs;
 
 use App\Models\AutoDailerReport;
-use App\Models\AutoDailerUploadedData;
+use App\Models\ADialProvider;
 use App\Services\TokenService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldBeUnique;
@@ -13,10 +13,10 @@ use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Http;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Contracts\Queue\ShouldBeUniqueUntilProcessing;
-
-
+use DateTime;
+use App\Models\ADialData;
 class MakeCallJob implements ShouldBeUniqueUntilProcessing
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
@@ -75,6 +75,91 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                 Log::info("📞✅ Call successful for: " . $this->feedData->mobile);
             } else {
                 Log::error("❌ Failed call: " . $this->feedData->mobile);
+            }
+            $providers = ADialProvider::all();
+            foreach ($providers as $provider) {
+                $ext_from = $provider->extension;
+
+                try {
+                    $token = $this->tokenService->getToken();
+
+                    $responseState = Http::withHeaders([
+                        'Authorization' => 'Bearer ' . $token,
+                    ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
+
+                    if (!$responseState->successful()) {
+                        Log::error("Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
+                        continue;
+                    }
+
+                    $participants = $responseState->json();
+
+                    if (empty($participants)) {
+                        Log::warning("⚠️ No participants found for extension {$ext_from}");
+                        continue;
+                    }
+
+                    Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
+
+                    foreach ($participants as $participant_data) {
+                        try {
+                            Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
+                            $filter = "contains(Caller, '{$participant_data['dn']}')";
+                            $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+
+                            $activeCallsResponse = Http::withHeaders([
+                                'Authorization' => 'Bearer ' . $token,
+                            ])->get($url);
+
+                            if ($activeCallsResponse->successful()) {
+                                $activeCalls = $activeCallsResponse->json();
+                                Log::info("✅ Dial:Active Calls Response: " . print_r($activeCalls, True));
+
+                                foreach ($activeCalls['value'] as $call) {
+
+                                    $status = $call['Status'];
+                                    $callId = $call['Id'];
+
+                                    $durationTime = null;
+                                    $durationRouting = null;
+
+                                    if ($status === 'Talking') {
+                                        $establishedAt = new DateTime($call['EstablishedAt']);
+                                        $serverNow = new DateTime($call['ServerNow']);
+                                        $durationTime = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+                                        // Log::info("✅ Duration Time: ".$durationTime);
+                                    }
+
+                                    if ($status === 'Routing') {
+                                        $establishedAt = new DateTime($call['EstablishedAt']);
+                                        $serverNow = new DateTime($call['ServerNow']);
+                                        $durationRouting = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+                                        // Log::info("✅ Duration Routing: ".$durationRouting);
+                                    }
+
+                                    DB::beginTransaction();
+                                    try {
+                                        AutoDailerReport::where('call_id', $callId)
+                                            ->update(['status' => $status, 'duration_time' => $durationTime, 'duration_routing' => $durationRouting]);
+                                        ADialData::where('call_id', $callId)
+                                            ->update(['state' => $status]);
+                                        // Log::info("✅ mobile status:: " . $status);
+                                        DB::commit();
+                                    } catch (\Exception $e) {
+                                        DB::rollBack();
+                                        Log::error("❌ Transaction Failed for call ID {$callId}: " . $e->getMessage());
+                                    }
+                                }
+                            } else {
+                                Log::error("❌ Failed to fetch active calls. Response: " . $activeCallsResponse->body());
+                            }
+                        } catch (\Exception $e) {
+                            Log::error("❌ Failed to process participant data for call ID " . ($participant_data['callid'] ?? 'N/A') . ": " . $e->getMessage());
+                        }
+                    }
+                } catch (\Exception $e) {
+                    Log::error("❌ Failed fetching participants for provider {$ext_from}: " . $e->getMessage());
+                }
             }
         } catch (\Exception $e) {
             Log::error("❌ Exception: " . $e->getMessage());
