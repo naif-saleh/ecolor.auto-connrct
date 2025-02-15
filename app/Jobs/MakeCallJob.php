@@ -81,7 +81,7 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                 $ext_from = $provider->extension;
 
                 try {
-                    
+
 
                     $responseState = Http::withHeaders([
                         'Authorization' => 'Bearer ' . $token,
@@ -116,13 +116,21 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                                 Log::info("✅ Dial:Active Calls Response: " . print_r($activeCalls, True));
 
                                 foreach ($activeCalls['value'] as $call) {
-
                                     $status = $call['Status'];
                                     $callId = $call['Id'];
 
+                                    // Keep existing values by default
                                     $durationTime = null;
                                     $durationRouting = null;
 
+                                    // First, get the current record to preserve existing values
+                                    $currentReport = AutoDailerReport::where('call_id', $callId)->first();
+                                    if ($currentReport) {
+                                        $durationTime = $currentReport->duration_time;
+                                        $durationRouting = $currentReport->duration_routing;
+                                    }
+
+                                    // Then update based on current status
                                     if ($status === 'Talking') {
                                         $establishedAt = new DateTime($call['EstablishedAt']);
                                         $serverNow = new DateTime($call['ServerNow']);
@@ -140,7 +148,11 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                                     DB::beginTransaction();
                                     try {
                                         AutoDailerReport::where('call_id', $callId)
-                                            ->update(['status' => $status, 'duration_time' => $durationTime, 'duration_routing' => $durationRouting]);
+                                            ->update([
+                                                'status' => $status,
+                                                'duration_time' => $durationTime,
+                                                'duration_routing' => $durationRouting
+                                            ]);
                                         ADialData::where('call_id', $callId)
                                             ->update(['state' => $status]);
                                         // Log::info("✅ mobile status:: " . $status);
