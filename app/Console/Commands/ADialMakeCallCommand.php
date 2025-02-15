@@ -45,7 +45,7 @@ class ADialMakeCallCommand extends Command
 
         // Fetch all providers
         $providers = ADialProvider::all();
-      
+
         foreach ($providers as $provider) {
             // TODO: add new feature to turn of the provider
             // Fetch files uploaded today
@@ -55,18 +55,18 @@ class ADialMakeCallCommand extends Command
                 ->get();
 
             foreach ($files as $file) {
-            
+
                 $from = Carbon::parse("{$file->date} {$file->from}")->subHours(3);
                 $to = Carbon::parse("{$file->date} {$file->to}")->subHours(3);
 
                 if (now()->between($from, $to)) {
-                
+
                     Log::info("ADIAL ✅ File ID {$file->id} is within range, processing calls...");
 
                     ADialData::where('feed_id', $file->id)
                         ->where('state', 'new')
                         ->chunk(50, function ($dataBatch) use ($provider) {
-                           
+
                             foreach ($dataBatch as $feedData) {
                                 try {
                                     $token = app(TokenService::class);
@@ -89,6 +89,7 @@ class ADialMakeCallCommand extends Command
         }
 
         Log::info('📞✅ ADialMakeCallCommand execution completed at ' . now());
+        return 0;
     }
 
 }
