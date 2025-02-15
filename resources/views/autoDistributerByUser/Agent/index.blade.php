@@ -13,7 +13,8 @@
                     <a href="larg_auto_dist_file .csv" class="btn btn-info mt-4" download><i
                             class="fa-solid fa-download"></i> Auto
                         Distributor Demo File</a>
-                    <button class="btn btn-primary mt-4" onclick="fetchTodayFeeds()">Update Feeds</button>
+                    <button class="btn btn-warning mt-4" onclick="fetchTodayFeeds()"><i class="fas fa-gear"></i>
+                        Manage Today Feeds</button>
                     @include('autoDistributerByUser.Agent.__updateFeedModal')
                     @include('autoDistributerByUser.Agent.__Dis_dropZoneUploadFile')
                 </span>
@@ -248,11 +249,11 @@
                         <tr>
                             <td><input type="checkbox" class="feed-checkbox" value="${feed.id}"></td>
                             <td>${feed.file_name}</td>
+                            <td>${feed.agent.extension}</td>
                             <td>${feed.from}</td>
                             <td>${feed.to}</td>
+                            <td>${feed.date}</td>
                             <td class="${feed.allow === 1 ? "bg-green" : "bg-red"}"> ${feed.allow === 1 ? "Active" : "Disactive"}</td>
-                            <td>${feed.created_at}</td>
-
                         </tr>
                     `;
                     });

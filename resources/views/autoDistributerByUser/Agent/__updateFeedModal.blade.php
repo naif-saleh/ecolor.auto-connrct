@@ -22,11 +22,13 @@
                     <thead>
                         <tr>
                             <th scope="col">Select</th>
+                            <th scope="col">Provider</th>
                             <th scope="col">Extension</th>
                             <th scope="col">From</th>
                             <th scope="col">To</th>
+                            <th scope="col">Date</th>
                             <th scope="col">Allow</th>
-                            <th scope="col">Created At</th>
+                            
 
                         </tr>
                     </thead>

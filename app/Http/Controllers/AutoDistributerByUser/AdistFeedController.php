@@ -12,7 +12,8 @@ class AdistFeedController extends Controller
 {
     public function getTodayFeeds()
     {
-        $todayFeeds = ADistFeed::whereDate('created_at', Carbon::today())->get();
+        
+        $todayFeeds = ADistFeed::with('agent')->whereDate('date', Carbon::today()->format('Y-m-d'))->get();
         return response()->json($todayFeeds);
     }
 

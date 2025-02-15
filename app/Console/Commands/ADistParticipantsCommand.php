@@ -67,10 +67,15 @@ class ADistParticipantsCommand extends Command
                 $status = $call['Status'];
                 $callId = $call['Id'];
 
-                $durationTime = null;
-                $durationRouting = null;
+                // First get the current record to preserve existing values
+                $currentReport = AutoDistributerReport::where('call_id', $callId)->first();
 
-                if ($status === 'Talking' || $status === 'Routing') {
+                // Initialize with current values (if they exist)
+                $durationTime = $currentReport ? $currentReport->duration_time : null;
+                $durationRouting = $currentReport ? $currentReport->duration_routing : null;
+
+                // Then update only the appropriate duration based on current status
+                if (isset($call['EstablishedAt']) && isset($call['ServerNow'])) {
                     $establishedAt = new DateTime($call['EstablishedAt']);
                     $serverNow = new DateTime($call['ServerNow']);
                     $duration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
