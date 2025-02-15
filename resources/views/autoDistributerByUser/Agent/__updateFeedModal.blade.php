@@ -28,7 +28,7 @@
                             <th scope="col">To</th>
                             <th scope="col">Date</th>
                             <th scope="col">Allow</th>
-                            <th scope="col">Created At</th>
+                            
 
                         </tr>
                     </thead>

@@ -13,7 +13,7 @@
                     <a href="larg_auto_dist_file .csv" class="btn btn-info mt-4" download><i
                             class="fa-solid fa-download"></i> Auto
                         Distributor Demo File</a>
-                    <button class="btn btn-primary mt-4" onclick="fetchTodayFeeds()"><i class="fas fa-gear"></i> 
+                    <button class="btn btn-primary mt-4" onclick="fetchTodayFeeds()"><i class="fas fa-gear"></i>
                         Manage Today Feeds</button>
                     @include('autoDistributerByUser.Agent.__updateFeedModal')
                     @include('autoDistributerByUser.Agent.__Dis_dropZoneUploadFile')
@@ -254,8 +254,6 @@
                             <td>${feed.to}</td>
                             <td>${feed.date}</td>
                             <td class="${feed.allow === 1 ? "bg-green" : "bg-red"}"> ${feed.allow === 1 ? "Active" : "Disactive"}</td>
-                            <td>${feed.created_at}</td>
-
                         </tr>
                     `;
                     });
