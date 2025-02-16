@@ -67,25 +67,27 @@ class ADistParticipantsCommand extends Command
                 $status = $call['Status'];
                 $callId = $call['Id'];
 
-                $durationTime = null;
-                $durationRouting = null;
                 // First get the current record to preserve existing values
                 $currentReport = AutoDistributerReport::where('call_id', $callId)->first();
 
-                // Initialize with current values (if they exist)
+                // Initialize durations from current values
                 $durationTime = $currentReport ? $currentReport->duration_time : null;
                 $durationRouting = $currentReport ? $currentReport->duration_routing : null;
 
-                // Then update only the appropriate duration based on current status
                 if (isset($call['EstablishedAt']) && isset($call['ServerNow'])) {
                     $establishedAt = new DateTime($call['EstablishedAt']);
                     $serverNow = new DateTime($call['ServerNow']);
-                    $duration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+                    $currentDuration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
 
+                    // Update durations based on status without overriding previous values
                     if ($status === 'Talking') {
-                        $durationTime = $duration;
+                        $durationTime = $currentDuration;
+                        // Keep existing routing duration
+                        $durationRouting = $currentReport ? $currentReport->duration_routing : null;
                     } elseif ($status === 'Routing') {
-                        $durationRouting = $duration;
+                        $durationRouting = $currentDuration;
+                        // Keep existing talking duration
+                        $durationTime = $currentReport ? $currentReport->duration_time : null;
                     }
                 }
 
@@ -96,13 +98,18 @@ class ADistParticipantsCommand extends Command
                         ->update([
                             'status' => $status,
                             'duration_time' => $durationTime,
-                            'duration_routing' => $durationRouting
+                            'duration_routing' => $durationRouting,
+                            'last_updated_at' => now() // Add this to track when the record was last updated
                         ]);
 
                     ADistData::where('call_id', $callId)
-                        ->update(['state' => $status]);
+                        ->update([
+                            'state' => $status,
+                            'duration_time' => $durationTime,
+                            'duration_routing' => $durationRouting
+                        ]);
 
-                    Log::info("ADistParticipantsCommand ✅ Mobile status: {$status}, Mobile: " . $call['Callee']);
+                    Log::info("ADistParticipantsCommand ✅ Status: {$status}, Time: {$durationTime}, Routing: {$durationRouting}, Mobile: " . $call['Callee']);
 
                     DB::commit();
                 } catch (\Exception $e) {
