@@ -44,6 +44,7 @@
                             <th><i class="fa-solid fa-user-large"></i> Agent Name</th>
                             <th><i class="fa-solid fa-phone-volume"></i> Agent Extension</th>
                             <th><i class="fa-solid fa-user-check"></i> Status</th>
+                            <th><i class="fa-solid fa-user-check"></i> Queue</th>
                             <th><i class="fa-solid fa-gear"></i> Action</th>
                         </tr>
                     </thead>
@@ -60,7 +61,7 @@
                                     <b>{{ $agent->status }} <i
                                             class="{{ $agent->status === 'Available' ? 'fa-solid fa-check' : 'fa-solid fa-exclamation' }}"></i></b>
                                 </td>
-
+                                <td>{{$agent->QueueStatus}}</td>
                                 <td class="d-flex justify-content-start gap-2">
                                     <a href=" {{ route('users.files.create', $agent->id) }}" class="btn btn-primary btn-sm">
                                         <i class="fa fa-plus"></i>
