@@ -67,6 +67,8 @@ class ADistParticipantsCommand extends Command
                 $status = $call['Status'];
                 $callId = $call['Id'];
 
+                $durationTime = null;
+                $durationRouting = null;
                 // First get the current record to preserve existing values
                 $currentReport = AutoDistributerReport::where('call_id', $callId)->first();
 
