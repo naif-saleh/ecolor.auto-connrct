@@ -50,8 +50,8 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
             $responseState = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
             ])->post(config('services.three_cx.api_url') . "/callcontrol/{$this->extension}/makecall", [
-                'destination' => $this->feedData->mobile,
-            ]);
+                        'destination' => $this->feedData->mobile,
+                    ]);
 
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
@@ -94,18 +94,18 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                     // Handle 401 specifically
                     if ($responseState->status() === 401) {
                         Log::error("Authentication failed for 3CX API. Token may be expired or invalid.");
-                        $token = $this->tokenService->getToken();
+                        // $token = $this->tokenService->getToken();
 
-                        $responseState = Http::withHeaders([
-                            'Authorization' => 'Bearer ' . $token,
-                        ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
+                        // $responseState = Http::withHeaders([
+                        //     'Authorization' => 'Bearer ' . $token,
+                        // ])->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants");
+                        continue;
 
-                        if (!$responseState->successful()) {
-                            Log::error("Failed to fetch participants even after token refresh. HTTP Status: {$responseState->status()}");
-                            continue;
-                        }
                     }
-
+                    if (!$responseState->successful()) {
+                        Log::error("Failed to fetch participants even after token refresh. HTTP Status: {$responseState->status()}");
+                        continue;
+                    }
                     if (!$responseState->successful()) {
                         Log::error("Failed to fetch participants for extension {$ext_from}. HTTP Status: {$responseState->status()}. Response: {$responseState->body()}");
                         continue;
@@ -138,34 +138,28 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                                 foreach ($activeCalls['value'] as $call) {
                                     $status = $call['Status'];
                                     $callId = $call['Id'];
-                                    if (!$callId || !$status) {
-                                        Log::error("Missing call ID or status in API response");
-                                        return;
-                                    }
-                                    // Get current record to preserve existing values
+
+                                    // First get the current record to preserve existing values
                                     $currentReport = AutoDailerReport::where('call_id', $callId)->first();
+
+                                    // Initialize with current values (if they exist)
                                     $durationTime = $currentReport ? $currentReport->duration_time : null;
                                     $durationRouting = $currentReport ? $currentReport->duration_routing : null;
 
-                                    // Update the appropriate duration based on current status
-                                    $serverNow = new DateTime($call['ServerNow']);
-
-                                    if ($status === 'Talking' && isset($call['EstablishedAt'])) {
+                                    // Then update only the appropriate duration based on current status
+                                    if (isset($call['EstablishedAt']) && isset($call['ServerNow'])) {
                                         $establishedAt = new DateTime($call['EstablishedAt']);
-                                        $durationTime = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+                                        $serverNow = new DateTime($call['ServerNow']);
+                                        $duration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+
+                                        if ($status === 'Talking') {
+                                            $durationTime = $duration;
+                                        } elseif ($status === 'Routing') {
+                                            $durationRouting = $duration;
+                                        }
                                     }
 
-                                    if ($status === 'Routing' && isset($call['EstablishedAt'])) {
-                                        $establishedAt = new DateTime($call['EstablishedAt']);
-                                        $durationRouting = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-                                    }
-
-                                    // For the table display, you might also want to handle "Ringing" status
-                                    if ($status === 'Ringing' && isset($call['EstablishedAt'])) {
-                                        $establishedAt = new DateTime($call['EstablishedAt']);
-                                        $durationRouting = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-                                    }
-
+                                    // Transaction to update database
                                     DB::beginTransaction();
                                     try {
                                         AutoDailerReport::where('call_id', $callId)
@@ -174,12 +168,16 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                                                 'duration_time' => $durationTime,
                                                 'duration_routing' => $durationRouting
                                             ]);
+
                                         ADialData::where('call_id', $callId)
                                             ->update(['state' => $status]);
+
+                                        Log::info("ADilaParticipantsCommand ✅ Mobile status: {$status}, Mobile: " . $call['Callee']);
+
                                         DB::commit();
                                     } catch (\Exception $e) {
                                         DB::rollBack();
-                                        Log::error("❌ Transaction Failed for call ID {$callId}: " . $e->getMessage());
+                                        Log::error("ADilaParticipantsCommand ❌ Transaction Failed for call ID {$callId}: " . $e->getMessage());
                                     }
                                 }
                             } else {
@@ -197,7 +195,7 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
             Log::error("❌ Exception: " . $e->getMessage());
         }
 
-        return 0;
+        
     }
     /**
      * Define unique job key (Ensures uniqueness for each mobile)
