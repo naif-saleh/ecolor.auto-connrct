@@ -99,7 +99,7 @@ class ADistMakeCallCommand extends Command
                         Log::info("Current time ({$timezone}): " . $now);
                         Log::info("Call window: {$from} to {$to}");
 
-                        if ($now()->between($from, $to)) {
+                        if ($now->between($from, $to)) {
                             // ✅ Get one new call
                             $feedData = ADistData::where('feed_id', $feed->id)
                                 ->where('state', 'new')
