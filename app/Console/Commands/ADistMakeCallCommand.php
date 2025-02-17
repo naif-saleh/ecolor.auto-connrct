@@ -13,7 +13,7 @@ use App\Models\ADistFeed;
 use App\Models\ADistData;
 use App\Models\AutoDistributerReport;
 use App\Services\TokenService;
-use DateTime;
+use App\Models\General_Setting;
 use Illuminate\Support\Facades\Cache;
 
 class ADistMakeCallCommand extends Command
@@ -91,6 +91,28 @@ class ADistMakeCallCommand extends Command
                         ->where('is_done', false)
                         ->get();
 
+
+                    $callTimeStart = General_Setting::get('call_time_start');
+                    $callTimeEnd = General_Setting::get('call_time_end');
+
+                    // Check if settings exist - do this once before processing any feeds
+                    if (!$callTimeStart || !$callTimeEnd) {
+                        Log::warning("⚠️ Call time settings not configured. Please visit the settings page to set up allowed call hours.");
+                        return;
+                    }
+
+                    $globalTodayStart = Carbon::parse(date('Y-m-d') . ' ' . $callTimeStart)->timezone($timezone);
+                    $globalTodayEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
+
+                    // Get current time once
+                    $now = now()->timezone($timezone);
+
+                    // Check if current time is within global allowed call hours
+                    if (!$now->between($globalTodayStart, $globalTodayEnd)) {
+                        Log::info("⏱️ Current time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
+                        return;
+                    }
+
                     foreach ($feeds as $feed) {
                         $from = Carbon::parse("{$feed->date} {$feed->from}")->timezone($timezone);
                         $to = Carbon::parse("{$feed->date} {$feed->to}")->timezone($timezone);
@@ -98,6 +120,17 @@ class ADistMakeCallCommand extends Command
                         Log::info("ADIAL Processing window for File ID {$feed->id}:");
                         Log::info("Current time ({$timezone}): " . $now);
                         Log::info("Call window: {$from} to {$to}");
+
+
+                        // // Get global call time settings
+                        // $callTimeStart = General_Setting::get('call_time_start');
+                        // $callTimeEnd = General_Setting::get('call_time_end');
+
+                        // Check if settings exist
+                        // if (!$callTimeStart || !$callTimeEnd) {
+                        //     Log::warning("⚠️ Call time settings not configured. Please visit the settings page to set up allowed call hours.");
+                        //     return;
+                        // }
 
                         if ($now->between($from, $to)) {
                             // ✅ Get one new call
@@ -153,7 +186,7 @@ class ADistMakeCallCommand extends Command
                             } catch (RequestException $e) {
                                 Log::error("❌ Call failed for {$feedData->mobile}: " . $e->getMessage());
                             }
-                        }else {
+                        } else {
                             Log::info("ADist ❌ File ID {$feed->id} is NOT within range.");
                             Log::info("Current time: " . $now->format('Y-m-d H:i:s'));
                             Log::info("Window: {$from->format('Y-m-d H:i:s')} - {$to->format('Y-m-d H:i:s')}");
