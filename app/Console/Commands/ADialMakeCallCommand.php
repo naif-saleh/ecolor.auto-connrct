@@ -43,53 +43,60 @@ class ADialMakeCallCommand extends Command
     {
         Log::info('ADialMakeCallCommand executed at ' . Carbon::now());
 
-        // Fetch all providers
+        // Get timezone from configuration
+        $timezone = config('app.timezone');
+        Log::info("Using timezone: {$timezone}");
+
         $providers = ADialProvider::all();
 
         foreach ($providers as $provider) {
-            // TODO: add new feature to turn of the provider
-            // Fetch files uploaded today
             $files = ADialFeed::where('provider_id', $provider->id)
                 ->whereDate('date', today())
-                ->where('allow', true) // Only allowed files
+                ->where('allow', true)
                 ->get();
 
             foreach ($files as $file) {
+                // Parse times using configured timezone
+                $from = Carbon::parse("{$file->date} {$file->from}")->timezone($timezone);
+                $to = Carbon::parse("{$file->date} {$file->to}")->timezone($timezone);
+                $now = now()->timezone($timezone);
 
-                $from = Carbon::parse("{$file->date} {$file->from}")->subHours(3);
-                $to = Carbon::parse("{$file->date} {$file->to}")->subHours(3);
+                Log::info("ADIAL Processing window for File ID {$file->id}:");
+                Log::info("Current time ({$timezone}): " . $now);
+                Log::info("Call window: {$from} to {$to}");
 
-                if (now()->between($from, $to)) {
-
+                if ($now->between($from, $to)) {
                     Log::info("ADIAL ✅ File ID {$file->id} is within range, processing calls...");
 
                     ADialData::where('feed_id', $file->id)
                         ->where('state', 'new')
                         ->chunk(50, function ($dataBatch) use ($provider) {
-
                             foreach ($dataBatch as $feedData) {
                                 try {
                                     $token = app(TokenService::class);
-                                    $job = dispatch(new MakeCallJob($feedData, $token, $provider->extension));
+                                    dispatch(new MakeCallJob($feedData, $token, $provider->extension));
+
+                                    // Add a small delay between calls to prevent system overload
+                                    usleep(200000); // 0.2 seconds delay
                                 } catch (\Exception $e) {
                                     Log::error("ADIAL ❌ Error in dispatching call: " . $e->getMessage());
                                 }
                             }
                         });
 
-                    // Mark file as done if all calls are processed
                     if (!ADialData::where('feed_id', $file->id)->where('state', 'new')->exists()) {
                         $file->update(['is_done' => true]);
                         Log::info("ADIAL ✅✅✅ All numbers called for File ID: {$file->id}");
                     }
                 } else {
                     Log::info("ADIAL ❌ File ID {$file->id} is NOT within range.");
+                    Log::info("Current time: " . $now->format('Y-m-d H:i:s'));
+                    Log::info("Window: {$from->format('Y-m-d H:i:s')} - {$to->format('Y-m-d H:i:s')}");
                 }
             }
         }
 
         Log::info('📞✅ ADialMakeCallCommand execution completed at ' . now());
-
     }
 
 }
