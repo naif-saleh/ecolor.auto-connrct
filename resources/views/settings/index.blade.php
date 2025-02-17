@@ -88,7 +88,7 @@
 
                             <div class="col-md-6">
                                 <input id="number_calls" type="number" class="form-control"
-                                       name="number_calls" value="" required>
+                                       name="number_calls" value="{{ $number_calls ? $number_calls : '' }}" required>
 
                                 @error('number_calls')
                                     <span class="invalid-feedback" role="alert">
