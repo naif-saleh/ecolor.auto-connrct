@@ -32,6 +32,14 @@ class SettingsController extends Controller
         return redirect()->back()->with('success_time', 'Call time settings updated successfully.');
     }
 
+
+    public function indexCountCall()
+    {
+
+        $number_calls = CountCalls::get('number_calls');
+
+        return view('settings.indexCountCalls', compact('number_calls'));
+    }
     public function updateCallsNumber(Request $request)
     {
         $request->validate([

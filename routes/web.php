@@ -84,8 +84,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('users', [UserController::class, 'store'])->name('users.store');
 
     //Settings....
-    Route::get('/settings', [SettingsController::class, 'index'])->name('settings.index');
+    Route::get('/settings/update-time-calls', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings', [SettingsController::class, 'updateBlockTime'])->name('settings.update');
+
+    Route::get('/settings/update-count-calls', [SettingsController::class, 'indexCountCall'])->name('settings.indexCountNumbers');
     Route::post('/settings/calls-number', [SettingsController::class, 'updateCallsNumber'])->name('settings.update.callsNumber');
     /**
      * Auto Dialer Provider Routese
