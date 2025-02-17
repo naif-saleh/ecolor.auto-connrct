@@ -53,7 +53,29 @@ class ADialMakeCallCommand extends Command
         $timezone = config('app.timezone');
         Log::info("Using timezone: {$timezone}");
 
+        // Get call time settings once before processing
+        $callTimeStart = General_Setting::get('call_time_start');
+        $callTimeEnd = General_Setting::get('call_time_end');
+
+        // Check if settings exist
+        if (!$callTimeStart || !$callTimeEnd) {
+            Log::warning("⚠️ Call time settings not configured. Please visit the settings page to set up allowed call hours.");
+            return;
+        }
+
+        // Get current time once in the configured timezone
+        $now = now()->timezone($timezone);
+        $globalTodayStart = Carbon::parse(date('Y-m-d') . ' ' . $callTimeStart)->timezone($timezone);
+        $globalTodayEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
+
+        // Check if current time is within global allowed call hours
+        if (!$now->between($globalTodayStart, $globalTodayEnd)) {
+            Log::info("⏱️ ADist - Current time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
+            return;
+        }
+
         $providers = ADialProvider::all();
+        Log::info("Found " . $providers->count() . " providers to process");
 
         foreach ($providers as $provider) {
             $files = ADialFeed::where('provider_id', $provider->id)
@@ -61,32 +83,12 @@ class ADialMakeCallCommand extends Command
                 ->where('allow', true)
                 ->get();
 
-            $callTimeStart = General_Setting::get('call_time_start');
-            $callTimeEnd = General_Setting::get('call_time_end');
-
-            // Check if settings exist - do this once before processing any feeds
-            if (!$callTimeStart || !$callTimeEnd) {
-                Log::warning("⚠️ Call time settings not configured. Please visit the settings page to set up allowed call hours.");
-                return;
-            }
-
-            $globalTodayStart = Carbon::parse(date('Y-m-d') . ' ' . $callTimeStart)->timezone($timezone);
-            $globalTodayEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
-
-            // Get current time once
-            $now = now()->timezone($timezone);
-
-            // Check if current time is within global allowed call hours
-            if (!$now->between($globalTodayStart, $globalTodayEnd)) {
-                Log::info("⏱️ ADist - Current time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
-                return;
-            }
+            Log::info("Found " . $files->count() . " feeds for provider " . $provider->name);
 
             foreach ($files as $file) {
                 // Parse times using configured timezone
                 $from = Carbon::parse("{$file->date} {$file->from}")->timezone($timezone);
                 $to = Carbon::parse("{$file->date} {$file->to}")->timezone($timezone);
-                $now = now()->timezone($timezone);
 
                 Log::info("ADIAL Processing window for File ID {$file->id}:");
                 Log::info("Current time ({$timezone}): " . $now);
@@ -94,7 +96,12 @@ class ADialMakeCallCommand extends Command
 
                 if ($now->between($from, $to)) {
                     Log::info("ADIAL ✅ File ID {$file->id} is within range, processing calls...");
-                    $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new');
+
+                    // Fixed: Added ->get() to execute the query
+                    $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->get();
+
+                    Log::info("Found " . $feed_data->count() . " calls to make for feed ID " . $file->id);
+
                     foreach ($feed_data as $data) {
                         $client = new Client();
                         try {
@@ -132,8 +139,16 @@ class ADialMakeCallCommand extends Command
                                 ]);
 
                                 Log::info("📞✅ Call successful for: " . $data->mobile);
+
+                                // Add a short delay between calls to prevent flooding
+                                sleep(2);
                             } else {
                                 Log::warning("⚠️ Call response received, but missing call ID. Response: " . json_encode($responseData));
+                                // Mark as failed to prevent retrying infinitely
+                                $data->update([
+                                    'state' => 'failed',
+                                    'call_date' => now(),
+                                ]);
                             }
 
                         } catch (RequestException $e) {
@@ -141,9 +156,13 @@ class ADialMakeCallCommand extends Command
                             if ($e->hasResponse()) {
                                 Log::error("Response: " . $e->getResponse()->getBody()->getContents());
                             }
+                            // Mark as failed to prevent retrying infinitely
+                            $data->update([
+                                'state' => 'error',
+                                'call_date' => now(),
+                            ]);
                         }
                     }
-
 
                     if (!ADialData::where('feed_id', $file->id)->where('state', 'new')->exists()) {
                         $file->update(['is_done' => true]);
