@@ -109,7 +109,7 @@ class ADistMakeCallCommand extends Command
 
                     // Check if current time is within global allowed call hours
                     if (!$now->between($globalTodayStart, $globalTodayEnd)) {
-                        Log::info("⏱️ Current time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
+                        Log::info("⏱️ ADial - Current time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
                         return;
                     }
 
