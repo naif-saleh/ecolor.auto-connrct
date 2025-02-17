@@ -2,7 +2,7 @@
 @extends('layout.main')
 
 @section('content')
-<div class="container">sdv
+<div class="container">
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
@@ -64,7 +64,7 @@
                     </form>
                 </div>
             </div>
-            <div class="card">
+            <div class="card mt-2">
                 <div class="card-header">Number of Calls</div>
 
                 <div class="card-body">
