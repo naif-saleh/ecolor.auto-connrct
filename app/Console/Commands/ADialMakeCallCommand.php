@@ -96,10 +96,11 @@ class ADialMakeCallCommand extends Command
                 Log::info("Call window: {$from} to {$to}");
 
                 if ($now->between($from, $to)) {
-                    Log::info("ADIAL ✅ File ID {$file->id} is within range, processing calls...");
+                    $callCount = CountCalls::get('number_calls');
+                    Log::info("ADIAL ✅ File ID {$file->id} is within range, processing calls...". $callCount);
 
                     $client = new Client();
-                    $callCount = CountCalls::get('number_calls');
+
                     ADialData::where('feed_id', $file->id)
                         ->where('state', 'new')
                         ->chunk((int)$callCount, function ($feed_data) use ($provider, $client) {
