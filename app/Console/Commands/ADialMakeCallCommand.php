@@ -8,7 +8,7 @@ use Carbon\Carbon;
 use App\Models\ADialProvider;
 use App\Models\ADialData;
 use App\Models\ADialFeed;
-
+use App\Models\General_Setting;
 use App\Jobs\MakeCallJob;
 use App\Services\TokenService;
 
@@ -55,6 +55,27 @@ class ADialMakeCallCommand extends Command
                 ->where('allow', true)
                 ->get();
 
+            $callTimeStart = General_Setting::get('call_time_start');
+            $callTimeEnd = General_Setting::get('call_time_end');
+
+            // Check if settings exist - do this once before processing any feeds
+            if (!$callTimeStart || !$callTimeEnd) {
+                Log::warning("⚠️ Call time settings not configured. Please visit the settings page to set up allowed call hours.");
+                return;
+            }
+
+            $globalTodayStart = Carbon::parse(date('Y-m-d') . ' ' . $callTimeStart)->timezone($timezone);
+            $globalTodayEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
+
+            // Get current time once
+            $now = now()->timezone($timezone);
+
+            // Check if current time is within global allowed call hours
+            if (!$now->between($globalTodayStart, $globalTodayEnd)) {
+                Log::info("⏱️ Current time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
+                return;
+            }
+
             foreach ($files as $file) {
                 // Parse times using configured timezone
                 $from = Carbon::parse("{$file->date} {$file->from}")->timezone($timezone);
@@ -98,5 +119,4 @@ class ADialMakeCallCommand extends Command
 
         Log::info('📞✅ ADialMakeCallCommand execution completed at ' . now());
     }
-
 }
