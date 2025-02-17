@@ -4,7 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class Settings extends Model
+class General_Setting extends Model
 {
     protected $fillable = ['key', 'value', 'description'];
 
