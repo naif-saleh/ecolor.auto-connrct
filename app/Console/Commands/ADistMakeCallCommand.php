@@ -153,6 +153,10 @@ class ADistMakeCallCommand extends Command
                             } catch (RequestException $e) {
                                 Log::error("❌ Call failed for {$feedData->mobile}: " . $e->getMessage());
                             }
+                        }else {
+                            Log::info("ADist ❌ File ID {$feed->id} is NOT within range.");
+                            Log::info("Current time: " . $now->format('Y-m-d H:i:s'));
+                            Log::info("Window: {$from->format('Y-m-d H:i:s')} - {$to->format('Y-m-d H:i:s')}");
                         }
                     }
 
