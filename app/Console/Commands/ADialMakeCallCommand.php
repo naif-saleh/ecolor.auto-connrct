@@ -92,7 +92,7 @@ class ADialMakeCallCommand extends Command
                 Log::info("Current time ({$timezone}): " . $now);
                 Log::info("Call window: {$from} to {$to}");
 
-                if ($now->between($from, $to) && $file->is_allow === true) {
+                if ($now->between($from, $to)) {
                     Log::info("ADIAL ✅ File ID {$file->id} is within range, processing calls...");
                     $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new');
                     foreach ($feed_data as $data) {
@@ -134,7 +134,7 @@ class ADialMakeCallCommand extends Command
                             } else {
                                 Log::warning("⚠️ Call response received, but missing call ID. Response: " . json_encode($responseData));
                             }
-                            
+
                         } catch (RequestException $e) {
                             Log::error("❌ Guzzle Request Failed: " . $e->getMessage());
                             if ($e->hasResponse()) {
