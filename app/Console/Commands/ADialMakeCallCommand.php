@@ -9,6 +9,7 @@ use App\Models\ADialProvider;
 use App\Models\ADialData;
 use App\Models\ADialFeed;
 use App\Models\General_Setting;
+use App\Models\CountCalls;
 use App\Jobs\MakeCallJob;
 use App\Services\TokenService;
 use Illuminate\Support\Facades\DB;
@@ -98,9 +99,10 @@ class ADialMakeCallCommand extends Command
                     Log::info("ADIAL ✅ File ID {$file->id} is within range, processing calls...");
 
                     $client = new Client();
+                    $callCount = CountCalls::get('number_calls');
                     ADialData::where('feed_id', $file->id)
                         ->where('state', 'new')
-                        ->chunk(80, function ($feed_data) use ($provider, $client) {
+                        ->chunk($callCount, function ($feed_data) use ($provider, $client) {
                             foreach ($feed_data as $data) {
                                 try {
                                     Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
