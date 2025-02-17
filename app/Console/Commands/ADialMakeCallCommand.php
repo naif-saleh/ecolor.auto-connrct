@@ -97,72 +97,68 @@ class ADialMakeCallCommand extends Command
                 if ($now->between($from, $to)) {
                     Log::info("ADIAL ✅ File ID {$file->id} is within range, processing calls...");
 
-                    // Fixed: Added ->get() to execute the query
-                    $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->get();
+                    $client = new Client();
+                    ADialData::where('feed_id', $file->id)
+                        ->where('state', 'new')
+                        ->chunk(50, function ($feed_data) use ($provider, $client) {
+                            foreach ($feed_data as $data) {
+                                try {
+                                    Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
+                                    $token = $this->tokenService->getToken();
+                                    Log::info("Calling API for extension: " . $provider->extension);
 
-                    Log::info("Found " . $feed_data->count() . " calls to make for feed ID " . $file->id);
+                                    $response = $client->post(config('services.three_cx.api_url') . "/callcontrol/{$provider->extension}/makecall", [
+                                        'headers' => [
+                                            'Authorization' => 'Bearer ' . $token,
+                                            'Accept' => 'application/json',
+                                            'Content-Type' => 'application/json',
+                                        ],
+                                        'json' => [
+                                            'destination' => $data->mobile,
+                                        ],
+                                        'timeout' => 10,
+                                    ]);
+                                    $responseData = json_decode($response->getBody()->getContents(), true);
 
-                    foreach ($feed_data as $data) {
-                        $client = new Client();
-                        try {
-                            Log::info("ADIAL EXT: ". $provider->extension." mobile: ".$data->mobile);
-                            $token = $this->tokenService->getToken();
-                            Log::info("Calling API for extension: " . $provider->extension);
+                                    if (isset($responseData['result']['callid'])) {
+                                        Log::info("✅ Call successful. Call ID: " . $responseData['result']['callid']);
+                                        AutoDailerReport::updateOrCreate(
+                                            ['call_id' => $responseData['result']['callid']],
+                                            [
+                                                'status' => $responseData['result']['status'],
+                                                'provider' => $provider->name,
+                                                'extension' => $provider->extension,
+                                                'phone_number' => $data->mobile,
+                                            ]
+                                        );
+                                        $data->update([
+                                            'state' => $responseData['result']['status'],
+                                            'call_date' => now(),
+                                            'call_id' => $responseData['result']['callid'],
+                                        ]);
 
-                            $response = $client->post(config('services.three_cx.api_url') . "/callcontrol/{$provider->extension}/makecall", [
-                                'headers' => [
-                                    'Authorization' => 'Bearer ' . $token,
-                                    'Accept' => 'application/json',
-                                    'Content-Type' => 'application/json',
-                                ],
-                                'json' => [
-                                    'destination' => $data->mobile,
-                                ],
-                                'timeout' => 10,
-                            ]);
-                            $responseData = json_decode($response->getBody()->getContents(), true);
-                            if (isset($responseData['result']['callid'])) {
-                                Log::info("✅ Call successful. Call ID: " . $responseData['result']['callid']);
-                                AutoDailerReport::updateOrCreate(
-                                    ['call_id' => $responseData['result']['callid']],
-                                    [
-                                        'status' => $responseData['result']['status'],
-                                        'provider' => $provider->name,
-                                        'extension' => $provider->extension,
-                                        'phone_number' => $data->mobile,
-                                    ]
-                                );
-                                $data->update([
-                                    'state' => $responseData['result']['status'],
-                                    'call_date' => now(),
-                                    'call_id' => $responseData['result']['callid'],
-                                ]);
-
-                                Log::info("📞✅ Call successful for: " . $data->mobile);
-
-                                // Add a short delay between calls to prevent flooding
-                                sleep(2);
-                            } else {
-                                Log::warning("⚠️ Call response received, but missing call ID. Response: " . json_encode($responseData));
-                                // Mark as failed to prevent retrying infinitely
-                                $data->update([
-                                    'state' => 'failed',
-                                    'call_date' => now(),
-                                ]);
+                                        Log::info("📞✅ Call successful for: " . $data->mobile);
+                                        sleep(2);
+                                    } else {
+                                        Log::warning("⚠️ Call response received, but missing call ID. Response: " . json_encode($responseData));
+                                        $data->update([
+                                            'state' => 'failed',
+                                            'call_date' => now(),
+                                        ]);
+                                    }
+                                } catch (RequestException $e) {
+                                    Log::error("❌ Guzzle Request Failed: " . $e->getMessage());
+                                    if ($e->hasResponse()) {
+                                        Log::error("Response: " . $e->getResponse()->getBody()->getContents());
+                                    }
+                                    $data->update([
+                                        'state' => 'error',
+                                        'call_date' => now(),
+                                    ]);
+                                }
                             }
+                        });
 
-                        } catch (RequestException $e) {
-                            Log::error("❌ Guzzle Request Failed: " . $e->getMessage());
-                            if ($e->hasResponse()) {
-                                Log::error("Response: " . $e->getResponse()->getBody()->getContents());
-                            }
-                            // Mark as failed to prevent retrying infinitely
-                            $data->update([
-                                'state' => 'error',
-                                'call_date' => now(),
-                            ]);
-                        }
-                    }
 
                     if (!ADialData::where('feed_id', $file->id)->where('state', 'new')->exists()) {
                         $file->update(['is_done' => true]);
