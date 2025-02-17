@@ -55,7 +55,26 @@ class ADialMakeCallCommand extends Command
                 ->where('allow', true)
                 ->get();
 
+            $callTimeStart = General_Setting::get('call_time_start');
+            $callTimeEnd = General_Setting::get('call_time_end');
 
+            // Check if settings exist - do this once before processing any feeds
+            if (!$callTimeStart || !$callTimeEnd) {
+                Log::warning("⚠️ Call time settings not configured. Please visit the settings page to set up allowed call hours.");
+                return;
+            }
+
+            $globalTodayStart = Carbon::parse(date('Y-m-d') . ' ' . $callTimeStart)->timezone($timezone);
+            $globalTodayEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
+
+            // Get current time once
+            $now = now()->timezone($timezone);
+
+            // Check if current time is within global allowed call hours
+            if (!$now->between($globalTodayStart, $globalTodayEnd)) {
+                Log::info("⏱️ ADist - Current time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
+                return;
+            }
 
             foreach ($files as $file) {
                 // Parse times using configured timezone
@@ -78,7 +97,8 @@ class ADialMakeCallCommand extends Command
                                     $token = app(TokenService::class);
                                     dispatch(new MakeCallJob($feedData, $token, $provider->extension));
 
-                                    usleep(200000);
+                                    // Add a small delay between calls to prevent system overload
+                                    usleep(200000); // 0.2 seconds delay
                                 } catch (\Exception $e) {
                                     Log::error("ADIAL ❌ Error in dispatching call: " . $e->getMessage());
                                 }
