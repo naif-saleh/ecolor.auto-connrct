@@ -165,32 +165,35 @@
                                 </ul>
                             </div>
                         </li>
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('users.system.index') }}">
-                                <i class="menu-icon mdi mdi-account-circle-outline"></i>
-                                <span class="menu-title">User Pages</span>
 
-                            </a>
-
-                        </li>
                         <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#form-elements" aria-expanded="false"
-                                aria-controls="form-elements">
+                            <a class="nav-link" data-bs-toggle="collapse" href="#settings" aria-expanded="false"
+                                aria-controls="settings">
                                 <i class="mdi mdi-cog-outline"></i>
 
                                 <span class="menu-title">Settings</span>
                                 <i class="menu-arrow"></i>
                             </a>
-                            <div class="collapse" id="form-elements">
+                            <div class="collapse" id="settings">
                                 <ul class="nav flex-column sub-menu">
                                     <li class="nav-item"><a class="nav-link"
                                             href="{{ route('settings.index') }}">System Time Calls</a></li>
                                     <li class="nav-item"><a class="nav-link"
                                             href="{{ route('settings.indexCountNumbers') }}">Count Calls</a></li>
+                                            <li class="nav-item">
+                                                <a class="nav-link" href="{{ route('users.system.index') }}">
+
+                                                    <span class="menu-title">Manage Users</span>
+
+                                                </a>
+
+                                            </li>
 
                                 </ul>
                             </div>
                         </li>
+
+
 
                     @elseif (Auth::check() && Auth::user()->isManagerUser())
                         <nav class="sidebar sidebar-offcanvas" id="sidebar">
