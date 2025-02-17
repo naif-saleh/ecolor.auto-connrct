@@ -173,6 +173,15 @@
                             </a>
 
                         </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="{{ route('settings.index') }}">
+                                <i class="mdi mdi-cog-outline"></i>
+
+                                <span class="menu-title">Settings</span>
+
+                            </a>
+
+                        </li>
                     @elseif (Auth::check() && Auth::user()->isManagerUser())
                         <nav class="sidebar sidebar-offcanvas" id="sidebar">
                             <ul class="nav">
