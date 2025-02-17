@@ -102,7 +102,7 @@ class ADialMakeCallCommand extends Command
                     $callCount = CountCalls::get('number_calls');
                     ADialData::where('feed_id', $file->id)
                         ->where('state', 'new')
-                        ->chunk($callCount, function ($feed_data) use ($provider, $client) {
+                        ->chunk((int)$callCount, function ($feed_data) use ($provider, $client) {
                             foreach ($feed_data as $data) {
                                 try {
                                     Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
