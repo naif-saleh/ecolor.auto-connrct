@@ -39,7 +39,7 @@ class ADialMakeCallCommand extends Command
     public function __construct(TokenService $tokenService)
     {
         parent::__construct();
-        $tokenService = $tokenService;
+        $this->tokenService = $tokenService;
     }
 
     /**
