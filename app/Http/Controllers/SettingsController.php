@@ -29,7 +29,7 @@ class SettingsController extends Controller
         General_Setting::set('call_time_start', $request->call_time_start . ':00', 'Start time for allowed calls');
         General_Setting::set('call_time_end', $request->call_time_end . ':00', 'End time for allowed calls');
 
-        return redirect()->back()->with('success', 'Call time settings updated successfully.');
+        return redirect()->back()->with('success_time', 'Call time settings updated successfully.');
     }
 
     public function updateCallsNumber(Request $request)
@@ -40,6 +40,6 @@ class SettingsController extends Controller
 
         CountCalls::set('number_calls', $request->number_calls, 'Number of Calls Each Time');
 
-        return redirect()->back()->with('success', 'Number of Calls Updated Successfully.');
+        return redirect()->back()->with('success_count', 'Number of Calls Updated Successfully.');
     }
 }

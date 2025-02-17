@@ -9,9 +9,9 @@
                 <div class="card-header">Call Time Settings</div>
 
                 <div class="card-body">
-                    @if (session('success'))
+                    @if (session('success_time'))
                         <div class="alert alert-success" role="alert">
-                            {{ session('success') }}
+                            {{ session('success_time') }}
                         </div>
                     @endif
 
@@ -68,9 +68,9 @@
                 <div class="card-header">Number of Calls</div>
 
                 <div class="card-body">
-                    @if (session('success'))
+                    @if (session('success_count'))
                         <div class="alert alert-success" role="alert">
-                            {{ session('success') }}
+                            {{ session('success_count') }}
                         </div>
                     @endif
 
