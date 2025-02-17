@@ -32,11 +32,7 @@
                                             <td>{{ $log->user->name }}</td>
                                             <td>
                                                 <span
-                                                    class="badge
-                                            @if ($log->operation == 'create') bg-success
-                                            @elseif($log->operation == 'update') bg-warning
-                                            @elseif($log->operation == 'delete') bg-danger
-                                            @else bg-secondary @endif">
+                                                    class="text-wrap d-inline-block w-100">
                                                     {{ ucfirst($log->operation) }}
                                                 </span>
                                             </td>
