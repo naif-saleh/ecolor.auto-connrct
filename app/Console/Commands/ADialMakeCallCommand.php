@@ -109,10 +109,10 @@ class ADialMakeCallCommand extends Command
                             foreach ($dataBatch as $feedData) {
                                 try {
                                     $token = $this->tokenService->getToken();
-                                    Log::info("Calling API for extension: " . $provider->extension);
+                                    Log::info("Calling API for extension: " . $feedData->extension);
 
                                     // Make POST request with Guzzle
-                                    $response = $client->request('POST', "/callcontrol/{$provider->extension}/makecall", [
+                                    $response = $client->request('POST', "/callcontrol/{$feedData->extension}/makecall", [
                                         'headers' => [
                                             'Authorization' => 'Bearer ' . $token,
                                         ],
@@ -129,8 +129,8 @@ class ADialMakeCallCommand extends Command
                                             ['call_id' => $responseData['result']['callid']],
                                             [
                                                 'status' => $responseData['result']['status'],
-                                                'provider' => $responseData['result']['dn'],
-                                                'extension' => $provider->name,
+                                                'provider' => $feedData->name,
+                                                'extension' => $feedData->extension,
                                                 'phone_number' => $feedData->mobile,
                                             ]
                                         );
@@ -146,13 +146,10 @@ class ADialMakeCallCommand extends Command
                                         Log::error("❌ Failed call: " . $feedData->mobile);
                                     }
 
-                                    $providers = ADialProvider::all();
-                                    foreach ($providers as $provider) {
-                                        $ext_from = $provider->extension;
 
                                         try {
                                             // Make GET request with Guzzle
-                                            $response = $client->request('GET', "/callcontrol/{$ext_from}/participants", [
+                                            $response = $client->request('GET', "/callcontrol/{$feedData->extension}/participants", [
                                                 'headers' => [
                                                     'Authorization' => 'Bearer ' . $token,
                                                 ],
@@ -162,7 +159,7 @@ class ADialMakeCallCommand extends Command
                                                 $participants = json_decode($response->getBody(), true);
 
                                                 if (empty($participants)) {
-                                                    Log::warning("⚠️ No participants found for extension {$ext_from}");
+                                                    Log::warning("⚠️ No participants found for extension {$feedData->extension}");
                                                     continue;
                                                 }
 
@@ -238,9 +235,9 @@ class ADialMakeCallCommand extends Command
                                                 Log::error("Failed to fetch participants. HTTP Status: {$response->getStatusCode()}");
                                             }
                                         } catch (RequestException $e) {
-                                            Log::error("❌ Failed fetching participants for provider {$ext_from}: " . $e->getMessage());
+                                            Log::error("❌ Failed fetching participants for provider {$feedData->extension}: " . $e->getMessage());
                                         }
-                                    }
+
                                 } catch (RequestException $e) {
                                     Log::error("❌ Guzzle Exception: " . $e->getMessage());
                                 } catch (\Exception $e) {
