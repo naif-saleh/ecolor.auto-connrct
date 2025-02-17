@@ -100,7 +100,7 @@ class ADialMakeCallCommand extends Command
                     $client = new Client();
                     ADialData::where('feed_id', $file->id)
                         ->where('state', 'new')
-                        ->chunk(50, function ($feed_data) use ($provider, $client) {
+                        ->chunk(80, function ($feed_data) use ($provider, $client) {
                             foreach ($feed_data as $data) {
                                 try {
                                     Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);

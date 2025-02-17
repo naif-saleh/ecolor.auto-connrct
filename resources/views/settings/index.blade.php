@@ -2,7 +2,7 @@
 @extends('layout.main')
 
 @section('content')
-<div class="container">
+<div class="container">sdv
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="card">
@@ -58,6 +58,59 @@
                             <div class="col-md-6 offset-md-4">
                                 <button type="submit" class="btn btn-primary">
                                     {{ !$callTimeStart || !$callTimeEnd ? 'Save Initial Settings' : 'Update Settings' }}
+                                </button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br>
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">Number of Calls</div>
+
+                <div class="card-body">
+                    @if (session('success'))
+                        <div class="alert alert-success" role="alert">
+                            {{ session('success') }}
+                        </div>
+                    @endif
+
+                    {{-- @if (!$callTimeStart || !$callTimeEnd)
+                        <div class="alert alert-warning" role="alert">
+                            <strong>Initial Setup Required:</strong> Please set the allowed calling hours for the system.
+                        </div>
+                    @endif --}}
+
+                    <form method="POST" action="">
+                        @csrf
+
+                        <div class="form-group row mb-3">
+                            <label for="number_calls" class="col-md-4 col-form-label text-md-right">Put Number of Calls</label>
+
+                            <div class="col-md-6">
+                                <input id="number_calls" type="number" class="form-control"
+                                       name="number_calls" value="" required>
+
+                                @error('number_calls')
+                                    <span class="invalid-feedback" role="alert">
+                                        <strong>{{ $message }}</strong>
+                                    </span>
+                                @enderror
+                            </div>
+                        </div>
+
+
+
+                        <div class="form-group row mb-0">
+                            <div class="col-md-6 offset-md-4">
+                                <button type="submit" class="btn btn-primary">
+                                    {{ !$callTimeEnd ? 'Save Initial Settings' : 'Update Settings' }}
                                 </button>
                             </div>
                         </div>
