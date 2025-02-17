@@ -11,6 +11,12 @@ use App\Models\ADialFeed;
 use App\Models\General_Setting;
 use App\Jobs\MakeCallJob;
 use App\Services\TokenService;
+use Illuminate\Support\Facades\DB;
+use App\Models\AutoDailerReport;
+use DateTime;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+
 
 class ADialMakeCallCommand extends Command
 {
@@ -33,7 +39,7 @@ class ADialMakeCallCommand extends Command
     public function __construct(TokenService $tokenService)
     {
         parent::__construct();
-        $this->tokenService = $tokenService;
+        $tokenService = $tokenService;
     }
 
     /**
@@ -89,18 +95,156 @@ class ADialMakeCallCommand extends Command
                 if ($now->between($from, $to)) {
                     Log::info("ADIAL ✅ File ID {$file->id} is within range, processing calls...");
 
+
+
                     ADialData::where('feed_id', $file->id)
                         ->where('state', 'new')
                         ->chunk(50, function ($dataBatch) use ($provider) {
+                            // Create a Guzzle client
+                            $client = new Client([
+                                'base_uri' => config('services.three_cx.api_url'),
+                                'timeout' => 30,
+                            ]);
+
                             foreach ($dataBatch as $feedData) {
                                 try {
-                                    $token = app(TokenService::class);
-                                    dispatch(new MakeCallJob($feedData, $token, $provider->extension));
+                                    $token = $this->tokenService->getToken();
+                                    Log::info("Calling API for extension: " . $provider->extension);
 
-                                    // Add a small delay between calls to prevent system overload
-                                    usleep(200000); // 0.2 seconds delay
+                                    // Make POST request with Guzzle
+                                    $response = $client->request('POST', "/callcontrol/{$provider->extension}/makecall", [
+                                        'headers' => [
+                                            'Authorization' => 'Bearer ' . $token,
+                                        ],
+                                        'json' => [
+                                            'destination' => $feedData->mobile,
+                                        ],
+                                    ]);
+
+                                    if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
+                                        $responseData = json_decode($response->getBody(), true);
+                                        Log::info("dadad call id " . $responseData['result']['callid'] . ' mobile ' . $feedData->mobile);
+
+                                        AutoDailerReport::updateOrCreate(
+                                            ['call_id' => $responseData['result']['callid']],
+                                            [
+                                                'status' => $responseData['result']['status'],
+                                                'provider' => $responseData['result']['dn'],
+                                                'extension' => $provider->name,
+                                                'phone_number' => $feedData->mobile,
+                                            ]
+                                        );
+
+                                        $feedData->update([
+                                            'state' => $responseData['result']['status'],
+                                            'call_date' => now(),
+                                            'call_id' => $responseData['result']['callid'],
+                                        ]);
+
+                                        Log::info("📞✅ Call successful for: " . $feedData->mobile);
+                                    } else {
+                                        Log::error("❌ Failed call: " . $feedData->mobile);
+                                    }
+
+                                    $providers = ADialProvider::all();
+                                    foreach ($providers as $provider) {
+                                        $ext_from = $provider->extension;
+
+                                        try {
+                                            // Make GET request with Guzzle
+                                            $response = $client->request('GET', "/callcontrol/{$ext_from}/participants", [
+                                                'headers' => [
+                                                    'Authorization' => 'Bearer ' . $token,
+                                                ],
+                                            ]);
+
+                                            if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
+                                                $participants = json_decode($response->getBody(), true);
+
+                                                if (empty($participants)) {
+                                                    Log::warning("⚠️ No participants found for extension {$ext_from}");
+                                                    continue;
+                                                }
+
+                                                Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
+
+                                                foreach ($participants as $participant_data) {
+                                                    try {
+                                                        Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
+                                                        $filter = "contains(Caller, '{$participant_data['dn']}')";
+                                                        $url = "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+
+                                                        // Make GET request for active calls with Guzzle
+                                                        $activeCallsResponse = $client->request('GET', $url, [
+                                                            'headers' => [
+                                                                'Authorization' => 'Bearer ' . $token,
+                                                            ],
+                                                        ]);
+
+                                                        if ($activeCallsResponse->getStatusCode() >= 200 && $activeCallsResponse->getStatusCode() < 300) {
+                                                            $activeCalls = json_decode($activeCallsResponse->getBody(), true);
+                                                            Log::info("✅ Dial:Active Calls Response: " . print_r($activeCalls, true));
+
+                                                            foreach ($activeCalls['value'] as $call) {
+                                                                $status = $call['Status'];
+                                                                $callId = $call['Id'];
+
+                                                                // Initialize duration variables
+                                                                $durationTime = null;
+                                                                $durationRouting = null;
+
+                                                                // Then update only the appropriate duration based on current status
+                                                                if (isset($call['EstablishedAt']) && isset($call['ServerNow'])) {
+                                                                    $establishedAt = new DateTime($call['EstablishedAt']);
+                                                                    $serverNow = new DateTime($call['ServerNow']);
+                                                                    $duration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+
+                                                                    if ($status === 'Talking') {
+                                                                        $durationTime = $duration;
+                                                                    } elseif ($status === 'Routing') {
+                                                                        $durationRouting = $duration;
+                                                                    }
+                                                                }
+
+                                                                // Transaction to update database
+                                                                DB::beginTransaction();
+                                                                try {
+                                                                    AutoDailerReport::where('call_id', $callId)
+                                                                        ->update([
+                                                                            'status' => $status,
+                                                                            'duration_time' => $durationTime,
+                                                                            'duration_routing' => $durationRouting
+                                                                        ]);
+
+                                                                    ADialData::where('call_id', $callId)
+                                                                        ->update(['state' => $status]);
+
+                                                                    Log::info("ADilaParticipantsCommand ✅ Mobile status: {$status}, Mobile: " . $call['Callee']);
+
+                                                                    DB::commit();
+                                                                } catch (\Exception $e) {
+                                                                    DB::rollBack();
+                                                                    Log::error("ADilaParticipantsCommand ❌ Transaction Failed for call ID {$callId}: " . $e->getMessage());
+                                                                }
+                                                            }
+                                                        } else {
+                                                            Log::error("❌ Failed to fetch active calls. Response: " . $activeCallsResponse->getBody());
+                                                        }
+                                                    } catch (RequestException $e) {
+                                                        Log::error("❌ Failed to process participant data for call ID " . ($participant_data['callid'] ?? 'N/A') . ": " . $e->getMessage());
+                                                    }
+                                                }
+                                            } else {
+                                                Log::error("Failed to fetch participants. HTTP Status: {$response->getStatusCode()}");
+                                            }
+                                        } catch (RequestException $e) {
+                                            Log::error("❌ Failed fetching participants for provider {$ext_from}: " . $e->getMessage());
+                                        }
+                                    }
+                                } catch (RequestException $e) {
+                                    Log::error("❌ Guzzle Exception: " . $e->getMessage());
                                 } catch (\Exception $e) {
-                                    Log::error("ADIAL ❌ Error in dispatching call: " . $e->getMessage());
+                                    Log::error("❌ General Exception: " . $e->getMessage());
                                 }
                             }
                         });
