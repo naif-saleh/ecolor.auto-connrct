@@ -98,6 +98,7 @@ class ADialMakeCallCommand extends Command
                     foreach ($feed_data as $data) {
                         $client = new Client();
                         try {
+                            Log::info("ADIAL EXT: ". $provider->extension." mobile: ".$data->mobile);
                             $token = $this->tokenService->getToken();
                             Log::info("Calling API for extension: " . $provider->extension);
 
