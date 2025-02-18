@@ -98,12 +98,12 @@ class ADialMakeCallCommand extends Command
 
                         $client = new Client();
                         $callCount = CountCalls::get('number_calls');
-                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount);
+                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount)->get();
 
 
                         foreach ($feed_data as $data) {
                             try {
-                                Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
+                                // Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
                                 $token = $this->tokenService->getToken();
                                 Log::info("ADial Calling API for extension: " . $provider->extension . "Mobile: " . $data->mobile);
                                 //Log::info("ADial GlobbalTodayStart: " . $globalTodayStart . " globalTodayEnd: ".$globalTodayEnd);
