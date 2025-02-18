@@ -100,8 +100,8 @@ class ADialMakeCallCommand extends Command
                         $callCount = CountCalls::get('number_calls');
                         ADialData::where('feed_id', $file->id)
                             ->where('state', 'new')
-                            ->chunk($callCount, function ($feed_data) use ($provider, $client, &$shouldStopProcessing) {
-                                if ($shouldStopProcessing) {
+                            ->chunk($callCount, function ($feed_data) use ($provider, $client, &$shouldStopProcessing, $now, $globalTodayStart, $globalTodayEnd) {
+                                if ($shouldStopProcessing || !$now->between($globalTodayStart, $globalTodayEnd)) {
                                     Log::info("❌ Stopping processing due to time condition update.");
                                     return false;
                                 }
