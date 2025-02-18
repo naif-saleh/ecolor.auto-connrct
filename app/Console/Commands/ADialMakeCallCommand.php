@@ -281,7 +281,6 @@ class ADialMakeCallCommand extends Command
         } else {
             Log::info("⏱️ ADist - Current time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
         }
-        $shouldStopProcessing = true;
         Log::info('📞✅ ADialMakeCallCommand execution completed at ' . now());
     }
 }
