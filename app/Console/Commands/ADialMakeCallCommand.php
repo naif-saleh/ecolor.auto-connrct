@@ -68,7 +68,7 @@ class ADialMakeCallCommand extends Command
         $now = now()->timezone($timezone);
         $globalTodayStart = Carbon::parse(date('Y-m-d') . ' ' . $callTimeStart)->timezone($timezone);
         $globalTodayEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
-
+        $shouldStopProcessing = false;
         // Check if current time is within global allowed call hours
         if ($now->between($globalTodayStart, $globalTodayEnd)) {
             Log::info("GlobbalTodayStart: " . $globalTodayStart . " globalTodayEnd: ".$globalTodayEnd);
@@ -100,7 +100,11 @@ class ADialMakeCallCommand extends Command
                         $callCount = CountCalls::get('number_calls');
                         ADialData::where('feed_id', $file->id)
                             ->where('state', 'new')
-                            ->chunk($callCount, function ($feed_data) use ($provider, $client) {
+                            ->chunk($callCount, function ($feed_data) use ($provider, $client, &$shouldStopProcessing) {
+                                if ($shouldStopProcessing) {
+                                    Log::info("❌ Stopping processing due to time condition update.");
+                                    return false;
+                                }
                                 foreach ($feed_data as $data) {
                                     try {
                                         Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
@@ -277,7 +281,7 @@ class ADialMakeCallCommand extends Command
         } else {
             Log::info("⏱️ ADist - Current time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
         }
-
+        $shouldStopProcessing = true;
         Log::info('📞✅ ADialMakeCallCommand execution completed at ' . now());
     }
 }
