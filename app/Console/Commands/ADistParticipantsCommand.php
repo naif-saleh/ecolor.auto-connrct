@@ -35,6 +35,7 @@ class ADistParticipantsCommand extends Command
 
 
         try {
+            $token = $this->tokenService->getToken();
             $client = new Client([
                 'base_uri' => config('services.three_cx.api_url'),
                 'headers' => [
@@ -42,10 +43,11 @@ class ADistParticipantsCommand extends Command
                 ],
             ]);
 
-            $token = $this->tokenService->getToken();
+
 
             // Fetch Active Calls
             try {
+
                 $response = $client->get('/xapi/v1/ActiveCalls', [
                     'headers' => ['Authorization' => "Bearer $token"]
                 ]);
