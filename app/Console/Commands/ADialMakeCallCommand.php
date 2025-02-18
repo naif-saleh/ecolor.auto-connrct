@@ -105,7 +105,7 @@ class ADialMakeCallCommand extends Command
                                     try {
                                         Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
                                         $token = $this->tokenService->getToken();
-                                        Log::info("Calling API for extension: " . $provider->extension);
+                                        Log::info("ADial Calling API for extension: " . $provider->extension . "Mobile: ".$data->mobile);
 
                                         $response = $client->post(config('services.three_cx.api_url') . "/callcontrol/{$provider->extension}/makecall", [
                                             'headers' => [
