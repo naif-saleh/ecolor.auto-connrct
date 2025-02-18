@@ -32,11 +32,10 @@ class TokenService
             return $cachedToken;
         }
 
-        if ($cachedToken) {
-            Log::info('Using cached token Two: '.$cachedToken);
-            return $cachedToken;
-        }
-
+        // if ($cachedToken) {
+        //     Log::info('Using cached token Two: '.$cachedToken);
+        //     return $cachedToken;
+        // }
 
 
         return $this->generateToken();
