@@ -34,7 +34,7 @@ Schedule::command('app:ADial-make-call-command')->everySecond();
  Schedule::command('app:ADist-make-call-command')->everyMinute();
 
 // // Call Status Commands
- Schedule::command('app:ADial-participants-command')->everySecond();
+// Schedule::command('app:ADial-participants-command')->everySecond();
  Schedule::command('app:ADist-participants-command')->everySecond();
 
 // // Update User Status Commands
