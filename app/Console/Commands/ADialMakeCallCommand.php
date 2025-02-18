@@ -119,7 +119,7 @@ class ADialMakeCallCommand extends Command
                                         'json' => [
                                             'destination' => $data->mobile,
                                         ],
-                                        //'timeout' => 10,
+                                        'timeout' => 20,
                                     ]);
                                     $responseData = json_decode($response->getBody()->getContents(), true);
 
@@ -163,7 +163,7 @@ class ADialMakeCallCommand extends Command
                         });
 
 
-                   
+
 
 
 

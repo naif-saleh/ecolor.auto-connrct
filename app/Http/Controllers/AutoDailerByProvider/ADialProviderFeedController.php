@@ -45,7 +45,15 @@ class ADialProviderFeedController extends Controller
                 'extension' => $request->extension,
                 'user_id' => auth()->id(), // Ensure the user is logged in
             ]);
-
+dd(Auth::user()->name);
+            // // Active Log Report...............................
+            // ActivityLog::create([
+            //     'user_id' => Auth::id(),
+            //     'operation' => Auth::user()->name . " created " . $request->name . " provider with extension " . $request->extension,
+            //     'file_type' => 'Auto-Dailer',
+            //     'file_name' => $request->name,
+            //     'operation_time' => now(),
+            // ]);
             return redirect('/providers')->with('success', 'Provider Created Successfully');
         } catch (\Exception $e) {
             return response()->json(['error' => 'Something went wrong: ' . $e->getMessage()], 500);
@@ -197,9 +205,9 @@ class ADialProviderFeedController extends Controller
         ]);
 
         $file = ADialFeed::where('slug', $slug)->firstOrFail();
-        $comment = "feed update from " . $file->from . " to " . $request->from . 
-        " and from to " . $file->to . " to "  . $request->to . 
-        " and date to " . $file->date . " to "  . $request->date;
+        $comment = "feed update from " . $file->from . " to " . $request->from .
+            " and from to " . $file->to . " to "  . $request->to .
+            " and date to " . $file->date . " to "  . $request->date;
 
         $file->update([
             'file_name' => $request->file_name,
