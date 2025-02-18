@@ -49,7 +49,7 @@ class ADistUpdateUserStatusCommand extends Command
             $client = new Client();
 
             // Fetch user data from 3CX API using Guzzle
-            $response = $client->request('GET', config('services.three_cx.api_url') . "/xapi/v1/Users", [
+            $response = $client->request('GET', config('services.three_cx.api_url') . "/api/v1/Users", [
                 'headers' => [
                     'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
