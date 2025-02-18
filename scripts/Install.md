@@ -46,3 +46,9 @@ journalctl -u adial_make_call.service --no-pager --lines=50
 ```
 
 (Replace with the specific service name if needed.)
+
+
+make sure that you are changing the values on php-fpm 
+`nano /etc/php/8.4/fpm/pool.d/www.conf`
+and then restart the services 
+`systemctl status php8.4-fpm.service`
