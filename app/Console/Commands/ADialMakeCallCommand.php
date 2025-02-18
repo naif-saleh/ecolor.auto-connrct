@@ -100,12 +100,13 @@ class ADialMakeCallCommand extends Command
                         $callCount = CountCalls::get('number_calls');
                         ADialData::where('feed_id', $file->id)
                             ->where('state', 'new')
-                            ->chunk($callCount, function ($feed_data) use ($provider, $client, &$shouldStopProcessing, $now, $globalTodayStart, $globalTodayEnd) {
-                                if ($shouldStopProcessing || !$now->between($globalTodayStart, $globalTodayEnd)) {
-                                    Log::info("❌ Stopping processing due to time condition update.");
-                                    return false;
-                                }
+                            ->chunk($callCount, function ($feed_data) use ($provider, $client, $now, $globalTodayStart, $globalTodayEnd) {
+
                                 foreach ($feed_data as $data) {
+                                    if (!$now->between($globalTodayStart, $globalTodayEnd)) {
+                                        Log::info("❌ Stopping processing due to time condition update.");
+                                        continue;
+                                    }
                                     try {
                                         Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
                                         $token = $this->tokenService->getToken();
