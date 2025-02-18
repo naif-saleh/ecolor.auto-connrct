@@ -13,7 +13,7 @@ use App\Models\ADistFeed;
 use App\Models\ADistData;
 use App\Models\AutoDistributerReport;
 use App\Services\TokenService;
-use DateTime;
+use App\Models\General_Setting;
 use Illuminate\Support\Facades\Cache;
 
 class ADistMakeCallCommand extends Command
@@ -31,6 +31,8 @@ class ADistMakeCallCommand extends Command
     public function handle()
     {
         Log::info('ADistMakeCallCommand executed at ' . Carbon::now());
+        $timezone = config('app.timezone');
+        Log::info("Using timezone: {$timezone}");
         $agents = ADistAgent::all();
 
         foreach ($agents as $agent) {
@@ -51,7 +53,6 @@ class ADistMakeCallCommand extends Command
                     Log::error("API Request Failed: " . $e->getMessage());
                     return response()->json(['error' => 'Unable to fetch participants'], 500);
                 }
-
 
                 $participants = json_decode($participantResponse->getBody(), true);
                 Log::info("📞 3CX API Response: " . print_r($participants, true));
@@ -90,67 +91,105 @@ class ADistMakeCallCommand extends Command
                         ->where('is_done', false)
                         ->get();
 
+
+                    $callTimeStart = General_Setting::get('call_time_start');
+                    $callTimeEnd = General_Setting::get('call_time_end');
+
+                    // Check if settings exist - do this once before processing any feeds
+                    if (!$callTimeStart || !$callTimeEnd) {
+                        Log::warning("⚠️ Call time settings not configured. Please visit the settings page to set up allowed call hours.");
+                        return;
+                    }
+
+                    $globalTodayStart = Carbon::parse(date('Y-m-d') . ' ' . $callTimeStart)->timezone($timezone);
+                    $globalTodayEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
+
+                    // Get current time once
+                    $now = now()->timezone($timezone);
+
+                    // Check if current time is within global allowed call hours
+                    if (!$now->between($globalTodayStart, $globalTodayEnd)) {
+                        Log::info("⏱️ ADial - Current time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
+                        return;
+                    }
+
                     foreach ($feeds as $feed) {
-                        $from = Carbon::parse("{$feed->date} {$feed->from}")->subHours(3);
-                        $to = Carbon::parse("{$feed->date} {$feed->to}")->subHours(3);
+                        $from = Carbon::parse("{$feed->date} {$feed->from}")->timezone($timezone);
+                        $to = Carbon::parse("{$feed->date} {$feed->to}")->timezone($timezone);
+                        $now = now()->timezone($timezone);
+                        Log::info("ADIAL Processing window for File ID {$feed->id}:");
+                        Log::info("Current time ({$timezone}): " . $now);
+                        Log::info("Call window: {$from} to {$to}");
 
-                        if (!now()->between($from, $to)) {
-                            continue;
-                        }
 
-                        // ✅ Get one new call
-                        $feedData = ADistData::where('feed_id', $feed->id)
-                            ->where('state', 'new')
-                            ->lockForUpdate()
-                            ->first();
+                        // // Get global call time settings
+                        // $callTimeStart = General_Setting::get('call_time_start');
+                        // $callTimeEnd = General_Setting::get('call_time_end');
 
-                        if (!$feedData) {
-                            Cache::forget($lockKey);
-                            Log::info("✅ Unlocking agent {$agent->id} ({$agent->extension}) - No available call data.");
-                            continue;
-                        }
+                        // Check if settings exist
+                        // if (!$callTimeStart || !$callTimeEnd) {
+                        //     Log::warning("⚠️ Call time settings not configured. Please visit the settings page to set up allowed call hours.");
+                        //     return;
+                        // }
 
-                        try {
-                            // ✅ Get agent devices
-                            $devicesResponse = $client->get("/callcontrol/{$agent->extension}/devices", [
-                                'headers' => ['Authorization' => "Bearer $token"],
-                                'timeout' => 2
-                            ]);
+                        if ($now->between($from, $to)) {
+                            // ✅ Get one new call
+                            $feedData = ADistData::where('feed_id', $feed->id)
+                                ->where('state', 'new')
+                                ->lockForUpdate()
+                                ->first();
 
-                            $dnDevices = json_decode($devicesResponse->getBody(), true);
+                            if (!$feedData) {
+                                Log::info("✅ No available call data for feed {$feed->id}");
+                                continue;
+                            }
 
-                            foreach ($dnDevices as $device) {
-                                if ($device['user_agent'] !== '3CX Mobile Client') continue;
-
-                                // ✅ Make the call
-                                $responseState = $client->post("/callcontrol/{$agent->extension}/devices/{$device['device_id']}/makecall", [
+                            try {
+                                // ✅ Get agent devices
+                                $devicesResponse = $client->get("/callcontrol/{$agent->extension}/devices", [
                                     'headers' => ['Authorization' => "Bearer $token"],
-                                    'json' => ['destination' => $feedData->mobile],
                                     'timeout' => 2
                                 ]);
 
-                                $responseData = json_decode($responseState->getBody(), true);
+                                $dnDevices = json_decode($devicesResponse->getBody(), true);
 
-                                // ✅ Update records in a transaction
-                                DB::transaction(function () use ($responseData, $feedData) {
-                                    AutoDistributerReport::create([
-                                        'call_id' => $responseData['result']['callid'],
-                                        'status' => "Initiating",
-                                        'provider' => $feedData->file->file_name,
-                                        'extension' => $responseData['result']['dn'],
-                                        'phone_number' => $responseData['result']['party_caller_id'],
-                                        'attempt_time' => now(),
+                                foreach ($dnDevices as $device) {
+                                    if ($device['user_agent'] !== '3CX Mobile Client') continue;
+
+                                    // ✅ Make the call
+                                    $responseState = $client->post("/callcontrol/{$agent->extension}/devices/{$device['device_id']}/makecall", [
+                                        'headers' => ['Authorization' => "Bearer $token"],
+                                        'json' => ['destination' => $feedData->mobile],
+                                        'timeout' => 2
                                     ]);
 
-                                    $feedData->update([
-                                        'state' => "Initiating",
-                                        'call_date' => now(),
-                                        'call_id' => $responseData['result']['callid'],
-                                    ]);
-                                });
+                                    $responseData = json_decode($responseState->getBody(), true);
+
+                                    // ✅ Update records in a transaction
+                                    DB::transaction(function () use ($responseData, $feedData) {
+                                        AutoDistributerReport::create([
+                                            'call_id' => $responseData['result']['callid'],
+                                            'status' => "Initiating",
+                                            'provider' => $feedData->file->file_name,
+                                            'extension' => $responseData['result']['dn'],
+                                            'phone_number' => $responseData['result']['party_caller_id'],
+                                            'attempt_time' => now(),
+                                        ]);
+
+                                        $feedData->update([
+                                            'state' => "Initiating",
+                                            'call_date' => now(),
+                                            'call_id' => $responseData['result']['callid'],
+                                        ]);
+                                    });
+                                }
+                            } catch (RequestException $e) {
+                                Log::error("❌ Call failed for {$feedData->mobile}: " . $e->getMessage());
                             }
-                        } catch (RequestException $e) {
-                            Log::error("❌ Call failed for {$feedData->mobile}: " . $e->getMessage());
+                        } else {
+                            Log::info("ADist ❌ File ID {$feed->id} is NOT within range.");
+                            Log::info("Current time: " . $now->format('Y-m-d H:i:s'));
+                            Log::info("Window: {$from->format('Y-m-d H:i:s')} - {$to->format('Y-m-d H:i:s')}");
                         }
                     }
 

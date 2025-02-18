@@ -168,7 +168,7 @@ class ADialProviderFeedController extends Controller
     // Display all files for a provider
     public function files(ADialProvider $provider)
     {
-        $files = $provider->files()->orderBy('date', 'desc')->paginate(5); // Change 'created_at' to the correct column if needed
+        $files = $provider->files()->orderBy('created_at', 'desc')->paginate(5);
         // Relationship defined in the provider model
         return view('autoDailerByProvider.ProviderFeed.feed', compact('provider', 'files'));
     }
@@ -197,12 +197,24 @@ class ADialProviderFeedController extends Controller
         ]);
 
         $file = ADialFeed::where('slug', $slug)->firstOrFail();
+        $comment = "feed update from " . $file->from . " to " . $request->from . 
+        " and from to " . $file->to . " to "  . $request->to . 
+        " and date to " . $file->date . " to "  . $request->date;
 
         $file->update([
             'file_name' => $request->file_name,
             'from' => $request->from,
             'to' => $request->to,
             'date' => $request->date,
+        ]);
+        // Active Log Report...............................
+        ActivityLog::create([
+            'user_id' => Auth::id(),
+            'operation' =>  $comment,
+            'file_id' => $file->id,
+            'file_type' => 'Auto-Dailer',
+            'file_name' => $file->file_name,
+            'operation_time' => now(),
         ]);
 
         return back()->with('success', 'File updated successfully');

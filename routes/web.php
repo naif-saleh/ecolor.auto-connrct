@@ -12,6 +12,7 @@ use App\Http\Controllers\AutoDistributerByUser\AdistFeedController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ManagerReportController;
+use App\Http\Controllers\SettingsController;
 
 /**
  * Root Route Handling
@@ -82,8 +83,12 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('users', [UserController::class, 'store'])->name('users.store');
 
+    //Settings....
+    Route::get('/settings/update-time-calls', [SettingsController::class, 'index'])->name('settings.index');
+    Route::post('/settings', [SettingsController::class, 'updateBlockTime'])->name('settings.update');
 
-
+    Route::get('/settings/update-count-calls', [SettingsController::class, 'indexCountCall'])->name('settings.indexCountNumbers');
+    Route::post('/settings/calls-number', [SettingsController::class, 'updateCallsNumber'])->name('settings.update.callsNumber');
     /**
      * Auto Dialer Provider Routese
      *
