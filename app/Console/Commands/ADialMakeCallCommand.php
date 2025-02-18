@@ -70,216 +70,217 @@ class ADialMakeCallCommand extends Command
         $globalTodayEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
 
         // Check if current time is within global allowed call hours
-        if (!$now->between($globalTodayStart, $globalTodayEnd)) {
-            Log::info("⏱️ ADist - Current time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
-            goto end_process;
-        }
+        if ($now->between($globalTodayStart, $globalTodayEnd)) {
 
-        $providers = ADialProvider::all();
-        Log::info("Found " . $providers->count() . " providers to process");
 
-        foreach ($providers as $provider) {
-            $files = ADialFeed::where('provider_id', $provider->id)
-                ->whereDate('date', today())
-                ->where('allow', true)
-                ->get();
 
-            Log::info("Found " . $files->count() . " feeds for provider " . $provider->name);
 
-            foreach ($files as $file) {
-                // Parse times using configured timezone
-                $from = Carbon::parse("{$file->date} {$file->from}")->timezone($timezone);
-                $to = Carbon::parse("{$file->date} {$file->to}")->timezone($timezone);
+            $providers = ADialProvider::all();
+            Log::info("Found " . $providers->count() . " providers to process");
 
-                Log::info("ADIAL Processing window for File ID {$file->id}:");
-                Log::info("Current time ({$timezone}): " . $now);
-                Log::info("Call window: {$from} to {$to}");
+            foreach ($providers as $provider) {
+                $files = ADialFeed::where('provider_id', $provider->id)
+                    ->whereDate('date', today())
+                    ->where('allow', true)
+                    ->get();
 
-                if ($now->between($from, $to)) {
+                Log::info("Found " . $files->count() . " feeds for provider " . $provider->name);
 
-                    Log::info("ADIAL ✅ File ID {$file->id} is within range, processing calls...");
+                foreach ($files as $file) {
+                    // Parse times using configured timezone
+                    $from = Carbon::parse("{$file->date} {$file->from}")->timezone($timezone);
+                    $to = Carbon::parse("{$file->date} {$file->to}")->timezone($timezone);
 
-                    $client = new Client();
-                    $callCount = CountCalls::get('number_calls');
-                    ADialData::where('feed_id', $file->id)
-                        ->where('state', 'new')
-                        ->chunk($callCount, function ($feed_data) use ($provider, $client) {
-                            foreach ($feed_data as $data) {
-                                try {
-                                    Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
-                                    $token = $this->tokenService->getToken();
-                                    Log::info("Calling API for extension: " . $provider->extension);
+                    Log::info("ADIAL Processing window for File ID {$file->id}:");
+                    Log::info("Current time ({$timezone}): " . $now);
+                    Log::info("Call window: {$from} to {$to}");
 
-                                    $response = $client->post(config('services.three_cx.api_url') . "/callcontrol/{$provider->extension}/makecall", [
-                                        'headers' => [
-                                            'Authorization' => 'Bearer ' . $token,
-                                            'Accept' => 'application/json',
-                                            'Content-Type' => 'application/json',
-                                        ],
-                                        'json' => [
-                                            'destination' => $data->mobile,
-                                        ],
-                                        'timeout' => 20,
-                                    ]);
-                                    $responseData = json_decode($response->getBody()->getContents(), true);
+                    if ($now->between($from, $to)) {
 
-                                    if (isset($responseData['result']['callid'])) {
-                                        Log::info("✅ Call successful. Call ID: " . $responseData['result']['callid']);
-                                        AutoDailerReport::updateOrCreate(
-                                            ['call_id' => $responseData['result']['callid']],
-                                            [
-                                                'status' => $responseData['result']['status'],
-                                                'provider' => $provider->name,
-                                                'extension' => $provider->extension,
-                                                'phone_number' => $data->mobile,
-                                            ]
-                                        );
-                                        $data->update([
-                                            'state' => $responseData['result']['status'],
-                                            'call_date' => now(),
-                                            'call_id' => $responseData['result']['callid'],
+                        Log::info("ADIAL ✅ File ID {$file->id} is within range, processing calls...");
+
+                        $client = new Client();
+                        $callCount = CountCalls::get('number_calls');
+                        ADialData::where('feed_id', $file->id)
+                            ->where('state', 'new')
+                            ->chunk($callCount, function ($feed_data) use ($provider, $client) {
+                                foreach ($feed_data as $data) {
+                                    try {
+                                        Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
+                                        $token = $this->tokenService->getToken();
+                                        Log::info("Calling API for extension: " . $provider->extension);
+
+                                        $response = $client->post(config('services.three_cx.api_url') . "/callcontrol/{$provider->extension}/makecall", [
+                                            'headers' => [
+                                                'Authorization' => 'Bearer ' . $token,
+                                                'Accept' => 'application/json',
+                                                'Content-Type' => 'application/json',
+                                            ],
+                                            'json' => [
+                                                'destination' => $data->mobile,
+                                            ],
+                                            'timeout' => 20,
                                         ]);
+                                        $responseData = json_decode($response->getBody()->getContents(), true);
 
-                                        Log::info("📞✅ Call successful for: " . $data->mobile);
-                                        sleep(2);
-                                    } else {
-                                        Log::warning("⚠️ Call response received, but missing call ID. Response: " . json_encode($responseData));
-                                        $data->update([
-                                            'state' => 'failed',
-                                            'call_date' => now(),
-                                        ]);
-                                    }
-                                } catch (RequestException $e) {
-                                    Log::error("❌ Guzzle Request Failed: " . $e->getMessage());
-                                    if ($e->hasResponse()) {
-                                        Log::error("Response: " . $e->getResponse()->getBody()->getContents());
-                                    }
-                                    $data->update([
-                                        'state' => 'error',
-                                        'call_date' => now(),
-                                    ]);
-                                }
-
-
-
-                                // ADial Partisipant
-                                try {
-                                    $token = $this->tokenService->getToken();
-
-                                    $responseState = $client->get(config('services.three_cx.api_url') . "/callcontrol/{$provider->extension}/participants", [
-                                        'headers' => [
-                                            'Authorization' => 'Bearer ' . $token,
-                                            'Accept' => 'application/json',
-                                        ],
-                                        'timeout' => 20,
-                                    ]);
-
-                                    if ($responseState->getStatusCode() !== 200) {
-                                        Log::error("❌ Failed to fetch participants even after token refresh. HTTP Status: {$responseState->getStatusCode()}");
-                                        return;
-                                    }
-
-                                    $participants = json_decode($responseState->getBody()->getContents(), true);
-
-                                    if (empty($participants)) {
-                                        Log::warning("⚠️ No participants found for extension {$provider->extension}");
-                                        return;
-                                    }
-
-                                    Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
-
-                                    foreach ($participants as $participant_data) {
-                                        try {
-                                            Log::info("✅ Processing participant: " . json_encode($participant_data));
-
-                                            $filter = "contains(Caller, '{$participant_data['dn']}')";
-                                            $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
-
-                                            $activeCallsResponse = $client->get($url, [
-                                                'headers' => [
-                                                    'Authorization' => 'Bearer ' . $token,
-                                                    'Accept' => 'application/json',
-                                                ],
-                                                'timeout' => 10,
+                                        if (isset($responseData['result']['callid'])) {
+                                            Log::info("✅ Call successful. Call ID: " . $responseData['result']['callid']);
+                                            AutoDailerReport::updateOrCreate(
+                                                ['call_id' => $responseData['result']['callid']],
+                                                [
+                                                    'status' => $responseData['result']['status'],
+                                                    'provider' => $provider->name,
+                                                    'extension' => $provider->extension,
+                                                    'phone_number' => $data->mobile,
+                                                ]
+                                            );
+                                            $data->update([
+                                                'state' => $responseData['result']['status'],
+                                                'call_date' => now(),
+                                                'call_id' => $responseData['result']['callid'],
                                             ]);
 
-                                            if ($activeCallsResponse->getStatusCode() === 200) {
-                                                $activeCalls = json_decode($activeCallsResponse->getBody()->getContents(), true);
-                                                Log::info("✅ Active Calls Response: " . print_r($activeCalls, true));
+                                            Log::info("📞✅ Call successful for: " . $data->mobile);
+                                            sleep(2);
+                                        } else {
+                                            Log::warning("⚠️ Call response received, but missing call ID. Response: " . json_encode($responseData));
+                                            $data->update([
+                                                'state' => 'failed',
+                                                'call_date' => now(),
+                                            ]);
+                                        }
+                                    } catch (RequestException $e) {
+                                        Log::error("❌ Guzzle Request Failed: " . $e->getMessage());
+                                        if ($e->hasResponse()) {
+                                            Log::error("Response: " . $e->getResponse()->getBody()->getContents());
+                                        }
+                                        $data->update([
+                                            'state' => 'error',
+                                            'call_date' => now(),
+                                        ]);
+                                    }
 
-                                                foreach ($activeCalls['value'] as $call) {
-                                                    $status = $call['Status'];
-                                                    $callId = $call['Id'];
 
-                                                    // Parse call duration
-                                                    $durationTime = null;
-                                                    $durationRouting = null;
 
-                                                    if (isset($call['EstablishedAt']) && isset($call['ServerNow'])) {
-                                                        $establishedAt = new DateTime($call['EstablishedAt']);
-                                                        $serverNow = new DateTime($call['ServerNow']);
-                                                        $duration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+                                    // ADial Partisipant
+                                    try {
+                                        $token = $this->tokenService->getToken();
 
-                                                        if ($status === 'Talking') {
-                                                            $durationTime = $duration;
-                                                        } elseif ($status === 'Routing') {
-                                                            $durationRouting = $duration;
+                                        $responseState = $client->get(config('services.three_cx.api_url') . "/callcontrol/{$provider->extension}/participants", [
+                                            'headers' => [
+                                                'Authorization' => 'Bearer ' . $token,
+                                                'Accept' => 'application/json',
+                                            ],
+                                            'timeout' => 20,
+                                        ]);
+
+                                        if ($responseState->getStatusCode() !== 200) {
+                                            Log::error("❌ Failed to fetch participants even after token refresh. HTTP Status: {$responseState->getStatusCode()}");
+                                            return;
+                                        }
+
+                                        $participants = json_decode($responseState->getBody()->getContents(), true);
+
+                                        if (empty($participants)) {
+                                            Log::warning("⚠️ No participants found for extension {$provider->extension}");
+                                            return;
+                                        }
+
+                                        Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
+
+                                        foreach ($participants as $participant_data) {
+                                            try {
+                                                Log::info("✅ Processing participant: " . json_encode($participant_data));
+
+                                                $filter = "contains(Caller, '{$participant_data['dn']}')";
+                                                $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+
+                                                $activeCallsResponse = $client->get($url, [
+                                                    'headers' => [
+                                                        'Authorization' => 'Bearer ' . $token,
+                                                        'Accept' => 'application/json',
+                                                    ],
+                                                    'timeout' => 10,
+                                                ]);
+
+                                                if ($activeCallsResponse->getStatusCode() === 200) {
+                                                    $activeCalls = json_decode($activeCallsResponse->getBody()->getContents(), true);
+                                                    Log::info("✅ Active Calls Response: " . print_r($activeCalls, true));
+
+                                                    foreach ($activeCalls['value'] as $call) {
+                                                        $status = $call['Status'];
+                                                        $callId = $call['Id'];
+
+                                                        // Parse call duration
+                                                        $durationTime = null;
+                                                        $durationRouting = null;
+
+                                                        if (isset($call['EstablishedAt']) && isset($call['ServerNow'])) {
+                                                            $establishedAt = new DateTime($call['EstablishedAt']);
+                                                            $serverNow = new DateTime($call['ServerNow']);
+                                                            $duration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+
+                                                            if ($status === 'Talking') {
+                                                                $durationTime = $duration;
+                                                            } elseif ($status === 'Routing') {
+                                                                $durationRouting = $duration;
+                                                            }
+                                                        }
+
+                                                        // Database Transaction
+                                                        DB::beginTransaction();
+                                                        try {
+                                                            AutoDailerReport::where('call_id', $callId)
+                                                                ->update([
+                                                                    'status' => $status,
+                                                                    'duration_time' => $durationTime,
+                                                                    'duration_routing' => $durationRouting,
+                                                                ]);
+
+                                                            ADialData::where('call_id', $callId)
+                                                                ->update(['state' => $status]);
+
+                                                            Log::info("✅ Call Updated: Status: {$status}, Mobile: " . $call['Callee']);
+
+                                                            DB::commit();
+                                                        } catch (\Exception $e) {
+                                                            DB::rollBack();
+                                                            Log::error("❌ Transaction Failed for Call ID {$callId}: " . $e->getMessage());
                                                         }
                                                     }
-
-                                                    // Database Transaction
-                                                    DB::beginTransaction();
-                                                    try {
-                                                        AutoDailerReport::where('call_id', $callId)
-                                                            ->update([
-                                                                'status' => $status,
-                                                                'duration_time' => $durationTime,
-                                                                'duration_routing' => $durationRouting,
-                                                            ]);
-
-                                                        ADialData::where('call_id', $callId)
-                                                            ->update(['state' => $status]);
-
-                                                        Log::info("✅ Call Updated: Status: {$status}, Mobile: " . $call['Callee']);
-
-                                                        DB::commit();
-                                                    } catch (\Exception $e) {
-                                                        DB::rollBack();
-                                                        Log::error("❌ Transaction Failed for Call ID {$callId}: " . $e->getMessage());
-                                                    }
+                                                } else {
+                                                    Log::error("❌ Failed to fetch active calls. HTTP Status: " . $activeCallsResponse->getStatusCode());
                                                 }
-                                            } else {
-                                                Log::error("❌ Failed to fetch active calls. HTTP Status: " . $activeCallsResponse->getStatusCode());
+                                            } catch (\Exception $e) {
+                                                Log::error("❌ Failed to process participant data: " . $e->getMessage());
                                             }
-                                        } catch (\Exception $e) {
-                                            Log::error("❌ Failed to process participant data: " . $e->getMessage());
                                         }
+                                    } catch (\Exception $e) {
+                                        Log::error("❌ Failed fetching participants for provider {$provider->extension}: " . $e->getMessage());
                                     }
-                                } catch (\Exception $e) {
-                                    Log::error("❌ Failed fetching participants for provider {$provider->extension}: " . $e->getMessage());
                                 }
-                            }
-                        });
+                            });
 
 
 
 
 
 
-                    if (!ADialData::where('feed_id', $file->id)->where('state', 'new')->exists()) {
-                        $file->update(['is_done' => true]);
-                        Log::info("ADIAL ✅✅✅ All numbers called for File ID: {$file->id}");
+                        if (!ADialData::where('feed_id', $file->id)->where('state', 'new')->exists()) {
+                            $file->update(['is_done' => true]);
+                            Log::info("ADIAL ✅✅✅ All numbers called for File ID: {$file->id}");
+                        }
+                    } else {
+                        Log::info("ADIAL ❌ File ID {$file->id} is NOT within range.");
+                        Log::info("Current time: " . $now->format('Y-m-d H:i:s'));
+                        Log::info("Window: {$from->format('Y-m-d H:i:s')} - {$to->format('Y-m-d H:i:s')}");
                     }
-                } else {
-                    Log::info("ADIAL ❌ File ID {$file->id} is NOT within range.");
-                    Log::info("Current time: " . $now->format('Y-m-d H:i:s'));
-                    Log::info("Window: {$from->format('Y-m-d H:i:s')} - {$to->format('Y-m-d H:i:s')}");
                 }
             }
+        } else {
+            Log::info("⏱️ ADist - Current time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
         }
-        end_process:
-        // This is the destination label, which is where the `goto` jumps.
-        return;
+
         Log::info('📞✅ ADialMakeCallCommand execution completed at ' . now());
     }
 }
