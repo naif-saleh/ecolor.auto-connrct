@@ -53,15 +53,8 @@ class ADialMakeCallCommand extends Command
         // Get timezone from configuration
         $timezone = config('app.timezone');
         Log::info("Using timezone: {$timezone}");
-
-
-
         // Get current time once in the configured timezone
         $now = now()->timezone($timezone);
-
-
-
-
         $providers = ADialProvider::all();
         Log::info("Found " . $providers->count() . " providers to process");
 
@@ -196,6 +189,25 @@ class ADialMakeCallCommand extends Command
 
                                     foreach ($participants as $participant_data) {
                                         try {
+                                            $timezone = config('app.timezone');
+                                            // Get current time once in the configured timezone
+                                            $now = now()->timezone($timezone);
+                                            // Get call time settings once before processing
+                                            $callTimeStart = General_Setting::get('call_time_start');
+                                            $callTimeEnd = General_Setting::get('call_time_end');
+
+                                            // Check if settings exist
+                                            if (!$callTimeStart || !$callTimeEnd) {
+                                                Log::warning("⚠️ Call time settings not configured. Please visit the settings page to set up allowed call hours.");
+                                                continue;
+                                            }
+                                            $globalTodayStart = Carbon::parse(date('Y-m-d') . ' ' . $callTimeStart)->timezone($timezone);
+                                            $globalTodayEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
+                                            // Check if current time is within global allowed call hours
+                                            if (!$now->between($globalTodayStart, $globalTodayEnd)) {
+                                                Log::info("⏱️ ADist - Current time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
+                                                continue;
+                                            }
                                             Log::info("✅ Processing participant: " . json_encode($participant_data));
 
                                             $filter = "contains(Caller, '{$participant_data['dn']}')";
