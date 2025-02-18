@@ -28,17 +28,12 @@ class TokenService
 
 
         if ($cachedToken) {
-            Log::info('tokenServices: Using cached token.');
+            Log::info('tokenServices: Using cached token One:'.$cachedToken);
             return $cachedToken;
         }
 
-        // if ($cachedToken) {
-        //     Log::info('Using cached token.');
-        //     return $cachedToken;
-        // }
-
         if ($cachedToken) {
-            Log::info('Using cached token.');
+            Log::info('Using cached token Two: '.$cachedToken);
             return $cachedToken;
         }
 

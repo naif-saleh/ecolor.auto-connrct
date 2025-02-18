@@ -6,7 +6,7 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use App\Models\ADistAgent;
-use App\Models\AutoDistributerFeedFile;
+use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Cache;
 use App\Services\TokenService;
 use Carbon\Carbon;
@@ -31,7 +31,7 @@ class ADistUpdateUserStatusCommand extends Command
 
     public function __construct(TokenService $tokenService)
     {
-        parent::__construct(); // This is required
+        parent::__construct();
         $this->tokenService = $tokenService;
     }
 
@@ -44,9 +44,9 @@ class ADistUpdateUserStatusCommand extends Command
 
         try {
             $token = $this->tokenService->getToken();
-
+            Log::info('Update Token: ' . $token);
             // Create Guzzle client
-            $client = new \GuzzleHttp\Client();
+            $client = new Client();
 
             // Fetch user data from 3CX API using Guzzle
             $response = $client->request('GET', config('services.three_cx.api_url') . "/xapi/v1/Users", [
