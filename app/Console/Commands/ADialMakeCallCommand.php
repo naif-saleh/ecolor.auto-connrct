@@ -55,19 +55,19 @@ class ADialMakeCallCommand extends Command
         Log::info("Using timezone: {$timezone}");
 
         // Get call time settings once before processing
-        $callTimeStart = General_Setting::get('call_time_start');
-        $callTimeEnd = General_Setting::get('call_time_end');
+        // $callTimeStart = General_Setting::get('call_time_start');
+        // $callTimeEnd = General_Setting::get('call_time_end');
 
-        // Check if settings exist
-        if (!$callTimeStart || !$callTimeEnd) {
-            Log::warning("⚠️ Call time settings not configured. Please visit the settings page to set up allowed call hours.");
-            return;
-        }
+        // // Check if settings exist
+        // if (!$callTimeStart || !$callTimeEnd) {
+        //     Log::warning("⚠️ Call time settings not configured. Please visit the settings page to set up allowed call hours.");
+        //     return;
+        // }
 
         // Get current time once in the configured timezone
         $now = now()->timezone($timezone);
-        $globalTodayStart = Carbon::parse(date('Y-m-d') . ' ' . $callTimeStart)->timezone($timezone);
-        $globalTodayEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
+        // $globalTodayStart = Carbon::parse(date('Y-m-d') . ' ' . $callTimeStart)->timezone($timezone);
+        // $globalTodayEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
 
         // Check if current time is within global allowed call hours
         // if ($now->between($globalTodayStart, $globalTodayEnd)) {
