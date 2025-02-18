@@ -71,10 +71,7 @@ class ADialMakeCallCommand extends Command
 
         // Check if current time is within global allowed call hours
         if ($now->between($globalTodayStart, $globalTodayEnd)) {
-
-
-
-
+            Log::info("GlobbalTodayStart: " . $globalTodayStart . " globalTodayEnd: ".$globalTodayEnd);
             $providers = ADialProvider::all();
             Log::info("Found " . $providers->count() . " providers to process");
 
