@@ -42,10 +42,11 @@ class ADistParticipantsCommand extends Command
                 ],
             ]);
 
-            $token = $this->tokenService->getToken();
+
 
             // Fetch Active Calls
             try {
+                $token = $this->tokenService->getToken();
                 $response = $client->get('/xapi/v1/ActiveCalls', [
                     'headers' => ['Authorization' => "Bearer $token"]
                 ]);
