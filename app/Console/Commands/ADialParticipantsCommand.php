@@ -58,7 +58,7 @@ class ADialParticipantsCommand extends Command
                 $client = new Client();
                 $token = $this->tokenService->getToken();
 
-                $responseState = $client->get(config('services.three_cx.api_url') . "/callcontrol/{$provider->extension}/participants", [
+                $responseState = $client->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants", [
                     'headers' => [
                         'Authorization' => 'Bearer ' . $token,
                         'Accept' => 'application/json',
@@ -84,7 +84,7 @@ class ADialParticipantsCommand extends Command
                     try {
                         Log::info("✅ Processing participant: " . json_encode($participant_data));
 
-                        $filter = "contains(Caller, '{$participant_data['dn']}')";
+                        $filter = "contains(Caller, '{$ext_from}')";
                         $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
                         $activeCallsResponse = $client->get($url, [
