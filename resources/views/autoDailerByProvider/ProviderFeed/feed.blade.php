@@ -118,7 +118,7 @@
                                     </div>
 
                                 </td>
-                                <td>{{ $file->created_at->addHours(3) }}</td>
+                                <td>{{ $file->created_at }}</td>
                             </tr>
 
 

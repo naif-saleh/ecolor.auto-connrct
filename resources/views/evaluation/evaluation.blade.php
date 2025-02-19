@@ -302,8 +302,8 @@
                                             {{ $report->is_satisfied === 'YES' ? 'Satisfied' : 'Unsatisfied' }}
                                         </span>
                                     </td>
-                                    <td>{{ $report->created_at->addHours(3)->format('Y-m-d') }}</td>
-                                    <td>{{ $report->created_at->addHours(3)->format('H:i:s') }}</td>
+                                    <td>{{ $report->created_at->format('Y-m-d') }}</td>
+                                    <td>{{ $report->created_at->format('H:i:s') }}</td>
                                 </tr>
                             @empty
                                 <tr>
