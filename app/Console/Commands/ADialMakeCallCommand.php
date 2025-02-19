@@ -115,7 +115,7 @@ class ADialMakeCallCommand extends Command
 
                                 if (isset($activeCalls['value'])) {
 
-                                    $activeCallsCount = count($activeCalls['value']);
+                                    // $activeCallsCount = count($activeCalls['value']);
 
                                     Log::info("ADialMakeCallCommand Active Calls Count: " . count($activeCalls['value']));
                                 } else {
@@ -130,7 +130,7 @@ class ADialMakeCallCommand extends Command
                         }
 
 
-                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount - $activeCallsCount)->get();
+                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount)->get();
                         Log::info("Retrieved Feed Data Count: " . $feed_data->count());
 
                         foreach ($feed_data as $data) {
