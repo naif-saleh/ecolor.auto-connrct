@@ -114,9 +114,7 @@ class ADialMakeCallCommand extends Command
                                 $activeCalls = json_decode($activeCallsResponse->getBody()->getContents(), true);
 
                                 if (isset($activeCalls['value'])) {
-
-                                    // $activeCallsCount = count($activeCalls['value']);
-
+                                    Log::info("Active Call Success");
                                     Log::info("ADialMakeCallCommand Active Calls Count: " . count($activeCalls['value']));
                                 } else {
                                     Log::warning("⚠️ ADialMakeCallCommand No 'value' field in response");
@@ -129,9 +127,8 @@ class ADialMakeCallCommand extends Command
                             Log::error("Stack trace: " . $e->getTraceAsString());
                         }
 
-
                         $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount)->get();
-                        Log::info("Retrieved Feed Data Count: " . $feed_data->count());
+
 
                         foreach ($feed_data as $data) {
                             try {
