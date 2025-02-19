@@ -116,12 +116,8 @@ class ADialMakeCallCommand extends Command
                                 if (isset($activeCalls['value'])) {
 
                                     $activeCallsCount = count($activeCalls['value']);
-                                    if (!is_numeric($activeCallsCount)) {
-                                        Log::error("❌ activeCallsCount is not numeric: " . var_export($activeCallsCount, true));
-                                        $activeCallsCount = 0;
-                                    }
-                                    $remainingCalls = max(0, $callCount - $activeCallsCount);
-                                    Log::info("ADialMakeCallCommand Active Calls Count: " . $remainingCalls);
+
+                                    Log::info("ADialMakeCallCommand Active Calls Count: " . count($activeCalls['value']));
                                 } else {
                                     Log::warning("⚠️ ADialMakeCallCommand No 'value' field in response");
                                 }
@@ -135,7 +131,7 @@ class ADialMakeCallCommand extends Command
 
 
                         $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount - $activeCallsCount)->get();
-
+                        Log::info("Retrieved Feed Data Count: " . $feed_data->count());
 
                         foreach ($feed_data as $data) {
                             try {
