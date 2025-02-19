@@ -159,102 +159,103 @@ class ADialMakeCallCommand extends Command
 
 
 
-                            try {
-                                $client = new Client();
-                                $token = $this->tokenService->getToken();
+                            // try {
+                            //     $client = new Client();
+                            //     $token = $this->tokenService->getToken();
 
-                                $responseState = $client->get(config('services.three_cx.api_url') . "/callcontrol/{$provider->extension}/participants", [
-                                    'headers' => [
-                                        'Authorization' => 'Bearer ' . $token,
-                                        'Accept' => 'application/json',
-                                    ],
-                                    'timeout' => 20,
-                                ]);
+                            //     $responseState = $client->get(config('services.three_cx.api_url') . "/callcontrol/{$provider->extension}/participants", [
+                            //         'headers' => [
+                            //             'Authorization' => 'Bearer ' . $token,
+                            //             'Accept' => 'application/json',
+                            //         ],
+                            //         'timeout' => 20,
+                            //     ]);
 
-                                if ($responseState->getStatusCode() !== 200) {
-                                    Log::error("❌ Failed to fetch participants even after token refresh. HTTP Status: {$responseState->getStatusCode()}");
-                                    return;
-                                }
+                            //     if ($responseState->getStatusCode() !== 200) {
+                            //         Log::error("❌ Failed to fetch participants even after token refresh. HTTP Status: {$responseState->getStatusCode()}");
+                            //         return;
+                            //     }
 
-                                $participants = json_decode($responseState->getBody()->getContents(), true);
+                            //     $participants = json_decode($responseState->getBody()->getContents(), true);
 
-                                if (empty($participants)) {
-                                    Log::warning("⚠️ No participants found for extension {$provider->extension}");
-                                    return;
-                                }
+                            //     if (empty($participants)) {
+                            //         Log::warning("⚠️ No participants found for extension {$provider->extension}");
+                            //         return;
+                            //     }
 
-                                Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
+                            //     Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
 
-                                foreach ($participants as $participant_data) {
-                                    try {
-                                        Log::info("✅ Processing participant: " . json_encode($participant_data));
+                            //     foreach ($participants as $participant_data) {
+                            //         try {
+                            //             Log::info("✅ Processing participant: " . json_encode($participant_data));
 
-                                        $filter = "contains(Caller, '{$participant_data['dn']}')";
-                                        $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+                            //             $filter = "contains(Caller, '{$participant_data['dn']}')";
+                            //             $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
-                                        $activeCallsResponse = $client->get($url, [
-                                            'headers' => [
-                                                'Authorization' => 'Bearer ' . $token,
-                                                'Accept' => 'application/json',
-                                            ],
-                                            'timeout' => 10,
-                                        ]);
+                            //             $activeCallsResponse = $client->get($url, [
+                            //                 'headers' => [
+                            //                     'Authorization' => 'Bearer ' . $token,
+                            //                     'Accept' => 'application/json',
+                            //                 ],
+                            //                 'timeout' => 10,
+                            //             ]);
 
-                                        if ($activeCallsResponse->getStatusCode() === 200) {
-                                            $activeCalls = json_decode($activeCallsResponse->getBody()->getContents(), true);
-                                            Log::info("✅ Active Calls Response: " . print_r($activeCalls, true));
+                            //             if ($activeCallsResponse->getStatusCode() === 200) {
+                            //                 $activeCalls = json_decode($activeCallsResponse->getBody()->getContents(), true);
+                            //                 Log::info("✅ Active Calls Response: " . print_r($activeCalls, true));
 
-                                            foreach ($activeCalls['value'] as $call) {
-                                                $status = $call['Status'];
-                                                $callId = $call['Id'];
 
-                                                // Parse call duration
-                                                $durationTime = null;
-                                                $durationRouting = null;
+                            //                 foreach ($activeCalls['value'] as $call) {
+                            //                     $status = $call['Status'];
+                            //                     $callId = $call['Id'];
 
-                                                if (isset($call['EstablishedAt']) && isset($call['ServerNow'])) {
-                                                    $establishedAt = new DateTime($call['EstablishedAt']);
-                                                    $serverNow = new DateTime($call['ServerNow']);
-                                                    $duration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+                            //                     // Parse call duration
+                            //                     $durationTime = null;
+                            //                     $durationRouting = null;
 
-                                                    if ($status === 'Talking') {
-                                                        $durationTime = $duration;
-                                                    } elseif ($status === 'Routing') {
-                                                        $durationRouting = $duration;
-                                                    }
-                                                }
+                            //                     if (isset($call['EstablishedAt']) && isset($call['ServerNow'])) {
+                            //                         $establishedAt = new DateTime($call['EstablishedAt']);
+                            //                         $serverNow = new DateTime($call['ServerNow']);
+                            //                         $duration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
 
-                                                // Database Transaction
-                                                DB::beginTransaction();
-                                                try {
-                                                    AutoDailerReport::where('call_id', $callId)
-                                                        ->update([
-                                                            'status' => $status,
-                                                            'duration_time' => $durationTime,
-                                                            'duration_routing' => $durationRouting,
-                                                        ]);
+                            //                         if ($status === 'Talking') {
+                            //                             $durationTime = $duration;
+                            //                         } elseif ($status === 'Routing') {
+                            //                             $durationRouting = $duration;
+                            //                         }
+                            //                     }
 
-                                                    ADialData::where('call_id', $callId)
-                                                        ->update(['state' => $status]);
+                            //                     // Database Transaction
+                            //                     DB::beginTransaction();
+                            //                     try {
+                            //                         AutoDailerReport::where('call_id', $callId)
+                            //                             ->update([
+                            //                                 'status' => $status,
+                            //                                 'duration_time' => $durationTime,
+                            //                                 'duration_routing' => $durationRouting,
+                            //                             ]);
 
-                                                    Log::info("✅ Call Updated: Status: {$status}, Mobile: " . $call['Callee']);
+                            //                         ADialData::where('call_id', $callId)
+                            //                             ->update(['state' => $status]);
 
-                                                    DB::commit();
-                                                } catch (\Exception $e) {
-                                                    DB::rollBack();
-                                                    Log::error("❌ Transaction Failed for Call ID {$callId}: " . $e->getMessage());
-                                                }
-                                            }
-                                        } else {
-                                            Log::error("❌ Failed to fetch active calls. HTTP Status: " . $activeCallsResponse->getStatusCode());
-                                        }
-                                    } catch (\Exception $e) {
-                                        Log::error("❌ Failed to process participant data: " . $e->getMessage());
-                                    }
-                                }
-                            } catch (\Exception $e) {
-                                Log::error("❌ Failed fetching participants for provider {$provider->extension}: " . $e->getMessage());
-                            }
+                            //                         Log::info("✅ Call Updated: Status: {$status}, Mobile: " . $call['Callee']);
+
+                            //                         DB::commit();
+                            //                     } catch (\Exception $e) {
+                            //                         DB::rollBack();
+                            //                         Log::error("❌ Transaction Failed for Call ID {$callId}: " . $e->getMessage());
+                            //                     }
+                            //                 }
+                            //             } else {
+                            //                 Log::error("❌ Failed to fetch active calls. HTTP Status: " . $activeCallsResponse->getStatusCode());
+                            //             }
+                            //         } catch (\Exception $e) {
+                            //             Log::error("❌ Failed to process participant data: " . $e->getMessage());
+                            //         }
+                            //     }
+                            // } catch (\Exception $e) {
+                            //     Log::error("❌ Failed fetching participants for provider {$provider->extension}: " . $e->getMessage());
+                            // }
                         }
 
                         if (!ADialData::where('feed_id', $file->id)->where('state', 'new')->exists()) {
