@@ -173,8 +173,8 @@
                                     </td>
                                     <td>{{$report->duration_time ? $report->duration_time : '-'}}</td>
                                     <td>{{$report->duration_routing ? $report->duration_routing : '-'}}</td>
-                                    <td>{{ $report->created_at->addHours(3)->format('Y-m-d') }}</td> <!-- For Date -->
-                                    <td>{{ $report->created_at->addHours(3)->format('H:i:s') }}</td> <!-- For Time -->
+                                    <td>{{ $report->created_at->format('Y-m-d') }}</td> <!-- For Date -->
+                                    <td>{{ $report->created_at->format('H:i:s') }}</td> <!-- For Time -->
 
                                 </tr>
                             @empty
