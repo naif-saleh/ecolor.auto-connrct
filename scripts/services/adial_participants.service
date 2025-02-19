@@ -1,0 +1,12 @@
+[Unit]
+Description=ADial Participants Script
+After=network.target
+
+[Service]
+ExecStart=/var/www/html/autoconnect/scripts/adial_participants.sh
+Restart=always
+User=www-data
+WorkingDirectory=/var/www/html/autoconnect
+
+[Install]
+WantedBy=multi-user.target

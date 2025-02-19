@@ -1,0 +1,12 @@
+[Unit]
+Description=ADist Update User Script
+After=network.target
+
+[Service]
+ExecStart=/var/www/html/autoconnect/scripts/adist_update_user.sh
+Restart=always
+User=www-data
+WorkingDirectory=/var/www/html/autoconnect
+
+[Install]
+WantedBy=multi-user.target
