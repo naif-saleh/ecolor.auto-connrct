@@ -48,11 +48,11 @@ class ADialParticipantsCommand extends Command
 
         // Fetch all providers
         $providers = ADialProvider::all();
-        Log::info("Total providers found: " . $providers->count());
-        Log::info("Providers query SQL: " . ADialProvider::toSql());
+        // Log::info("Total providers found: " . $providers->count());
+        // Log::info("Providers query SQL: " . ADialProvider::toSql());
 
-        // You can also dump the full provider data
-        Log::info("All providers data: " . print_r($providers->toArray(), true));
+        // // You can also dump the full provider data
+        // Log::info("All providers data: " . print_r($providers->toArray(), true));
 
         foreach ($providers as $provider) {
             $ext_from = $provider->extension;
@@ -72,7 +72,7 @@ class ADialParticipantsCommand extends Command
 
                 if ($responseState->getStatusCode() !== 200) {
                     Log::error("❌ ADialParticipantsCommand Failed to fetch participants even after token refresh. HTTP Status: {$responseState->getStatusCode()}");
-                    return;
+                    continue;
                 }
 
                 $participants = json_decode($responseState->getBody()->getContents(), true);
@@ -80,7 +80,7 @@ class ADialParticipantsCommand extends Command
                 if (empty($participants)) {
                     Log::warning("⚠️ ADialParticipantsCommand No participants found for extension {$provider->extension}");
 
-                    return;
+                    continue;
                 }
 
                 Log::info("✅ ADialParticipantsCommand Auto Dialer Participants Response: " . print_r($participants, true));
