@@ -52,7 +52,7 @@ class ADialParticipantsCommand extends Command
 
         foreach ($providers as $provider) {
             $ext_from = $provider->extension;
-
+            Log::warning("****Providers: {$provider->extension}");
             // ADial Partisipant
             try {
                 $client = new Client();
@@ -75,6 +75,7 @@ class ADialParticipantsCommand extends Command
 
                 if (empty($participants)) {
                     Log::warning("⚠️ ADialParticipantsCommand No participants found for extension {$provider->extension}");
+
                     return;
                 }
 
