@@ -72,7 +72,7 @@ class ADialParticipantsCommand extends Command
 
                 if ($responseState->getStatusCode() !== 200) {
                     Log::error("❌ ADialParticipantsCommand Failed to fetch participants even after token refresh. HTTP Status: {$responseState->getStatusCode()}");
-                    return;
+                    continue;
                 }
 
                 $participants = json_decode($responseState->getBody()->getContents(), true);
@@ -80,7 +80,7 @@ class ADialParticipantsCommand extends Command
                 if (empty($participants)) {
                     Log::warning("⚠️ ADialParticipantsCommand No participants found for extension {$provider->extension}");
 
-                    return;
+                    continue;
                 }
 
                 Log::info("✅ ADialParticipantsCommand Auto Dialer Participants Response: " . print_r($participants, true));
