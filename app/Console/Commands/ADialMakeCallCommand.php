@@ -110,6 +110,7 @@ class ADialMakeCallCommand extends Command
                             ]);
 
                             if ($activeCallsResponse->getStatusCode() === 200) {
+                                Log::info("Active Call Success");
                                 $activeCalls = json_decode($activeCallsResponse->getBody()->getContents(), true);
 
                                 if (isset($activeCalls['value'])) {
