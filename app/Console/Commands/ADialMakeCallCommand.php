@@ -115,7 +115,7 @@ class ADialMakeCallCommand extends Command
 
                                 if (isset($activeCalls['value'])) {
                                     Log::info("Active Call Success");
-                                    Log::info("✅ ADialMakeCallCommand Active Calls Count: " . count($activeCalls['value']));
+                                    Log::info("ADialMakeCallCommand Active Calls Count: " . count($activeCalls['value']));
                                 } else {
                                     Log::warning("⚠️ ADialMakeCallCommand No 'value' field in response");
                                 }
