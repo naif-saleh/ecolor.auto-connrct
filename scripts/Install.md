@@ -52,3 +52,8 @@ make sure that you are changing the values on php-fpm
 `nano /etc/php/8.4/fpm/pool.d/www.conf`
 and then restart the services 
 `systemctl status php8.4-fpm.service`
+
+If faild to run make sure you give permession to files
+```
+chmod +x /var/www/html/autoconnect/scripts/replace-with-the-file-name.sh
+```
