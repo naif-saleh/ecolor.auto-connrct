@@ -48,7 +48,11 @@ class ADialParticipantsCommand extends Command
 
         // Fetch all providers
         $providers = ADialProvider::all();
+        Log::info("Total providers found: " . $providers->count());
+        Log::info("Providers query SQL: " . ADialProvider::toSql());
 
+        // You can also dump the full provider data
+        Log::info("All providers data: " . print_r($providers->toArray(), true));
 
         foreach ($providers as $provider) {
             $ext_from = $provider->extension;
