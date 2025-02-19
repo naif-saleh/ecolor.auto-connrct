@@ -98,6 +98,33 @@ class ADialMakeCallCommand extends Command
 
                         $client = new Client();
                         $callCount = CountCalls::get('number_calls');
+
+                        try {
+                            $token = $this->tokenService->getToken();
+                            $activeCallsResponse = $client->get(config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls", [
+                                'headers' => [
+                                    'Authorization' => 'Bearer ' . $token,
+                                    'Accept' => 'application/json',
+                                ],
+                                'timeout' => 10,
+                            ]);
+
+                            if ($activeCallsResponse->getStatusCode() === 200) {
+                                $activeCalls = json_decode($activeCallsResponse->getBody()->getContents(), true);
+
+                                if (isset($activeCalls['value'])) {
+                                    Log::info("✅ ADialMakeCallCommand Active Calls Count: " . count($activeCalls['value']));
+                                } else {
+                                    Log::warning("⚠️ ADialMakeCallCommand No 'value' field in response");
+                                }
+                            } else {
+                                Log::error("❌ ADialMakeCallCommand Failed to fetch active calls. HTTP Status: " . $activeCallsResponse->getStatusCode());
+                            }
+                        } catch (\Throwable $e) {
+                            Log::error("❌ ADialMakeCallCommand Failed to process ActiveCalls data: " . $e->getMessage());
+                            Log::error("Stack trace: " . $e->getTraceAsString());
+                        }
+
                         $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount)->get();
 
 
