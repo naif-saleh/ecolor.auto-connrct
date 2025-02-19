@@ -67,22 +67,22 @@ class ADialParticipantsCommand extends Command
                 ]);
 
                 if ($responseState->getStatusCode() !== 200) {
-                    Log::error("❌ Failed to fetch participants even after token refresh. HTTP Status: {$responseState->getStatusCode()}");
+                    Log::error("❌ ADialParticipantsCommand Failed to fetch participants even after token refresh. HTTP Status: {$responseState->getStatusCode()}");
                     return;
                 }
 
                 $participants = json_decode($responseState->getBody()->getContents(), true);
 
                 if (empty($participants)) {
-                    Log::warning("⚠️ No participants found for extension {$provider->extension}");
+                    Log::warning("⚠️ ADialParticipantsCommand No participants found for extension {$provider->extension}");
                     return;
                 }
 
-                Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
+                Log::info("✅ ADialParticipantsCommand Auto Dialer Participants Response: " . print_r($participants, true));
 
                 foreach ($participants as $participant_data) {
                     try {
-                        Log::info("✅ Processing participant: " . json_encode($participant_data));
+                        Log::info("✅ ADialParticipantsCommand Processing participant: " . json_encode($participant_data));
 
                         $filter = "contains(Caller, '{$ext_from}')";
                         $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
@@ -132,23 +132,23 @@ class ADialParticipantsCommand extends Command
                                     ADialData::where('call_id', $callId)
                                         ->update(['state' => $status]);
 
-                                    Log::info("✅ Call Updated: Status: {$status}, Mobile: " . $call['Callee']);
+                                    Log::info("✅ ADialParticipantsCommand Call Updated: Status: {$status}, Mobile: " . $call['Callee']);
 
                                     DB::commit();
                                 } catch (\Exception $e) {
                                     DB::rollBack();
-                                    Log::error("❌ Transaction Failed for Call ID {$callId}: " . $e->getMessage());
+                                    Log::error("❌ ADialParticipantsCommand Transaction Failed for Call ID {$callId}: " . $e->getMessage());
                                 }
                             }
                         } else {
-                            Log::error("❌ Failed to fetch active calls. HTTP Status: " . $activeCallsResponse->getStatusCode());
+                            Log::error("❌ ADialParticipantsCommand Failed to fetch active calls. HTTP Status: " . $activeCallsResponse->getStatusCode());
                         }
                     } catch (\Exception $e) {
-                        Log::error("❌ Failed to process participant data: " . $e->getMessage());
+                        Log::error("❌ ADialParticipantsCommand Failed to process participant data: " . $e->getMessage());
                     }
                 }
             } catch (\Exception $e) {
-                Log::error("❌ Failed fetching participants for provider {$provider->extension}: " . $e->getMessage());
+                Log::error("❌ ADialParticipantsCommand Failed fetching participants for provider {$provider->extension}: " . $e->getMessage());
             }
 
 
