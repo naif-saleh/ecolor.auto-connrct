@@ -48,7 +48,7 @@ class ADialMakeCallCommand extends Command
      */
     public function handle()
     {
-        Log::info('ADialParticipantsCommand executed at ' . Carbon::now());
+        Log::info('ADialMakeCallCommand executed at ' . Carbon::now());
 
         // Get timezone from configuration
         $timezone = config('app.timezone');
