@@ -57,35 +57,6 @@ class ADialMakeCallCommand extends Command
         // Get call time settings once before processing
         $callTimeStart = General_Setting::get('call_time_start');
         $callTimeEnd = General_Setting::get('call_time_end');
-        $client = new Client();
-
-        try {
-            $token = $this->tokenService->getToken();
-            $activeCallsResponse = $client->get(config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls", [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $token,
-                    'Accept' => 'application/json',
-                ],
-                'timeout' => 10,
-            ]);
-
-            if ($activeCallsResponse->getStatusCode() === 200) {
-
-                $activeCalls = json_decode($activeCallsResponse->getBody()->getContents(), true);
-
-                if (isset($activeCalls['value'])) {
-                    Log::info("Active Call Success");
-                    Log::info("ADialMakeCallCommand Active Calls Count: " . count($activeCalls['value']));
-                } else {
-                    Log::warning("⚠️ ADialMakeCallCommand No 'value' field in response");
-                }
-            } else {
-                Log::error("❌ ADialMakeCallCommand Failed to fetch active calls. HTTP Status: " . $activeCallsResponse->getStatusCode());
-            }
-        } catch (\Throwable $e) {
-            Log::error("❌ ADialMakeCallCommand Failed to process ActiveCalls data: " . $e->getMessage());
-            Log::error("Stack trace: " . $e->getTraceAsString());
-        }
 
         // Check if settings exist
         if (!$callTimeStart || !$callTimeEnd) {
@@ -125,12 +96,45 @@ class ADialMakeCallCommand extends Command
 
                         Log::info("ADIAL ✅ File ID {$file->id} is within range, processing calls...");
 
-
+                        $client = new Client();
                         $callCount = CountCalls::get('number_calls');
 
+                        try {
+                            $token = $this->tokenService->getToken();
+                            $activeCallsResponse = $client->get(config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls", [
+                                'headers' => [
+                                    'Authorization' => 'Bearer ' . $token,
+                                    'Accept' => 'application/json',
+                                ],
+                                'timeout' => 10,
+                            ]);
+
+                            if ($activeCallsResponse->getStatusCode() === 200) {
+
+                                $activeCalls = json_decode($activeCallsResponse->getBody()->getContents(), true);
+
+                                if (isset($activeCalls['value'])) {
+
+                                    $activeCallsCount = count($activeCalls['value']);
+                                    if (!is_numeric($activeCallsCount)) {
+                                        Log::error("❌ activeCallsCount is not numeric: " . var_export($activeCallsCount, true));
+                                        $activeCallsCount = 0;
+                                    }
+                                    $remainingCalls = max(0, $callCount - $activeCallsCount);
+                                    Log::info("ADialMakeCallCommand Active Calls Count: " . $remainingCalls);
+                                } else {
+                                    Log::warning("⚠️ ADialMakeCallCommand No 'value' field in response");
+                                }
+                            } else {
+                                Log::error("❌ ADialMakeCallCommand Failed to fetch active calls. HTTP Status: " . $activeCallsResponse->getStatusCode());
+                            }
+                        } catch (\Throwable $e) {
+                            Log::error("❌ ADialMakeCallCommand Failed to process ActiveCalls data: " . $e->getMessage());
+                            Log::error("Stack trace: " . $e->getTraceAsString());
+                        }
 
 
-                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount)->get();
+                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount - $activeCallsCount)->get();
 
 
                         foreach ($feed_data as $data) {
