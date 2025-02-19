@@ -110,10 +110,11 @@ class ADialMakeCallCommand extends Command
                             ]);
 
                             if ($activeCallsResponse->getStatusCode() === 200) {
-                                Log::info("Active Call Success");
+
                                 $activeCalls = json_decode($activeCallsResponse->getBody()->getContents(), true);
 
                                 if (isset($activeCalls['value'])) {
+                                    Log::info("Active Call Success");
                                     Log::info("✅ ADialMakeCallCommand Active Calls Count: " . count($activeCalls['value']));
                                 } else {
                                     Log::warning("⚠️ ADialMakeCallCommand No 'value' field in response");
