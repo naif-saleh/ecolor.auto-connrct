@@ -48,17 +48,21 @@ class ADialParticipantsCommand extends Command
 
         // Fetch all providers
         $providers = ADialProvider::all();
+        // Log::info("Total providers found: " . $providers->count());
+        // Log::info("Providers query SQL: " . ADialProvider::toSql());
 
+        // // You can also dump the full provider data
+        // Log::info("All providers data: " . print_r($providers->toArray(), true));
 
         foreach ($providers as $provider) {
             $ext_from = $provider->extension;
-
+            Log::warning("****Providers: {$provider->extension}");
             // ADial Partisipant
             try {
                 $client = new Client();
                 $token = $this->tokenService->getToken();
 
-                $responseState = $client->get(config('services.three_cx.api_url') . "/callcontrol/{$provider->extension}/participants", [
+                $responseState = $client->get(config('services.three_cx.api_url') . "/callcontrol/{$ext_from}/participants", [
                     'headers' => [
                         'Authorization' => 'Bearer ' . $token,
                         'Accept' => 'application/json',
@@ -67,24 +71,25 @@ class ADialParticipantsCommand extends Command
                 ]);
 
                 if ($responseState->getStatusCode() !== 200) {
-                    Log::error("❌ Failed to fetch participants even after token refresh. HTTP Status: {$responseState->getStatusCode()}");
-                    return;
+                    Log::error("❌ ADialParticipantsCommand Failed to fetch participants even after token refresh. HTTP Status: {$responseState->getStatusCode()}");
+                    continue;
                 }
 
                 $participants = json_decode($responseState->getBody()->getContents(), true);
 
                 if (empty($participants)) {
-                    Log::warning("⚠️ No participants found for extension {$provider->extension}");
-                    return;
+                    Log::warning("⚠️ ADialParticipantsCommand No participants found for extension {$provider->extension}");
+
+                    continue;
                 }
 
-                Log::info("✅ Auto Dialer Participants Response: " . print_r($participants, true));
+                Log::info("✅ ADialParticipantsCommand Auto Dialer Participants Response: " . print_r($participants, true));
 
                 foreach ($participants as $participant_data) {
                     try {
-                        Log::info("✅ Processing participant: " . json_encode($participant_data));
+                        Log::info("✅ ADialParticipantsCommand Processing participant: " . json_encode($participant_data));
 
-                        $filter = "contains(Caller, '{$participant_data['dn']}')";
+                        $filter = "contains(Caller, '{$ext_from}')";
                         $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
                         $activeCallsResponse = $client->get($url, [
@@ -132,23 +137,23 @@ class ADialParticipantsCommand extends Command
                                     ADialData::where('call_id', $callId)
                                         ->update(['state' => $status]);
 
-                                    Log::info("✅ Call Updated: Status: {$status}, Mobile: " . $call['Callee']);
+                                    Log::info("✅ ADialParticipantsCommand Call Updated: Status: {$status}, Mobile: " . $call['Callee']);
 
                                     DB::commit();
                                 } catch (\Exception $e) {
                                     DB::rollBack();
-                                    Log::error("❌ Transaction Failed for Call ID {$callId}: " . $e->getMessage());
+                                    Log::error("❌ ADialParticipantsCommand Transaction Failed for Call ID {$callId}: " . $e->getMessage());
                                 }
                             }
                         } else {
-                            Log::error("❌ Failed to fetch active calls. HTTP Status: " . $activeCallsResponse->getStatusCode());
+                            Log::error("❌ ADialParticipantsCommand Failed to fetch active calls. HTTP Status: " . $activeCallsResponse->getStatusCode());
                         }
                     } catch (\Exception $e) {
-                        Log::error("❌ Failed to process participant data: " . $e->getMessage());
+                        Log::error("❌ ADialParticipantsCommand Failed to process participant data: " . $e->getMessage());
                     }
                 }
             } catch (\Exception $e) {
-                Log::error("❌ Failed fetching participants for provider {$provider->extension}: " . $e->getMessage());
+                Log::error("❌ ADialParticipantsCommand Failed fetching participants for provider {$provider->extension}: " . $e->getMessage());
             }
 
 

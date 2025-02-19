@@ -6,7 +6,7 @@
             <div class="col-12">
                 <!-- Card Container -->
                 <div class="card shadow-lg border-0">
-                   
+
                     <div class="card-body">
                         <!-- Search Bar -->
                         <div class="mb-4">
@@ -39,8 +39,8 @@
                                             <td>{{ $log->file_type }}</td>
                                             <td>{{ $log->file_name }}</td>
                                             {{-- <td>{{ $log->operation_time }}</td> --}}
-                                            <td>{{ $log->created_at->addHours(3)->format('H:i:s') }}</td>
-                                            <td>{{ $log->created_at->addHours(3)->format('Y-m-d') }}</td>
+                                            <td>{{ $log->created_at->format('H:i:s') }}</td>
+                                            <td>{{ $log->created_at->format('Y-m-d') }}</td>
 
                                         </tr>
                                     @endforeach

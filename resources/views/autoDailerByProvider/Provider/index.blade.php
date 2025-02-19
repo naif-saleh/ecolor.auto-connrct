@@ -33,8 +33,8 @@
                                 <tr>
                                     <td>{{ $provider->name }}</td>
                                     <td>{{ $provider->extension ?? 'No Extension' }}</td>
-                                    <td>{{ $provider->created_at->addHour(3) }}</td>
-                                    <td>{{ $provider->updated_at->addHour(3) }}</td>
+                                    <td>{{ $provider->created_at }}</td>
+                                    <td>{{ $provider->updated_at }}</td>
                                     <td>
                                         <!-- Add File Button -->
                                         <!-- Add File Button with Icon -->
