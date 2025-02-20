@@ -174,7 +174,7 @@ class ReportController extends Controller
             $handle = fopen('php://output', 'w');
 
             // Write the CSV header
-            fputcsv($handle, ['Mobile', 'Provider', 'Extension', 'State', 'Duration', 'Time', 'Date']);
+            fputcsv($handle, ['Mobile', 'Provider', 'Extension', 'State', 'Talking', 'Routing', 'Time', 'Date']);
 
             // Write each report row
             foreach ($reports as $report) {
@@ -184,6 +184,7 @@ class ReportController extends Controller
                     $report->extension,
                     in_array($report->status, ['Wexternalline', 'Talking']) ? 'Answered' : 'No Answer',
                     $report->duration_time ? $report->duration_time : '-',
+                    $report->duration_routing ? $report->duration_routing : '-',
                     $report->created_at->addHours(3)->format('H:i:s'),
                     $report->created_at->addHours(3)->format('Y-m-d')
                 ]);
