@@ -63,9 +63,9 @@
                 <select name="provider" class="form-modern" onchange="this.form.submit()">
                     <option value="">All Providers</option>
                     @foreach ($providers as $provider)
-                        <option value="{{ $provider->provider }}"
-                            {{ request('provider') == $provider->provider ? 'selected' : '' }}>
-                            {{ $provider->provider->name ?? $provider->provider }}
+                        <option value="{{ $provider->name }}"
+                            {{ request('provider') == $provider->name ? 'selected' : '' }}>
+                            {{ $provider->provider->name ?? $provider->name }}
                         </option>
                     @endforeach
                 </select>
