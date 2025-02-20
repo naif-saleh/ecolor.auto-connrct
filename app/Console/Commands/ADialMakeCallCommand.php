@@ -53,36 +53,7 @@ class ADialMakeCallCommand extends Command
         // Get timezone from configuration
         $timezone = config('app.timezone');
         Log::info("Using timezone: {$timezone}");
-        $client = new Client();
-        $callCount = CountCalls::get('number_calls');
-        try {
-            $token = $this->tokenService->getToken();
-            $activeCallsResponse = $client->get(config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls", [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $token,
-                    'Accept' => 'application/json',
-                ],
-                'timeout' => 10,
-            ]);
 
-            if ($activeCallsResponse->getStatusCode() === 200) {
-
-                $activeCalls = json_decode($activeCallsResponse->getBody()->getContents(), true);
-
-                if (isset($activeCalls['value'])) {
-                    Log::info("Active Call Success");
-                    $currentCalls = count($activeCalls['value']);
-                    Log::info("ADialMakeCallCommand Active Calls Count: " . count($activeCalls['value']));
-                } else {
-                    Log::warning("⚠️ ADialMakeCallCommand No 'value' field in response");
-                }
-            } else {
-                Log::error("❌ ADialMakeCallCommand Failed to fetch active calls. HTTP Status: " . $activeCallsResponse->getStatusCode());
-            }
-        } catch (\Throwable $e) {
-            Log::error("❌ ADialMakeCallCommand Failed to process ActiveCalls data: " . $e->getMessage());
-            Log::error("Stack trace: " . $e->getTraceAsString());
-        }
         // Get call time settings once before processing
         $callTimeStart = General_Setting::get('call_time_start');
         $callTimeEnd = General_Setting::get('call_time_end');
@@ -111,7 +82,7 @@ class ADialMakeCallCommand extends Command
                     ->get();
 
 
-                    Log::info("Found " . $files->count() . " feeds for provider " . $provider->name );
+                Log::info("Found " . $files->count() . " feeds for provider " . $provider->name);
                 foreach ($files as $file) {
                     // Parse times using configured timezone
                     $from = Carbon::parse("{$file->date} {$file->from}")->timezone($timezone);
@@ -125,57 +96,41 @@ class ADialMakeCallCommand extends Command
 
                         Log::info("ADIAL ✅ File ID {$file->id} is within range, processing calls...");
 
+                        $client = new Client();
+                        $callCount = CountCalls::get('number_calls');
+                        try {
+                            $token = $this->tokenService->getToken();
+                            $activeCallsResponse = $client->get(config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls", [
+                                'headers' => [
+                                    'Authorization' => 'Bearer ' . $token,
+                                    'Accept' => 'application/json',
+                                ],
+                                'timeout' => 10,
+                            ]);
 
-                        // try {
-                        //     $token = $this->tokenService->getToken();
-                        //     $activeCallsResponse = $client->get(config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls", [
-                        //         'headers' => [
-                        //             'Authorization' => 'Bearer ' . $token,
-                        //             'Accept' => 'application/json',
-                        //         ],
-                        //         'timeout' => 10,
-                        //     ]);
+                            if ($activeCallsResponse->getStatusCode() === 200) {
 
-                        //     if ($activeCallsResponse->getStatusCode() === 200) {
-                        //         $activeCalls = json_decode($activeCallsResponse->getBody()->getContents(), true);
+                                $activeCalls = json_decode($activeCallsResponse->getBody()->getContents(), true);
 
-                        //         // Get active calls count
-                        //         $activeCallsCount = isset($activeCalls['value']) ? count($activeCalls['value']) : 0;
-                        //         Log::info("Current active calls: " . $activeCallsCount);
-
-                        //         // Calculate remaining allowed calls
-                        //         $remainingAllowedCalls =  $callCount - $activeCallsCount;
-                        //         Log::info("Remaining allowed calls: " . $remainingAllowedCalls);
-
-                        //         if ($remainingAllowedCalls <= 0) {
-                        //             Log::warning("Maximum concurrent calls reached. Skipping new calls.", [
-                        //                 'max_calls' => $callCount,
-                        //                 'active_calls' => $activeCallsCount
-                        //             ]);
-                        //             return;
-                        //         }
-
-                        //         // Get new $remainingAllowedCalls to call with the limit
-                        //         $feed_data = ADialData::where('feed_id', $file->id)
-                        //             ->where('state', 'new')
-                        //             ->take($remainingAllowedCalls)
-                        //             ->get();
-
-                        //         Log::info("Retrieved {$feed_data->count()} new numbers to call");
-
-                        //     } else {
-                        //         Log::error("❌ Failed to fetch active calls. HTTP Status: " . $activeCallsResponse->getStatusCode());
-                        //         return;
-                        //     }
-                        // } catch (\Throwable $e) {
-                        //     Log::error("❌ Failed to process ActiveCalls data: " . $e->getMessage());
-                        //     Log::error("Stack trace: " . $e->getTraceAsString());
-                        //     return;
-                        // }
+                                if (isset($activeCalls['value'])) {
+                                    Log::info("Active Call Success");
+                                    $currentCalls = count($activeCalls['value']);
+                                    Log::info("ADialMakeCallCommand Active Calls Count: " . count($activeCalls['value']));
+                                } else {
+                                    Log::warning("⚠️ ADialMakeCallCommand No 'value' field in response");
+                                }
+                            } else {
+                                Log::error("❌ ADialMakeCallCommand Failed to fetch active calls. HTTP Status: " . $activeCallsResponse->getStatusCode());
+                            }
+                        } catch (\Throwable $e) {
+                            Log::error("❌ ADialMakeCallCommand Failed to process ActiveCalls data: " . $e->getMessage());
+                            Log::error("Stack trace: " . $e->getTraceAsString());
+                        }
 
 
-                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount - $currentCalls)->get();
-                        log::info("Nimbers Taken: ".$feed_data->count());
+
+                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount)->get();
+
 
                         foreach ($feed_data as $data) {
                             $now = now()->timezone($timezone);
