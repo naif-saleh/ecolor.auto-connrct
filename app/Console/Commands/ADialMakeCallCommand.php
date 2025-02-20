@@ -174,7 +174,7 @@ class ADialMakeCallCommand extends Command
                             Log::error("Stack trace: " . $e->getTraceAsString());
                         }
 
-                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount - $currentCalls)->get();
+                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount)->get();
                         log::info("Nimbers Taken: ".$feed_data->count());
 
                         foreach ($feed_data as $data) {
