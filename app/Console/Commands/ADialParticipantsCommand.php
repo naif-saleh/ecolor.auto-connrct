@@ -135,7 +135,7 @@ class ADialParticipantsCommand extends Command
                                             'status' => $status,
                                             'duration_time' => $durationTime,
                                             'duration_routing' => $durationRouting,
-                                            'last_updated_at' => now(), // Add this to track when the record was last updated
+                                            
                                         ]);
 
                                     ADialData::where('call_id', $callId)
