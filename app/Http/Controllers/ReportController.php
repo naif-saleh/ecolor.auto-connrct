@@ -50,101 +50,69 @@ class ReportController extends Controller
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
 
-        // Map filter values to database values
+        // Status mapping
         $statusMap = [
             'answered' => ['Talking', 'Wexternalline'],
             'no answer' => ['Wspecialmenu', 'no answer', 'Dialing', 'Routing'],
         ];
 
-        // Base query builder for reuse
-        $baseQuery = AutoDailerReport::query();
+        // Start with a base query
+        $query = AutoDailerReport::query();
 
-        // Apply all filters to the base query
+        // Apply extension filters
         if ($extensionFrom) {
-            $baseQuery->where('extension', '>=', $extensionFrom);
+            $query->where('extension', '>=', $extensionFrom);
         }
         if ($extensionTo) {
-            $baseQuery->where('extension', '<=', $extensionTo);
+            $query->where('extension', '<=', $extensionTo);
         }
+
+        // Apply provider filter
         if ($provider) {
-            $baseQuery->where('provider', $provider);
+            $query->where('provider', $provider);
         }
+
+        // Apply date filters
         if ($dateFrom && $dateTo) {
-            $baseQuery->whereBetween('created_at', [
+            $query->whereBetween('created_at', [
                 \Carbon\Carbon::parse($dateFrom)->startOfDay(),
                 \Carbon\Carbon::parse($dateTo)->endOfDay()
             ]);
         }
 
-        // Clone the base query for reports
-        $reportsQuery = clone $baseQuery;
-
-        // Apply status filter to reports query
+        // Apply status filter based on selected view (all, answered, no answer, today)
         if ($filter === 'today') {
-            $reportsQuery->whereDate('created_at', now()->toDateString());
-        } elseif ($filter !== 'all' && isset($statusMap[$filter])) {
-            $reportsQuery->whereIn('status', $statusMap[$filter]);
+            $query->whereDate('created_at', now()->toDateString());
+        } elseif (isset($statusMap[$filter])) {
+            $query->whereIn('status', $statusMap[$filter]);
         }
+        // If filter is 'all', no additional status filter needed
 
-        // Get paginated reports
-        $reports = $reportsQuery->orderBy('created_at', 'desc')->paginate(50);
+        // Get filtered results
+        $reports = $query->orderBy('created_at', 'desc')->paginate(50);
 
-        // Calculate statistics based on the current filter context
-        $statsQuery = clone $baseQuery;
+        // Calculate statistics based on the current filtered query
+        $statsQuery = clone $query;
 
-        // For 'today' filter, add date restriction to stats
-        if ($filter === 'today') {
-            $statsQuery->whereDate('created_at', now()->toDateString());
-        }
-
-        // Calculate filtered statistics
+        // Calculate statistics for the filtered results
         $totalCount = $statsQuery->count();
         $answeredCount = (clone $statsQuery)
-            ->whereIn('status', ['Wextension', 'Wexternalline', 'Talking'])
+            ->whereIn('status', $statusMap['answered'])
             ->count();
         $noAnswerCount = (clone $statsQuery)
-            ->whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer', 'Routing'])
-            ->count();
-
-        // Calculate today's statistics (always showing today regardless of filter)
-        $todayQuery = AutoDailerReport::query()
-            ->whereDate('created_at', now()->toDateString());
-
-        // Apply extension and provider filters to today's stats
-        if ($extensionFrom) {
-            $todayQuery->where('extension', '>=', $extensionFrom);
-        }
-        if ($extensionTo) {
-            $todayQuery->where('extension', '<=', $extensionTo);
-        }
-        if ($provider) {
-            $todayQuery->where('provider', $provider);
-        }
-
-        $todayTotalCount = $todayQuery->count();
-        $todayAnsweredCount = (clone $todayQuery)
-            ->whereIn('status', ['Wextension', 'Wexternalline', 'Talking'])
-            ->count();
-        $todayNoAnswerCount = (clone $todayQuery)
-            ->whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer', 'Routing'])
+            ->whereIn('status', $statusMap['no answer'])
             ->count();
 
         // Fetch distinct providers for the filter dropdown
-        $providers = ADialProvider::select('name')->distinct()->get();
+        $providers = ADialProvider::select('provider')->distinct()->get();
 
         return view('reports.auto_dailer_report', compact(
             'reports',
             'filter',
-            'extensionFrom',
-            'extensionTo',
-            'provider',
-            'providers',
             'totalCount',
             'answeredCount',
             'noAnswerCount',
-            'todayTotalCount',
-            'todayAnsweredCount',
-            'todayNoAnswerCount'
+            'providers'
         ));
     }
 

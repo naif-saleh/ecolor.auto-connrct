@@ -83,7 +83,7 @@
             </form>
         </div>
 
-        @if ($filter !== 'today')
+        {{-- @if ($filter !== 'today')
             <!-- Today's Statistics -->
             <div class="row mb-5 text-center justify-content-center">
                 <div class="col-12">
@@ -114,7 +114,7 @@
                     </div>
                 </div>
             </div>
-        @endif
+        @endif --}}
         <!-- Statistics Section -->
         <div class="row mb-5 text-center justify-content-center">
             <!-- Total Calls -->
@@ -124,7 +124,10 @@
                         <div class="mb-3">
                             <i class="bi bi-telephone-fill text-primary fs-4"></i>
                         </div>
-                        <h5 class="text-primary fs-6"><i class="fa-solid fa-phone-volume"></i> Total Calls</h5>
+                        <h5 class="text-primary fs-6">
+                            <i class="fa-solid fa-phone-volume"></i>
+                            Total Calls
+                        </h5>
                         <h3 class="fw-bold fs-5">{{ $totalCount }}</h3>
                     </div>
                 </div>
@@ -137,7 +140,10 @@
                         <div class="mb-3">
                             <i class="bi bi-check-circle-fill text-success fs-4"></i>
                         </div>
-                        <h5 class="text-success fs-6"><i class="fa-solid fa-phone"></i> Answered</h5>
+                        <h5 class="text-success fs-6">
+                            <i class="fa-solid fa-phone"></i>
+                            Answered
+                        </h5>
                         <h3 class="fw-bold fs-5">{{ $answeredCount }}</h3>
                     </div>
                 </div>
@@ -150,7 +156,10 @@
                         <div class="mb-3">
                             <i class="bi bi-x-circle-fill text-warning fs-4"></i>
                         </div>
-                        <h5 class="text-warning fs-6"><i class="fa-solid fa-phone-slash"></i> No Answer</h5>
+                        <h5 class="text-warning fs-6">
+                            <i class="fa-solid fa-phone-slash"></i>
+                            No Answer
+                        </h5>
                         <h3 class="fw-bold fs-5">{{ $noAnswerCount }}</h3>
                     </div>
                 </div>
