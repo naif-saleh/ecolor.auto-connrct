@@ -81,13 +81,13 @@ class ADialMakeCallCommand extends Command
                     ->where('allow', true)
                     ->get();
 
-                Log::info("Found " . $files->count() . " feeds for provider " . $provider->name . "Feed\s: ".$files->file_name);
+
 
                 foreach ($files as $file) {
                     // Parse times using configured timezone
                     $from = Carbon::parse("{$file->date} {$file->from}")->timezone($timezone);
                     $to = Carbon::parse("{$file->date} {$file->to}")->timezone($timezone);
-
+                    Log::info("Found " . $files->count() . " feeds for provider " . $provider->name . "Feed\s: ".$files->file_name);
                     Log::info("ADIAL Processing window for File ID {$file->id}:");
                     Log::info("Current time ({$timezone}): " . $now);
                     Log::info("Call window: {$from} to {$to}");
