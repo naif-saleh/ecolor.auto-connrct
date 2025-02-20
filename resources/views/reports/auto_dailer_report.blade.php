@@ -25,6 +25,13 @@
         <div class="mb-4">
             <!-- First Line: Export and Filter Buttons -->
             <div class="filter-buttons">
+                <!-- Export Button -->
+                <a href="{{ route('auto_dailer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to')]) }}"
+                    class="btn btn-modern-export" id="download-autoDailer-csv-button">
+                    <i class="fas fa-file-export me-2"></i> Export as CSV
+                </a>
+
+                <!-- State Filters (All, Answered, No Answer, Today) -->
                 <a href="{{ url('auto-dailer-report') }}"
                     class="btn btn-modern-filter {{ !$filter || $filter === 'all' ? 'active' : '' }}" data-filter="all">
                     <i class="fas fa-list me-1"></i> All
@@ -41,6 +48,7 @@
                     class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}" data-filter="today">
                     <i class="fas fa-calendar-day me-1"></i> Today
                 </a>
+
             </div>
 
             <!-- Second Line: Filters Form -->
