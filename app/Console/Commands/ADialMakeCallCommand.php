@@ -135,65 +135,65 @@ class ADialMakeCallCommand extends Command
                         foreach ($feed_data as $data) {
                             $now = now()->timezone($timezone);
                             if (!$now->between($from, $to)) {
+
+                                try {
+                                    // Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
+                                    $token = $this->tokenService->getToken();
+                                    Log::info("ADial Calling API for extension: " . $provider->extension . "Mobile: " . $data->mobile);
+                                    //Log::info("ADial GlobbalTodayStart: " . $globalTodayStart . " globalTodayEnd: ".$globalTodayEnd);
+                                    $response = $client->post(config('services.three_cx.api_url') . "/callcontrol/{$provider->extension}/makecall", [
+                                        'headers' => [
+                                            'Authorization' => 'Bearer ' . $token,
+                                            'Accept' => 'application/json',
+                                            'Content-Type' => 'application/json',
+                                        ],
+                                        'json' => [
+                                            'destination' => $data->mobile,
+                                        ],
+                                        'timeout' => 20,
+                                    ]);
+                                    $responseData = json_decode($response->getBody()->getContents(), true);
+
+                                    if (isset($responseData['result']['callid'])) {
+                                        Log::info("✅ Call successful. Call ID: " . $responseData['result']['callid']);
+                                        AutoDailerReport::updateOrCreate(
+                                            ['call_id' => $responseData['result']['callid']],
+                                            [
+                                                'status' => $responseData['result']['status'],
+                                                'provider' => $provider->name,
+                                                'extension' => $provider->extension,
+                                                'phone_number' => $data->mobile,
+                                            ]
+                                        );
+                                        $data->update([
+                                            'state' => $responseData['result']['status'],
+                                            'call_date' => now(),
+                                            'call_id' => $responseData['result']['callid'],
+                                        ]);
+
+                                        Log::info("📞✅ Call successful for: " . $data->mobile);
+                                        // sleep(2);
+                                    } else {
+                                        Log::warning("⚠️ Call response received, but missing call ID. Response: " . json_encode($responseData));
+                                        $data->update([
+                                            'state' => 'failed',
+                                            'call_date' => now(),
+                                        ]);
+                                    }
+                                } catch (RequestException $e) {
+                                    Log::error("❌ Guzzle Request Failed: " . $e->getMessage());
+                                    if ($e->hasResponse()) {
+                                        Log::error("Response: " . $e->getResponse()->getBody()->getContents());
+                                    }
+                                    $data->update([
+                                        'state' => 'error',
+                                        'call_date' => now(),
+                                    ]);
+                                }
+                            }else
+                            {
                                 Log::info("❌ ADIAL Stopping: Time range expired during execution.");
-                                continue;
                             }
-                            try {
-                                // Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
-                                $token = $this->tokenService->getToken();
-                                Log::info("ADial Calling API for extension: " . $provider->extension . "Mobile: " . $data->mobile);
-                                //Log::info("ADial GlobbalTodayStart: " . $globalTodayStart . " globalTodayEnd: ".$globalTodayEnd);
-                                $response = $client->post(config('services.three_cx.api_url') . "/callcontrol/{$provider->extension}/makecall", [
-                                    'headers' => [
-                                        'Authorization' => 'Bearer ' . $token,
-                                        'Accept' => 'application/json',
-                                        'Content-Type' => 'application/json',
-                                    ],
-                                    'json' => [
-                                        'destination' => $data->mobile,
-                                    ],
-                                    'timeout' => 20,
-                                ]);
-                                $responseData = json_decode($response->getBody()->getContents(), true);
-
-                                if (isset($responseData['result']['callid'])) {
-                                    Log::info("✅ Call successful. Call ID: " . $responseData['result']['callid']);
-                                    AutoDailerReport::updateOrCreate(
-                                        ['call_id' => $responseData['result']['callid']],
-                                        [
-                                            'status' => $responseData['result']['status'],
-                                            'provider' => $provider->name,
-                                            'extension' => $provider->extension,
-                                            'phone_number' => $data->mobile,
-                                        ]
-                                    );
-                                    $data->update([
-                                        'state' => $responseData['result']['status'],
-                                        'call_date' => now(),
-                                        'call_id' => $responseData['result']['callid'],
-                                    ]);
-
-                                    Log::info("📞✅ Call successful for: " . $data->mobile);
-                                    // sleep(2);
-                                } else {
-                                    Log::warning("⚠️ Call response received, but missing call ID. Response: " . json_encode($responseData));
-                                    $data->update([
-                                        'state' => 'failed',
-                                        'call_date' => now(),
-                                    ]);
-                                }
-                            } catch (RequestException $e) {
-                                Log::error("❌ Guzzle Request Failed: " . $e->getMessage());
-                                if ($e->hasResponse()) {
-                                    Log::error("Response: " . $e->getResponse()->getBody()->getContents());
-                                }
-                                $data->update([
-                                    'state' => 'error',
-                                    'call_date' => now(),
-                                ]);
-                            }
-
-
 
                             // try {
                             //     $client = new Client();
