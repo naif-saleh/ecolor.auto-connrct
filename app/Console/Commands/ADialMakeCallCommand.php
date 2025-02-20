@@ -175,13 +175,13 @@ class ADialMakeCallCommand extends Command
                         }
 
                         $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount - $currentCalls)->get();
-
                         log::info("Nimbers Taken: ".$feed_data->count());
+
                         foreach ($feed_data as $data) {
                             $now = now()->timezone($timezone);
                             if (!$now->between($from, $to)) {
                                 Log::info("❌ ADIAL Stopping: Time range expired during execution.");
-                                break; // Stop processing further calls
+                                continue;
                             }
                             try {
                                 // Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
