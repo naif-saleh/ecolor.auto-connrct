@@ -32,7 +32,8 @@
                 </a>
 
                 <!-- State Filters (All, Answered, No Answer, Today) -->
-                <a href="{{ url('auto-dailer-report?filter=all') }}" class="btn btn-modern-filter {{ $filter === 'all' ? 'active' : '' }}">
+                <a href="{{ url('auto-dailer-report?filter=all') }}"
+                    class="btn btn-modern-filter {{ $filter === 'all' ? 'active' : '' }}">
                     <i class="fas fa-list me-1"></i> All
                 </a>
                 <a href="{{ url('auto-dailer-report?filter=answered') }}"
@@ -82,6 +83,38 @@
             </form>
         </div>
 
+        @if ($filter !== 'today')
+            <!-- Today's Statistics -->
+            <div class="row mb-5 text-center justify-content-center">
+                <div class="col-12">
+                    <h6 class="text-muted mb-4">Today's Statistics</h6>
+                </div>
+                <div class="col-md-2 col-sm-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body">
+                            <h5 class="text-primary fs-6">Today's Total</h5>
+                            <h3 class="fw-bold fs-5">{{ $todayTotalCount }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body">
+                            <h5 class="text-success fs-6">Today's Answered</h5>
+                            <h3 class="fw-bold fs-5">{{ $todayAnsweredCount }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body">
+                            <h5 class="text-warning fs-6">Today's No Answer</h5>
+                            <h3 class="fw-bold fs-5">{{ $todayNoAnswerCount }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif
         <!-- Statistics Section -->
         <div class="row mb-5 text-center justify-content-center">
             <!-- Total Calls -->
@@ -92,7 +125,7 @@
                             <i class="bi bi-telephone-fill text-primary fs-4"></i>
                         </div>
                         <h5 class="text-primary fs-6"><i class="fa-solid fa-phone-volume"></i> Total Calls</h5>
-                        <h3 class="fw-bold fs-5">{{ $filter === 'today' ? $todayTotalCount : $totalCount }}</h3>
+                        <h3 class="fw-bold fs-5">{{ $totalCount }}</h3>
                     </div>
                 </div>
             </div>
@@ -105,7 +138,7 @@
                             <i class="bi bi-check-circle-fill text-success fs-4"></i>
                         </div>
                         <h5 class="text-success fs-6"><i class="fa-solid fa-phone"></i> Answered</h5>
-                        <h3 class="fw-bold fs-5">{{ $filter === 'today' ? $todayAnsweredCount : $answeredCount }}</h3>
+                        <h3 class="fw-bold fs-5">{{ $answeredCount }}</h3>
                     </div>
                 </div>
             </div>
@@ -118,7 +151,7 @@
                             <i class="bi bi-x-circle-fill text-warning fs-4"></i>
                         </div>
                         <h5 class="text-warning fs-6"><i class="fa-solid fa-phone-slash"></i> No Answer</h5>
-                        <h3 class="fw-bold fs-5">{{ $filter === 'today' ? $todayNoAnswerCount : $noAnswerCount }}</h3>
+                        <h3 class="fw-bold fs-5">{{ $noAnswerCount }}</h3>
                     </div>
                 </div>
             </div>
@@ -135,7 +168,7 @@
                                 <th><i class="fa-solid fa-hashtag"></i></th>
                                 <th><i class="fa-solid fa-mobile"></i> Mobile</th>
                                 <th><i class="fa-brands fa-nfc-directional"></i> Provider</th>
-                                <th><i class="fa-solid fa-phone-volume"></i>  Extension</th>
+                                <th><i class="fa-solid fa-phone-volume"></i> Extension</th>
                                 <th><i class="fa-solid fa-phone"></i>|<i class="fa-solid fa-phone-slash"></i> Status</th>
                                 <th><i class="fa-solid fa-circle-radiation"></i> Talking</th>
                                 <th><i class="fa-solid fa-circle-radiation"></i> Ringing</th>
@@ -171,8 +204,8 @@
                                             {{ ucfirst($status) }}
                                         </span>
                                     </td>
-                                    <td>{{$report->duration_time ? $report->duration_time : '-'}}</td>
-                                    <td>{{$report->duration_routing ? $report->duration_routing : '-'}}</td>
+                                    <td>{{ $report->duration_time ? $report->duration_time : '-' }}</td>
+                                    <td>{{ $report->duration_routing ? $report->duration_routing : '-' }}</td>
                                     <td>{{ $report->created_at->format('Y-m-d') }}</td> <!-- For Date -->
                                     <td>{{ $report->created_at->format('H:i:s') }}</td> <!-- For Time -->
 
