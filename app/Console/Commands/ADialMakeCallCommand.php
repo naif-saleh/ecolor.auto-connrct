@@ -176,7 +176,7 @@ class ADialMakeCallCommand extends Command
 
                         $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount - $currentCalls)->get();
 
-
+                        log::info("Nimbers Taken: ".$feed_data->count());
                         foreach ($feed_data as $data) {
                             $now = now()->timezone($timezone);
                             if (!$now->between($from, $to)) {
@@ -219,7 +219,7 @@ class ADialMakeCallCommand extends Command
                                     ]);
 
                                     Log::info("📞✅ Call successful for: " . $data->mobile);
-                                    sleep(2);
+                                    // sleep(2);
                                 } else {
                                     Log::warning("⚠️ Call response received, but missing call ID. Response: " . json_encode($responseData));
                                     $data->update([
