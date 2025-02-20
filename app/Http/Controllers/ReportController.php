@@ -111,7 +111,7 @@ class ReportController extends Controller
         // Get distinct providers for dropdown
         $providers = ADialProvider::select('name')
             ->distinct()
-            ->orderBy('provider')
+            ->orderBy('name')
             ->get();
 
         return view('reports.auto_dailer_report', compact(
