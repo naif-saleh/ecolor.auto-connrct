@@ -43,7 +43,7 @@ class ReportController extends Controller
      */
     public function AutoDailerReports(Request $request)
     {
-        $filter = $request->input('filter', 'today');
+        $filter = $request->input('filter', 'today'); // Default to 'today' if no filter is provided
         $extensionFrom = $request->input('extension_from');
         $extensionTo = $request->input('extension_to');
         $provider = $request->input('provider');
@@ -68,6 +68,9 @@ class ReportController extends Controller
                 \Carbon\Carbon::parse($dateFrom)->startOfDay(),
                 \Carbon\Carbon::parse($dateTo)->endOfDay()
             ]);
+        } elseif ($filter === 'today') {
+            // If no date range is provided and filter is 'today', default to today's data
+            $query->whereDate('created_at', now()->toDateString());
         }
 
         // Apply extension range filters if provided
@@ -86,27 +89,16 @@ class ReportController extends Controller
             $query->whereIn('status', $answeredStatuses);
         } elseif ($filter === 'no answer') {
             $query->whereIn('status', $noAnswerStatuses);
-        } elseif ($filter === 'today') {
-            $query->whereDate('created_at', now()->toDateString());
         }
-        // If filter is 'all', no additional status filter needed
+        // If filter is 'all', no additional status or date filter applied
 
         // Get paginated results
         $reports = $query->orderBy('created_at', 'desc')->paginate(50);
 
-        // Calculate statistics based on the current filter set
-        // Total count for the current filter combination
+        // Calculate statistics
         $totalCount = $statsQuery->count();
-
-        // Answered count for the current filter combination
-        $answeredCount = (clone $statsQuery)
-            ->whereIn('status', $answeredStatuses)
-            ->count();
-
-        // No answer count for the current filter combination
-        $noAnswerCount = (clone $statsQuery)
-            ->whereIn('status', $noAnswerStatuses)
-            ->count();
+        $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
+        $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
 
         // Get distinct providers for dropdown
         $providers = ADialProvider::select('name', 'extension')
@@ -114,7 +106,6 @@ class ReportController extends Controller
             ->orderBy('name', 'asc')
             ->orderBy('extension', 'desc')
             ->get();
-
 
         return view('reports.auto_dailer_report', compact(
             'reports',
@@ -130,6 +121,7 @@ class ReportController extends Controller
             'dateTo'
         ));
     }
+
 
     /**
      * Export Auto Distributer AS CSV File
