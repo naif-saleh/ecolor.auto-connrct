@@ -161,6 +161,7 @@ class ADialMakeCallCommand extends Command
 
                                 if (isset($activeCalls['value'])) {
                                     Log::info("Active Call Success");
+                                    $currentCalls = count($activeCalls['value']);
                                     Log::info("ADialMakeCallCommand Active Calls Count: " . count($activeCalls['value']));
                                 } else {
                                     Log::warning("⚠️ ADialMakeCallCommand No 'value' field in response");
@@ -173,10 +174,15 @@ class ADialMakeCallCommand extends Command
                             Log::error("Stack trace: " . $e->getTraceAsString());
                         }
 
-                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount)->get();
+                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount - $currentCalls)->get();
 
 
                         foreach ($feed_data as $data) {
+                            $now = now()->timezone($timezone);
+                            if (!$now->between($from, $to)) {
+                                Log::info("❌ ADIAL Stopping: Time range expired during execution.");
+                                break; // Stop processing further calls
+                            }
                             try {
                                 // Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
                                 $token = $this->tokenService->getToken();
@@ -344,10 +350,10 @@ class ADialMakeCallCommand extends Command
                     }
                 }
             }
-        }else{
+        } else {
             Log::info('📞❌ Time is not allowd to call exepet in' . now());
         }
 
-        Log::info('📞✅ ADialMakeCallCommand execution completed at ' . $globalTodayStart .'to' . $globalTodayEnd);
+        Log::info('📞✅ ADialMakeCallCommand execution completed at ' . $globalTodayStart . 'to' . $globalTodayEnd);
     }
 }
