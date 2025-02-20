@@ -134,7 +134,7 @@ class ADialMakeCallCommand extends Command
 
                         foreach ($feed_data as $data) {
                             $now = now()->timezone($timezone);
-                            if (!$now->between($from, $to)) {
+                            if ($now->between($from, $to)) {
 
                                 try {
                                     // Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
