@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ActivityLog;
+use App\Models\ADialProvider;
 use App\Models\UserActivityLog;
 use App\Models\AutoDailerReport;
 use App\Models\AutoDistributerReport;
@@ -129,7 +130,7 @@ class ReportController extends Controller
             ->count();
 
         // Fetch distinct providers for the filter dropdown
-        $providers = AutoDailerReport::select('provider')->distinct()->get();
+        $providers = ADialProvider::select('name')->distinct()->get();
 
         return view('reports.auto_dailer_report', compact(
             'reports',
