@@ -32,19 +32,20 @@
                 </a>
 
                 <!-- State Filters (All, Answered, No Answer, Today) -->
-                <a href="{{ url('auto-dailer-report?filter=all') }}" class="btn btn-modern-filter {{ $filter === 'all' ? 'active' : '' }}">
+                <a href="{{ url('auto-dailer-report') }}"
+                    class="btn btn-modern-filter {{ !$filter || $filter === 'all' ? 'active' : '' }}" data-filter="all">
                     <i class="fas fa-list me-1"></i> All
                 </a>
                 <a href="{{ url('auto-dailer-report?filter=answered') }}"
-                    class="btn btn-modern-filter {{ $filter === 'answered' ? 'active' : '' }}">
+                    class="btn btn-modern-filter {{ $filter === 'answered' ? 'active' : '' }}" data-filter="answered">
                     <i class="fas fa-phone me-1"></i> Answered
                 </a>
                 <a href="{{ url('auto-dailer-report?filter=no answer') }}"
-                    class="btn btn-modern-filter {{ $filter === 'no answer' ? 'active' : '' }}">
+                    class="btn btn-modern-filter {{ $filter === 'no answer' ? 'active' : '' }}" data-filter="no answer">
                     <i class="fas fa-phone-slash me-1"></i> No Answer
                 </a>
                 <a href="{{ url('auto-dailer-report?filter=today') }}"
-                    class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}">
+                    class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}" data-filter="today">
                     <i class="fas fa-calendar-day me-1"></i> Today
                 </a>
 
@@ -52,19 +53,22 @@
 
             <!-- Second Line: Filters Form -->
             <form method="GET" action="{{ url('auto-dailer-report') }}" class="filter-form">
+                <!-- Keep current filter value -->
+                <input type="hidden" name="filter" value="{{ $filter }}">
+
                 <!-- Extension Inputs -->
                 <input type="number" name="extension_from" class="form-modern" placeholder="Extension From"
                     value="{{ request('extension_from') }}">
                 <input type="number" name="extension_to" class="form-modern" placeholder="Extension To"
                     value="{{ request('extension_to') }}">
 
-                <!-- Provider Dropdown -->
-                <select name="provider" class="form-modern" onchange="this.form.submit()">
+                <!-- Provider Dropdown - Remove onchange="this.form.submit()" -->
+                <select name="provider" class="form-modern">
                     <option value="">All Providers</option>
                     @foreach ($providers as $provider)
-                        <option value="{{ $provider->provider }}"
-                            {{ request('provider') == $provider->provider ? 'selected' : '' }}>
-                            {{ $provider->provider->name ?? $provider->provider }}
+                        <option value="{{ $provider->name }}"
+                            {{ request('provider') == $provider->name ? 'selected' : '' }}>
+                            {{ $provider->name }} - {{$provider->extension}}
                         </option>
                     @endforeach
                 </select>
@@ -82,6 +86,38 @@
             </form>
         </div>
 
+        {{-- @if ($filter !== 'today')
+            <!-- Today's Statistics -->
+            <div class="row mb-5 text-center justify-content-center">
+                <div class="col-12">
+                    <h6 class="text-muted mb-4">Today's Statistics</h6>
+                </div>
+                <div class="col-md-2 col-sm-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body">
+                            <h5 class="text-primary fs-6">Today's Total</h5>
+                            <h3 class="fw-bold fs-5">{{ $todayTotalCount }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body">
+                            <h5 class="text-success fs-6">Today's Answered</h5>
+                            <h3 class="fw-bold fs-5">{{ $todayAnsweredCount }}</h3>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-2 col-sm-3">
+                    <div class="card shadow-sm border-0 text-center">
+                        <div class="card-body">
+                            <h5 class="text-warning fs-6">Today's No Answer</h5>
+                            <h3 class="fw-bold fs-5">{{ $todayNoAnswerCount }}</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        @endif --}}
         <!-- Statistics Section -->
         <div class="row mb-5 text-center justify-content-center">
             <!-- Total Calls -->
@@ -91,8 +127,11 @@
                         <div class="mb-3">
                             <i class="bi bi-telephone-fill text-primary fs-4"></i>
                         </div>
-                        <h5 class="text-primary fs-6"><i class="fa-solid fa-phone-volume"></i> Total Calls</h5>
-                        <h3 class="fw-bold fs-5">{{ $filter === 'today' ? $todayTotalCount : $totalCount }}</h3>
+                        <h5 class="text-primary fs-6">
+                            <i class="fa-solid fa-phone-volume"></i>
+                            Total Calls
+                        </h5>
+                        <h3 class="fw-bold fs-5">{{ $totalCount }}</h3>
                     </div>
                 </div>
             </div>
@@ -104,8 +143,11 @@
                         <div class="mb-3">
                             <i class="bi bi-check-circle-fill text-success fs-4"></i>
                         </div>
-                        <h5 class="text-success fs-6"><i class="fa-solid fa-phone"></i> Answered</h5>
-                        <h3 class="fw-bold fs-5">{{ $filter === 'today' ? $todayAnsweredCount : $answeredCount }}</h3>
+                        <h5 class="text-success fs-6">
+                            <i class="fa-solid fa-phone"></i>
+                            Answered
+                        </h5>
+                        <h3 class="fw-bold fs-5">{{ $answeredCount }}</h3>
                     </div>
                 </div>
             </div>
@@ -117,8 +159,11 @@
                         <div class="mb-3">
                             <i class="bi bi-x-circle-fill text-warning fs-4"></i>
                         </div>
-                        <h5 class="text-warning fs-6"><i class="fa-solid fa-phone-slash"></i> No Answer</h5>
-                        <h3 class="fw-bold fs-5">{{ $filter === 'today' ? $todayNoAnswerCount : $noAnswerCount }}</h3>
+                        <h5 class="text-warning fs-6">
+                            <i class="fa-solid fa-phone-slash"></i>
+                            No Answer
+                        </h5>
+                        <h3 class="fw-bold fs-5">{{ $noAnswerCount }}</h3>
                     </div>
                 </div>
             </div>
@@ -135,7 +180,7 @@
                                 <th><i class="fa-solid fa-hashtag"></i></th>
                                 <th><i class="fa-solid fa-mobile"></i> Mobile</th>
                                 <th><i class="fa-brands fa-nfc-directional"></i> Provider</th>
-                                <th><i class="fa-solid fa-phone-volume"></i>  Extension</th>
+                                <th><i class="fa-solid fa-phone-volume"></i> Extension</th>
                                 <th><i class="fa-solid fa-phone"></i>|<i class="fa-solid fa-phone-slash"></i> Status</th>
                                 <th><i class="fa-solid fa-circle-radiation"></i> Talking</th>
                                 <th><i class="fa-solid fa-circle-radiation"></i> Ringing</th>
@@ -171,8 +216,8 @@
                                             {{ ucfirst($status) }}
                                         </span>
                                     </td>
-                                    <td>{{$report->duration_time ? $report->duration_time : '-'}}</td>
-                                    <td>{{$report->duration_routing ? $report->duration_routing : '-'}}</td>
+                                    <td>{{ $report->duration_time ? $report->duration_time : '-' }}</td>
+                                    <td>{{ $report->duration_routing ? $report->duration_routing : '-' }}</td>
                                     <td>{{ $report->created_at->format('Y-m-d') }}</td> <!-- For Date -->
                                     <td>{{ $report->created_at->format('H:i:s') }}</td> <!-- For Time -->
 
@@ -245,6 +290,29 @@
                         confirmButtonText: 'OK'
                     });
                 });
+        });
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get all filter buttons
+            const filterButtons = document.querySelectorAll('.filter-buttons a');
+
+            filterButtons.forEach(button => {
+                button.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    // Get current form values
+                    const form = document.querySelector('.filter-form');
+                    const formData = new FormData(form);
+
+                    // Update the filter value
+                    formData.set('filter', this.dataset.filter);
+
+                    // Build the URL with all parameters
+                    const params = new URLSearchParams(formData);
+                    window.location.href =
+                        `${this.href}${window.location.search ? '&' : '?'}${params.toString()}`;
+                });
+            });
         });
     </script>
 

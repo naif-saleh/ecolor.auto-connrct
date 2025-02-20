@@ -81,8 +81,8 @@ class ADialMakeCallCommand extends Command
                     ->where('allow', true)
                     ->get();
 
-                Log::info("Found " . $files->count() . " feeds for provider " . $provider->name);
 
+                    Log::info("Found " . $files->count() . " feeds for provider " . $provider->name );
                 foreach ($files as $file) {
                     // Parse times using configured timezone
                     $from = Carbon::parse("{$file->date} {$file->from}")->timezone($timezone);
@@ -161,6 +161,7 @@ class ADialMakeCallCommand extends Command
 
                                 if (isset($activeCalls['value'])) {
                                     Log::info("Active Call Success");
+                                    $currentCalls = count($activeCalls['value']);
                                     Log::info("ADialMakeCallCommand Active Calls Count: " . count($activeCalls['value']));
                                 } else {
                                     Log::warning("⚠️ ADialMakeCallCommand No 'value' field in response");
@@ -173,10 +174,15 @@ class ADialMakeCallCommand extends Command
                             Log::error("Stack trace: " . $e->getTraceAsString());
                         }
 
-                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount)->get();
-
+                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount - $currentCalls)->get();
+                        log::info("Nimbers Taken: ".$feed_data->count());
 
                         foreach ($feed_data as $data) {
+                            $now = now()->timezone($timezone);
+                            if (!$now->between($from, $to)) {
+                                Log::info("❌ ADIAL Stopping: Time range expired during execution.");
+                                continue;
+                            }
                             try {
                                 // Log::info("ADIAL EXT: " . $provider->extension . " mobile: " . $data->mobile);
                                 $token = $this->tokenService->getToken();
@@ -213,7 +219,7 @@ class ADialMakeCallCommand extends Command
                                     ]);
 
                                     Log::info("📞✅ Call successful for: " . $data->mobile);
-                                    sleep(2);
+                                    // sleep(2);
                                 } else {
                                     Log::warning("⚠️ Call response received, but missing call ID. Response: " . json_encode($responseData));
                                     $data->update([
@@ -344,10 +350,10 @@ class ADialMakeCallCommand extends Command
                     }
                 }
             }
-        }else{
+        } else {
             Log::info('📞❌ Time is not allowd to call exepet in' . now());
         }
 
-        Log::info('📞✅ ADialMakeCallCommand execution completed at ' . $globalTodayStart .'to' . $globalTodayEnd);
+        Log::info('📞✅ ADialMakeCallCommand execution completed at ' . $globalTodayStart . 'to' . $globalTodayEnd);
     }
 }

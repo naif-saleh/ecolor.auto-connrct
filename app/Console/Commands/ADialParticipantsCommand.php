@@ -108,19 +108,22 @@ class ADialParticipantsCommand extends Command
                                 $status = $call['Status'];
                                 $callId = $call['Id'];
 
-                                // Parse call duration
-                                $durationTime = null;
-                                $durationRouting = null;
+                                // Get existing record to preserve previous durations
+                                $existingRecord = AutoDailerReport::where('call_id', $callId)->first();
+                                $durationTime = $existingRecord ? $existingRecord->duration_time : null;
+                                $durationRouting = $existingRecord ? $existingRecord->duration_routing : null;
 
+                                // Calculate current duration
                                 if (isset($call['EstablishedAt']) && isset($call['ServerNow'])) {
                                     $establishedAt = new DateTime($call['EstablishedAt']);
                                     $serverNow = new DateTime($call['ServerNow']);
-                                    $duration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+                                    $currentDuration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
 
+                                    // Update appropriate duration based on status
                                     if ($status === 'Talking') {
-                                        $durationTime = $duration;
+                                        $durationTime = $currentDuration;
                                     } elseif ($status === 'Routing') {
-                                        $durationRouting = $duration;
+                                        $durationRouting = $currentDuration;
                                     }
                                 }
 
@@ -132,12 +135,14 @@ class ADialParticipantsCommand extends Command
                                             'status' => $status,
                                             'duration_time' => $durationTime,
                                             'duration_routing' => $durationRouting,
+                                            
                                         ]);
 
                                     ADialData::where('call_id', $callId)
                                         ->update(['state' => $status]);
 
-                                    Log::info("✅ ADialParticipantsCommand Call Updated: Status: {$status}, Mobile: " . $call['Callee']);
+                                    Log::info("✅ ADialParticipantsCommand Call Updated: Status: {$status}, Mobile: " . $call['Callee'] .
+                                        ", Routing Duration: {$durationRouting}, Talking Duration: {$durationTime}");
 
                                     DB::commit();
                                 } catch (\Exception $e) {
