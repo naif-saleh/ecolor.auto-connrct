@@ -68,7 +68,7 @@
                     @foreach ($providers as $provider)
                         <option value="{{ $provider->name }}"
                             {{ request('provider') == $provider->name ? 'selected' : '' }}>
-                            {{ $provider->name }}
+                            {{ $provider->name }} - {{$provider->extension}}
                         </option>
                     @endforeach
                 </select>
