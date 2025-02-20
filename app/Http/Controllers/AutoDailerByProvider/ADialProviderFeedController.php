@@ -21,7 +21,7 @@ class ADialProviderFeedController extends Controller
     //Auto Dialer Index
     public function index()
     {
-        $providers = ADialProvider::paginate(10);
+        $providers = ADialProvider::paginate(30);
         return view('autoDailerByProvider.Provider.index', compact('providers'));
     }
 
