@@ -109,7 +109,7 @@ class ReportController extends Controller
             ->count();
 
         // Get distinct providers for dropdown
-        $providers = ADialProvider::select('name', 'extension')
+        $providers = ADialProvider::select('name', 'extension', 'desc')
             ->distinct()
             ->orderBy('name', 'extension')
             ->get();
