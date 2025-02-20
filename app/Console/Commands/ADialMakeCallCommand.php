@@ -81,7 +81,7 @@ class ADialMakeCallCommand extends Command
                     ->where('allow', true)
                     ->get();
 
-                Log::info("Found " . $files->count() . " feeds for provider " . $provider->name);
+                Log::info("Found " . $files->count() . " feeds for provider " . $provider->name . "Feed\s: ".$files->name);
 
                 foreach ($files as $file) {
                     // Parse times using configured timezone
