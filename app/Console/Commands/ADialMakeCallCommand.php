@@ -180,6 +180,10 @@ class ADialMakeCallCommand extends Command
                                             'call_date' => now(),
                                         ]);
                                     }
+
+
+
+                                    
                                 } catch (RequestException $e) {
                                     Log::error("❌ Guzzle Request Failed: " . $e->getMessage());
                                     if ($e->hasResponse()) {
