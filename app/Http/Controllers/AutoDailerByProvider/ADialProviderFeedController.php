@@ -45,7 +45,7 @@ class ADialProviderFeedController extends Controller
                 'extension' => $request->extension,
                 'user_id' => auth()->id(), // Ensure the user is logged in
             ]);
-dd(Auth::user()->name);
+            // dd(Auth::user()->name);
             // // Active Log Report...............................
             // ActivityLog::create([
             //     'user_id' => Auth::id(),
@@ -137,7 +137,7 @@ dd(Auth::user()->name);
             $mobile = trim($line); // Assuming each line contains only a mobile number
             Log::info('mobile executed at ' . $mobile);
 
-            if ($this->isValidMobile($mobile)) {
+            // if ($this->isValidMobile($mobile)) {
                 // If mobile is valid, add to batch data
                 $batchData[] = [
                     'feed_id' => $fileId,
@@ -146,11 +146,11 @@ dd(Auth::user()->name);
                     'created_at' => now(),
                     'updated_at' => now(),
                 ];
-            } else {
-                // Log invalid number and continue to the next one
-                Log::info('This mobile not valid ' . $mobile);
-                continue; // Skip invalid mobile and move to the next line
-            }
+            // } else {
+            //     // Log invalid number and continue to the next one
+            //     Log::info('This mobile not valid ' . $mobile);
+            //     continue; // Skip invalid mobile and move to the next line
+            // }
 
             // Insert in batches to improve performance
             if (count($batchData) >= $batchSize) {
