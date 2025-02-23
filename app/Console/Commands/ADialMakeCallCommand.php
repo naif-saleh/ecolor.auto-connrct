@@ -129,7 +129,7 @@ class ADialMakeCallCommand extends Command
 
 
 
-                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount - $currentCalls)->get();
+                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount)->get();
 
 
                         foreach ($feed_data as $data) {
