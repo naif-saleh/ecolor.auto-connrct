@@ -214,6 +214,17 @@ class ADialMakeCallCommand extends Command
             Log::info('📞❌ Time is not allowd to call exepet in' . now());
         }
 
+        Log::info('📞✅ ADialMakeCallCommand execution completed at ' . $globalTodayStart . 'to' . $globalTodayEnd);
+
+
+
+
+
+
+
+
+
+
         try {
             $client = new Client();
             $token = $this->tokenService->getToken();
@@ -316,9 +327,5 @@ class ADialMakeCallCommand extends Command
         } catch (\Exception $e) {
             Log::error("❌ ADialParticipantsCommand Failed fetching participants for provider {$provider->extension}: " . $e->getMessage());
         }
-
-
-
-        Log::info('📞✅ ADialMakeCallCommand execution completed at ' . $globalTodayStart . 'to' . $globalTodayEnd);
     }
 }
