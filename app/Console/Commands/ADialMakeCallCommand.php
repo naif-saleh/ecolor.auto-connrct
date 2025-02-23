@@ -129,7 +129,7 @@ class ADialMakeCallCommand extends Command
 
 
 
-                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount)->get();
+                        $feed_data = ADialData::where('feed_id', $file->id)->where('state', 'new')->take($callCount - $currentCalls)->get();
 
 
                         foreach ($feed_data as $data) {
@@ -215,15 +215,6 @@ class ADialMakeCallCommand extends Command
         }
 
         Log::info('📞✅ ADialMakeCallCommand execution completed at ' . $globalTodayStart . 'to' . $globalTodayEnd);
-
-
-
-
-
-
-
-
-
 
         try {
             $client = new Client();
