@@ -163,9 +163,10 @@ class ReportController extends Controller
         // Apply date range filter
         if ($dateFrom && $dateTo) {
             $query->whereBetween('created_at', [
-                \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-                \Carbon\Carbon::parse($dateTo)->endOfDay()
+                \Carbon\Carbon::parse($dateFrom, 'Asia/Riyadh')->startOfDay()->timezone('UTC'),
+                \Carbon\Carbon::parse($dateTo, 'Asia/Riyadh')->endOfDay()->timezone('UTC')
             ]);
+
         }
         $reports = $query->get();
         dd('Export Query:', ['query' => $query->toSql(), 'bindings' => $query->getBindings()]);
