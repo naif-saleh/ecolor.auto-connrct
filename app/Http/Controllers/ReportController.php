@@ -161,11 +161,10 @@ class ReportController extends Controller
         }
 
         // Apply date range filter
+        // Apply date range filter
         if ($dateFrom && $dateTo) {
-            $query->whereBetween('created_at', [
-                \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-                \Carbon\Carbon::parse($dateTo)->endOfDay()
-            ]);
+            $query->whereDate('created_at', '>=', $dateFrom)
+                ->whereDate('created_at', '<=', $dateTo);
         }
 
         $reports = $query->get();
@@ -467,7 +466,7 @@ class ReportController extends Controller
         $reports = $query->get();
 
         // Define the CSV file header
-        $headers = ['#', 'Mobile',  'Is Satisfied', 'Called At - Date', 'Called At - Time'];
+        $headers = ['#', 'Mobile', 'Is Satisfied', 'Called At - Date', 'Called At - Time'];
 
         // Create the CSV content
         $csvContent = [];
