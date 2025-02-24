@@ -156,7 +156,7 @@ class ReportController extends Controller
             $query->where('extension', '<=', $extensionTo);
         }
 
-        if (!empty($provider)) {
+        if ($provider) {
             $query->where('provider', $provider);
         }
 
@@ -168,6 +168,7 @@ class ReportController extends Controller
             ]);
         }
         $reports = $query->get();
+        dd('Export Query:', ['query' => $query->toSql(), 'bindings' => $query->getBindings()]);
 
         $response = new StreamedResponse(function () use ($reports) {
             $handle = fopen('php://output', 'w');
