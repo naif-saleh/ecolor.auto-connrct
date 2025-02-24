@@ -26,7 +26,7 @@
             <!-- First Line: Export and Filter Buttons -->
             <div class="filter-buttons">
                 <!-- Export Button -->
-                <a href="{{ route('auto_dailer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to')]) }}"
+                <a href="{{ route('auto_dailer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to'), 'provider'=>request('provider'), 'date_from'=>request('date_from'), 'date_to'=>request('date_to')]) }}"
                     class="btn btn-modern-export" id="download-autoDailer-csv-button">
                     <i class="fas fa-file-export me-2"></i> Export as CSV
                 </a>
