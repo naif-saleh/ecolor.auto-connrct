@@ -156,19 +156,20 @@ class ReportController extends Controller
             $query->where('extension', '<=', $extensionTo);
         }
 
-        if (!empty($provider)) {
+        if ($provider) {
             $query->where('provider', $provider);
         }
 
         // Apply date range filter
         if ($dateFrom && $dateTo) {
             $query->whereBetween('created_at', [
-                \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-                \Carbon\Carbon::parse($dateTo)->endOfDay()
+                \Carbon\Carbon::parse($dateFrom, 'Asia/Riyadh')->startOfDay()->timezone('UTC'),
+                \Carbon\Carbon::parse($dateTo, 'Asia/Riyadh')->endOfDay()->timezone('UTC')
             ]);
-        }
 
+        }
         $reports = $query->get();
+        // dd('Export Query:', ['query' => $query->toSql(), 'bindings' => $query->getBindings()]);
 
         $response = new StreamedResponse(function () use ($reports) {
             $handle = fopen('php://output', 'w');
@@ -467,7 +468,7 @@ class ReportController extends Controller
         $reports = $query->get();
 
         // Define the CSV file header
-        $headers = ['#', 'Mobile',  'Is Satisfied', 'Called At - Date', 'Called At - Time'];
+        $headers = ['#', 'Mobile', 'Is Satisfied', 'Called At - Date', 'Called At - Time'];
 
         // Create the CSV content
         $csvContent = [];
