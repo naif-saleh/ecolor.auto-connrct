@@ -161,19 +161,11 @@ class ReportController extends Controller
         }
 
         // Apply date range filter
-        if ($dateFrom && $dateTo && $provider) {
-            // Debug the actual values first
-            \Log::info('Filter values:', [
-                'provider' => $provider,
-                'date_from' => $dateFrom,
-                'date_to' => $dateTo
+        if ($dateFrom && $dateTo) {
+            $query->whereBetween('created_at', [
+                \Carbon\Carbon::parse($dateFrom)->startOfDay(),
+                \Carbon\Carbon::parse($dateTo)->endOfDay()
             ]);
-
-            $query->where(function($q) use ($provider, $dateFrom, $dateTo) {
-                $q->where('provider', '=', $provider)
-                  ->whereDate('created_at', '>=', $dateFrom)
-                  ->whereDate('created_at', '<=', $dateTo);
-            });
         }
         $reports = $query->get();
 
