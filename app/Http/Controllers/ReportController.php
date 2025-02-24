@@ -162,18 +162,17 @@ class ReportController extends Controller
 
         // Apply date range filter
         if ($dateFrom && $dateTo) {
-            $query->whereDate('created_at', '>=', $dateFrom)
-                ->whereDate('created_at', '<=', $dateTo);
+            $query->whereRaw('DATE(created_at) >= ?', [$dateFrom])
+                  ->whereRaw('DATE(created_at) <= ?', [$dateTo]);
+
+            // Keep the debug logging
+           dd('Date range query:', [
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'sql' => $query->toSql(),
+                'bindings' => $query->getBindings()
+            ]);
         }
-
-         // Add this temporarily to debug
-    dd('Date range query:', [
-        'date_from' => $dateFrom,
-        'date_to' => $dateTo,
-        'sql' => $query->toSql(),
-        'bindings' => $query->getBindings()
-    ]);
-
 
         $reports = $query->get();
 
