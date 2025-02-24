@@ -161,10 +161,19 @@ class ReportController extends Controller
         }
 
         // Apply date range filter
-        if ($dateFrom && $dateTo) {
-            $query->where('provider', $provider)  // Add provider filter explicitly
-                  ->whereDate('created_at', '>=', $dateFrom)  // Use whereDate for first date
-                  ->whereDate('created_at', '<=', $dateTo);   // Use whereDate for second date
+        if ($dateFrom && $dateTo && $provider) {
+            // Debug the actual values first
+            \Log::info('Filter values:', [
+                'provider' => $provider,
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo
+            ]);
+
+            $query->where(function($q) use ($provider, $dateFrom, $dateTo) {
+                $q->where('provider', '=', $provider)
+                  ->whereDate('created_at', '>=', $dateFrom)
+                  ->whereDate('created_at', '<=', $dateTo);
+            });
         }
         $reports = $query->get();
 
