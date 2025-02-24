@@ -162,18 +162,10 @@ class ReportController extends Controller
 
         // Apply date range filter
         if ($dateFrom && $dateTo) {
-            $query->whereRaw('DATE(created_at) >= ?', [$dateFrom])
-                  ->whereRaw('DATE(created_at) <= ?', [$dateTo]);
-
-            // Keep the debug logging
-           dd('Date range query:', [
-                'date_from' => $dateFrom,
-                'date_to' => $dateTo,
-                'sql' => $query->toSql(),
-                'bindings' => $query->getBindings()
-            ]);
+            $query->where('provider', $provider)  // Add provider filter explicitly
+                  ->whereDate('created_at', '>=', $dateFrom)  // Use whereDate for first date
+                  ->whereDate('created_at', '<=', $dateTo);   // Use whereDate for second date
         }
-
         $reports = $query->get();
 
         $response = new StreamedResponse(function () use ($reports) {
