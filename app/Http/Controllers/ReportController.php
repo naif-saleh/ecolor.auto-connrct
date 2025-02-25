@@ -53,6 +53,7 @@ class ReportController extends Controller
         // Define status mappings
         $answeredStatuses = ['Talking', 'Wexternalline'];
         $noAnswerStatuses = ['Wspecialmenu', 'no answer', 'Dialing', 'Routing'];
+        $faildCalls = "Dialing";
 
         // Start building the query
         $query = AutoDailerReport::query();
@@ -89,6 +90,8 @@ class ReportController extends Controller
             $query->whereIn('status', $answeredStatuses);
         } elseif ($filter === 'no answer') {
             $query->whereIn('status', $noAnswerStatuses);
+        }elseif ($filter === 'faild') {
+            $query->whereIn('status', $faildCalls);
         }
         // If filter is 'all', no additional status or date filter applied
 
@@ -99,6 +102,7 @@ class ReportController extends Controller
         $totalCount = $statsQuery->count();
         $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
+        $faildCallsCount = (clone $statsQuery)->whereIn('status', $faildCalls)->count();
 
         // Get distinct providers for dropdown
         $providers = ADialProvider::select('name', 'extension')
@@ -115,6 +119,7 @@ class ReportController extends Controller
             'totalCount',
             'answeredCount',
             'noAnswerCount',
+            'faildCallsCount',
             'extensionFrom',
             'extensionTo',
             'dateFrom',

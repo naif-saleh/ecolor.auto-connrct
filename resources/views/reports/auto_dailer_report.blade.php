@@ -44,6 +44,11 @@
                     class="btn btn-modern-filter {{ $filter === 'no answer' ? 'active' : '' }}" data-filter="no answer">
                     <i class="fas fa-phone-slash me-1"></i> No Answer
                 </a>
+                <a href="{{ url('auto-dailer-report?filter=faild') }}"
+                    class="btn btn-modern-filter {{ $filter === 'faild' ? 'active' : '' }}" data-filter="faild">
+                    <i class="bi bi-telephone-x me-1"></i>
+                    </i> Faild Calls
+                </a>
                 <a href="{{ url('auto-dailer-report?filter=today') }}"
                     class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}" data-filter="today">
                     <i class="fas fa-calendar-day me-1"></i> Today
@@ -167,6 +172,22 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Faild Calls -->
+            <div class="col-md-2 col-sm-3">
+                <div class="card shadow-sm border-0 text-center">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="bi bi-exclamation-circle-fill text-danger fs-4"></i>
+                        </div>
+                        <h5 class="text-danger fs-6">
+                            <i class="fa-solid fa-phone"></i>
+                            Faild Call
+                        </h5>
+                        <h3 class="fw-bold fs-5">{{ $faildCallsCount }}</h3>
+                    </div>
+                </div>
+            </div>
         </div>
 
 
@@ -204,15 +225,16 @@
                                             ])
                                                 ? 'answered'
                                                 : ($report->status === 'Dialing'
-                                                    ? 'falid'
+                                                    ? 'falid call'
                                                     : 'no answer');
 
                                             $badgeClass = match ($status) {
                                                 'answered'
                                                     => 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill',
                                                 'no answer'
+                                                    => 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill',
+                                                default
                                                     => 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill',
-                                                default => 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill',
                                             };
                                         @endphp
                                         <span class="badge bg-{{ $badgeClass }}">
