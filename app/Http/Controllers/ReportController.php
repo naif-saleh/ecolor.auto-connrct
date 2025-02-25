@@ -52,8 +52,8 @@ class ReportController extends Controller
 
         // Define status mappings
         $answeredStatuses = ['Talking', 'Wexternalline'];
-        $noAnswerStatuses = ['Wspecialmenu', 'no answer', 'Dialing', 'Routing'];
-        $faildCalls = "Dialing";
+        $noAnswerStatuses = ['Wspecialmenu', 'no answer', 'Routing'];
+        $faildCalls = ['Dialing', 'error'];
 
         // Start building the query
         $query = AutoDailerReport::query();
