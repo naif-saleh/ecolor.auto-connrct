@@ -46,7 +46,7 @@
                 </a>
                 <a href="{{ url('auto-dailer-report?filter=faild') }}"
                     class="btn btn-modern-filter {{ $filter === 'faild' ? 'active' : '' }}" data-filter="faild">
-                    <i class="bi bi-file-excel me-1"></i>
+                    <i class="fa-solid fa-user-xmark"></i>
                     </i> Faild Calls
                 </a>
                 <a href="{{ url('auto-dailer-report?filter=today') }}"
@@ -181,7 +181,7 @@
                             <i class="bi bi-exclamation-circle-fill text-danger fs-4"></i>
                         </div>
                         <h5 class="text-danger fs-6">
-                            <i class="bi bi-file-excel text-danger fs-4"></i>
+                            <i class="fa-solid fa-user-xmark text-danger"></i>
 
                             Faild Call
                         </h5>
