@@ -212,7 +212,7 @@
                                                     => 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill',
                                                 'no answer'
                                                     => 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill',
-                                                default => 'secondary',
+                                                default => 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill',
                                             };
                                         @endphp
                                         <span class="badge bg-{{ $badgeClass }}">
