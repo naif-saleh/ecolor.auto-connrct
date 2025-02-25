@@ -90,7 +90,7 @@ class ReportController extends Controller
             $query->whereIn('status', $answeredStatuses);
         } elseif ($filter === 'no answer') {
             $query->whereIn('status', $noAnswerStatuses);
-        }elseif ($filter === 'faild') {
+        } elseif ($filter === 'faild') {
             $query->whereIn('status', $faildCalls);
         }
         // If filter is 'all', no additional status or date filter applied
@@ -171,7 +171,6 @@ class ReportController extends Controller
                 \Carbon\Carbon::parse($dateFrom, 'Asia/Riyadh')->startOfDay()->timezone('UTC'),
                 \Carbon\Carbon::parse($dateTo, 'Asia/Riyadh')->endOfDay()->timezone('UTC')
             ]);
-
         }
         $reports = $query->get();
         // dd('Export Query:', ['query' => $query->toSql(), 'bindings' => $query->getBindings()]);
@@ -188,7 +187,10 @@ class ReportController extends Controller
                     $report->phone_number,
                     $report->provider,
                     $report->extension,
-                    in_array($report->status, ['Wexternalline', 'Talking']) ? 'Answered' : 'No Answer',
+                    $report->status === 'Dialing'
+                        ? 'Failed'
+                        : (in_array($report->status, ['Wexternalline', 'Talking']) ? 'Answered' : 'No Answer'),
+
                     $report->duration_time ? $report->duration_time : '-',
                     $report->duration_routing ? $report->duration_routing : '-',
                     $report->created_at->addHours(3)->format('H:i:s'),
