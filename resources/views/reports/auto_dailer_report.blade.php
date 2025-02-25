@@ -26,7 +26,7 @@
             <!-- First Line: Export and Filter Buttons -->
             <div class="filter-buttons">
                 <!-- Export Button -->
-                <a href="{{ route('auto_dailer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to'), 'provider'=>request('provider'), 'date_from'=>request('date_from'), 'date_to'=>request('date_to')]) }}"
+                <a href="{{ route('auto_dailer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to'), 'provider' => request('provider'), 'date_from' => request('date_from'), 'date_to' => request('date_to')]) }}"
                     class="btn btn-modern-export" id="download-autoDailer-csv-button">
                     <i class="fas fa-file-export me-2"></i> Export as CSV
                 </a>
@@ -43,6 +43,11 @@
                 <a href="{{ url('auto-dailer-report?filter=no answer') }}"
                     class="btn btn-modern-filter {{ $filter === 'no answer' ? 'active' : '' }}" data-filter="no answer">
                     <i class="fas fa-phone-slash me-1"></i> No Answer
+                </a>
+                <a href="{{ url('auto-dailer-report?filter=faild') }}"
+                    class="btn btn-modern-filter {{ $filter === 'faild' ? 'active' : '' }}" data-filter="faild">
+                    <i class="fa-solid fa-user-xmark"></i>
+                    </i> Faild Calls
                 </a>
                 <a href="{{ url('auto-dailer-report?filter=today') }}"
                     class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}" data-filter="today">
@@ -68,7 +73,7 @@
                     @foreach ($providers as $provider)
                         <option value="{{ $provider->name }}"
                             {{ request('provider') == $provider->name ? 'selected' : '' }}>
-                            {{ $provider->name }} - {{$provider->extension}}
+                            {{ $provider->name }} - {{ $provider->extension }}
                         </option>
                     @endforeach
                 </select>
@@ -167,6 +172,23 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Faild Calls -->
+            <div class="col-md-2 col-sm-3">
+                <div class="card shadow-sm border-0 text-center">
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <i class="bi bi-exclamation-circle-fill text-danger fs-4"></i>
+                        </div>
+                        <h5 class="text-danger fs-6">
+                            <i class="fa-solid fa-user-xmark text-danger"></i>
+
+                            Faild Call
+                        </h5>
+                        <h3 class="fw-bold fs-5">{{ $faildCallsCount }}</h3>
+                    </div>
+                </div>
+            </div>
         </div>
 
 
@@ -203,13 +225,17 @@
                                                 'Talking',
                                             ])
                                                 ? 'answered'
-                                                : 'no answer';
+                                                : ($report->status === 'Dialing'
+                                                    ? 'falid call'
+                                                    : 'no answer');
+
                                             $badgeClass = match ($status) {
                                                 'answered'
                                                     => 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill',
                                                 'no answer'
+                                                    => 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill',
+                                                default
                                                     => 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill',
-                                                default => 'secondary',
                                             };
                                         @endphp
                                         <span class="badge bg-{{ $badgeClass }}">
