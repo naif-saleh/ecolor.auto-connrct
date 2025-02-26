@@ -78,6 +78,7 @@ class ADialParticipantsCommand extends Command
 
                 // ✅ Fetch Active Calls (Only Per Provider)
                 try {
+                    $token = $this->tokenService->getToken();
                     $filter = "contains(Caller, '{$provider->extension}')";
                     $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
