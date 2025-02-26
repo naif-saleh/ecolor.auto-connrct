@@ -143,7 +143,7 @@ class ADialMakeCallCommand extends Command
                             usleep(300000); // 300ms delay
                             break;
                         } catch (RequestException $e) {
-                            Log::error("❌ Guzzle Request Failed: " . $e->getMessage());
+                            Log::error("❌ ADial MakeCall: Guzzle Request Failed: " . $e->getMessage());
                             $data->update(['state' => 'error', 'call_date' => now()]);
                         }
                     }
