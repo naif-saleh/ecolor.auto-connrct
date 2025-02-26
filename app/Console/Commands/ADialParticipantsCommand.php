@@ -143,7 +143,9 @@ class ADialParticipantsCommand extends Command
                                 'duration_time' => $durationTime,
                                 'duration_routing' => $durationRouting,
                                 'updated_at' => now(),
+                                'phone_number' => $call['Caller'] ?? null, // Ensure the phone number is provided
                             ];
+
 
                             $dataUpdates[] = [
                                 'call_id' => $callId,
