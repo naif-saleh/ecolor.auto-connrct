@@ -87,7 +87,7 @@ class ADialParticipantsCommand extends Command
                             'Authorization' => 'Bearer ' . $token,
                             'Accept' => 'application/json',
                         ],
-                        'timeout' => 10,
+                        'timeout' => 30,
                     ]);
 
                     if ($activeCallsResponse->getStatusCode() !== 200) {
