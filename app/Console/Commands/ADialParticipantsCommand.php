@@ -42,13 +42,12 @@ class ADialParticipantsCommand extends Command
     public function handle()
     {
         $startTime = Carbon::now();
-
         Log::info('✅ ADialParticipantsCommand started at ' . Carbon::now());
 
         $timezone = config('app.timezone');
         $now = now()->timezone($timezone);
-
         $providers = ADialProvider::all();
+
         Log::info("Total providers found: " . $providers->count());
 
         $client = new Client();
@@ -62,11 +61,13 @@ class ADialParticipantsCommand extends Command
 
         foreach ($providers as $provider) {
             Log::info("Processing provider: {$provider->extension}");
-            $providerStartTime = Carbon::now(); // Start time for this provider
+            $providerStartTime = Carbon::now();
+
             $files = ADialFeed::where('provider_id', $provider->id)
                 ->whereDate('date', today())
                 ->where('allow', true)
                 ->get();
+
             foreach ($files as $file) {
                 $from = Carbon::parse("{$file->date} {$file->from}")->timezone($timezone);
                 $to = Carbon::parse("{$file->date} {$file->to}")->timezone($timezone);
@@ -78,7 +79,6 @@ class ADialParticipantsCommand extends Command
 
                 // ✅ Fetch Active Calls (Only Per Provider)
                 try {
-                    $token = $this->tokenService->getToken();
                     $filter = "contains(Caller, '{$provider->extension}')";
                     $url = config('services.three_cx.api_url') . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
@@ -96,26 +96,22 @@ class ADialParticipantsCommand extends Command
                     }
 
                     $activeCalls = json_decode($activeCallsResponse->getBody()->getContents(), true);
-                    // Log::info("Active Call per Provider: ",print_r($activeCalls, True));
+
                     if (empty($activeCalls['value'])) {
                         Log::warning("⚠️ No active calls found for provider {$provider->extension}");
-                        $providerEndTime = Carbon::now(); // End time for this provider
-                        $providerExecutionTime = $providerStartTime->diffInMilliseconds($providerEndTime);
-                        Log::info("⏳ Execution time for provider {$provider->extension}: {$providerExecutionTime} ms continue");
-
                         continue;
                     }
 
-
-                    // Update database per bluk batching...........
-                    $updates = [];
-                    $dataUpdates = [];
-
                     foreach ($activeCalls['value'] as $call) {
-                        $callStartTime = Carbon::now(); // Start time for this call
+                        $callStartTime = Carbon::now();
 
-                        $callId = $call['Id'];
-                        $status = $call['Status'];
+                        $callId = $call['Id'] ?? null;
+                        $status = $call['Status'] ?? 'Unknown';
+
+                        if (!$callId) {
+                            Log::warning("⚠️ Missing Call ID in response");
+                            continue;
+                        }
 
                         try {
                             // Fetch existing call record
@@ -136,41 +132,25 @@ class ADialParticipantsCommand extends Command
                                 }
                             }
 
+                            // Update database
+                            AutoDailerReport::where('call_id', $callId)
+                                ->update([
+                                    'status' => $status,
+                                    'duration_time' => $durationTime,
+                                    'duration_routing' => $durationRouting,
+                                ]);
 
-                            $updates[] = [
-                                'call_id' => $callId,
-                                'status' => $status,
-                                'duration_time' => $durationTime,
-                                'duration_routing' => $durationRouting,
-                                'updated_at' => now(),
-                                'phone_number' => $call['Caller'] ?? null,
-                                'extension' => $provider->extension ?? null,  
-                            ];
-
-
-
-                            $dataUpdates[] = [
-                                'call_id' => $callId,
-                                'state' => $status,
-                                'updated_at' => now(),
-                            ];
+                            ADialData::where('call_id', $callId)
+                                ->update(['state' => $status]);
 
                             Log::info("✅ Updated Call: {$callId}, Status: {$status}, Talking Duration: {$durationTime}, Routing Duration: {$durationRouting}");
                         } catch (\Exception $e) {
-                            Log::error("❌ Failed to process Call ID {$callId}: " . $e->getMessage());
+                            Log::error("❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
                         }
-                        $callEndTime = Carbon::now(); // End time for this call
+
+                        $callEndTime = Carbon::now();
                         $callExecutionTime = $callStartTime->diffInMilliseconds($callEndTime);
                         Log::info("⏳ Execution time for call {$callId}: {$callExecutionTime} ms");
-                    }
-
-
-                    if (!empty($updates)) {
-                        AutoDailerReport::upsert($updates, ['call_id'], ['status', 'duration_time', 'duration_routing', 'updated_at']);
-                    }
-
-                    if (!empty($dataUpdates)) {
-                        ADialData::upsert($dataUpdates, ['call_id'], ['state', 'updated_at']);
                     }
                 } catch (\Exception $e) {
                     Log::error("❌ Failed to fetch active calls for provider {$provider->extension}: " . $e->getMessage());
@@ -178,7 +158,7 @@ class ADialParticipantsCommand extends Command
                 }
             }
 
-            $providerEndTime = Carbon::now(); // End time for this provider
+            $providerEndTime = Carbon::now();
             $providerExecutionTime = $providerStartTime->diffInMilliseconds($providerEndTime);
             Log::info("⏳ Execution time for provider {$provider->extension}: {$providerExecutionTime} ms");
         }
