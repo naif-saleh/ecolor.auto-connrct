@@ -125,7 +125,7 @@ class ADialMakeCallCommand extends Command
                             $response = $client->post(config('services.three_cx.api_url') . "/callcontrol/{$provider->extension}/makecall", [
                                 'headers' => ['Authorization' => 'Bearer ' . $token, 'Accept' => 'application/json', 'Content-Type' => 'application/json'],
                                 'json' => ['destination' => $data->mobile],
-                                'timeout' => 20,
+                                'timeout' => 10,
                             ]);
 
                             $responseData = json_decode($response->getBody()->getContents(), true);
@@ -143,7 +143,7 @@ class ADialMakeCallCommand extends Command
                             usleep(300000); // 300ms delay
                             break;
                         } catch (RequestException $e) {
-                            Log::error("❌ Guzzle Request Failed: " . $e->getMessage());
+                            Log::error("❌ ADial MakeCall: Guzzle Request Failed: " . $e->getMessage());
                             $data->update(['state' => 'error', 'call_date' => now()]);
                         }
                     }
