@@ -157,7 +157,7 @@ class ADialParticipantsCommand extends Command
                         }
                         $callEndTime = Carbon::now(); // End time for this call
                         $callExecutionTime = $callStartTime->diffInMilliseconds($callEndTime);
-                        Log::info("⏳ Execution time for call {$call['id']}: {$callExecutionTime} ms");
+                        Log::info("⏳ Execution time for call {$callId}: {$callExecutionTime} ms");
                     }
 
 
