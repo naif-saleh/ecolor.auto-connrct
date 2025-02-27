@@ -109,7 +109,7 @@ class ADistMakeCallCommand extends Command
                         ->get();
 
                     foreach ($feeds as $feed) {
-                        Log::info("ffeedd");
+                        Log::info("ffeedd {{$feed->from}}");
                         $from = Carbon::parse("{$feed->date} {$feed->from}", $timezone);
                         $to = Carbon::parse("{$feed->date} {$feed->to}", $timezone);
 
