@@ -49,7 +49,6 @@ class ADistMakeCallCommand extends Command
                         'headers' => ['Authorization' => "Bearer $token"],
                         'timeout' => 10
                     ]);
-
                 } catch (\GuzzleHttp\Exception\RequestException $e) {
                     Log::error("API Request Failed: " . $e->getMessage());
                     return response()->json(['error' => 'Unable to fetch participants'], 500);
@@ -91,7 +90,7 @@ class ADistMakeCallCommand extends Command
                         ->where('allow', true)
                         ->where('is_done', false)
                         ->get();
-
+                        Log::info("xfeeds " . print_r($feeds, TRUE));
 
                     $callTimeStart = General_Setting::get('call_time_start');
                     $callTimeEnd = General_Setting::get('call_time_end');
@@ -101,8 +100,7 @@ class ADistMakeCallCommand extends Command
                         Log::warning("⚠️ Call time settings not configured. Please visit the settings page to set up allowed call hours.");
                         return;
                     } else {
-        Log::warning("⚠️ Call time xsettings not configured. Please visit the settings page to set up allowed call hours.");
-
+                        Log::warning("⚠️ Call time xsettings not configured. Please visit the settings page to set up allowed call hours.");
                     }
 
                     $globalTodayStart = Carbon::parse(date('Y-m-d') . ' ' . $callTimeStart)->timezone($timezone);
@@ -117,9 +115,8 @@ class ADistMakeCallCommand extends Command
                         return;
                     } else {
                         Log::info("⏱️ ADial - sCurrent time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
-
                     }
-                    Log::info("xfeeds " . print_r($feeds, TRUE));
+
 
                     foreach ($feeds as $feed) {
                         $from = Carbon::parse("{$feed->date} {$feed->from}")->timezone($timezone);
@@ -161,7 +158,7 @@ class ADistMakeCallCommand extends Command
                                 ]);
 
                                 $dnDevices = json_decode($devicesResponse->getBody(), true);
-                                Log::info("ADist  dnDevices ID {". print_r($dnDevices, TRUE)."} is within range.");
+                                Log::info("ADist  dnDevices ID {" . print_r($dnDevices, TRUE) . "} is within range.");
 
                                 foreach ($dnDevices as $device) {
                                     if ($device['user_agent'] !== '3CX Mobile Client') continue;
@@ -175,7 +172,7 @@ class ADistMakeCallCommand extends Command
                                     ]);
 
                                     $responseData = json_decode($responseState->getBody(), true);
-                                    Log::info("ADist  responseData ID {". print_r($responseData, TRUE)."} is within range.");
+                                    Log::info("ADist  responseData ID {" . print_r($responseData, TRUE) . "} is within range.");
                                     // ✅ Update records in a transaction
                                     DB::transaction(function () use ($responseData, $feedData) {
                                         AutoDistributerReport::create([
