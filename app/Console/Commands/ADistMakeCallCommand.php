@@ -108,7 +108,7 @@ class ADistMakeCallCommand extends Command
                         ->where('allow', true)
                         ->where('is_done', false)
                         ->get();
-                        Log::info("ffeedd",print_r($feeds,true));
+                        Log::info("ffeedd");
                     foreach ($feeds as $feed) {
 
                         $from = Carbon::parse("{$feed->date} {$feed->from}", $timezone);
