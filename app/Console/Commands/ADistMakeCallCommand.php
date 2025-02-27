@@ -108,57 +108,73 @@ class ADistMakeCallCommand extends Command
                         ->where('is_done', false)
                         ->get();
 
+                    Log::info("Fetched Feeds for Agent {$agent->id}: " . print_r($feeds->toArray(), true));
+
                     foreach ($feeds as $feed) {
-                        Log::info("ffeedd {{$feed->from}}");
+                        Log::info("Processing Feed ID: {$feed->id}, From: {$feed->from}, To: {$feed->to}");
+
                         $from = Carbon::parse("{$feed->date} {$feed->from}", $timezone);
                         $to = Carbon::parse("{$feed->date} {$feed->to}", $timezone);
+                        Log::info("Time Window for Feed {$feed->id}: {$from} - {$to}, Current Time: " . now()->timezone($timezone));
 
                         if (!$now->between($from, $to)) {
-                            Log::info("File is not within time range");
+                            Log::info("🚫 Feed {$feed->id} is NOT within the allowed time range.");
                             continue;
-                        } else {
-                            // ✅ Fetch call data
-                            $feedData = ADistData::where('feed_id', $feed->id)
-                                ->where('state', 'new')->get();
-                            if (!$feedData) continue;
+                        }
 
-                            // ✅ Fetch agent devices
+                        // ✅ Fetch call data
+                        $feedData = ADistData::where('feed_id', $feed->id)
+                            ->where('state', 'new')
+                            ->get();
+
+                        Log::info("📞 Call Data for Feed {$feed->id}: " . print_r($feedData->toArray(), true));
+
+                        if ($feedData->isEmpty()) {
+                            Log::info("✅ No available call data for feed {$feed->id}");
+                            continue;
+                        }
+
+                        // ✅ Fetch agent devices
+                        try {
+                            $devicesResponse = $client->get("/callcontrol/{$agent->extension}/devices", [
+                                'headers' => ['Authorization' => "Bearer $token"],
+                                'timeout' => 2
+                            ]);
+                            $devices = json_decode($devicesResponse->getBody(), true);
+                            Log::info("📱 Agent Devices: " . print_r($devices, true));
+                        } catch (RequestException $e) {
+                            Log::error("❌ Device fetch failed: " . $e->getMessage());
+                            continue;
+                        }
+
+                        foreach ($devices as $device) {
+                            if ($device['user_agent'] !== '3CX Mobile Client') continue;
+
+                            Log::info("☎️ Attempting call using Device ID: {$device['device_id']}");
+
+                            // ✅ Make Call
                             try {
-                                $devicesResponse = $client->get("/callcontrol/{$agent->extension}/devices", [
+                                $response = $client->post("/callcontrol/{$agent->extension}/devices/{$device['device_id']}/makecall", [
                                     'headers' => ['Authorization' => "Bearer $token"],
+                                    'json' => ['destination' => $feedData->first()->mobile], // Use first() to access single item
                                     'timeout' => 2
                                 ]);
-                                $devices = json_decode($devicesResponse->getBody(), true);
-                            } catch (RequestException $e) {
-                                Log::error("❌ Device fetch failed: " . $e->getMessage());
-                                continue;
-                            }
+                                $callResponse = json_decode($response->getBody(), true);
 
-                            foreach ($devices as $device) {
-                                if ($device['user_agent'] !== '3CX Mobile Client') continue;
+                                Log::info("📞 Call Initiated Response: " . print_r($callResponse, true));
 
-                                // ✅ Make Call
-                                try {
-                                    $response = $client->post("/callcontrol/{$agent->extension}/devices/{$device['device_id']}/makecall", [
-                                        'headers' => ['Authorization' => "Bearer $token"],
-                                        'json' => ['destination' => $feedData->mobile],
-                                        'timeout' => 2
+                                // ✅ Update DB
+                                DB::transaction(function () use ($callResponse, $feedData) {
+                                    AutoDistributerReport::create([
+                                        'call_id' => $callResponse['result']['callid'],
+                                        'status' => "Initiating",
+                                        'phone_number' => $callResponse['result']['party_caller_id'],
+                                        'attempt_time' => now(),
                                     ]);
-                                    $callResponse = json_decode($response->getBody(), true);
-
-                                    // ✅ Update DB
-                                    DB::transaction(function () use ($callResponse, $feedData) {
-                                        AutoDistributerReport::create([
-                                            'call_id' => $callResponse['result']['callid'],
-                                            'status' => "Initiating",
-                                            'phone_number' => $callResponse['result']['party_caller_id'],
-                                            'attempt_time' => now(),
-                                        ]);
-                                        $feedData->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
-                                    });
-                                } catch (RequestException $e) {
-                                    Log::error("❌ Call failed: " . $e->getMessage());
-                                }
+                                    $feedData->first()->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
+                                });
+                            } catch (RequestException $e) {
+                                Log::error("❌ Call failed: " . $e->getMessage());
                             }
                         }
                     }
