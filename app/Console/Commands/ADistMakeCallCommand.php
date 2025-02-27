@@ -83,7 +83,7 @@ class ADistMakeCallCommand extends Command
                 }
 
                 try {
-                    Log::info("timex");
+                    Log::info("timexxxx");
                     // ✅ Fetch call time settings
                     $callTimeStart = General_Setting::get('call_time_start');
                     $callTimeEnd = General_Setting::get('call_time_end');
