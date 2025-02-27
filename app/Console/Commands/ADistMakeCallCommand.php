@@ -49,6 +49,7 @@ class ADistMakeCallCommand extends Command
                         'headers' => ['Authorization' => "Bearer $token"],
                         'timeout' => 10
                     ]);
+
                 } catch (\GuzzleHttp\Exception\RequestException $e) {
                     Log::error("API Request Failed: " . $e->getMessage());
                     return response()->json(['error' => 'Unable to fetch participants'], 500);
@@ -153,6 +154,7 @@ class ADistMakeCallCommand extends Command
                                 ]);
 
                                 $dnDevices = json_decode($devicesResponse->getBody(), true);
+                                Log::info("ADist  dnDevices ID {". print_r($dnDevices, TRUE)."} is within range.");
 
                                 foreach ($dnDevices as $device) {
                                     if ($device['user_agent'] !== '3CX Mobile Client') continue;
