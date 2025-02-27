@@ -36,7 +36,7 @@ class ADistMakeCallCommand extends Command
 
         $agents = ADistAgent::all();
         foreach ($agents as $agent) {
-            Log::info(" Agents: ".print_r($agents,true));
+
             try {
                 // ✅ Fetch API Token
                 $token = $this->tokenService->getToken();
@@ -58,6 +58,7 @@ class ADistMakeCallCommand extends Command
                         'timeout' => 10
                     ]);
                     $participants = json_decode($participantResponse->getBody(), true);
+                    Log::info(" Agents: ".print_r($participants,true));
                 } catch (\GuzzleHttp\Exception\RequestException $e) {
                     Log::error("API Request Failed: " . $e->getMessage());
                     continue;
