@@ -36,6 +36,7 @@ class ADistMakeCallCommand extends Command
 
         $agents = ADistAgent::all();
         foreach ($agents as $agent) {
+            Log::info(" Agents: ".print_r($agents,true));
             try {
                 // ✅ Fetch API Token
                 $token = $this->tokenService->getToken();
