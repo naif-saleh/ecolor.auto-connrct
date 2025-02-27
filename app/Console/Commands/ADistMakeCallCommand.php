@@ -133,6 +133,7 @@ class ADistMakeCallCommand extends Command
                         // }
 
                         if ($now->between($from, $to)) {
+                            Log::info("ADist  File ID {$feed->id} is within range.");
                             // ✅ Get one new call
                             $feedData = ADistData::where('feed_id', $feed->id)
                                 ->where('state', 'new')
@@ -157,6 +158,7 @@ class ADistMakeCallCommand extends Command
                                     if ($device['user_agent'] !== '3CX Mobile Client') continue;
 
                                     // ✅ Make the call
+                                    Log::info("ADist  mobile ID {$feedData->mobile} is within range.");
                                     $responseState = $client->post("/callcontrol/{$agent->extension}/devices/{$device['device_id']}/makecall", [
                                         'headers' => ['Authorization' => "Bearer $token"],
                                         'json' => ['destination' => $feedData->mobile],
@@ -164,7 +166,7 @@ class ADistMakeCallCommand extends Command
                                     ]);
 
                                     $responseData = json_decode($responseState->getBody(), true);
-
+                                    Log::info("ADist  responseData ID {". print_r($responseData, TRUE)."} is within range.");
                                     // ✅ Update records in a transaction
                                     DB::transaction(function () use ($responseData, $feedData) {
                                         AutoDistributerReport::create([
