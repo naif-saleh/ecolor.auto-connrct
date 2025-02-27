@@ -83,7 +83,7 @@ class ADistMakeCallCommand extends Command
                 }
 
                 try {
-                    Log::info("timexxxx");
+
                     // ✅ Fetch call time settings
                     $callTimeStart = General_Setting::get('call_time_start');
                     $callTimeEnd = General_Setting::get('call_time_end');
@@ -91,7 +91,7 @@ class ADistMakeCallCommand extends Command
                         Log::warning("⚠️ Call time settings missing. Configure allowed call hours.");
                         continue;
                     }
-
+                    Log::info("timexxxx");
                     $globalTodayStart = Carbon::parse(today()->format('Y-m-d') . " $callTimeStart", $timezone);
                     $globalTodayEnd = Carbon::parse(today()->format('Y-m-d') . " $callTimeEnd", $timezone);
                     $now = now()->timezone($timezone);
