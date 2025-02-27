@@ -100,6 +100,9 @@ class ADistMakeCallCommand extends Command
                     if (!$callTimeStart || !$callTimeEnd) {
                         Log::warning("⚠️ Call time settings not configured. Please visit the settings page to set up allowed call hours.");
                         return;
+                    } else {
+        Log::warning("⚠️ Call time xsettings not configured. Please visit the settings page to set up allowed call hours.");
+
                     }
 
                     $globalTodayStart = Carbon::parse(date('Y-m-d') . ' ' . $callTimeStart)->timezone($timezone);
