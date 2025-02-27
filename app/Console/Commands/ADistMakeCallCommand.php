@@ -109,7 +109,7 @@ class ADistMakeCallCommand extends Command
                     Log::info("Fetched Feeds for Agent {$agent->id}: " . print_r($feeds->toArray(), true));
 
                     foreach ($feeds as $feed) {
-                        Log::info("Processing Feed ID: {$feed->id}, From: {$feed->from}, To: {$feed->to}");
+                        Log::info("Found {$feeds->count()} feeds for provider {$feed->name}");
 
                         $from = Carbon::parse("{$feed->date} {$feed->from}", $timezone);
                         $to = Carbon::parse("{$feed->date} {$feed->to}", $timezone);
