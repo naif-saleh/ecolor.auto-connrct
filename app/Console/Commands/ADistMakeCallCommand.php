@@ -103,8 +103,8 @@ class ADistMakeCallCommand extends Command
 
                     // ✅ Fetch Feeds
                     $feeds = ADistFeed::where('agent_id', $agent->id)
-                        ->whereDate('date', today())
-                        
+                        ->whereDate('created_at', today())
+
                         ->get();
 
                     Log::info("Fetched Feeds for Agent {$agent->id}: " . print_r($feeds->toArray(), true));
