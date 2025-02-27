@@ -100,7 +100,7 @@ class ADistMakeCallCommand extends Command
                         Log::info("⏱️ Current time {$now} is outside allowed call hours.");
                         continue;
                     }
-                    Log::info("timex - now");
+
 
                     // ✅ Fetch Feeds
                     $feeds = ADistFeed::where('agent_id', $agent->id)
@@ -108,7 +108,7 @@ class ADistMakeCallCommand extends Command
                         ->where('allow', true)
                         ->where('is_done', false)
                         ->get();
-
+                        Log::info("ffeedd",$feeds);
                     foreach ($feeds as $feed) {
 
                         $from = Carbon::parse("{$feed->date} {$feed->from}", $timezone);
