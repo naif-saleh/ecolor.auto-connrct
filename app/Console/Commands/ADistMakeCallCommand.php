@@ -81,7 +81,7 @@ class ADistMakeCallCommand extends Command
                     Log::info("🚫 Agent {$agent->id} is locked by another process");
                     continue;
                 }
-
+                Log::info("timex");
                 try {
 
                     // ✅ Fetch call time settings
@@ -91,7 +91,7 @@ class ADistMakeCallCommand extends Command
                         Log::warning("⚠️ Call time settings missing. Configure allowed call hours.");
                         continue;
                     }
-                    Log::info("timex", $callTimeEnd);
+
                     $globalTodayStart = Carbon::parse(today()->format('Y-m-d') . " $callTimeStart", $timezone);
                     $globalTodayEnd = Carbon::parse(today()->format('Y-m-d') . " $callTimeEnd", $timezone);
                     $now = now()->timezone($timezone);
