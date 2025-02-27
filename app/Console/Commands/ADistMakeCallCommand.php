@@ -112,8 +112,11 @@ class ADistMakeCallCommand extends Command
                     if (!$now->between($globalTodayStart, $globalTodayEnd)) {
                         Log::info("⏱️ ADial - Current time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
                         return;
-                    }
+                    } else {
+                        Log::info("⏱️ ADial - sCurrent time {$now} is outside allowed call hours ({$callTimeStart} - {$callTimeEnd}). Exiting.");
 
+                    }
+            
                     foreach ($feeds as $feed) {
                         $from = Carbon::parse("{$feed->date} {$feed->from}")->timezone($timezone);
                         $to = Carbon::parse("{$feed->date} {$feed->to}")->timezone($timezone);
