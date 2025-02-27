@@ -58,7 +58,6 @@ class ADistMakeCallCommand extends Command
                         'timeout' => 10
                     ]);
                     $participants = json_decode($participantResponse->getBody(), true);
-
                 } catch (\GuzzleHttp\Exception\RequestException $e) {
                     Log::error("API Request Failed: " . $e->getMessage());
                     continue;
@@ -108,55 +107,58 @@ class ADistMakeCallCommand extends Command
                         ->where('allow', true)
                         ->where('is_done', false)
                         ->get();
-                        Log::info("ffeedd");
+                    Log::info("ffeedd");
                     foreach ($feeds as $feed) {
 
                         $from = Carbon::parse("{$feed->date} {$feed->from}", $timezone);
                         $to = Carbon::parse("{$feed->date} {$feed->to}", $timezone);
 
-                        if (!$now->between($from, $to)) continue;
-
-                        // ✅ Fetch call data
-                        $feedData = ADistData::where('feed_id', $feed->id)
-                            ->where('state', 'new')->get();
-                        if (!$feedData) continue;
-
-                        // ✅ Fetch agent devices
-                        try {
-                            $devicesResponse = $client->get("/callcontrol/{$agent->extension}/devices", [
-                                'headers' => ['Authorization' => "Bearer $token"],
-                                'timeout' => 2
-                            ]);
-                            $devices = json_decode($devicesResponse->getBody(), true);
-                        } catch (RequestException $e) {
-                            Log::error("❌ Device fetch failed: " . $e->getMessage());
+                        if (!$now->between($from, $to)) {
+                            Log::info(" File is not within time range");
                             continue;
-                        }
+                        } else {
+                            // ✅ Fetch call data
+                            $feedData = ADistData::where('feed_id', $feed->id)
+                                ->where('state', 'new')->get();
+                            if (!$feedData) continue;
 
-                        foreach ($devices as $device) {
-                            if ($device['user_agent'] !== '3CX Mobile Client') continue;
-
-                            // ✅ Make Call
+                            // ✅ Fetch agent devices
                             try {
-                                $response = $client->post("/callcontrol/{$agent->extension}/devices/{$device['device_id']}/makecall", [
+                                $devicesResponse = $client->get("/callcontrol/{$agent->extension}/devices", [
                                     'headers' => ['Authorization' => "Bearer $token"],
-                                    'json' => ['destination' => $feedData->mobile],
                                     'timeout' => 2
                                 ]);
-                                $callResponse = json_decode($response->getBody(), true);
-
-                                // ✅ Update DB
-                                DB::transaction(function () use ($callResponse, $feedData) {
-                                    AutoDistributerReport::create([
-                                        'call_id' => $callResponse['result']['callid'],
-                                        'status' => "Initiating",
-                                        'phone_number' => $callResponse['result']['party_caller_id'],
-                                        'attempt_time' => now(),
-                                    ]);
-                                    $feedData->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
-                                });
+                                $devices = json_decode($devicesResponse->getBody(), true);
                             } catch (RequestException $e) {
-                                Log::error("❌ Call failed: " . $e->getMessage());
+                                Log::error("❌ Device fetch failed: " . $e->getMessage());
+                                continue;
+                            }
+
+                            foreach ($devices as $device) {
+                                if ($device['user_agent'] !== '3CX Mobile Client') continue;
+
+                                // ✅ Make Call
+                                try {
+                                    $response = $client->post("/callcontrol/{$agent->extension}/devices/{$device['device_id']}/makecall", [
+                                        'headers' => ['Authorization' => "Bearer $token"],
+                                        'json' => ['destination' => $feedData->mobile],
+                                        'timeout' => 2
+                                    ]);
+                                    $callResponse = json_decode($response->getBody(), true);
+
+                                    // ✅ Update DB
+                                    DB::transaction(function () use ($callResponse, $feedData) {
+                                        AutoDistributerReport::create([
+                                            'call_id' => $callResponse['result']['callid'],
+                                            'status' => "Initiating",
+                                            'phone_number' => $callResponse['result']['party_caller_id'],
+                                            'attempt_time' => now(),
+                                        ]);
+                                        $feedData->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
+                                    });
+                                } catch (RequestException $e) {
+                                    Log::error("❌ Call failed: " . $e->getMessage());
+                                }
                             }
                         }
                     }
