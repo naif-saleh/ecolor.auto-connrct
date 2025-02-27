@@ -118,9 +118,7 @@ class ADistMakeCallCommand extends Command
 
                         // ✅ Fetch call data
                         $feedData = ADistData::where('feed_id', $feed->id)
-                            ->where('state', 'new')
-                            ->lockForUpdate()
-                            ->first();
+                            ->where('state', 'new')->get();
                         if (!$feedData) continue;
 
                         // ✅ Fetch agent devices
