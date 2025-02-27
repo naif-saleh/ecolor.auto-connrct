@@ -107,14 +107,14 @@ class ADistMakeCallCommand extends Command
                         ->where('allow', true)
                         ->where('is_done', false)
                         ->get();
-                    Log::info("ffeedd");
-                    foreach ($feeds as $feed) {
 
+                    foreach ($feeds as $feed) {
+                        Log::info("ffeedd");
                         $from = Carbon::parse("{$feed->date} {$feed->from}", $timezone);
                         $to = Carbon::parse("{$feed->date} {$feed->to}", $timezone);
 
                         if (!$now->between($from, $to)) {
-                            Log::info(" File is not within time range");
+                            Log::info("File is not within time range");
                             continue;
                         } else {
                             // ✅ Fetch call data
