@@ -81,9 +81,9 @@ class ADistMakeCallCommand extends Command
                     Log::info("🚫 Agent {$agent->id} is locked by another process");
                     continue;
                 }
-                Log::info("timex");
-                try {
 
+                try {
+                    Log::info("timex");
                     // ✅ Fetch call time settings
                     $callTimeStart = General_Setting::get('call_time_start');
                     $callTimeEnd = General_Setting::get('call_time_end');
