@@ -83,7 +83,7 @@ class ADistMakeCallCommand extends Command
                 }
 
                 try {
-                    Log::info("Done");
+
                     // ✅ Fetch call time settings
                     $callTimeStart = General_Setting::get('call_time_start');
                     $callTimeEnd = General_Setting::get('call_time_end');
@@ -109,6 +109,7 @@ class ADistMakeCallCommand extends Command
                         ->get();
 
                     foreach ($feeds as $feed) {
+                        Log::info("Feeds", $feed->id);
                         $from = Carbon::parse("{$feed->date} {$feed->from}", $timezone);
                         $to = Carbon::parse("{$feed->date} {$feed->to}", $timezone);
 
