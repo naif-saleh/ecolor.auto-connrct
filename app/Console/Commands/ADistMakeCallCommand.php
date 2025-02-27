@@ -132,7 +132,7 @@ class ADistMakeCallCommand extends Command
                         //     Log::warning("⚠️ Call time settings not configured. Please visit the settings page to set up allowed call hours.");
                         //     return;
                         // }
-
+                        Log::info("ADist  File ID {$feed->id} is withinx range.");
                         if ($now->between($from, $to)) {
                             Log::info("ADist  File ID {$feed->id} is within range.");
                             // ✅ Get one new call
