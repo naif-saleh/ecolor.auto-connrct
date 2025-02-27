@@ -138,7 +138,7 @@ class ADistMakeCallCommand extends Command
                         try {
                             $devicesResponse = $client->get("/callcontrol/{$agent->extension}/devices", [
                                 'headers' => ['Authorization' => "Bearer $token"],
-                                'timeout' => 2
+                                'timeout' => 10
                             ]);
                             $devices = json_decode($devicesResponse->getBody(), true);
                             Log::info("📱 Agent Devices: " . print_r($devices, true));
@@ -156,8 +156,8 @@ class ADistMakeCallCommand extends Command
                             try {
                                 $response = $client->post("/callcontrol/{$agent->extension}/devices/{$device['device_id']}/makecall", [
                                     'headers' => ['Authorization' => "Bearer $token"],
-                                    'json' => ['destination' => $feedData->first()->mobile], // Use first() to access single item
-                                    'timeout' => 2
+                                    'json' => ['destination' => $feedData->mobile],
+                                    'timeout' => 10
                                 ]);
                                 $callResponse = json_decode($response->getBody(), true);
 
