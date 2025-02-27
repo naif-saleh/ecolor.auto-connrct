@@ -100,12 +100,13 @@ class ADistMakeCallCommand extends Command
                         continue;
                     }
 
-
+Log::info('Today: ',today());
                     // ✅ Fetch Feeds
                     $feeds = ADistFeed::where('agent_id', $agent->id)
                         ->where('allow', true)
                         ->where('is_done',false)
                         ->where('date', today())
+                        ->orderBy('created_at', 'desc')
                         ->get();
 
                     Log::info("Fetched Feeds for Agent {$agent->id}: " . print_r($feeds->toArray(), true));
