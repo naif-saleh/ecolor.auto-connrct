@@ -58,7 +58,7 @@ class ADistMakeCallCommand extends Command
                         'timeout' => 10
                     ]);
                     $participants = json_decode($participantResponse->getBody(), true);
-                    Log::info(" Agents: ".print_r($participants,true));
+
                 } catch (\GuzzleHttp\Exception\RequestException $e) {
                     Log::error("API Request Failed: " . $e->getMessage());
                     continue;
@@ -83,6 +83,7 @@ class ADistMakeCallCommand extends Command
                 }
 
                 try {
+                    Log::info("Done");
                     // ✅ Fetch call time settings
                     $callTimeStart = General_Setting::get('call_time_start');
                     $callTimeEnd = General_Setting::get('call_time_end');
