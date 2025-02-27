@@ -5,5 +5,5 @@ do
 # Call Commands
 php8.4 /var/www/html/autoconnect/artisan app:ADist-make-call-command
 
-  sleep 60
+  sleep 2
 done
