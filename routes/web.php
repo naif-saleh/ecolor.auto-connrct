@@ -14,6 +14,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ManagerReportController;
 use App\Http\Controllers\SettingsController;
 
+
 /**
  * Root Route Handling
  *
@@ -27,6 +28,8 @@ use App\Http\Controllers\SettingsController;
  * - Regular User → Redirects to the evaluation page.
  * - Unauthenticated → Shows the login page.
  */
+
+
 
 Route::get('/', function () {
     if (Auth::check()) {
