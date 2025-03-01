@@ -286,9 +286,10 @@ class ADialMakeCallCommand extends Command
                 try {
                     // Update call record
                     Log::info("✅ Call successful. Call ID: " . $responseData['result']['callid']);
-                    AutoDailerReport::updateOrCreate(
-                        ['call_id' => $callId],
+                    AutoDailerReport::create(
+
                         [
+                            'call_id' => $callId,
                             'status' => $status,
                             'provider' => $provider->name,
                             'extension' => $provider->extension,
