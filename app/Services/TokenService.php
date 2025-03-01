@@ -12,6 +12,7 @@ class TokenService
     protected $clientId;
     protected $clientSecret;
 
+
     public function __construct()
     {
         $this->authUrl = config('services.three_cx.api_url') . '/connect/token';
@@ -25,18 +26,10 @@ class TokenService
     public function getToken()
     {
         $cachedToken = Cache::get('three_cx_token');
-
-
         if ($cachedToken) {
             Log::info('tokenServices: Using cached token One:');
             return $cachedToken;
         }
-
-        // if ($cachedToken) {
-        //     Log::info('Using cached token Two: '.$cachedToken);
-        //     return $cachedToken;
-        // }
-
 
         return $this->generateToken();
     }
@@ -72,4 +65,8 @@ class TokenService
 
         return null; // Return null if token generation fails
     }
+
+
+
+    
 }
