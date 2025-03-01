@@ -6,10 +6,11 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\ADialProvider;
- use App\Models\ADialData;
- use App\Models\ADialFeed;
+use App\Models\ADialData;
+use App\Models\ADialFeed;
 use App\Services\TokenService;
 use App\Services\ThreeCxService;
+use App\Jobs\UpdateCallStatusJob;
 
 
 
@@ -125,30 +126,19 @@ class ADialParticipantsCommand extends Command
         Log::info("ADialParticipantsCommand⏳ Execution time for provider {$provider->extension}: {$providerExecutionTime} ms");
     }
 
-    protected function updateCallStatus($call)
+    protected function updateCallStatus($call, $provider = null, $extension = null, $phoneNumber = null)
     {
-        $callStartTime = Carbon::now();
-
         $callId = $call['Id'] ?? null;
-        $status = $call['Status'] ?? 'Unknown';
 
         if (!$callId) {
             Log::warning("ADialParticipantsCommand⚠️ Missing Call ID in response");
             return;
         }
 
-        try {
-            // Update call record with full call data for duration calculation
-            $this->threeCxService->updateCallRecord($callId, $status, $call);
+        // Dispatch job to queue
+        UpdateCallStatusJob::dispatch($call, $provider, $extension, $phoneNumber);
 
-            Log::info("ADialParticipantsCommand✅ Updated Call: {$callId}, Status: {$status}");
-        } catch (\Exception $e) {
-            Log::error("ADialParticipantsCommand❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
-        }
-
-        $callEndTime = Carbon::now();
-        $callExecutionTime = $callStartTime->diffInMilliseconds($callEndTime);
-        Log::info("ADialParticipantsCommand⏳ Execution time for call {$callId}: {$callExecutionTime} ms");
+        Log::info("ADialParticipantsCommand📤 Queued update for Call ID: {$callId}");
     }
 
 
