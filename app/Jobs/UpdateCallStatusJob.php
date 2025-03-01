@@ -10,6 +10,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use app\Models\TemporaryCall;
 
 class UpdateCallStatusJob implements ShouldQueue
 {
@@ -53,6 +54,17 @@ class UpdateCallStatusJob implements ShouldQueue
             return;
         }
 
+        $temporaryCall = TemporaryCall::updateOrCreate(
+            ['call_id' => $callId], // Prevent duplicate entries
+            [
+                'provider' => $this->provider,
+                'extension' => $this->extension,
+                'phone_number' => $this->phoneNumber,
+                'call_data' => json_encode($this->call),
+                'status' => 'pending', // Mark as pending before processing
+            ]
+        );
+
         try {
             // Update call record with full call data for duration calculation
             $threeCxService->updateCallRecord(
@@ -64,9 +76,12 @@ class UpdateCallStatusJob implements ShouldQueue
                 $this->phoneNumber
             );
 
+            $temporaryCall->update(['status' => 'processed']);
+
             Log::info("UpdateCallStatusJob✅ Updated Call: {$callId}, Status: {$status}, mobile: {$this->phoneNumber}");
         } catch (\Exception $e) {
             Log::error("UpdateCallStatusJob❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
+            $temporaryCall->update(['status' => 'failed']);
         }
 
         $callEndTime = Carbon::now();
