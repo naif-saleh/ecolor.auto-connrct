@@ -136,7 +136,7 @@ class ADialParticipantsCommand extends Command
         }
 
         // Dispatch job to queue
-        UpdateCallStatusJob::dispatch($call, $provider, $extension, $phoneNumber);
+        UpdateCallStatusJob::dispatch($call, $provider, $extension, $phoneNumber, $this->threeCxService);
 
         Log::info("ADialParticipantsCommand📤 Queued update for Call ID: {$callId}");
     }
