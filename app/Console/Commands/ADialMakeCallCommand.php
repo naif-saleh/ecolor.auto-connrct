@@ -240,10 +240,7 @@ class ADialMakeCallCommand extends Command
         }
 
         $callsToMake = max(0, $callLimit - $currentCalls);
-        if ($callsToMake <= 0) {
-            Log::info("ADialMakeCallCommand: 📞 Call limit reached, skipping further calls.");
-            return;
-        }
+        
 
         // Make calls
         $feedData = ADialData::where('feed_id', $file->id)
