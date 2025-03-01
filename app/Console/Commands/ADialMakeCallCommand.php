@@ -287,7 +287,7 @@ class ADialMakeCallCommand extends Command
                     // Update call record
                     Log::info("✅ Call successful. Call ID: " . $responseData['result']['callid']);
                     AutoDailerReport::updateOrCreate(
-                        ['call_id' => $callId],
+                        ['call_id' => $callId],  
                         [
                             'status' => $status,
                             'provider' => $provider->name,
@@ -295,6 +295,7 @@ class ADialMakeCallCommand extends Command
                             'phone_number' => $data->mobile
                         ]
                     );
+
 
                     // Update dial data
                     $data->update([
