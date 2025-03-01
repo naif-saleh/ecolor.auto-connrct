@@ -293,7 +293,6 @@ class ADialMakeCallCommand extends Command
                     $this->threeCxService->updateCallRecord(
                         $callId,
                         $status,
-                        null, // No call data for duration calculation at this stage
                         $provider->name,
                         $provider->extension,
                         $data->mobile
@@ -334,5 +333,5 @@ class ADialMakeCallCommand extends Command
 
 
 
-    
+
 }
