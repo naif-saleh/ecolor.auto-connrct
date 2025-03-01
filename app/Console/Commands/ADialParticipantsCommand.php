@@ -6,10 +6,8 @@ use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
 use App\Models\ADialProvider;
-use App\Models\AutoDailerReport;
-use App\Models\ADialData;
-use GuzzleHttp\Client;
-use App\Models\ADialFeed;
+ use App\Models\ADialData;
+ use App\Models\ADialFeed;
 use App\Services\TokenService;
 use App\Services\ThreeCxService;
 
@@ -32,6 +30,130 @@ class ADialParticipantsCommand extends Command
         parent::__construct();
         $this->threeCxService = $threeCxService;
     }
+
+    public function handle()
+    {
+        $startTime = Carbon::now();
+        Log::info('✅ ADialParticipantsCommand started at ' . $startTime);
+
+        $timezone = config('app.timezone');
+        $now = now()->timezone($timezone);
+        $providers = ADialProvider::all();
+
+        Log::info("Total providers found: " . $providers->count());
+
+        foreach ($providers as $provider) {
+            Log::info("Processing provider: {$provider->extension}");
+            $this->processProviderStatus($provider, $now, $timezone);
+        }
+
+        $endTime = Carbon::now();
+        $executionTime = $startTime->diffInMilliseconds($endTime);
+        Log::info("✅ ADialParticipantsCommand execution completed in {$executionTime} ms.");
+    }
+
+    protected function processProviderStatus($provider, $now, $timezone)
+    {
+        $providerStartTime = Carbon::now();
+
+        $files = ADialFeed::where('provider_id', $provider->id)
+            ->whereDate('date', today())
+            ->where('allow', true)
+            ->get();
+
+        // Skip providers with no active feed files
+        if ($files->isEmpty()) {
+            Log::info("No active feed files for provider: {$provider->extension}");
+            return;
+        }
+
+        // Check if any file is in the active time window or has active calls
+        $shouldCheck = false;
+
+        // First check if any file is in the call window
+        foreach ($files as $file) {
+            $from = Carbon::parse("{$file->date} {$file->from}")->timezone($timezone);
+            $to = Carbon::parse("{$file->date} {$file->to}")->timezone($timezone);
+
+            if ($now->between($from, $to)) {
+                $shouldCheck = true;
+                break;
+            }
+        }
+
+        // If no files in window, check if provider has any active calls from today
+        if (!$shouldCheck) {
+            $hasActiveCalls = ADialData::whereHas('feed', function ($query) use ($provider) {
+                $query->where('provider_id', $provider->id);
+            })
+                ->whereDate('call_date', today())
+                ->whereIn('state', ['Routing', 'Talking', 'Ringing'])
+                ->exists();
+
+            if ($hasActiveCalls) {
+                $shouldCheck = true;
+            }
+        }
+
+        if (!$shouldCheck) {
+            Log::info("❌ Skipping provider {$provider->extension}, no current activity.");
+            return;
+        }
+
+        // Fetch active calls for this provider
+        try {
+            $activeCalls = $this->threeCxService->getActiveCallsForProvider($provider->extension);
+
+            if (empty($activeCalls['value'])) {
+                Log::info("No active calls found for provider {$provider->extension}");
+                return;
+            }
+
+            Log::info("Found " . count($activeCalls['value']) . " active call(s) for provider {$provider->extension}");
+
+            // Process each active call
+            foreach ($activeCalls['value'] as $call) {
+                $this->updateCallStatus($call);
+            }
+        } catch (\Exception $e) {
+            Log::error("❌ Failed to process active calls for provider {$provider->extension}: " . $e->getMessage());
+            return;
+        }
+
+        $providerEndTime = Carbon::now();
+        $providerExecutionTime = $providerStartTime->diffInMilliseconds($providerEndTime);
+        Log::info("⏳ Execution time for provider {$provider->extension}: {$providerExecutionTime} ms");
+    }
+
+    protected function updateCallStatus($call)
+    {
+        $callStartTime = Carbon::now();
+
+        $callId = $call['Id'] ?? null;
+        $status = $call['Status'] ?? 'Unknown';
+
+        if (!$callId) {
+            Log::warning("⚠️ Missing Call ID in response");
+            return;
+        }
+
+        try {
+            // Update call record with full call data for duration calculation
+            $this->threeCxService->updateCallRecord($callId, $status, $call);
+
+            Log::info("✅ Updated Call: {$callId}, Status: {$status}");
+        } catch (\Exception $e) {
+            Log::error("❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
+        }
+
+        $callEndTime = Carbon::now();
+        $callExecutionTime = $callStartTime->diffInMilliseconds($callEndTime);
+        Log::info("⏳ Execution time for call {$callId}: {$callExecutionTime} ms");
+    }
+
+
+
+    
     // protected $tokenService;
     // /**
     //  * The console command description.
@@ -177,123 +299,5 @@ class ADialParticipantsCommand extends Command
     // }
 
 
-    public function handle()
-    {
-        $startTime = Carbon::now();
-        Log::info('✅ ADialParticipantsCommand started at ' . $startTime);
 
-        $timezone = config('app.timezone');
-        $now = now()->timezone($timezone);
-        $providers = ADialProvider::all();
-
-        Log::info("Total providers found: " . $providers->count());
-
-        foreach ($providers as $provider) {
-            Log::info("Processing provider: {$provider->extension}");
-            $this->processProviderStatus($provider, $now, $timezone);
-        }
-
-        $endTime = Carbon::now();
-        $executionTime = $startTime->diffInMilliseconds($endTime);
-        Log::info("✅ ADialParticipantsCommand execution completed in {$executionTime} ms.");
-    }
-
-    protected function processProviderStatus($provider, $now, $timezone)
-    {
-        $providerStartTime = Carbon::now();
-
-        $files = ADialFeed::where('provider_id', $provider->id)
-            ->whereDate('date', today())
-            ->where('allow', true)
-            ->get();
-
-        // Skip providers with no active feed files
-        if ($files->isEmpty()) {
-            Log::info("No active feed files for provider: {$provider->extension}");
-            return;
-        }
-
-        // Check if any file is in the active time window or has active calls
-        $shouldCheck = false;
-
-        // First check if any file is in the call window
-        foreach ($files as $file) {
-            $from = Carbon::parse("{$file->date} {$file->from}")->timezone($timezone);
-            $to = Carbon::parse("{$file->date} {$file->to}")->timezone($timezone);
-
-            if ($now->between($from, $to)) {
-                $shouldCheck = true;
-                break;
-            }
-        }
-
-        // If no files in window, check if provider has any active calls from today
-        if (!$shouldCheck) {
-            $hasActiveCalls = ADialData::whereHas('feed', function ($query) use ($provider) {
-                $query->where('provider_id', $provider->id);
-            })
-                ->whereDate('call_date', today())
-                ->whereIn('state', ['Routing', 'Talking', 'Ringing'])
-                ->exists();
-
-            if ($hasActiveCalls) {
-                $shouldCheck = true;
-            }
-        }
-
-        if (!$shouldCheck) {
-            Log::info("❌ Skipping provider {$provider->extension}, no current activity.");
-            return;
-        }
-
-        // Fetch active calls for this provider
-        try {
-            $activeCalls = $this->threeCxService->getActiveCallsForProvider($provider->extension);
-
-            if (empty($activeCalls['value'])) {
-                Log::info("No active calls found for provider {$provider->extension}");
-                return;
-            }
-
-            Log::info("Found " . count($activeCalls['value']) . " active call(s) for provider {$provider->extension}");
-
-            // Process each active call
-            foreach ($activeCalls['value'] as $call) {
-                $this->updateCallStatus($call);
-            }
-        } catch (\Exception $e) {
-            Log::error("❌ Failed to process active calls for provider {$provider->extension}: " . $e->getMessage());
-            return;
-        }
-
-        $providerEndTime = Carbon::now();
-        $providerExecutionTime = $providerStartTime->diffInMilliseconds($providerEndTime);
-        Log::info("⏳ Execution time for provider {$provider->extension}: {$providerExecutionTime} ms");
-    }
-
-    protected function updateCallStatus($call)
-    {
-        $callStartTime = Carbon::now();
-
-        $callId = $call['Id'] ?? null;
-        $status = $call['Status'] ?? 'Unknown';
-
-        if (!$callId) {
-            Log::warning("⚠️ Missing Call ID in response");
-            return;
-        }
-
-        try {
-            // Update call record with full call data for duration calculation
-            $this->threeCxService->updateCallRecord($callId, $status, $call);
-
-            Log::info("✅ Updated Call: {$callId}, Status: {$status}");
-        } catch (\Exception $e) {
-            Log::error("❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
-        }
-
-        $callEndTime = Carbon::now();
-        $callExecutionTime = $callStartTime->diffInMilliseconds($callEndTime);
-        Log::info("⏳ Execution time for call {$callId}: {$callExecutionTime} ms");
-    }
 }

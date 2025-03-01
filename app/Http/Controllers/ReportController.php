@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\ActivityLog;
+use App\Models\ADialData;
 use App\Models\ADialProvider;
 use App\Models\UserActivityLog;
 use App\Models\AutoDailerReport;
@@ -56,7 +57,7 @@ class ReportController extends Controller
         $faildCalls = ['Dialing', 'error'];
 
         // Start building the query
-        $query = AutoDailerReport::query();
+        $query = ADialData::query();
 
         // Apply provider filter if selected
         if ($provider) {
@@ -146,12 +147,12 @@ class ReportController extends Controller
             'faild' => ['Dialing', 'error'],
         ];
 
-        $query = AutoDailerReport::query();
+        $query = ADialData::query();
 
         if ($filter === 'today') {
             $query->whereDate('created_at', now()->toDateString());
         } elseif ($filter && isset($statusMap[$filter])) {
-            $query->whereIn('status', $statusMap[$filter]);
+            $query->whereIn('state', $statusMap[$filter]);
         }
 
         if ($extensionFrom) {

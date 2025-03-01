@@ -11,12 +11,7 @@ use App\Models\ADialFeed;
 use App\Models\General_Setting;
 use App\Models\CountCalls;
 use App\Services\ThreeCxService;
-use App\Services\TokenService;
-use Illuminate\Support\Facades\DB;
 use App\Models\AutoDailerReport;
-use DateTime;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
 
 
 class ADialMakeCallCommand extends Command
