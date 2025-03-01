@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\TemporaryCall;
 use App\Services\ThreeCxService;
 use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
@@ -10,7 +11,6 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
-use app\Models\TemporaryCall;
 
 class UpdateCallStatusJob implements ShouldQueue
 {
