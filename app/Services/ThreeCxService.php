@@ -131,7 +131,7 @@ class ThreeCxService
     /**
      * Update call record in database with consistent format
      */
-    public function updateCallRecord($callId, $status, $call = null, $provider = null, $extension = null, $phoneNumber = null)
+    public function updateCallRecord($callId, $status, $call = null)
     {
         $updateData = ['status' => $status];
 
