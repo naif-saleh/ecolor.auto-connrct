@@ -168,8 +168,7 @@ class ThreeCxService
         try {
             DB::beginTransaction();
 
-            $report = AutoDailerReport::update(
-                ['call_id' => $callId],
+            $report = AutoDailerReport::where('call_id', $callId)->update(
                 $updateData
             );
 
