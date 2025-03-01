@@ -269,9 +269,9 @@ class ADialMakeCallCommand extends Command
         }
     }
 
-    protected function makeCallWithRetries($data, $provider, $maxRetries = 3)
+    protected function makeCallWithRetries($data, $provider)
     {
-        for ($i = 0; $i < $maxRetries; $i++) {
+
             try {
                 // Make the call
                 $responseData = $this->threeCxService->makeCall(
@@ -287,7 +287,7 @@ class ADialMakeCallCommand extends Command
                     // Update call record
                     Log::info("✅ Call successful. Call ID: " . $responseData['result']['callid']);
                     AutoDailerReport::updateOrCreate(
-                        ['call_id' => $callId],  
+                        ['call_id' => $callId],
                         [
                             'status' => $status,
                             'provider' => $provider->name,
@@ -312,21 +312,13 @@ class ADialMakeCallCommand extends Command
 
                 // Add a small delay between calls
                 usleep(300000); // 300ms
-                break; // Successfully made call, exit retry loop
+
 
             } catch (\Exception $e) {
-                Log::error("❌ ADial MakeCall: Call Failed (Attempt " . ($i + 1) . "): " . $e->getMessage());
+                Log::error("❌ ADial MakeCall: Call Failed : " . $e->getMessage());
 
-                if ($i == $maxRetries - 1) {
-                    // Last retry failed, mark as error
-                    $data->update([
-                        'state' => 'error',
-                        'call_date' => now()
-                    ]);
 
-                    Log::error("❌ Failed to make call after {$maxRetries} attempts: {$data->mobile}");
-                }
             }
-        }
+
     }
 }
