@@ -40,7 +40,7 @@ class ADistUpdateUserStatusCommand extends Command
      */
     public function handle()
     {
-        Log::info('ADistUpdateUserStatusCommand executed at ' . Carbon::now());
+        Log::info('UpdateUserStatusCommand executed at ' . Carbon::now());
 
         try {
             $token = $this->tokenService->getToken();
@@ -83,23 +83,23 @@ class ADistUpdateUserStatusCommand extends Command
                             ]
                         );
 
-                        Log::info("Auto Distributor: ✅ Updated user data for extension " . $user['Number']);
+                        Log::info("UpdateUserStatusCommand: ✅ Updated user data for extension " . $user['Number']);
                     }
 
                     $this->info('All user data updated successfully.');
                 }
             } else {
-                Log::error('Auto Distributor Error: ❌ Failed to fetch users from 3CX API. Response status: ' . $response->getStatusCode());
+                Log::error('UpdateUserStatusCommand Error: ❌ Failed to fetch users from 3CX API. Response status: ' . $response->getStatusCode());
                 $this->error('Failed to fetch users from 3CX API. Check logs for details.');
             }
         } catch (\GuzzleHttp\Exception\RequestException $e) {
-            Log::error('Auto Distributor Error: ❌ Guzzle request failed: ' . $e->getMessage());
+            Log::error('UpdateUserStatusCommand Error: ❌ Guzzle request failed: ' . $e->getMessage());
             if ($e->hasResponse()) {
                 Log::error('Response: ' . $e->getResponse()->getBody()->getContents());
             }
             $this->error('An error occurred with the API request. Check logs for details.');
         } catch (\Exception $e) {
-            Log::error('Auto Distributor Error: ❌ An error occurred while updating user data: ' . $e->getMessage());
+            Log::error('UpdateUserStatusCommand Error: ❌ An error occurred while updating user data: ' . $e->getMessage());
             $this->error('An error occurred. Check logs for details.');
         }
     }
