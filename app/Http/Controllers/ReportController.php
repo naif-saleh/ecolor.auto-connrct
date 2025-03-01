@@ -88,11 +88,11 @@ class ReportController extends Controller
 
         // Apply status filters based on selection
         if ($filter === 'answered') {
-            $query->whereIn('status', $answeredStatuses);
+            $query->whereIn('state', $answeredStatuses);
         } elseif ($filter === 'no answer') {
-            $query->whereIn('status', $noAnswerStatuses);
+            $query->whereIn('state', $noAnswerStatuses);
         } elseif ($filter === 'faild') {
-            $query->whereIn('status', $faildCalls);
+            $query->whereIn('state', $faildCalls);
         }
         // If filter is 'all', no additional status or date filter applied
 
@@ -101,9 +101,9 @@ class ReportController extends Controller
 
         // Calculate statistics
         $totalCount = $statsQuery->count();
-        $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
-        $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
-        $faildCallsCount = (clone $statsQuery)->whereIn('status', $faildCalls)->count();
+        $answeredCount = (clone $statsQuery)->whereIn('state', $answeredStatuses)->count();
+        $noAnswerCount = (clone $statsQuery)->whereIn('state', $noAnswerStatuses)->count();
+        $faildCallsCount = (clone $statsQuery)->whereIn('state', $faildCalls)->count();
 
         // Get distinct providers for dropdown
         $providers = ADialProvider::select('name', 'extension')
