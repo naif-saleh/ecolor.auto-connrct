@@ -64,7 +64,7 @@ class UpdateCallStatusJob implements ShouldQueue
                 $this->phoneNumber
             );
 
-            Log::info("UpdateCallStatusJob✅ Updated Call: {$callId}, Status: {$status}");
+            Log::info("UpdateCallStatusJob✅ Updated Call: {$callId}, Status: {$status}, mobile: {$this->phoneNumber}");
         } catch (\Exception $e) {
             Log::error("UpdateCallStatusJob❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
         }
