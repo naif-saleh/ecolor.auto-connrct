@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\General_Setting;
 use App\Models\CountCalls;
-use app\Models\ActivityLog;
+use App\Models\ActivityLog;
 use Illuminate\Support\Facades\Auth;
 
 class SettingsController extends Controller
