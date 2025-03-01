@@ -168,7 +168,7 @@ class ThreeCxService
         try {
             DB::beginTransaction();
 
-            $report = AutoDailerReport::updateOrCreate(
+            $report = AutoDailerReport::update(
                 ['call_id' => $callId],
                 $updateData
             );

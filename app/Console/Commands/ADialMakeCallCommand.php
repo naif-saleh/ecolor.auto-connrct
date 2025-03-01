@@ -290,15 +290,12 @@ class ADialMakeCallCommand extends Command
                 // Update both tables atomically
                 try {
                     // Update call record
-                    Log::info("✅ Call successful. Call ID: " . $responseData['result']['callid']);
-                    AutoDailerReport::updateOrCreate(
-                        ['call_id' => $callId],
-                        [
-                            'status' => $status,
-                            'provider' => $provider->name,
-                            'extension' => $provider->extension,
-                            'phone_number' => $data->mobile
-                        ]
+                    $this->threeCxService->updateCallRecord(
+                        $callId,
+                        $status,
+                        $provider->name,
+                        $provider->extension,
+                        $data->mobile
                     );
 
                     // Update dial data
@@ -333,4 +330,8 @@ class ADialMakeCallCommand extends Command
             }
         }
     }
+
+
+
+
 }
