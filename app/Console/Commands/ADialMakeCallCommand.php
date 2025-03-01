@@ -175,7 +175,7 @@ class ADialMakeCallCommand extends Command
         $callTimeEnd = General_Setting::get('call_time_end');
 
         if (!$callTimeStart || !$callTimeEnd) {
-            Log::warning("⚠️ Call time settings not configured.");
+            Log::warning("ADialMakeCallCommand: ⚠️ Call time settings not configured.");
             return;
         }
 
@@ -184,21 +184,21 @@ class ADialMakeCallCommand extends Command
         $globalEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
 
         if (!$now->between($globalStart, $globalEnd)) {
-            Log::info('📞❌ Calls are not allowed at this time.');
+            Log::info('ADialMakeCallCommand: 📞❌ Calls are not allowed at this time.');
             return;
         }
 
-        Log::info("Allowed call window: {$globalStart} to {$globalEnd}");
+        Log::info("ADialMakeCallCommand: Allowed call window: {$globalStart} to {$globalEnd}");
 
         // Process each provider
         $providers = ADialProvider::all();
-        Log::info("Found {$providers->count()} providers to process");
+        Log::info("ADialMakeCallCommand: Found {$providers->count()} providers to process");
 
         foreach ($providers as $provider) {
             $this->processProvider($provider, $now, $timezone);
         }
 
-        Log::info('📞✅ ADialMakeCallCommand execution completed.');
+        Log::info('ADialMakeCallCommand: 📞✅ ADialMakeCallCommand execution completed.');
     }
 
     protected function processProvider($provider, $now, $timezone)
@@ -208,7 +208,7 @@ class ADialMakeCallCommand extends Command
             ->where('allow', true)
             ->get();
 
-        Log::info("Found {$files->count()} feeds for provider {$provider->name}");
+        Log::info("ADialMakeCallCommand: Found {$files->count()} feeds for provider {$provider->name}");
 
         foreach ($files as $file) {
             $this->processFile($file, $provider, $now, $timezone);
@@ -222,7 +222,7 @@ class ADialMakeCallCommand extends Command
         $to = Carbon::parse("{$file->date} {$file->to}")->timezone($timezone);
 
         if (!$now->between($from, $to)) {
-            Log::info("❌ Skipping File ID {$file->id}, not in call window.");
+            Log::info("ADialMakeCallCommand: ❌ Skipping File ID {$file->id}, not in call window.");
             return;
         }
 
@@ -233,15 +233,15 @@ class ADialMakeCallCommand extends Command
             $activeCalls = $this->threeCxService->getAllActiveCalls();
             $currentCalls = count($activeCalls['value'] ?? []);
 
-            Log::info("Current active calls: {$currentCalls}, Limit: {$callLimit}");
+            Log::info("ADialMakeCallCommand: Current active calls: {$currentCalls}, Limit: {$callLimit}");
         } catch (\Throwable $e) {
-            Log::error("❌ Error fetching active calls: " . $e->getMessage());
+            Log::error("ADialMakeCallCommand: ❌ Error fetching active calls: " . $e->getMessage());
             return;
         }
 
         $callsToMake = max(0, $callLimit - $currentCalls);
         if ($callsToMake <= 0) {
-            Log::info("📞 Call limit reached, skipping further calls.");
+            Log::info("ADialMakeCallCommand: 📞 Call limit reached, skipping further calls.");
             return;
         }
 
@@ -251,11 +251,11 @@ class ADialMakeCallCommand extends Command
             ->take($callsToMake)
             ->get();
 
-        Log::info("Making {$feedData->count()} calls for feed ID {$file->id}");
+        Log::info("ADialMakeCallCommand: Making {$feedData->count()} calls for feed ID {$file->id}");
 
         foreach ($feedData as $data) {
             if (!$now->between($from, $to)) {
-                Log::info("❌ Call window expired during execution.");
+                Log::info("ADialMakeCallCommand: ❌ Call window expired during execution.");
                 break;
             }
 
@@ -265,61 +265,54 @@ class ADialMakeCallCommand extends Command
         // Mark file as done if all calls processed
         if (!ADialData::where('feed_id', $file->id)->where('state', 'new')->exists()) {
             $file->update(['is_done' => true]);
-            Log::info("✅ All numbers called for File ID: {$file->id}");
+            Log::info("ADialMakeCallCommand: ✅ All numbers called for File ID: {$file->id}");
         }
     }
 
     protected function makeCallWithRetries($data, $provider)
     {
 
-            try {
-                // Make the call
-                $responseData = $this->threeCxService->makeCall(
-                    $provider->extension,
-                    $data->mobile
-                );
+        try {
+            // Make the call
+            $responseData = $this->threeCxService->makeCall(
+                $provider->extension,
+                $data->mobile
+            );
 
-                $callId = $responseData['result']['callid'];
-                $status = $responseData['result']['status'];
-
-                // Update both tables atomically
-                try {
-                    // Update call record
-                    Log::info("✅ Call successful. Call ID: " . $responseData['result']['callid']);
-                    AutoDailerReport::create(
-
-                        [
-                            'call_id' => $callId,
-                            'status' => $status,
-                            'provider' => $provider->name,
-                            'extension' => $provider->extension,
-                            'phone_number' => $data->mobile
-                        ]
-                    );
+            $callId = $responseData['result']['callid'];
+            $status = $responseData['result']['status'];
 
 
-                    // Update dial data
-                    $data->update([
-                        'state' => $status,
-                        'call_date' => now(),
-                        'call_id' => $callId
-                    ]);
+            // Update call record
+            Log::info("ADialMakeCallCommand: ✅ Call successful. Call ID: " . $responseData['result']['callid']);
+            AutoDailerReport::create(
 
-                    Log::info("✅ Mobile Number Called and Saved Successfully: {$data->mobile}, Call ID: {$callId}");
-                } catch (\Exception $e) {
-                    Log::error("❌ Failed to update database after call: " . $e->getMessage());
-                    throw $e;
-                }
-
-                // Add a small delay between calls
-                usleep(300000); // 300ms
+                [
+                    'call_id' => $callId,
+                    'status' => $status,
+                    'provider' => $provider->name,
+                    'extension' => $provider->extension,
+                    'phone_number' => $data->mobile
+                ]
+            );
 
 
-            } catch (\Exception $e) {
-                Log::error("❌ ADial MakeCall: Call Failed : " . $e->getMessage());
+            // Update dial data
+            $data->update([
+                'state' => $status,
+                'call_date' => now(),
+                'call_id' => $callId
+            ]);
+
+            Log::info("ADialMakeCallCommand: ✅ Mobile Number Called and Saved Successfully: {$data->mobile}, Call ID: {$callId}");
 
 
-            }
+            // Add a small delay between calls
+            usleep(300000); // 300ms
 
+
+        } catch (\Exception $e) {
+            Log::error("ADialMakeCallCommand: ❌ ADial MakeCall: Call Failed : " . $e->getMessage());
+        }
     }
 }

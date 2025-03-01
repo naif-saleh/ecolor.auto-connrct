@@ -40,16 +40,16 @@ class ADialParticipantsCommand extends Command
         $now = now()->timezone($timezone);
         $providers = ADialProvider::all();
 
-        Log::info("Total providers found: " . $providers->count());
+        Log::info("ADialParticipantsCommand: Total providers found: " . $providers->count());
 
         foreach ($providers as $provider) {
-            Log::info("Processing provider: {$provider->extension}");
+            Log::info("ADialParticipantsCommandProcessing provider: {$provider->extension}");
             $this->processProviderStatus($provider, $now, $timezone);
         }
 
         $endTime = Carbon::now();
         $executionTime = $startTime->diffInMilliseconds($endTime);
-        Log::info("✅ ADialParticipantsCommand execution completed in {$executionTime} ms.");
+        Log::info("ADialParticipantsCommand✅ ADialParticipantsCommand execution completed in {$executionTime} ms.");
     }
 
     protected function processProviderStatus($provider, $now, $timezone)
@@ -63,7 +63,7 @@ class ADialParticipantsCommand extends Command
 
         // Skip providers with no active feed files
         if ($files->isEmpty()) {
-            Log::info("No active feed files for provider: {$provider->extension}");
+            Log::info("ADialParticipantsCommandNo active feed files for provider: {$provider->extension}");
             return;
         }
 
@@ -96,7 +96,7 @@ class ADialParticipantsCommand extends Command
         }
 
         if (!$shouldCheck) {
-            Log::info("❌ Skipping provider {$provider->extension}, no current activity.");
+            Log::info("ADialParticipantsCommand❌ Skipping provider {$provider->extension}, no current activity.");
             return;
         }
 
@@ -105,24 +105,24 @@ class ADialParticipantsCommand extends Command
             $activeCalls = $this->threeCxService->getActiveCallsForProvider($provider->extension);
 
             if (empty($activeCalls['value'])) {
-                Log::info("No active calls found for provider {$provider->extension}");
+                Log::info("ADialParticipantsCommandNo active calls found for provider {$provider->extension}");
                 return;
             }
 
-            Log::info("Found " . count($activeCalls['value']) . " active call(s) for provider {$provider->extension}");
+            Log::info("ADialParticipantsCommandFound " . count($activeCalls['value']) . " active call(s) for provider {$provider->extension}");
 
             // Process each active call
             foreach ($activeCalls['value'] as $call) {
                 $this->updateCallStatus($call);
             }
         } catch (\Exception $e) {
-            Log::error("❌ Failed to process active calls for provider {$provider->extension}: " . $e->getMessage());
+            Log::error("ADialParticipantsCommand❌ Failed to process active calls for provider {$provider->extension}: " . $e->getMessage());
             return;
         }
 
         $providerEndTime = Carbon::now();
         $providerExecutionTime = $providerStartTime->diffInMilliseconds($providerEndTime);
-        Log::info("⏳ Execution time for provider {$provider->extension}: {$providerExecutionTime} ms");
+        Log::info("ADialParticipantsCommand⏳ Execution time for provider {$provider->extension}: {$providerExecutionTime} ms");
     }
 
     protected function updateCallStatus($call)
@@ -133,7 +133,7 @@ class ADialParticipantsCommand extends Command
         $status = $call['Status'] ?? 'Unknown';
 
         if (!$callId) {
-            Log::warning("⚠️ Missing Call ID in response");
+            Log::warning("ADialParticipantsCommand⚠️ Missing Call ID in response");
             return;
         }
 
@@ -141,19 +141,19 @@ class ADialParticipantsCommand extends Command
             // Update call record with full call data for duration calculation
             $this->threeCxService->updateCallRecord($callId, $status, $call);
 
-            Log::info("✅ Updated Call: {$callId}, Status: {$status}");
+            Log::info("ADialParticipantsCommand✅ Updated Call: {$callId}, Status: {$status}");
         } catch (\Exception $e) {
-            Log::error("❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
+            Log::error("ADialParticipantsCommand❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
         }
 
         $callEndTime = Carbon::now();
         $callExecutionTime = $callStartTime->diffInMilliseconds($callEndTime);
-        Log::info("⏳ Execution time for call {$callId}: {$callExecutionTime} ms");
+        Log::info("ADialParticipantsCommand⏳ Execution time for call {$callId}: {$callExecutionTime} ms");
     }
 
 
 
-    
+
     // protected $tokenService;
     // /**
     //  * The console command description.
