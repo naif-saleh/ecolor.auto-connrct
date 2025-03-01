@@ -214,9 +214,9 @@
                             @forelse ($reports as $index => $report)
                                 <tr>
                                     <td>{{ $reports->firstItem() + $index }}</td>
-                                    <td>{{ $report->mobile }}</td>
-                                    <td>-</td>
-                                    <td>-</td>
+                                    <td>{{ $report->phone_number }}</td>
+                                    <td>{{ $report->provider }}</td>
+                                    <td>{{ $report->extension }}</td>
                                     <td>
                                         @php
                                             $status = in_array($report->status, [
