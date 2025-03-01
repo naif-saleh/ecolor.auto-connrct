@@ -160,9 +160,9 @@ class ThreeCxService
         }
 
         // Add provider info if available
-        if ($provider) $updateData['provider'] = $provider;
-        if ($extension) $updateData['extension'] = $extension;
-        if ($phoneNumber) $updateData['phone_number'] = $phoneNumber;
+        // if ($provider) $updateData['provider'] = $provider;
+        // if ($extension) $updateData['extension'] = $extension;
+        // if ($phoneNumber) $updateData['phone_number'] = $phoneNumber;
 
         // Use updateOrCreate to handle both new and existing calls
         try {
