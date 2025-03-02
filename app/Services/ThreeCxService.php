@@ -192,7 +192,6 @@ class ThreeCxService
             return;
         }
 
-        $updateData = [];
         $updateADialData = [];
 
         foreach ($calls as $call) {
@@ -207,33 +206,46 @@ class ThreeCxService
             $serverNow = isset($call['ServerNow']) ? Carbon::parse($call['ServerNow']) : Carbon::now();
             $currentDuration = $establishedAt ? $establishedAt->diff($serverNow)->format('%H:%I:%S') : null;
 
+            $phoneNumber = isset($call['Caller']) ? (string) $call['Caller'] : 'Unknown';
+
+            // Log missing phone numbers for debugging
+            if ($phoneNumber === 'Unknown') {
+                Log::warning("🚨 Missing phone number for call_id: {$callId}");
+            }
+
             $updateRecord = [
-                'call_id' => $callId,
                 'status' => $status,
-                'phone_number' => $call['Caller'] ?? null,
+                'phone_number' => $phoneNumber,
                 'provider' => $call['Callee'] ?? null,
                 'extension' => null,
                 'duration_time' => ($status === 'Talking' && $currentDuration) ? $currentDuration : null,
                 'duration_routing' => ($status === 'Routing' && $currentDuration) ? $currentDuration : null,
             ];
 
-            $updateData[] = $updateRecord;
             $updateADialData[] = ['call_id' => $callId, 'state' => $status];
-        }
 
-        try {
-            DB::beginTransaction();
+            try {
+                DB::beginTransaction();
 
-            // Batch update AutoDailerReport
-            AutoDailerReport::upsert($updateData, ['call_id'], ['status', 'phone_number', 'provider', 'extension', 'duration_time', 'duration_routing']);
+                // ✅ Replacing upsert() with updateOrInsert()
+                AutoDailerReport::updateOrInsert(
+                    ['call_id' => $callId], // Unique key
+                    $updateRecord // Data to update/insert
+                );
 
-            // Batch update ADialData
-            ADialData::upsert($updateADialData, ['call_id'], ['state']);
+                // ✅ Updating ADialData using updateOrInsert()
+                foreach ($updateADialData as $data) {
+                    ADialData::updateOrInsert(
+                        ['call_id' => $data['call_id']],
+                        ['state' => $data['state']]
+                    );
+                }
 
-            DB::commit();
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error("❌ Batch update failed: " . $e->getMessage());
+                DB::commit();
+            } catch (\Exception $e) {
+                DB::rollBack();
+                Log::error("❌ Batch update failed: " . $e->getMessage());
+            }
         }
     }
 }
