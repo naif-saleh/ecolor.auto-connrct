@@ -129,20 +129,20 @@ class ADialParticipantsCommand extends Command
     }
 
 
-    // protected function updateCallStatus($call, $provider = null, $extension = null, $phoneNumber = null)
-    // {
-    //     $callId = $call['Id'] ?? null;
+// protected function updateCallStatus($call, $provider = null, $extension = null, $phoneNumber = null)
+// {
+//     $callId = $call['Id'] ?? null;
 
-    //     if (!$callId) {
-    //         Log::warning("ADialParticipantsCommand⚠️ Missing Call ID in response");
-    //         return;
-    //     }
+//     if (!$callId) {
+//         Log::warning("ADialParticipantsCommand⚠️ Missing Call ID in response");
+//         return;
+//     }
 
-    //     // Dispatch job to queue with the correct argument structure
-    //     UpdateCallStatusJob::dispatch([$call]);
+//     // Dispatch job to queue with the correct argument structure
+//     UpdateCallStatusJob::dispatch([$call]);
 
-    //     Log::info("ADialParticipantsCommand📤 Queued update for Call ID: {$callId}");
-    // }
+//     Log::info("ADialParticipantsCommand📤 Queued update for Call ID: {$callId}");
+// }
 
 
     protected function updateCallStatus($call, $provider = null, $extension = null, $phoneNumber = null)
