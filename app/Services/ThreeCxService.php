@@ -206,18 +206,18 @@ class ThreeCxService
             $serverNow = isset($call['ServerNow']) ? Carbon::parse($call['ServerNow']) : Carbon::now();
             $currentDuration = $establishedAt ? $establishedAt->diff($serverNow)->format('%H:%I:%S') : null;
 
-            $phoneNumber = isset($call['Caller']) ? (string) $call['Caller'] : 'Unknown';
+            // $phoneNumber = isset($call['Caller']) ? (string) $call['Caller'] : 'Unknown';
 
-            // Log missing phone numbers for debugging
-            if ($phoneNumber === 'Unknown') {
-                Log::warning("🚨 Missing phone number for call_id: {$callId}");
-            }
+            // // Log missing phone numbers for debugging
+            // if ($phoneNumber === 'Unknown') {
+            //     Log::warning("🚨 Missing phone number for call_id: {$callId}");
+            // }
 
             $updateRecord = [
                 'status' => $status,
-                'phone_number' => $phoneNumber,
-                'provider' => $call['Callee'] ?? null,
-                'extension' => null,
+                // 'phone_number' => $phoneNumber,
+                // 'provider' => $call['Callee'] ?? null,
+                // 'extension' => null,
                 'duration_time' => ($status === 'Talking' && $currentDuration) ? $currentDuration : null,
                 'duration_routing' => ($status === 'Routing' && $currentDuration) ? $currentDuration : null,
             ];
