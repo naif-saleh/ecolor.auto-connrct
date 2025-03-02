@@ -210,9 +210,9 @@ class ThreeCxService
             $updateRecord = [
                 'call_id' => $callId,
                 'status' => $status,
-                'phone_number' => 'null',
-                'provider' => 'null',
-                'extension' => 'null',
+                'phone_number' => $call['Caller'] ?? null,
+                'provider' => $call['Callee'] ?? null,
+                'extension' => null,
                 'duration_time' => ($status === 'Talking' && $currentDuration) ? $currentDuration : null,
                 'duration_routing' => ($status === 'Routing' && $currentDuration) ? $currentDuration : null,
             ];
