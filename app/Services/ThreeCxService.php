@@ -206,18 +206,9 @@ class ThreeCxService
             $serverNow = isset($call['ServerNow']) ? Carbon::parse($call['ServerNow']) : Carbon::now();
             $currentDuration = $establishedAt ? $establishedAt->diff($serverNow)->format('%H:%I:%S') : null;
 
-            // $phoneNumber = isset($call['Caller']) ? (string) $call['Caller'] : 'Unknown';
-
-            // // Log missing phone numbers for debugging
-            // if ($phoneNumber === 'Unknown') {
-            //     Log::warning("🚨 Missing phone number for call_id: {$callId}");
-            // }
 
             $updateRecord = [
                 'status' => $status,
-                // 'phone_number' => $phoneNumber,
-                // 'provider' => $call['Callee'] ?? null,
-                // 'extension' => null,
                 'duration_time' => ($status === 'Talking' && $currentDuration) ? $currentDuration : null,
                 'duration_routing' => ($status === 'Routing' && $currentDuration) ? $currentDuration : null,
             ];
@@ -228,15 +219,13 @@ class ThreeCxService
                 DB::beginTransaction();
 
                 // ✅ Replacing upsert() with updateOrInsert()
-                AutoDailerReport::updateOrInsert(
-                    ['call_id' => $callId], // Unique key
-                    $updateRecord // Data to update/insert
+                AutoDailerReport::where('call_id', $callId)->update(
+                    $updateRecord
                 );
 
                 // ✅ Updating ADialData using updateOrInsert()
                 foreach ($updateADialData as $data) {
-                    ADialData::updateOrInsert(
-                        ['call_id' => $data['call_id']],
+                    ADialData::where('call_id', $data['call_id'])->update(
                         ['state' => $data['state']]
                     );
                 }
