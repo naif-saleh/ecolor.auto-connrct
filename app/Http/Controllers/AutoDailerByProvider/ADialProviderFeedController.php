@@ -171,7 +171,7 @@ class ADialProviderFeedController extends Controller
     private function isValidMobile($mobile)
 {
     // Validates Saudi mobile numbers in both formats:
-        return preg_match('/^(9665[0-9]{8}|9050[0-9]{8}|505[0-9]{8})$/', $mobile);
+        return preg_match('/^(9665[0-9]{8}|505[0-9]{8}|9050[0-9]{8})$/', $mobile);
 }
 
     // Display all files for a provider
