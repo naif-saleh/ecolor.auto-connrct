@@ -83,8 +83,8 @@ class ADialParticipantsCommand extends Command
 
         // If no files in window, check if provider has any active calls from today
         if (!$shouldCheck) {
-            $hasActiveCalls = ADialData::whereHas('feed', function ($query) use ($provider) {
-                $query->where('provider_id', $provider->id);
+            $hasActiveCalls = ADialData::whereHas('file', function ($query) use ($provider) {
+                $query->where('feed_id', $provider->id);
             })
                 ->whereDate('call_date', today())
                 ->whereIn('state', ['Routing', 'Talking', 'Ringing'])
