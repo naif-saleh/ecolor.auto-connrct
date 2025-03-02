@@ -46,11 +46,16 @@ class UpdateCallStatusJob implements ShouldQueue
     {
         $callStartTime = Carbon::now();
 
+        if (!is_array($this->call) || empty($this->call)) {
+            Log::error("❌ UpdateCallStatusJob failed: 'call' parameter is null or empty.");
+            return;
+        }
+
         $callId = $this->call['Id'] ?? null;
         $status = $this->call['Status'] ?? 'Unknown';
 
         if (!$callId) {
-            Log::warning("UpdateCallStatusJob⚠️ Missing Call ID in response");
+            Log::warning("⚠️ UpdateCallStatusJob: Missing Call ID in response");
             return;
         }
 
@@ -67,7 +72,6 @@ class UpdateCallStatusJob implements ShouldQueue
         );
 
         try {
-            
             $threeCxService->updateCallRecord(
                 $callId,
                 $status,
@@ -90,4 +94,5 @@ class UpdateCallStatusJob implements ShouldQueue
         $executionTime = $callStartTime->diffInMilliseconds($callEndTime);
         Log::info("⏳ Execution Time for Call {$callId}: {$executionTime} ms");
     }
+
 }
