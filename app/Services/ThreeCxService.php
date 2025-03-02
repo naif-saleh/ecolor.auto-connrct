@@ -193,6 +193,7 @@ class ThreeCxService
         }
 
         $updateADialData = [];
+        $callUpdates = [];
 
         foreach ($calls as $call) {
             $callId = $call['Id'] ?? null;
@@ -206,35 +207,34 @@ class ThreeCxService
             $serverNow = isset($call['ServerNow']) ? Carbon::parse($call['ServerNow']) : Carbon::now();
             $currentDuration = $establishedAt ? $establishedAt->diff($serverNow)->format('%H:%I:%S') : null;
 
-
-            $updateRecord = [
+            $callUpdates[$callId] = [
                 'status' => $status,
                 'duration_time' => ($status === 'Talking' && $currentDuration) ? $currentDuration : null,
                 'duration_routing' => ($status === 'Routing' && $currentDuration) ? $currentDuration : null,
             ];
 
-            $updateADialData[] = ['call_id' => $callId, 'state' => $status];
+            $updateADialData[$callId] = ['state' => $status];
+        }
 
-            try {
-                DB::beginTransaction();
+        try {
+            DB::beginTransaction();
 
-                // ✅ Replacing upsert() with updateOrInsert()
-                AutoDailerReport::where('call_id', $callId)->update(
-                    $updateRecord
-                );
 
-                // ✅ Updating ADialData using updateOrInsert()
-                foreach ($updateADialData as $data) {
-                    ADialData::where('call_id', $data['call_id'])->update(
-                        ['state' => $data['state']]
-                    );
-                }
 
-                DB::commit();
-            } catch (\Exception $e) {
-                DB::rollBack();
-                Log::error("❌ Batch update failed: " . $e->getMessage());
+            // ✅ Bulk Update ADialData
+            foreach ($updateADialData as $callId => $updateRecord) {
+                ADialData::where('call_id', $callId)->update($updateRecord);
             }
+
+            // ✅ Bulk Update AutoDailerReport
+            foreach ($callUpdates as $callId => $updateRecord) {
+                AutoDailerReport::where('call_id', $callId)->update($updateRecord);
+            }
+            
+            DB::commit();
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("❌ Batch update failed: " . $e->getMessage());
         }
     }
 }
