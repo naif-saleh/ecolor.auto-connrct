@@ -128,6 +128,7 @@ class ADialParticipantsCommand extends Command
         Log::info("ADialParticipantsCommand⏳ Execution time for provider {$provider->extension}: {$providerExecutionTime} ms");
     }
 
+
     protected function updateCallStatus($call, $provider = null, $extension = null, $phoneNumber = null)
     {
         $callId = $call['Id'] ?? null;
@@ -137,12 +138,28 @@ class ADialParticipantsCommand extends Command
             return;
         }
 
-        // Dispatch job to queue
-        UpdateCallStatusJob::dispatch($call, $provider, $extension, $phoneNumber, $this->threeCxService);
-
+        // Dispatch job to queue with the correct argument structure
+        UpdateCallStatusJob::dispatch([$call]);
 
         Log::info("ADialParticipantsCommand📤 Queued update for Call ID: {$callId}");
     }
+
+
+    // protected function updateCallStatus($call, $provider = null, $extension = null, $phoneNumber = null)
+    // {
+    //     $callId = $call['Id'] ?? null;
+
+    //     if (!$callId) {
+    //         Log::warning("ADialParticipantsCommand⚠️ Missing Call ID in response");
+    //         return;
+    //     }
+
+    //     // Dispatch job to queue
+    //     UpdateCallStatusJob::dispatch($call, $provider, $extension, $phoneNumber, $this->threeCxService);
+
+
+    //     Log::info("ADialParticipantsCommand📤 Queued update for Call ID: {$callId}");
+    // }
 
 
 
