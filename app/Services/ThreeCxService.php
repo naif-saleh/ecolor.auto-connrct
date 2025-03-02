@@ -211,6 +211,7 @@ class ThreeCxService
                 'status' => $status,
                 'duration_time' => ($status === 'Talking' && $currentDuration) ? $currentDuration : null,
                 'duration_routing' => ($status === 'Routing' && $currentDuration) ? $currentDuration : null,
+                'phone_number' =>  DB::raw('phone_number'),
             ];
 
             $updateADialData[$callId] = ['state' => $status];
@@ -230,7 +231,7 @@ class ThreeCxService
             foreach ($callUpdates as $callId => $updateRecord) {
                 AutoDailerReport::where('call_id', $callId)->update($updateRecord);
             }
-            
+
             DB::commit();
         } catch (\Exception $e) {
             DB::rollBack();
