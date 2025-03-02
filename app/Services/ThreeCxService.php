@@ -211,7 +211,7 @@ class ThreeCxService
                 'status' => $status,
                 'duration_time' => ($status === 'Talking' && $currentDuration) ? $currentDuration : null,
                 'duration_routing' => ($status === 'Routing' && $currentDuration) ? $currentDuration : null,
-                'phone_number' =>  DB::raw('phone_number'),
+                'phone_number' =>  DB::raw('phone_number') ? DB::raw('phone_number') : 'Missing',
             ];
 
             $updateADialData[$callId] = ['state' => $status];
