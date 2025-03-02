@@ -210,6 +210,9 @@ class ThreeCxService
             $updateRecord = [
                 'call_id' => $callId,
                 'status' => $status,
+                'phone_number' => 'null',
+                'provider' => 'null',
+                'extension' => 'null',
                 'duration_time' => ($status === 'Talking' && $currentDuration) ? $currentDuration : null,
                 'duration_routing' => ($status === 'Routing' && $currentDuration) ? $currentDuration : null,
             ];
@@ -222,7 +225,7 @@ class ThreeCxService
             DB::beginTransaction();
 
             // Batch update AutoDailerReport
-            AutoDailerReport::upsert($updateData, ['call_id'], ['status', 'duration_time', 'duration_routing']);
+            AutoDailerReport::upsert($updateData, ['call_id'], ['status', 'phone_number', 'provider', 'extension', 'duration_time', 'duration_routing']);
 
             // Batch update ADialData
             ADialData::upsert($updateADialData, ['call_id'], ['state']);

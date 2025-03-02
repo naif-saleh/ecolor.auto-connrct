@@ -42,7 +42,7 @@ class UpdateCallStatusJob implements ShouldQueue
                 ['call_id' => $callId],
                 [
                     'call_data' => json_encode($call),
-                    'status' => 'pending',
+                    'status' => $status,
                 ]
             );
 
