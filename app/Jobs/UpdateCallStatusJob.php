@@ -54,19 +54,20 @@ class UpdateCallStatusJob implements ShouldQueue
             return;
         }
 
+        // Store call temporarily before processing
         $temporaryCall = TemporaryCall::updateOrCreate(
-            ['call_id' => $callId], // Prevent duplicate entries
+            ['call_id' => $callId],
             [
                 'provider' => $this->provider,
                 'extension' => $this->extension,
                 'phone_number' => $this->phoneNumber,
                 'call_data' => json_encode($this->call),
-                'status' => 'pending', // Mark as pending before processing
+                'status' => 'pending',
             ]
         );
 
         try {
-            // Update call record with full call data for duration calculation
+            
             $threeCxService->updateCallRecord(
                 $callId,
                 $status,
@@ -76,16 +77,17 @@ class UpdateCallStatusJob implements ShouldQueue
                 $this->phoneNumber
             );
 
+            // Mark as processed
             $temporaryCall->update(['status' => 'processed']);
 
-            Log::info("UpdateCallStatusJob✅ Updated Call: {$callId}, Status: {$status}, mobile: {$this->phoneNumber}");
+            Log::info("✅ Call Updated: ID {$callId}, Status: {$status}, Mobile: {$this->phoneNumber}");
         } catch (\Exception $e) {
-            Log::error("UpdateCallStatusJob❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
+            Log::error("❌ Failed to update Call ID {$callId}: " . $e->getMessage());
             $temporaryCall->update(['status' => 'failed']);
         }
 
         $callEndTime = Carbon::now();
-        $callExecutionTime = $callStartTime->diffInMilliseconds($callEndTime);
-        Log::info("UpdateCallStatusJob⏳ Execution time for call {$callId}: {$callExecutionTime} ms");
+        $executionTime = $callStartTime->diffInMilliseconds($callEndTime);
+        Log::info("⏳ Execution Time for Call {$callId}: {$executionTime} ms");
     }
 }
