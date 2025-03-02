@@ -117,7 +117,7 @@ class ADialMakeCallCommand extends Command
         //     Log::error("ADialMakeCallCommand: ❌ active calls retched size: " . $activeCalls);
         //     return;
         // }
-        
+
         $callsToMake = max(0, $callLimit - $currentCalls);
 
 
@@ -188,7 +188,7 @@ class ADialMakeCallCommand extends Command
 
 
         } catch (\Exception $e) {
-            Log::error("ADialMakeCallCommand: ❌ ADial MakeCall: Call Failed : " . $e->getMessage());
+            Log::error("ADialMakeCallCommand: ❌ ADial MakeCall: Call Failed {$data->mobile}: " . $e->getMessage());
         }
     }
 }
