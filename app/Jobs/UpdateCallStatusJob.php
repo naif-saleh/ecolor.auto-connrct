@@ -46,20 +46,14 @@ class UpdateCallStatusJob implements ShouldQueue
     {
         $callStartTime = Carbon::now();
 
-        if (!is_array($this->call) || empty($this->call)) {
-            Log::error("❌ UpdateCallStatusJob failed: 'call' parameter is null or empty.");
-            return;
-        }
-
         $callId = $this->call['Id'] ?? null;
         $status = $this->call['Status'] ?? 'Unknown';
 
         if (!$callId) {
-            Log::warning("⚠️ UpdateCallStatusJob: Missing Call ID in response");
+            Log::warning("UpdateCallStatusJob⚠️ Missing Call ID in response");
             return;
         }
 
-        // Store call temporarily before processing
         $temporaryCall = TemporaryCall::updateOrCreate(
             ['call_id' => $callId],
             [
@@ -67,11 +61,12 @@ class UpdateCallStatusJob implements ShouldQueue
                 'extension' => $this->extension,
                 'phone_number' => $this->phoneNumber,
                 'call_data' => json_encode($this->call),
-                'status' => 'pending',
+                'status' => 'pending',  
             ]
         );
 
         try {
+            // Update call record with full call data for duration calculation
             $threeCxService->updateCallRecord(
                 $callId,
                 $status,
@@ -81,18 +76,16 @@ class UpdateCallStatusJob implements ShouldQueue
                 $this->phoneNumber
             );
 
-            // Mark as processed
             $temporaryCall->update(['status' => 'processed']);
 
-            Log::info("✅ Call Updated: ID {$callId}, Status: {$status}, Mobile: {$this->phoneNumber}");
+            Log::info("UpdateCallStatusJob✅ Updated Call: {$callId}, Status: {$status}, mobile: {$this->phoneNumber}");
         } catch (\Exception $e) {
-            Log::error("❌ Failed to update Call ID {$callId}: " . $e->getMessage());
+            Log::error("UpdateCallStatusJob❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
             $temporaryCall->update(['status' => 'failed']);
         }
 
         $callEndTime = Carbon::now();
-        $executionTime = $callStartTime->diffInMilliseconds($callEndTime);
-        Log::info("⏳ Execution Time for Call {$callId}: {$executionTime} ms");
+        $callExecutionTime = $callStartTime->diffInMilliseconds($callEndTime);
+        Log::info("UpdateCallStatusJob⏳ Execution time for call {$callId}: {$callExecutionTime} ms");
     }
-
 }
