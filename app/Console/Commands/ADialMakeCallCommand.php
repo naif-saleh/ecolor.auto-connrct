@@ -188,7 +188,7 @@ class ADialMakeCallCommand extends Command
 
 
         } catch (\Exception $e) {
-            Log::error("ADialMakeCallCommand: ❌ ADial MakeCall: Call Failed {$data->mobile}: " . $e->getMessage());
+            Log::error("ADialMakeCallCommand: ❌ ADial MakeCall: Call Failed to number {$data->mobile}: " . $e->getMessage());
         }
     }
 }
