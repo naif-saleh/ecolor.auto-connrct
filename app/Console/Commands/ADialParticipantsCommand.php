@@ -38,7 +38,7 @@ class ADialParticipantsCommand extends Command
 
         $timezone = config('app.timezone');
         $now = now()->timezone($timezone);
-        $providers = ADialProvider::whereHas('feeds', function ($query) {
+        $providers = ADialProvider::whereHas('files', function ($query) {
             $query->whereDate('date', today())->where('allow', true);
         })->get();
 
