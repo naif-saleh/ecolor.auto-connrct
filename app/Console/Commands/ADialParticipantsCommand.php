@@ -38,7 +38,10 @@ class ADialParticipantsCommand extends Command
 
         $timezone = config('app.timezone');
         $now = now()->timezone($timezone);
-        $providers = ADialProvider::all();
+        $providers = ADialProvider::whereHas('files', function ($query) {
+            $query->whereDate('date', today())->where('allow', true);
+        })->get();
+
 
         Log::info("ADialParticipantsCommand: Total providers found: " . $providers->count());
 
