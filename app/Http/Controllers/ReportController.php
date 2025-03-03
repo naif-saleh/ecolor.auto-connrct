@@ -52,8 +52,8 @@ class ReportController extends Controller
 
         // Define status mappings
         $answeredStatuses = ['Talking', 'Wexternalline'];
-        $noAnswerStatuses = ['Wspecialmenu', 'no answer', 'Routing'];
-        $faildCalls = ['Dialing', 'error'];
+        $noAnswerStatuses = ['Wspecialmenu', 'no answer', 'Routing', 'Dialing', 'error'];
+        //$faildCalls = ['Dialing', 'error'];
 
         // Start building the query
         $query = AutoDailerReport::query();
@@ -90,9 +90,10 @@ class ReportController extends Controller
             $query->whereIn('status', $answeredStatuses);
         } elseif ($filter === 'no answer') {
             $query->whereIn('status', $noAnswerStatuses);
-        } elseif ($filter === 'faild') {
-            $query->whereIn('status', $faildCalls);
         }
+        // elseif ($filter === 'faild') {
+        //     $query->whereIn('status', $faildCalls);
+        // }
         // If filter is 'all', no additional status or date filter applied
 
         // Get paginated results
@@ -102,7 +103,7 @@ class ReportController extends Controller
         $totalCount = $statsQuery->count();
         $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
-        $faildCallsCount = (clone $statsQuery)->whereIn('status', $faildCalls)->count();
+        // $faildCallsCount = (clone $statsQuery)->whereIn('status', $faildCalls)->count();
 
         // Get distinct providers for dropdown
         $providers = ADialProvider::select('name', 'extension')
@@ -119,7 +120,6 @@ class ReportController extends Controller
             'totalCount',
             'answeredCount',
             'noAnswerCount',
-            'faildCallsCount',
             'extensionFrom',
             'extensionTo',
             'dateFrom',
@@ -142,8 +142,8 @@ class ReportController extends Controller
 
         $statusMap = [
             'answered' => ['Wexternalline', 'Talking'],
-            'no answer' => ['no answer', 'Routing'],
-            'faild' => ['Dialing', 'error'],
+            'no answer' => ['no answer', 'Routing','Dialing','error'],
+            //'faild' => ['Dialing', 'error'],
         ];
 
         $query = AutoDailerReport::query();
@@ -188,10 +188,7 @@ class ReportController extends Controller
                     $report->phone_number,
                     $report->provider,
                     $report->extension,
-                    $report->status === 'Dialing'
-                        ? 'Failed'
-                        : (in_array($report->status, ['Wexternalline', 'Talking']) ? 'Answered' : 'No Answer'),
-
+                   (in_array($report->status, ['Wexternalline', 'Talking']) ? 'Answered' : 'No Answer'),
                     $report->duration_time ? $report->duration_time : '-',
                     $report->duration_routing ? $report->duration_routing : '-',
                     $report->created_at->addHours(3)->format('H:i:s'),
