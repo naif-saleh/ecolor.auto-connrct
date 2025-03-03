@@ -58,7 +58,7 @@ class ADialMakeCallCommand extends Command
         $globalEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
 
         if (!$now->between($globalStart, $globalEnd)) {
-            Log::info('ADialMakeCallCommand: 📞❌ Calls are not allowed at this time.');
+            Log::info('ADialMakeCallCommand: 📞🛑 Calls are not allowed at this time.');
             return;
         }
 
@@ -96,7 +96,7 @@ class ADialMakeCallCommand extends Command
         $to = Carbon::parse("{$file->date} {$file->to}")->timezone($timezone);
 
         if (!$now->between($from, $to)) {
-            Log::info("ADialMakeCallCommand: ❌ Skipping File ID {$file->id}, not in call window.");
+            Log::info("ADialMakeCallCommand: 🛑 Skipping File ID {$file->id}, not in call window.");
             return;
         }
 
@@ -131,7 +131,7 @@ class ADialMakeCallCommand extends Command
 
         foreach ($feedData as $data) {
             if (!$now->between($from, $to)) {
-                Log::info("ADialMakeCallCommand: ❌ Call window expired during execution.");
+                Log::info("ADialMakeCallCommand: 🛑 Call window expired during execution.");
                 break;
             }
 
