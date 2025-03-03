@@ -46,13 +46,13 @@ class ADialParticipantsCommand extends Command
         Log::info("ADialParticipantsCommand: Total providers found: " . $providers->count());
 
         foreach ($providers as $provider) {
-            Log::info("ADialParticipantsCommandProcessing provider: {$provider->extension}");
+            Log::info("ADialParticipantsCommand Processing provider: {$provider->extension}");
             $this->processProviderStatus($provider, $now, $timezone);
         }
 
         $endTime = Carbon::now();
         $executionTime = $startTime->diffInMilliseconds($endTime);
-        Log::info("ADialParticipantsCommand✅ ADialParticipantsCommand execution completed in {$executionTime} ms.");
+        Log::info("ADialParticipantsCommand ✅ ADialParticipantsCommand execution completed in {$executionTime} ms.");
     }
 
     protected function processProviderStatus($provider, $now, $timezone)
@@ -66,7 +66,7 @@ class ADialParticipantsCommand extends Command
 
         // Skip providers with no active feed files
         if ($files->isEmpty()) {
-            Log::info("ADialParticipantsCommandNo active feed files for provider: {$provider->extension}");
+            Log::info("ADialParticipantsCommand ⚠️ No active feed files for provider: {$provider->extension}");
             return;
         }
 
@@ -99,7 +99,8 @@ class ADialParticipantsCommand extends Command
         }
 
         if (!$shouldCheck) {
-            Log::info("ADialParticipantsCommand❌ Skipping provider {$provider->extension}, no current activity.");
+            Log::info("ADialParticipantsCommand ⚠️ Skipping provider {$provider->extension}, no current activity.");
+
             return;
         }
 
@@ -108,7 +109,7 @@ class ADialParticipantsCommand extends Command
             $activeCalls = $this->threeCxService->getActiveCallsForProvider($provider->extension);
 
             if (empty($activeCalls['value'])) {
-                Log::info("ADialParticipantsCommandNo active calls found for provider {$provider->extension}");
+                Log::info("ADialParticipantsCommand ⚠️ No active calls found for provider {$provider->extension}");
                 return;
             }
 
@@ -150,7 +151,7 @@ class ADialParticipantsCommand extends Command
         $callId = $call['Id'] ?? null;
 
         if (!$callId) {
-            Log::warning("ADialParticipantsCommand⚠️ Missing Call ID in response");
+            Log::warning("ADialParticipantsCommand ⚠️ Missing Call ID in response");
             return;
         }
 
@@ -158,7 +159,7 @@ class ADialParticipantsCommand extends Command
         UpdateCallStatusJob::dispatch($call, $provider, $extension, $phoneNumber, $this->threeCxService);
 
 
-        Log::info("ADialParticipantsCommand📤 Queued update for Call ID: {$callId}");
+        Log::info("ADialParticipantsCommand 📤 Queued update for Call ID: {$callId}");
     }
 
 
