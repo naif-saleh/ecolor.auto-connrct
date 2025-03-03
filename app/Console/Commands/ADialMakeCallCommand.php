@@ -49,7 +49,7 @@ class ADialMakeCallCommand extends Command
         $callTimeEnd = General_Setting::get('call_time_end');
 
         if (!$callTimeStart || !$callTimeEnd) {
-            Log::warning("ADialMakeCallCommand: ⚠️ Call time settings not configured.");
+            Log::warning("ADialMakeCallCommand: ⚠️ Call time settings not configured. ⚠️");
             return;
         }
 
@@ -58,11 +58,11 @@ class ADialMakeCallCommand extends Command
         $globalEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
 
         if (!$now->between($globalStart, $globalEnd)) {
-            Log::info('ADialMakeCallCommand: 📞🛑 Calls are not allowed at this time.');
+            Log::info('ADialMakeCallCommand: 📞🛑 Calls are not allowed at this time. ⏳❌');
             return;
         }
 
-        Log::info("ADialMakeCallCommand: Allowed call window: {$globalStart} to {$globalEnd}");
+        Log::info("ADialMakeCallCommand: ✅ Allowed call window: {$globalStart} to {$globalEnd}");
 
         // Process each provider
         $providers = ADialProvider::all();
