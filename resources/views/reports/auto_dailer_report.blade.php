@@ -44,11 +44,11 @@
                     class="btn btn-modern-filter {{ $filter === 'no answer' ? 'active' : '' }}" data-filter="no answer">
                     <i class="fas fa-phone-slash me-1"></i> No Answer
                 </a>
-                <a href="{{ url('auto-dailer-report?filter=faild') }}"
+                {{-- <a href="{{ url('auto-dailer-report?filter=faild') }}"
                     class="btn btn-modern-filter {{ $filter === 'faild' ? 'active' : '' }}" data-filter="faild">
                     <i class="fa-solid fa-user-xmark"></i>
                     </i> Faild Calls
-                </a>
+                </a> --}}
                 <a href="{{ url('auto-dailer-report?filter=today') }}"
                     class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}" data-filter="today">
                     <i class="fas fa-calendar-day me-1"></i> Today
@@ -174,7 +174,7 @@
             </div>
 
             <!-- Faild Calls -->
-            <div class="col-md-2 col-sm-3">
+            {{-- <div class="col-md-2 col-sm-3">
                 <div class="card shadow-sm border-0 text-center">
                     <div class="card-body">
                         <div class="mb-3">
@@ -188,7 +188,7 @@
                         <h3 class="fw-bold fs-5">{{ $faildCallsCount }}</h3>
                     </div>
                 </div>
-            </div>
+            </div> --}}
         </div>
 
 
@@ -225,9 +225,9 @@
                                                 'Talking',
                                             ])
                                                 ? 'answered'
-                                                : ($report->status === 'Dialing'
-                                                    ? 'falid call'
-                                                    : 'no answer');
+                                                // : ($report->status === 'Dialing'
+                                                //     ? 'falid call'
+                                                    : 'no answer';
 
                                             $badgeClass = match ($status) {
                                                 'answered'
