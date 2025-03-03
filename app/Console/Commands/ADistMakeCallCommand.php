@@ -34,7 +34,10 @@ class ADistMakeCallCommand extends Command
         $timezone = config('app.timezone');
         Log::info("Using timezone: {$timezone}");
 
-        $agents = ADistAgent::all();
+        $agents = ADistAgent::whereHas('files', function ($query) {
+            $query->whereDate('date', today())->where('allow', true);
+        })->get();
+
         foreach ($agents as $agent) {
 
             try {
@@ -103,10 +106,10 @@ class ADistMakeCallCommand extends Command
 
                     // ✅ Fetch Feeds
                     $feeds = ADistFeed::where('agent_id', $agent->id)
-                    ->where('allow', true)
-                    ->where('is_done', false)
-                    ->whereDate('date', today()) // problaem is here
-                    ->get();
+                        ->where('allow', true)
+                        ->where('is_done', false)
+                        ->whereDate('date', today())
+                        ->get();
 
                     Log::info("Fetched Feeds for Agent {$agent->id}: " . print_r($feeds->toArray(), true));
 
@@ -147,35 +150,65 @@ class ADistMakeCallCommand extends Command
                             continue;
                         }
 
+                        // Find the right device
+                        $mobileDevice = null;
                         foreach ($devices as $device) {
-                            if ($device['user_agent'] !== '3CX Mobile Client') continue;
+                            if ($device['user_agent'] === '3CX Mobile Client') {
+                                $mobileDevice = $device;
+                                break;
+                            }
+                        }
 
-                            Log::info("☎️ Attempting call using Device ID: {$device['device_id']}");
+                        if (!$mobileDevice) {
+                            Log::error("❌ No 3CX Mobile Client device found for agent {$agent->extension}");
+                            continue;
+                        }
 
-                            // ✅ Make Call
+                        // Process each number in the feed data
+                        foreach ($feedData as $dataItem) {
+                            // Check if agent is still available before each call
+                            if ($agent->status !== "Available") {
+                                Log::info("⏳ Agent {$agent->id} ({$agent->extension}) is no longer available - Status: {$agent->status}");
+                                break; // Stop processing numbers if agent becomes unavailable
+                            }
+
+                            Log::info("☎️ Attempting call to {$dataItem->mobile} using Device ID: {$mobileDevice['device_id']}");
+
                             try {
-                                $response = $client->post("/callcontrol/{$agent->extension}/devices/{$device['device_id']}/makecall", [
+                                $response = $client->post("/callcontrol/{$agent->extension}/devices/{$mobileDevice['device_id']}/makecall", [
                                     'headers' => ['Authorization' => "Bearer $token"],
-                                    'json' => ['destination' => $feedData->mobile],
+                                    'json' => ['destination' => $dataItem->mobile],
                                     'timeout' => 10
                                 ]);
                                 $callResponse = json_decode($response->getBody(), true);
 
                                 Log::info("📞 Call Initiated Response: " . print_r($callResponse, true));
 
-                                // ✅ Update DB
-                                DB::transaction(function () use ($callResponse, $feedData) {
+                                // ✅ Update DB for this specific number
+                                DB::transaction(function () use ($callResponse, $dataItem, $agent, $feed) {
                                     AutoDistributerReport::create([
                                         'call_id' => $callResponse['result']['callid'],
                                         'status' => "Initiating",
+                                        'extension' => $agent->extension,
                                         'phone_number' => $callResponse['result']['party_caller_id'],
+                                        'provider' => $feed->file_name,
                                         'attempt_time' => now(),
                                     ]);
-                                    $feedData->first()->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
+                                    $dataItem->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
                                 });
+
+                                // Break after successful call to avoid multiple simultaneous calls
+                                // If you want to call all numbers in sequence, remove this break
+                                break;
+
                             } catch (RequestException $e) {
-                                Log::error("❌ Call failed: " . $e->getMessage());
+                                Log::error("❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
+                                // Update state to indicate call attempt failed
+                                $dataItem->update(['state' => "Failed"]);
                             }
+
+                            // Add a delay between call attempts if needed
+                            sleep(2);
                         }
                     }
                 } finally {
