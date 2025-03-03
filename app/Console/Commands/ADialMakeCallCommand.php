@@ -41,7 +41,7 @@ class ADialMakeCallCommand extends Command
 
     public function handle()
     {
-        Log::info('ADialMakeCallCommand started at ' . Carbon::now());
+        Log::info('✅ ADialMakeCallCommand started at ' . Carbon::now());
 
         // Check call time constraints
         $timezone = config('app.timezone');
@@ -127,7 +127,7 @@ class ADialMakeCallCommand extends Command
             ->take($callsToMake)
             ->get();
 
-        Log::info("ADialMakeCallCommand: Making {$feedData->count()} calls for feed ID {$file->id}");
+        Log::info("ADialMakeCallCommand:Feed-count of {$feedData->count()} calls for feed ID {$file->id}");
 
         foreach ($feedData as $data) {
             if (!$now->between($from, $to)) {
@@ -160,7 +160,7 @@ class ADialMakeCallCommand extends Command
 
 
             // Update call record
-            Log::info("ADialMakeCallCommand: ✅ Call successful. Call ID: " . $responseData['result']['callid']);
+            Log::info("ADialMakeCallCommand: ✅ Call successful for mobile: {$data->mobile}. Call ID: " . $responseData['result']['callid']);
             AutoDailerReport::create(
 
                 [
