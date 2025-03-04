@@ -149,17 +149,19 @@ class ADialParticipantsCommand extends Command
     protected function updateCallStatus($call, $provider = null, $extension = null, $phoneNumber = null)
     {
         $callId = $call['Id'] ?? null;
+        $callStatus = $call['Status'] ?? null;
 
         if (!$callId) {
             Log::warning("ADialParticipantsCommand ⚠️ Missing Call ID in response");
             return;
         }
 
+        $this->threeCxService->updateCallRecord($callId, $callStatus);
         // Dispatch job to queue
-        UpdateCallStatusJob::dispatch($call, $provider, $extension, $phoneNumber, $this->threeCxService);
+        // UpdateCallStatusJob::dispatch($call, $provider, $extension, $phoneNumber, $this->threeCxService);
 
 
-        Log::info("ADialParticipantsCommand 📤 Queued update for Call ID: {$callId}");
+        // Log::info("ADialParticipantsCommand 📤 Queued update for Call ID: {$callId}");
     }
 
 
