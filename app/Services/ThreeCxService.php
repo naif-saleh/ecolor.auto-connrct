@@ -134,7 +134,7 @@ class ThreeCxService
     public function updateCallRecord($callId, $status, $call)
     {
 
-         
+
         $duration_time = null;
         $duration_routing = null;
         $currentDuration = null;
@@ -173,8 +173,8 @@ class ThreeCxService
             $updated = ADialData::where('call_id', $callId)->update(['state' => $status]);
 
             Log::info("ADialParticipantsCommand ✅ call status is updated for call_id: {$callId}, " .
-                "Status: " . ($call['Status'] ?? 'N/A') .
-                ", Routing: " . ($currentDuration ?? 'N/A'));
+                " Status: " . ($call['Status'] ?? 'N/A') .
+                " , Routing: " . ($currentDuration ?? 'N/A'));
 
             DB::commit();
 
