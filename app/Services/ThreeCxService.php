@@ -133,8 +133,6 @@ class ThreeCxService
      */
     public function updateCallRecord($callId, $status, $call)
     {
-
-
         $duration_time = null;
         $duration_routing = null;
         $currentDuration = null;
@@ -145,14 +143,28 @@ class ThreeCxService
             $serverNow = Carbon::parse($call['ServerNow']);
             $currentDuration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
 
-            if ($status === 'Talking') {
-                $duration_time = $currentDuration;
-            } elseif ($status === 'Routing') {
-                $duration_routing = $currentDuration;
+            // Retrieve existing record to preserve any existing durations
+            $existingRecord = AutoDailerReport::where('call_id', $callId)->first();
+
+            if ($existingRecord) {
+                // Update durations based on current status
+                switch ($status) {
+                    case 'Talking':
+                        $duration_time = $currentDuration;
+                        $duration_routing = $existingRecord->duration_routing;
+                        break;
+                    case 'Routing':
+                        $duration_routing = $currentDuration;
+                        $duration_time = $existingRecord->duration_time;
+                        break;
+                    default:
+                        $duration_time = $existingRecord->duration_time;
+                        $duration_routing = $existingRecord->duration_routing;
+                }
             }
         } else {
             // If updating without call data, preserve existing durations
-            $existingRecord = AutoDailerReport::where('call_id', $callId)->first(['duration_time', 'duration_routing']);
+            $existingRecord = AutoDailerReport::where('call_id', $callId)->first();
 
             if ($existingRecord) {
                 $duration_time = $existingRecord->duration_time ?? null;
@@ -174,7 +186,7 @@ class ThreeCxService
 
             Log::info("ADialParticipantsCommand ✅ call status is updated for call_id: {$callId}, " .
                 " Status: " . ($call['Status'] ?? 'N/A') .
-                " , Routing: " . ($currentDuration ?? 'N/A'));
+                " , Duration: " . ($currentDuration ?? 'N/A'));
 
             DB::commit();
 
