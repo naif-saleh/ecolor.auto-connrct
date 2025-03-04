@@ -29,95 +29,63 @@ class UpdateCallStatusJob implements ShouldQueue
      * @param string|null $extension
      * @param string|null $phoneNumber
      */
-    public function __construct(array $call, $provider)
+    public function __construct(array $call, $provider = null, $extension = null, $phoneNumber = null)
     {
         $this->call = $call;
         $this->provider = $provider;
-
+        $this->extension = $extension;
+        $this->phoneNumber = $phoneNumber;
     }
-
-    /**
+/**
      * Execute the job.
      *
      * @return void
      */
-    // public function handle(ThreeCxService $threeCxService)
-    // {
-    //     $callStartTime = Carbon::now();
-
-    //     $callId = $this->call['Id'] ?? null;
-    //     $status = $this->call['Status'] ?? 'Unknown';
-
-    //     if (!$callId) {
-    //         Log::warning("UpdateCallStatusJob⚠️ Missing Call ID in response");
-    //         return;
-    //     }
-
-    //     $temporaryCall = TemporaryCall::updateOrCreate(
-    //         ['call_id' => $callId],
-    //         [
-    //             'provider' => $this->provider,
-    //             'extension' => $this->extension,
-    //             'phone_number' => $this->phoneNumber,
-    //             'call_data' => json_encode($this->call),
-    //             'status' => 'pending',
-    //         ]
-    //     );
-
-    //     try {
-    //         // Update call record with full call data for duration calculation
-    //         $threeCxService->updateCallRecord(
-    //             $callId,
-    //             $status,
-    //             $this->call,
-    //             $this->provider,
-    //             $this->extension,
-    //             $this->phoneNumber
-    //         );
-
-    //         $temporaryCall->update(['status' => 'processed']);
-
-    //         Log::info("UpdateCallStatusJob✅ Updated Call: {$callId}, Status: {$status}, mobile: {$this->phoneNumber}");
-    //     } catch (\Exception $e) {
-    //         Log::error("UpdateCallStatusJob❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
-    //         $temporaryCall->update(['status' => 'failed']);
-    //     }
-
-    //     $callEndTime = Carbon::now();
-    //     $callExecutionTime = $callStartTime->diffInMilliseconds($callEndTime);
-    //     Log::info("UpdateCallStatusJob⏳ Execution time for call {$callId}: {$callExecutionTime} ms");
-    // }
-
     public function handle(ThreeCxService $threeCxService)
     {
-        $callStartTime = microtime(true);
-        $batchData = [];
+        $callStartTime = Carbon::now();
 
-        foreach ($this->call as $calls) {
-            $callId = $calls['Id'] ?? null;
-            $status = $calls['Status'] ?? 'Unknown';
-            $phoneNumber = $calls['Caller'] ?? 'missing';
-             
-            if (!$callId) {
-                Log::warning("⚠️ Missing Call ID in response");
-                continue;
-            }
+        $callId = $this->call['Id'] ?? null;
+        $status = $this->call['Status'] ?? 'Unknown';
 
-            $batchData[] = [
-                'call_id' => $callId,
-                'status' => $status,
-                'provider' => $this->provider['name'],
-                'extension' => $this->provider['extension'],
-                'phone_number' => $phoneNumber,
-
-            ];
+        if (!$callId) {
+            Log::warning("UpdateCallStatusJob⚠️ Missing Call ID in response");
+            return;
         }
 
-        if (!empty($batchData)) {
-            $threeCxService->updateCallRecords($batchData);
+        $temporaryCall = TemporaryCall::updateOrCreate(
+            ['call_id' => $callId],
+            [
+                'provider' => $this->provider,
+                'extension' => $this->extension,
+                'phone_number' => $this->phoneNumber,
+                'call_data' => json_encode($this->call),
+                'status' => 'pending',
+            ]
+        );
+
+        try {
+            // Update call record with full call data for duration calculation
+            $threeCxService->updateCallRecord(
+                $callId,
+                $status,
+                $this->call,
+                $this->provider,
+                $this->extension,
+                $this->phoneNumber
+            );
+
+            $temporaryCall->update(['status' => 'processed']);
+
+            Log::info("UpdateCallStatusJob✅ Updated Call: {$callId}, Status: {$status}, mobile: {$this->phoneNumber}");
+        } catch (\Exception $e) {
+            Log::error("UpdateCallStatusJob❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
+            $temporaryCall->update(['status' => 'failed']);
         }
 
-        $executionTime = round((microtime(true) - $callStartTime) * 1000, 2);
-        Log::info("⏳ Batch Execution time: {$executionTime} ms for " . count($batchData) . " calls.");
+        $callEndTime = Carbon::now();
+        $callExecutionTime = $callStartTime->diffInMilliseconds($callEndTime);
+        Log::info("UpdateCallStatusJob⏳ Execution time for call {$callId}: {$callExecutionTime} ms");
     }
 }
+

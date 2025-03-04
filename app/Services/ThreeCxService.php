@@ -131,132 +131,132 @@ class ThreeCxService
     /**
      * Update call record in database with consistent format
      */
-    // public function updateCallRecord($callId, $status, $call = null, $provider = null, $extension = null, $phoneNumber = null)
-    // {
-    //     $updateData = ['status' => $status];
-
-    //     // Calculate durations if call data is provided
-    //     if ($call && isset($call['EstablishedAt'], $call['ServerNow'])) {
-    //         $establishedAt = Carbon::parse($call['EstablishedAt']);
-    //         $serverNow = Carbon::parse($call['ServerNow']);
-    //         $currentDuration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-
-    //         if ($status === 'Talking') {
-    //             $updateData['duration_time'] = $currentDuration;
-    //         } elseif ($status === 'Routing') {
-    //             $updateData['duration_routing'] = $currentDuration;
-    //         }
-    //     } else {
-    //         // If updating without call data, preserve existing durations
-    //         $existingRecord = AutoDailerReport::where('call_id', $callId)->first(['duration_time', 'duration_routing']);
-
-    //         if ($existingRecord) {
-    //             if ($status === 'Talking' && isset($existingRecord->duration_time)) {
-    //                 $updateData['duration_time'] = $existingRecord->duration_time;
-    //             } elseif ($status === 'Routing' && isset($existingRecord->duration_routing)) {
-    //                 $updateData['duration_routing'] = $existingRecord->duration_routing;
-    //             }
-    //         }
-    //     }
-
-    //     // Add provider info if available
-    //     if ($provider) $updateData['provider'] = $provider;
-    //     if ($extension) $updateData['extension'] = $extension;
-    //     if ($phoneNumber) $updateData['phone_number'] = $phoneNumber;
-
-    //     // Use updateOrCreate to handle both new and existing calls
-    //     try {
-    //         DB::beginTransaction();
-
-    //         $report = AutoDailerReport::where('call_id', $callId)->update(
-    //             $updateData
-    //         );
-
-    //         // Also update the data table for consistency
-    //         $updated = ADialData::where('call_id', $callId)
-    //             ->update(['state' => $status]);
-
-    //         DB::commit();
-
-    //         return $report;
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         Log::error("❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
-    //         throw $e;
-    //     }
-    // }
-
-    public function updateCallRecords(array $calls)
+    public function updateCallRecord($callId, $status, $call = null, $provider = null, $extension = null, $phoneNumber = null)
     {
-        if (empty($calls)) {
-            return;
+        $updateData = ['status' => $status];
+
+        // Calculate durations if call data is provided
+        if ($call && isset($call['EstablishedAt'], $call['ServerNow'])) {
+            $establishedAt = Carbon::parse($call['EstablishedAt']);
+            $serverNow = Carbon::parse($call['ServerNow']);
+            $currentDuration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+
+            if ($status === 'Talking') {
+                $updateData['duration_time'] = $currentDuration;
+            } elseif ($status === 'Routing') {
+                $updateData['duration_routing'] = $currentDuration;
+            }
+        } else {
+            // If updating without call data, preserve existing durations
+            $existingRecord = AutoDailerReport::where('call_id', $callId)->first(['duration_time', 'duration_routing']);
+
+            if ($existingRecord) {
+                if ($status === 'Talking' && isset($existingRecord->duration_time)) {
+                    $updateData['duration_time'] = $existingRecord->duration_time;
+                } elseif ($status === 'Routing' && isset($existingRecord->duration_routing)) {
+                    $updateData['duration_routing'] = $existingRecord->duration_routing;
+                }
+            }
         }
 
+        // Add provider info if available
+        if ($provider) $updateData['provider'] = $provider;
+        if ($extension) $updateData['extension'] = $extension;
+        if ($phoneNumber) $updateData['phone_number'] = $phoneNumber;
+
+        // Use updateOrCreate to handle both new and existing calls
         try {
             DB::beginTransaction();
 
-            $updateData = [];
-            $updateDataADial = [];
+            $report = AutoDailerReport::where('call_id', $callId)->update(
+                $updateData
+            );
 
-            foreach ($calls as $call) {
-                $callId = $call['call_id'];
-                $status = $call['status'];
-                $provider = $call['provider'] ?? null;
-                $extension = $call['extension'] ?? null;
-                $phoneNumber = $call['phone_number'] ?? null;
-                $callData = $call['call_data'] ?? null;
-
-                $updateEntry = ['status' => $status];
-
-                // ✅ Calculate durations if call data exists
-                if ($callData && isset($callData['EstablishedAt'], $callData['ServerNow'])) {
-                    $establishedAt = Carbon::parse($callData['EstablishedAt']);
-                    $serverNow = Carbon::parse($callData['ServerNow']);
-                    $currentDuration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-
-                    if ($status === 'Talking') {
-                        $updateEntry['duration_time'] = $currentDuration;
-                    } elseif ($status === 'Routing') {
-                        $updateEntry['duration_routing'] = $currentDuration;
-                    }
-                } else {
-                    // ✅ Preserve existing durations
-                    $existingRecord = AutoDailerReport::where('call_id', $callId)->first(['duration_time', 'duration_routing']);
-                    if ($existingRecord) {
-                        if ($status === 'Talking' && isset($existingRecord->duration_time)) {
-                            $updateEntry['duration_time'] = $existingRecord->duration_time;
-                        } elseif ($status === 'Routing' && isset($existingRecord->duration_routing)) {
-                            $updateEntry['duration_routing'] = $existingRecord->duration_routing;
-                        }
-                    }
-                }
-
-                // ✅ Add provider info if available
-                if ($provider) $updateEntry['provider'] = $provider;
-                if ($extension) $updateEntry['extension'] = $extension;
-                if ($phoneNumber) $updateEntry['phone_number'] = $phoneNumber;
-
-                // ✅ Prepare bulk update data
-                $updateData[] = array_merge(['call_id' => $callId], $updateEntry);
-                $updateDataADial[] = ['call_id' => $callId, 'state' => $status];
-            }
-
-            // ✅ Bulk update `AutoDailerReport`
-            DB::table('auto_dailer_reports')
-                ->upsert($updateData, ['call_id'], array_keys($updateEntry));
-
-            // ✅ Bulk update `ADialData`
-            DB::table('a_dial_data')
-                ->upsert($updateDataADial, ['call_id'], ['state']);
+            // Also update the data table for consistency
+            $updated = ADialData::where('call_id', $callId)
+                ->update(['state' => $status]);
 
             DB::commit();
 
-            Log::info("✅ Successfully updated " . count($calls) . " calls in batch.");
+            return $report;
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("❌ Batch update failed: " . $e->getMessage());
+            Log::error("❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
+            throw $e;
         }
     }
+
+    // public function updateCallRecords(array $calls)
+    // {
+    //     if (empty($calls)) {
+    //         return;
+    //     }
+
+    //     try {
+    //         DB::beginTransaction();
+
+    //         $updateData = [];
+    //         $updateDataADial = [];
+
+    //         foreach ($calls as $call) {
+    //             $callId = $call['call_id'];
+    //             $status = $call['status'];
+    //             $provider = $call['provider'] ?? null;
+    //             $extension = $call['extension'] ?? null;
+    //             $phoneNumber = $call['phone_number'] ?? null;
+    //             $callData = $call['call_data'] ?? null;
+
+    //             $updateEntry = ['status' => $status];
+
+    //             // ✅ Calculate durations if call data exists
+    //             if ($callData && isset($callData['EstablishedAt'], $callData['ServerNow'])) {
+    //                 $establishedAt = Carbon::parse($callData['EstablishedAt']);
+    //                 $serverNow = Carbon::parse($callData['ServerNow']);
+    //                 $currentDuration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+
+    //                 if ($status === 'Talking') {
+    //                     $updateEntry['duration_time'] = $currentDuration;
+    //                 } elseif ($status === 'Routing') {
+    //                     $updateEntry['duration_routing'] = $currentDuration;
+    //                 }
+    //             } else {
+    //                 // ✅ Preserve existing durations
+    //                 $existingRecord = AutoDailerReport::where('call_id', $callId)->first(['duration_time', 'duration_routing']);
+    //                 if ($existingRecord) {
+    //                     if ($status === 'Talking' && isset($existingRecord->duration_time)) {
+    //                         $updateEntry['duration_time'] = $existingRecord->duration_time;
+    //                     } elseif ($status === 'Routing' && isset($existingRecord->duration_routing)) {
+    //                         $updateEntry['duration_routing'] = $existingRecord->duration_routing;
+    //                     }
+    //                 }
+    //             }
+
+    //             // ✅ Add provider info if available
+    //             if ($provider) $updateEntry['provider'] = $provider;
+    //             if ($extension) $updateEntry['extension'] = $extension;
+    //             if ($phoneNumber) $updateEntry['phone_number'] = $phoneNumber;
+
+    //             // ✅ Prepare bulk update data
+    //             $updateData[] = array_merge(['call_id' => $callId], $updateEntry);
+    //             $updateDataADial[] = ['call_id' => $callId, 'state' => $status];
+    //         }
+
+    //         // ✅ Bulk update `AutoDailerReport`
+    //         DB::table('auto_dailer_reports')
+    //             ->upsert($updateData, ['call_id'], array_keys($updateEntry));
+
+    //         // ✅ Bulk update `ADialData`
+    //         DB::table('a_dial_data')
+    //             ->upsert($updateDataADial, ['call_id'], ['state']);
+
+    //         DB::commit();
+
+    //         Log::info("✅ Successfully updated " . count($calls) . " calls in batch.");
+    //     } catch (\Exception $e) {
+    //         DB::rollBack();
+    //         Log::error("❌ Batch update failed: " . $e->getMessage());
+    //     }
+    // }
 
     // public function updateCallRecordsBatch($calls)
     // {

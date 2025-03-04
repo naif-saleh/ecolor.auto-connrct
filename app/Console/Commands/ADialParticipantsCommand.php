@@ -117,7 +117,7 @@ class ADialParticipantsCommand extends Command
 
             // Process each active call
             foreach ($activeCalls['value'] as $call) {
-                $this->updateCallStatus($call, $provider);
+                $this->updateCallStatus($call);
             }
         } catch (\Exception $e) {
             Log::error("ADialParticipantsCommand❌ Failed to process active calls for provider {$provider->extension}: " . $e->getMessage());
@@ -156,10 +156,13 @@ class ADialParticipantsCommand extends Command
         }
 
         // Dispatch job to queue
-        UpdateCallStatusJob::dispatch($call, $provider, $this->threeCxService);
+        UpdateCallStatusJob::dispatch($call, $provider, $extension, $phoneNumber, $this->threeCxService);
 
 
         Log::info("ADialParticipantsCommand 📤 Queued update for Call ID: {$callId}");
     }
+
+
+
 
 }
