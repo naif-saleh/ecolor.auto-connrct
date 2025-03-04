@@ -160,7 +160,7 @@ class ADialMakeCallCommand extends Command
 
 
             // Update call record
-            Log::info("ADialMakeCallCommand: ✅ Call successful for mobile: {$data->mobile}. Call ID: " . $responseData['result']['callid']);
+            Log::info("ADialMakeCallCommand: 📞✅📞 Call successful for mobile: {$data->mobile}. Call ID: " . $responseData['result']['callid']);
             AutoDailerReport::create(
 
                 [
