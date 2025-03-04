@@ -133,7 +133,11 @@ class ThreeCxService
      */
     public function updateCallRecord($callId, $status, $call)
     {
-        $updateData = ['status' => $status];
+
+         
+        $duration_time = null;
+        $duration_routing = null;
+        $currentDuration = null;
 
         // Calculate durations if call data is provided
         if ($call && isset($call['EstablishedAt'], $call['ServerNow'])) {
@@ -142,34 +146,36 @@ class ThreeCxService
             $currentDuration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
 
             if ($status === 'Talking') {
-                $updateData['duration_time'] = $currentDuration;
+                $duration_time = $currentDuration;
             } elseif ($status === 'Routing') {
-                $updateData['duration_routing'] = $currentDuration;
+                $duration_routing = $currentDuration;
             }
         } else {
             // If updating without call data, preserve existing durations
             $existingRecord = AutoDailerReport::where('call_id', $callId)->first(['duration_time', 'duration_routing']);
 
             if ($existingRecord) {
-                if ($status === 'Talking' && isset($existingRecord->duration_time)) {
-                    $updateData['duration_time'] = $existingRecord->duration_time;
-                } elseif ($status === 'Routing' && isset($existingRecord->duration_routing)) {
-                    $updateData['duration_routing'] = $existingRecord->duration_routing;
-                }
+                $duration_time = $existingRecord->duration_time ?? null;
+                $duration_routing = $existingRecord->duration_routing ?? null;
             }
         }
 
         try {
             DB::beginTransaction();
 
-            $report = AutoDailerReport::where('call_id', $callId)->update(
-                $updateData
-            );
+            $report = AutoDailerReport::where('call_id', $callId)->update([
+                'status' => $status,
+                'duration_time' => $duration_time,
+                'duration_routing' => $duration_routing
+            ]);
 
             // Also update the data table for consistency
-            $updated = ADialData::where('call_id', $callId)
-                ->update(['state' => $status]);
-                Log::info("ADialParticipantsCommand ✅ call status is updated for call_id: ".$callId. "Status: " .$call['Status'] . "Routing: ". $currentDuration);
+            $updated = ADialData::where('call_id', $callId)->update(['state' => $status]);
+
+            Log::info("ADialParticipantsCommand ✅ call status is updated for call_id: {$callId}, " .
+                "Status: " . ($call['Status'] ?? 'N/A') .
+                ", Routing: " . ($currentDuration ?? 'N/A'));
+
             DB::commit();
 
             return $report;
@@ -179,6 +185,7 @@ class ThreeCxService
             throw $e;
         }
     }
+
 
     // public function updateCallRecords(array $calls)
     // {
