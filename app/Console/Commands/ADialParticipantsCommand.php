@@ -146,7 +146,7 @@ class ADialParticipantsCommand extends Command
 // }
 
 
-    protected function updateCallStatus($call, $provider = null, $extension = null, $phoneNumber = null)
+    protected function updateCallStatus($call)
     {
         $callId = $call['Id'] ?? null;
         $callStatus = $call['Status'] ?? null;
@@ -156,7 +156,7 @@ class ADialParticipantsCommand extends Command
             return;
         }
 
-        $this->threeCxService->updateCallRecord($callId, $callStatus);
+        $this->threeCxService->updateCallRecord($callId, $callStatus, $call);
         // Dispatch job to queue
         // UpdateCallStatusJob::dispatch($call, $provider, $extension, $phoneNumber, $this->threeCxService);
 
