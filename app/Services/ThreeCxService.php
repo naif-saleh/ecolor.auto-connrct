@@ -169,7 +169,7 @@ class ThreeCxService
             // Also update the data table for consistency
             $updated = ADialData::where('call_id', $callId)
                 ->update(['state' => $status]);
-                Log::info("ADialParticipantsCommand ✅ call status is updated for call_id: ".$callId. "Status: " .$call['Status'] . "Routing: ". $updateData['duration_time']);
+                Log::info("ADialParticipantsCommand ✅ call status is updated for call_id: ".$callId. "Status: " .$call['Status'] . "Routing: ". $currentDuration);
             DB::commit();
 
             return $report;
