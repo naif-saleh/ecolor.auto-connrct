@@ -162,13 +162,22 @@ class ADialParticipantsCommand extends Command
         $duration = null;
         $routingDuration = null;
 
+        // Retrieve existing record to preserve previous durations
+        $existingRecord = AutoDailerReport::where('call_id', $callId)->first();
+
         // Calculate durations if possible
         if (isset($call['EstablishedAt'], $call['ServerNow'])) {
             $establishedAt = Carbon::parse($call['EstablishedAt']);
             $serverNow = Carbon::parse($call['ServerNow']);
             $currentDuration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
 
-            // Determine which duration to update based on status
+            // Preserve existing durations and update based on current status
+            if ($existingRecord) {
+                $duration = $existingRecord->duration_time;
+                $routingDuration = $existingRecord->duration_routing;
+            }
+
+            // Update durations based on current status
             switch ($status) {
                 case 'Talking':
                     $duration = $currentDuration;
