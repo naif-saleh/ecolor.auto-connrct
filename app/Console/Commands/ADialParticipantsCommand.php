@@ -81,10 +81,6 @@ class ADialParticipantsCommand extends Command
                         });
                     });
             });
-        })->orWhereHas('files.data', function ($query) {
-            // Providers with active calls today
-            $query->whereDate('call_date', today())
-                ->whereIn('state', ['Routing', 'Talking', 'Ringing']);
         })->get();
     }
 
