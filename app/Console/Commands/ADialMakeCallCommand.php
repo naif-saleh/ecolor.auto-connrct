@@ -113,18 +113,18 @@ class ADialMakeCallCommand extends Command
             return;
         }
 
-        // if($activeCalls > 96){
-        //     Log::error("ADialMakeCallCommand: ❌ active calls retched size: " . $activeCalls);
-        //     return;
-        // }
+        if($currentCalls > 96){
+            Log::error("ADialMakeCallCommand: ❌ active calls retched size: " . $activeCalls);
+            return;
+        }
 
-        $callsToMake = max(0, $callLimit - $currentCalls);
+        $callsToMake = max(0, $currentCalls - $callLimit );
 
 
         // Make calls
         $feedData = ADialData::where('feed_id', $file->id)
             ->where('state', 'new')
-            ->take($callsToMake)
+            ->take($callLimit)
             ->get();
 
         Log::info("ADialMakeCallCommand:Feed-count of {$feedData->count()} calls for feed ID {$file->id}");
