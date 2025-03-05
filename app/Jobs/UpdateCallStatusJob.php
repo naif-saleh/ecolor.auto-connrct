@@ -20,23 +20,16 @@ class UpdateCallStatusJob implements ShouldQueue
 
     protected $provider;
 
-    /**
-     * Create a new job instance.
-     */
     public function __construct($provider)
     {
         $this->provider = $provider;
     }
 
-    /**
-     * Execute the job.
-     */
     public function handle(ThreeCxService $threeCxService)
     {
         $providerStartTime = Carbon::now();
 
         try {
-            // Fetch active calls for the provider
             $activeCalls = $threeCxService->getActiveCallsForProvider($this->provider->extension);
 
             if (empty($activeCalls['value'])) {
@@ -44,7 +37,6 @@ class UpdateCallStatusJob implements ShouldQueue
                 return;
             }
 
-            // Process the calls
             $this->batchUpdateCallStatuses($activeCalls['value']);
 
             $providerEndTime = Carbon::now();
@@ -58,7 +50,6 @@ class UpdateCallStatusJob implements ShouldQueue
     protected function batchUpdateCallStatuses(array $calls)
     {
         $updateData = [];
-        $callIds = [];
 
         foreach ($calls as $call) {
             $callId = $call['Id'] ?? null;
@@ -69,20 +60,17 @@ class UpdateCallStatusJob implements ShouldQueue
                 continue;
             }
 
-            $callIds[] = $callId;
             $updateData[$callId] = $this->prepareCallUpdateData($call);
         }
 
-        Log::info("Transaction Level Before: " . DB::transactionLevel());
+        if (!empty($updateData)) {
+            DB::transaction(function () use ($updateData) {
+                $this->batchUpdateReports($updateData);
+                $this->batchUpdateDialData($updateData);
+            });
+        }
 
-        DB::transaction(function () use ($updateData, $callIds) {
-            $this->batchUpdateReports($updateData);
-            $this->batchUpdateDialData($callIds, $updateData);
-        });
-
-        Log::info("Transaction Level After: " . DB::transactionLevel());
-
-        Log::info("ADialParticipantsCommand ✅ Batch updated " . count($callIds) . " call records");
+        Log::info("ADialParticipantsCommand ✅ Batch updated " . count($updateData) . " call records");
     }
 
     protected function prepareCallUpdateData(array $call): array
@@ -124,21 +112,46 @@ class UpdateCallStatusJob implements ShouldQueue
 
     protected function batchUpdateReports(array $updateData)
     {
+        $casesStatus = "";
+        $casesDuration = "";
+        $casesRouting = "";
+        $ids = [];
+
         foreach ($updateData as $callId => $data) {
-            AutoDailerReport::where('call_id', $callId)->update([
-                'status' => $data['status'],
-                'duration_time' => $data['duration_time'] ?? DB::raw('duration_time'),
-                'duration_routing' => $data['duration_routing'] ?? DB::raw('duration_routing'),
-            ]);
+            $casesStatus .= "WHEN '{$callId}' THEN '{$data['status']}' ";
+            $casesDuration .= "WHEN '{$callId}' THEN COALESCE('{$data['duration_time']}', duration_time) ";
+            $casesRouting .= "WHEN '{$callId}' THEN COALESCE('{$data['duration_routing']}', duration_routing) ";
+            $ids[] = "'{$callId}'";
+        }
+
+        if (!empty($ids)) {
+            DB::update("
+                UPDATE auto_dailer_reports
+                SET
+                    status = CASE call_id {$casesStatus} END,
+                    duration_time = CASE call_id {$casesDuration} END,
+                    duration_routing = CASE call_id {$casesRouting} END
+                WHERE call_id IN (" . implode(',', $ids) . ")
+            ");
         }
     }
 
-    protected function batchUpdateDialData(array $callIds, array $updateData)
+    protected function batchUpdateDialData(array $updateData)
     {
+        $casesState = "";
+        $ids = [];
+
         foreach ($updateData as $callId => $data) {
-            ADialData::where('call_id', $callId)->update([
-                'state' => $data['status']
-            ]);
+            $casesState .= "WHEN '{$callId}' THEN '{$data['status']}' ";
+            $ids[] = "'{$callId}'";
+        }
+
+        if (!empty($ids)) {
+            DB::update("
+                UPDATE a_dial_data
+                SET state = CASE call_id {$casesState} END
+                WHERE call_id IN (" . implode(',', $ids) . ")
+            ");
         }
     }
 }
