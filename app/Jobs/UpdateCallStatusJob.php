@@ -64,14 +64,20 @@ class UpdateCallStatusJob implements ShouldQueue
         }
 
         if (!empty($updateData)) {
-            DB::transaction(function () use ($updateData) {
-                $this->batchUpdateReports($updateData);
-                $this->batchUpdateDialData($updateData);
-            });
+            // Break the updates into smaller chunks
+            $chunks = array_chunk($updateData, 50, true);
+
+            foreach ($chunks as $chunk) {
+                DB::transaction(function () use ($chunk) {
+                    $this->batchUpdateReports($chunk);
+                    $this->batchUpdateDialData($chunk);
+                });
+            }
         }
 
         Log::info("ADialParticipantsCommand ✅ Batch updated " . count($updateData) . " call records");
     }
+
 
     protected function prepareCallUpdateData(array $call): array
     {
@@ -118,10 +124,11 @@ class UpdateCallStatusJob implements ShouldQueue
         $ids = [];
 
         foreach ($updateData as $callId => $data) {
-            $casesStatus .= "WHEN '{$callId}' THEN '{$data['status']}' ";
-            $casesDuration .= "WHEN '{$callId}' THEN COALESCE('{$data['duration_time']}', duration_time) ";
-            $casesRouting .= "WHEN '{$callId}' THEN COALESCE('{$data['duration_routing']}', duration_routing) ";
-            $ids[] = "'{$callId}'";
+            AutoDailerReport::where('call_id', $callId)->update([
+                'status' => $data['status'],
+                'duration_time' => $data['duration_time'] ?? DB::raw('duration_time'),
+                'duration_routing' => $data['duration_routing'] ?? DB::raw('duration_routing'),
+            ]);
         }
 
         if (!empty($ids)) {
@@ -140,10 +147,10 @@ class UpdateCallStatusJob implements ShouldQueue
     {
         $casesState = "";
         $ids = [];
-
         foreach ($updateData as $callId => $data) {
-            $casesState .= "WHEN '{$callId}' THEN '{$data['status']}' ";
-            $ids[] = "'{$callId}'";
+            ADialData::where('call_id', $callId)->update([
+                'state' => $data['status']
+            ]);
         }
 
         if (!empty($ids)) {
