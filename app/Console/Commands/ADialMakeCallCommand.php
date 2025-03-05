@@ -118,7 +118,7 @@ class ADialMakeCallCommand extends Command
             return;
         }
 
-        $callsToMake = max(0, $currentCalls - $callLimit );
+        //$callsToMake = max(0, $currentCalls - $callLimit );
 
 
         // Make calls
