@@ -1,91 +1,155 @@
 <?php
-
 namespace App\Jobs;
 
-use App\Models\TemporaryCall;
+use App\Models\AutoDailerReport;
+use App\Models\ADialData;
 use App\Services\ThreeCxService;
-use Carbon\Carbon;
 use Illuminate\Bus\Queueable;
+use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class UpdateCallStatusJob implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    protected $call;
     protected $provider;
-    protected $extension;
-    protected $phoneNumber;
 
     /**
      * Create a new job instance.
-     *
-     * @param array $call
-     * @param string|null $provider
-     * @param string|null $extension
-     * @param string|null $phoneNumber
      */
-    public function __construct(array $call, $provider = null, $extension = null, $phoneNumber = null)
+    public function __construct($provider)
     {
-        $this->call = $call;
         $this->provider = $provider;
-        $this->extension = $extension;
-        $this->phoneNumber = $phoneNumber;
     }
-/**
+
+    /**
      * Execute the job.
-     *
-     * @return void
      */
     public function handle(ThreeCxService $threeCxService)
     {
-        $callStartTime = Carbon::now();
-
-        $callId = $this->call['Id'] ?? null;
-        $status = $this->call['Status'] ?? 'Unknown';
-
-        if (!$callId) {
-            Log::warning("UpdateCallStatusJob⚠️ Missing Call ID in response");
-            return;
-        }
-
-        $temporaryCall = TemporaryCall::updateOrCreate(
-            ['call_id' => $callId],
-            [
-                'provider' => $this->provider,
-                'extension' => $this->extension,
-                'phone_number' => $this->phoneNumber,
-                'call_data' => json_encode($this->call),
-                'status' => 'pending',
-            ]
-        );
+        $providerStartTime = Carbon::now();
 
         try {
-            // Update call record with full call data for duration calculation
-            $threeCxService->updateCallRecord(
-                $callId,
-                $status,
-                $this->call,
-                $this->provider,
-                $this->extension,
-                $this->phoneNumber
-            );
+            // Fetch active calls for the provider
+            $activeCalls = $threeCxService->getActiveCallsForProvider($this->provider->extension);
 
-            $temporaryCall->update(['status' => 'processed']);
+            if (empty($activeCalls['value'])) {
+                Log::info("ADialParticipantsCommand ⚠️ No active calls found for provider {$this->provider->extension}");
+                return;
+            }
 
-            Log::info("UpdateCallStatusJob✅ Updated Call: {$callId}, Status: {$status}, mobile: {$this->phoneNumber}");
+            // Process the calls
+            $this->batchUpdateCallStatuses($activeCalls['value']);
+
+            $providerEndTime = Carbon::now();
+            $executionTime = $providerStartTime->diffInMilliseconds($providerEndTime);
+            Log::info("ADialParticipantsCommand ⏳ Execution time for provider {$this->provider->extension}: {$executionTime} ms");
         } catch (\Exception $e) {
-            Log::error("UpdateCallStatusJob❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
-            $temporaryCall->update(['status' => 'failed']);
+            Log::error("ADialParticipantsCommand ❌ Failed to process calls for provider {$this->provider->extension}: " . $e->getMessage());
+        }
+    }
+
+    protected function batchUpdateCallStatuses(array $calls)
+    {
+        $updateData = [];
+        $callIds = [];
+
+        foreach ($calls as $call) {
+            $callId = $call['Id'] ?? null;
+            $callStatus = $call['Status'] ?? null;
+
+            if (!$callId || !$callStatus) {
+                Log::warning("ADialParticipantsCommand ⚠️ Incomplete call data: " . json_encode($call));
+                continue;
+            }
+
+            $callIds[] = $callId;
+            $updateData[] = $this->prepareCallUpdateData($call);
         }
 
-        $callEndTime = Carbon::now();
-        $callExecutionTime = $callStartTime->diffInMilliseconds($callEndTime);
-        Log::info("UpdateCallStatusJob⏳ Execution time for call {$callId}: {$callExecutionTime} ms");
+        DB::beginTransaction();
+        try {
+            $this->batchUpdateReports($updateData);
+            $this->batchUpdateDialData($callIds, $updateData);
+
+            DB::commit();
+            Log::info("ADialParticipantsCommand ✅ Batch updated " . count($callIds) . " call records");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("ADialParticipantsCommand ❌ Batch update failed: " . $e->getMessage());
+        }
+    }
+
+    protected function prepareCallUpdateData(array $call): array
+    {
+        $callId = $call['Id'];
+        $status = $call['Status'];
+        $duration = null;
+        $routingDuration = null;
+
+        $existingRecord = AutoDailerReport::where('call_id', $callId)->first();
+
+        if (isset($call['EstablishedAt'], $call['ServerNow'])) {
+            $establishedAt = Carbon::parse($call['EstablishedAt']);
+            $serverNow = Carbon::parse($call['ServerNow']);
+            $currentDuration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+
+            if ($existingRecord) {
+                $duration = $existingRecord->duration_time;
+                $routingDuration = $existingRecord->duration_routing;
+            }
+
+            switch ($status) {
+                case 'Talking':
+                    $duration = $currentDuration;
+                    break;
+                case 'Routing':
+                    $routingDuration = $currentDuration;
+                    break;
+            }
+        }
+
+        return [
+            'call_id' => $callId,
+            'status' => $status,
+            'duration_time' => $duration,
+            'duration_routing' => $routingDuration
+        ];
+    }
+
+    protected function batchUpdateReports(array $updateData)
+    {
+        $updates = collect($updateData)->keyBy('call_id');
+
+        AutoDailerReport::whereIn('call_id', $updates->keys())
+            ->update([
+                'status' => DB::raw("CASE call_id " .
+                    $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN '{$item['status']}'")->implode(' ') .
+                    " END"),
+                'duration_time' => DB::raw("CASE call_id " .
+                    $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN " . ($item['duration_time'] ? "'{$item['duration_time']}'" : 'duration_time'))->implode(' ') .
+                    " END"),
+                'duration_routing' => DB::raw("CASE call_id " .
+                    $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN " . ($item['duration_routing'] ? "'{$item['duration_routing']}'" : 'duration_routing'))->implode(' ') .
+                    " END")
+            ]);
+    }
+
+    protected function batchUpdateDialData(array $callIds, array $updateData)
+    {
+        $updates = collect($updateData)->keyBy('call_id');
+
+        ADialData::whereIn('call_id', $callIds)
+            ->update([
+                'state' => DB::raw("CASE call_id " .
+                    $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN '{$item['status']}'")->implode(' ') .
+                    " END")
+            ]);
     }
 }
-
