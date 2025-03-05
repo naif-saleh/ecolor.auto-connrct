@@ -1,11 +1,11 @@
 <?php
+
 namespace App\Jobs;
 
 use App\Models\AutoDailerReport;
 use App\Models\ADialData;
 use App\Services\ThreeCxService;
 use Illuminate\Bus\Queueable;
-use Illuminate\Contracts\Queue\ShouldBeUnique;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
@@ -70,20 +70,19 @@ class UpdateCallStatusJob implements ShouldQueue
             }
 
             $callIds[] = $callId;
-            $updateData[] = $this->prepareCallUpdateData($call);
+            $updateData[$callId] = $this->prepareCallUpdateData($call);
         }
 
-        DB::beginTransaction();
-        try {
+        Log::info("Transaction Level Before: " . DB::transactionLevel());
+
+        DB::transaction(function () use ($updateData, $callIds) {
             $this->batchUpdateReports($updateData);
             $this->batchUpdateDialData($callIds, $updateData);
+        });
 
-            DB::commit();
-            Log::info("ADialParticipantsCommand ✅ Batch updated " . count($callIds) . " call records");
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error("ADialParticipantsCommand ❌ Batch update failed: " . $e->getMessage());
-        }
+        Log::info("Transaction Level After: " . DB::transactionLevel());
+
+        Log::info("ADialParticipantsCommand ✅ Batch updated " . count($callIds) . " call records");
     }
 
     protected function prepareCallUpdateData(array $call): array
@@ -125,31 +124,21 @@ class UpdateCallStatusJob implements ShouldQueue
 
     protected function batchUpdateReports(array $updateData)
     {
-        $updates = collect($updateData)->keyBy('call_id');
-
-        AutoDailerReport::whereIn('call_id', $updates->keys())
-            ->update([
-                'status' => DB::raw("CASE call_id " .
-                    $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN '{$item['status']}'")->implode(' ') .
-                    " END"),
-                'duration_time' => DB::raw("CASE call_id " .
-                    $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN " . ($item['duration_time'] ? "'{$item['duration_time']}'" : 'duration_time'))->implode(' ') .
-                    " END"),
-                'duration_routing' => DB::raw("CASE call_id " .
-                    $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN " . ($item['duration_routing'] ? "'{$item['duration_routing']}'" : 'duration_routing'))->implode(' ') .
-                    " END")
+        foreach ($updateData as $callId => $data) {
+            AutoDailerReport::where('call_id', $callId)->update([
+                'status' => $data['status'],
+                'duration_time' => $data['duration_time'] ?? DB::raw('duration_time'),
+                'duration_routing' => $data['duration_routing'] ?? DB::raw('duration_routing'),
             ]);
+        }
     }
 
     protected function batchUpdateDialData(array $callIds, array $updateData)
     {
-        $updates = collect($updateData)->keyBy('call_id');
-
-        ADialData::whereIn('call_id', $callIds)
-            ->update([
-                'state' => DB::raw("CASE call_id " .
-                    $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN '{$item['status']}'")->implode(' ') .
-                    " END")
+        foreach ($updateData as $callId => $data) {
+            ADialData::where('call_id', $callId)->update([
+                'state' => $data['status']
             ]);
+        }
     }
 }
