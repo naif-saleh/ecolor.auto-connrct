@@ -1,5 +1,5 @@
 @extends('layout.main')
-@section('title', 'Ejaada | Dashboard')
+@section('title', 'Ecolor | Dashboard')
 
 @section('content')
     <div class="main-panel">

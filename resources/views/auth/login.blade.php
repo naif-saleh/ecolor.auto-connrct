@@ -39,7 +39,7 @@
                         <div class="auth-form-light text-left py-5 px-4 px-sm-5">
                             <div>
                                 <img src="https://ecolor.com.sa/wp-content/uploads/2023/07/ECOLOR-LOGO.svg"
-                                    width="60" alt="">
+                                    width="200" alt="">
                             </div>
 
                             <h6 class="fw-light mt-4">Sign in to continue.</h6>
