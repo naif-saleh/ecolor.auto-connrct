@@ -171,16 +171,19 @@ class ADialParticipantsCommand extends Command
             $serverNow = Carbon::parse($call['ServerNow']);
             $currentDuration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
 
-            // Preserve existing durations and update based on current status
+            // Preserve existing durations
             if ($existingRecord) {
                 $duration = $existingRecord->duration_time;
                 $routingDuration = $existingRecord->duration_routing;
             }
 
-            // Update durations based on current status
+            // Update ONLY the duration corresponding to the current status
             switch ($status) {
                 case 'Talking':
-                    $duration = $currentDuration;
+                    // Only update talking duration if not already in a different state
+                    if (!$existingRecord || $existingRecord->status !== 'Routing') {
+                        $duration = $currentDuration;
+                    }
                     break;
                 case 'Routing':
                     $routingDuration = $currentDuration;
