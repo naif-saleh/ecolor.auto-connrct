@@ -113,10 +113,10 @@ class ADialMakeCallCommand extends Command
             return;
         }
 
-        if($currentCalls > 96){
-            Log::error("ADialMakeCallCommand: ❌ active calls retched size: " . $activeCalls);
-            return;
-        }
+        // if($currentCalls > 96){
+        //     Log::error("ADialMakeCallCommand: ❌ active calls retched size: " . $activeCalls);
+        //     return;
+        // }
 
         //$callsToMake = max(0, $currentCalls - $callLimit );
 
