@@ -4,14 +4,13 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\ADialProvider;
 use App\Models\ADialData;
 use App\Models\ADialFeed;
-use App\Services\TokenService;
 use App\Services\ThreeCxService;
-use App\Jobs\UpdateCallStatusJob;
-
+use App\Models\AutoDailerReport;
 
 class ADialParticipantsCommand extends Command
 {
@@ -22,6 +21,12 @@ class ADialParticipantsCommand extends Command
      */
     protected $signature = 'app:ADial-participants-command';
 
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Update call statuses for active participants';
 
     protected $threeCxService;
 
@@ -36,135 +41,193 @@ class ADialParticipantsCommand extends Command
         $startTime = Carbon::now();
         Log::info('✅ ADialParticipantsCommand started at ' . $startTime);
 
-        $timezone = config('app.timezone');
-        $now = now()->timezone($timezone);
-        $providers = ADialProvider::whereHas('files', function ($query) {
-            $query->whereDate('date', today())->where('allow', true);
-        })->get();
+        try {
+            $this->processActiveProviders();
 
-
-        Log::info("ADialParticipantsCommand: Total providers found: " . $providers->count());
-
-        foreach ($providers as $provider) {
-            Log::info("ADialParticipantsCommand Processing provider: {$provider->extension}");
-            $this->processProviderStatus($provider, $now, $timezone);
+            $endTime = Carbon::now();
+            $executionTime = $startTime->diffInMilliseconds($endTime);
+            Log::info("ADialParticipantsCommand ✅ Execution completed in {$executionTime} ms.");
+        } catch (\Exception $e) {
+            Log::error("ADialParticipantsCommand ❌ Execution failed: " . $e->getMessage());
         }
-
-        $endTime = Carbon::now();
-        $executionTime = $startTime->diffInMilliseconds($endTime);
-        Log::info("ADialParticipantsCommand ✅ ADialParticipantsCommand execution completed in {$executionTime} ms.");
     }
 
-    protected function processProviderStatus($provider, $now, $timezone)
+    protected function processActiveProviders()
+    {
+        $timezone = config('app.timezone');
+        $now = now()->timezone($timezone);
+
+        // Get providers with active feeds or ongoing calls
+        $providers = $this->getActiveProviders($now, $timezone);
+
+        Log::info("ADialParticipantsCommand: Total active providers found: " . $providers->count());
+
+        foreach ($providers as $provider) {
+            $this->processProviderCalls($provider, $now, $timezone);
+        }
+    }
+
+    protected function getActiveProviders($now, $timezone)
+    {
+        return ADialProvider::where(function ($query) use ($now, $timezone) {
+            // Providers with files in active call window
+            $query->whereHas('files', function ($subQuery) use ($now, $timezone) {
+                $subQuery->whereDate('date', today())
+                    ->where('allow', true)
+                    ->where(function ($timeQuery) use ($now, $timezone) {
+                        $timeQuery->where(function ($q) use ($now, $timezone) {
+                            $q->whereRaw("STR_TO_DATE(CONCAT(date, ' ', `from`), '%Y-%m-%d %H:%i:%s') <= ?", [$now])
+                                ->whereRaw("STR_TO_DATE(CONCAT(date, ' ', `to`), '%Y-%m-%d %H:%i:%s') >= ?", [$now]);
+                        });
+                    });
+            });
+        })->orWhereHas('files.data', function ($query) {
+            // Providers with active calls today
+            $query->whereDate('call_date', today())
+                ->whereIn('state', ['Routing', 'Talking', 'Ringing']);
+        })->get();
+    }
+
+    protected function processProviderCalls($provider, $now, $timezone)
     {
         $providerStartTime = Carbon::now();
 
-        $files = ADialFeed::where('provider_id', $provider->id)
-            ->whereDate('date', today())
-            ->where('allow', true)
-            ->get();
-
-        // Skip providers with no active feed files
-        if ($files->isEmpty()) {
-            Log::info("ADialParticipantsCommand ⚠️ No active feed files for provider: {$provider->extension}");
-            return;
-        }
-
-        // Check if any file is in the active time window or has active calls
-        $shouldCheck = false;
-
-        // First check if any file is in the call window
-        foreach ($files as $file) {
-            $from = Carbon::parse("{$file->date} {$file->from}")->timezone($timezone);
-            $to = Carbon::parse("{$file->date} {$file->to}")->timezone($timezone);
-
-            if ($now->between($from, $to)) {
-                $shouldCheck = true;
-                break;
-            }
-        }
-
-        // If no files in window, check if provider has any active calls from today
-        if (!$shouldCheck) {
-            $hasActiveCalls = ADialData::whereHas('file', function ($query) use ($provider) {
-                $query->where('feed_id', $provider->id);
-            })
-                ->whereDate('call_date', today())
-                ->whereIn('state', ['Routing', 'Talking', 'Ringing'])
-                ->exists();
-
-            if ($hasActiveCalls) {
-                $shouldCheck = true;
-            }
-        }
-
-        if (!$shouldCheck) {
-            Log::info("ADialParticipantsCommand ⚠️ Skipping provider no current activity {$provider->extension}, .");
-
-            return;
-        }
-
-        // Fetch active calls for this provider
         try {
-            $activeCalls = $this->threeCxService->getActiveCallsForProvider($provider->extension);
+            // Fetch active calls for this provider
+            $activeCalls = $this->fetchActiveProviderCalls($provider);
 
             if (empty($activeCalls['value'])) {
                 Log::info("ADialParticipantsCommand ⚠️ No active calls found for provider {$provider->extension}");
                 return;
             }
 
-            Log::info("ADialParticipantsCommand Found active call(s) for provider" . count($activeCalls['value']) . " | {$provider->extension}");
+            // Batch process call updates
+            $this->batchUpdateCallStatuses($activeCalls['value']);
 
-            // Process each active call
-            foreach ($activeCalls['value'] as $call) {
-                $this->updateCallStatus($call);
-            }
+            $providerEndTime = Carbon::now();
+            $providerExecutionTime = $providerStartTime->diffInMilliseconds($providerEndTime);
+            Log::info("ADialParticipantsCommand ⏳ Execution time for provider {$provider->extension}: {$providerExecutionTime} ms");
         } catch (\Exception $e) {
-            Log::error("ADialParticipantsCommand❌ Failed to process active calls for provider {$provider->extension}: " . $e->getMessage());
-            return;
+            Log::error("ADialParticipantsCommand ❌ Failed to process calls for provider {$provider->extension}: " . $e->getMessage());
         }
-
-        $providerEndTime = Carbon::now();
-        $providerExecutionTime = $providerStartTime->diffInMilliseconds($providerEndTime);
-        Log::info("ADialParticipantsCommand⏳ Execution time for provider {$provider->extension}: {$providerExecutionTime} ms");
     }
 
-
-// protected function updateCallStatus($call, $provider = null, $extension = null, $phoneNumber = null)
-// {
-//     $callId = $call['Id'] ?? null;
-
-//     if (!$callId) {
-//         Log::warning("ADialParticipantsCommand⚠️ Missing Call ID in response");
-//         return;
-//     }
-
-//     // Dispatch job to queue with the correct argument structure
-//     UpdateCallStatusJob::dispatch([$call]);
-
-//     Log::info("ADialParticipantsCommand📤 Queued update for Call ID: {$callId}");
-// }
-
-
-    protected function updateCallStatus($call)
+    protected function fetchActiveProviderCalls($provider)
     {
-        $callId = $call['Id'] ?? null;
-        $callStatus = $call['Status'] ?? null;
-
-        if (!$callId) {
-            Log::warning("ADialParticipantsCommand ⚠️ Missing Call ID in response");
-            return;
+        try {
+            return $this->threeCxService->getActiveCallsForProvider($provider->extension);
+        } catch (\Exception $e) {
+            Log::error("ADialParticipantsCommand ❌ Failed to fetch active calls: " . $e->getMessage());
+            return ['value' => []];
         }
-
-        $this->threeCxService->updateCallRecord($callId, $callStatus, $call);
-        // Dispatch job to queue
-        // UpdateCallStatusJob::dispatch($call, $provider, $extension, $phoneNumber, $this->threeCxService);
-
-
-        // Log::info("ADialParticipantsCommand 📤 Queued update for Call ID: {$callId}");
     }
 
+    protected function batchUpdateCallStatuses(array $calls)
+    {
+        // Prepare data for batch update
+        $updateData = [];
+        $callIds = [];
 
+        foreach ($calls as $call) {
+            $callId = $call['Id'] ?? null;
+            $callStatus = $call['Status'] ?? null;
 
+            if (!$callId || !$callStatus) {
+                Log::warning("ADialParticipantsCommand ⚠️ Incomplete call data: " . json_encode($call));
+                continue;
+            }
 
+            $callIds[] = $callId;
+            $updateData[] = $this->prepareCallUpdateData($call);
+        }
+
+        // Perform batch updates within a transaction
+        DB::beginTransaction();
+        try {
+            // Batch update AutoDailerReports
+            $this->batchUpdateReports($updateData);
+
+            // Batch update ADialData
+            $this->batchUpdateDialData($callIds, $updateData);
+
+            DB::commit();
+
+            Log::info("ADialParticipantsCommand ✅ Batch updated " . count($callIds) . " call records");
+        } catch (\Exception $e) {
+            DB::rollBack();
+            Log::error("ADialParticipantsCommand ❌ Batch update failed: " . $e->getMessage());
+        }
+    }
+
+    protected function prepareCallUpdateData(array $call): array
+    {
+        $callId = $call['Id'];
+        $status = $call['Status'];
+        $duration = null;
+        $routingDuration = null;
+
+        // Calculate durations if possible
+        if (isset($call['EstablishedAt'], $call['ServerNow'])) {
+            $establishedAt = Carbon::parse($call['EstablishedAt']);
+            $serverNow = Carbon::parse($call['ServerNow']);
+            $currentDuration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+
+            // Determine which duration to update based on status
+            switch ($status) {
+                case 'Talking':
+                    $duration = $currentDuration;
+                    break;
+                case 'Routing':
+                    $routingDuration = $currentDuration;
+                    break;
+            }
+        }
+
+        return [
+            'call_id' => $callId,
+            'status' => $status,
+            'duration_time' => $duration,
+            'duration_routing' => $routingDuration
+        ];
+    }
+
+    protected function batchUpdateReports(array $updateData)
+    {
+        $updates = collect($updateData)->keyBy('call_id');
+
+        AutoDailerReport::whereIn('call_id', $updates->keys())
+            ->update([
+                'status' => DB::raw("CASE call_id " .
+                    $updates->map(function ($item, $callId) {
+                        return "WHEN '{$callId}' THEN '{$item['status']}'";
+                    })->implode(' ') .
+                    " END"),
+                'duration_time' => DB::raw("CASE call_id " .
+                    $updates->map(function ($item, $callId) {
+                        return "WHEN '{$callId}' THEN " .
+                            ($item['duration_time'] ? "'{$item['duration_time']}'" : 'duration_time');
+                    })->implode(' ') .
+                    " END"),
+                'duration_routing' => DB::raw("CASE call_id " .
+                    $updates->map(function ($item, $callId) {
+                        return "WHEN '{$callId}' THEN " .
+                            ($item['duration_routing'] ? "'{$item['duration_routing']}'" : 'duration_routing');
+                    })->implode(' ') .
+                    " END")
+            ]);
+    }
+
+    protected function batchUpdateDialData(array $callIds, array $updateData)
+    {
+        $updates = collect($updateData)->keyBy('call_id');
+
+        ADialData::whereIn('call_id', $callIds)
+            ->update([
+                'state' => DB::raw("CASE call_id " .
+                    $updates->map(function ($item, $callId) {
+                        return "WHEN '{$callId}' THEN '{$item['status']}'";
+                    })->implode(' ') .
+                    " END")
+            ]);
+    }
 }
