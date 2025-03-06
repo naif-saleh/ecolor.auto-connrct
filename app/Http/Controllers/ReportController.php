@@ -52,7 +52,7 @@ class ReportController extends Controller
 
         // Define status mappings
         $answeredStatuses = ['Talking', 'Wexternalline'];
-        $noAnswerStatuses = ['Wspecialmenu', 'no answer', 'Routing', 'Dialing', 'error'];
+        $noAnswerStatuses = ['Wspecialmenu', 'no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
         //$faildCalls = ['Dialing', 'error'];
 
         // Start building the query
