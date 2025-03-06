@@ -51,7 +51,7 @@ class ReportController extends Controller
         $dateTo = $request->input('date_to');
 
         // Define status mappings
-        $answeredStatuses = ['Talking', 'Wexternalline'];
+        $answeredStatuses = ['Talking', 'Wexternalline', 'Transferring'];
         $noAnswerStatuses = ['Wspecialmenu', 'no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
         //$faildCalls = ['Dialing', 'error'];
 
@@ -141,7 +141,7 @@ class ReportController extends Controller
         $dateTo = $request->input('date_to');
 
         $statusMap = [
-            'answered' => ['Wexternalline', 'Talking'],
+            'answered' => ['Wexternalline', 'Talking', 'Transferring'],
             'no answer' => ['no answer', 'Routing','Dialing','error', 'Initiating'],
             //'faild' => ['Dialing', 'error'],
         ];
