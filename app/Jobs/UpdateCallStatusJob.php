@@ -33,23 +33,23 @@ class UpdateCallStatusJob implements ShouldQueue
      */
     public function handle(ThreeCxService $threeCxService)
     {
-        $providerStartTime = Carbon::now();
+        // $providerStartTime = Carbon::now();
 
         try {
             // Fetch active calls for the provider
             $activeCalls = $threeCxService->getActiveCallsForProvider($this->provider->extension);
 
             if (empty($activeCalls['value'])) {
-                Log::info("ADialParticipantsCommand ⚠️ No active calls found for provider {$this->provider->extension}");
+                Log::info("ADialParticipantsCommand 🔍⚠️📡 No active calls found for provider {$this->provider->extension}");
                 return;
             }
 
             // Process the calls
             $this->batchUpdateCallStatuses($activeCalls['value']);
 
-            $providerEndTime = Carbon::now();
-            $executionTime = $providerStartTime->diffInMilliseconds($providerEndTime);
-            Log::info("ADialParticipantsCommand ⏳ Execution time for provider {$this->provider->extension}: {$executionTime} ms");
+            // $providerEndTime = Carbon::now();
+            // $executionTime = $providerStartTime->diffInMilliseconds($providerEndTime);
+            // Log::info("ADialParticipantsCommand ⏳ Execution time for provider {$this->provider->extension}: {$executionTime} ms");
         } catch (\Exception $e) {
             Log::error("ADialParticipantsCommand ❌ Failed to process calls for provider {$this->provider->extension}: " . $e->getMessage());
         }
