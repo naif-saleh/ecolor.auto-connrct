@@ -142,7 +142,7 @@ class ReportController extends Controller
 
         $statusMap = [
             'answered' => ['Wexternalline', 'Talking'],
-            'no answer' => ['no answer', 'Routing','Dialing','error'],
+            'no answer' => ['no answer', 'Routing','Dialing','error', 'Initiating'],
             //'faild' => ['Dialing', 'error'],
         ];
 
