@@ -40,14 +40,13 @@ class ADialParticipantsCommand extends Command
     public function handle()
     {
         $startTime = Carbon::now();
-        Log::info('✅ ADialParticipantsCommand started at ' . $startTime);
+        Log::info('✅ 📡 ADialParticipantsCommand started at ' . $startTime);
 
         try {
             $this->processActiveProviders();
-
-            $endTime = Carbon::now();
-            $executionTime = $startTime->diffInMilliseconds($endTime);
-            Log::info("ADialParticipantsCommand ✅ Execution completed in {$executionTime} ms.");
+            // $endTime = Carbon::now();
+            // $executionTime = $startTime->diffInMilliseconds($endTime);
+            // Log::info("ADialParticipantsCommand ✅ Execution completed in {$executionTime} ms.");
         } catch (\Exception $e) {
             Log::error("ADialParticipantsCommand ❌ Execution failed: " . $e->getMessage());
         }
@@ -61,7 +60,7 @@ class ADialParticipantsCommand extends Command
         // Get providers with active feeds or ongoing calls
         $providers = $this->getActiveProviders($now, $timezone);
 
-        Log::info("ADialParticipantsCommand: Total active providers found: " . $providers->count());
+        Log::info("ADialParticipantsCommand: 🟢🔍 Total active providers found: " . $providers->count());
 
         foreach ($providers as $provider) {
             $this->processProviderCalls($provider, $now, $timezone);

@@ -41,7 +41,7 @@ class ADialMakeCallCommand extends Command
 
     public function handle()
     {
-        Log::info('✅ ADialMakeCallCommand started at ' . Carbon::now());
+        Log::info('✅ 📡 ADialMakeCallCommand started at ' . Carbon::now());
 
         // Check call time constraints
         $timezone = config('app.timezone');
@@ -58,21 +58,21 @@ class ADialMakeCallCommand extends Command
         $globalEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
 
         if (!$now->between($globalStart, $globalEnd)) {
-            Log::info('ADialMakeCallCommand: 📞🛑 Calls are not allowed at this time. ⏳❌');
+            Log::info('ADialMakeCallCommand: 🕒🚫📞 Calls are not allowed at this time. 🕒🚫📞');
             return;
         }
 
-        Log::info("ADialMakeCallCommand: ✅ Allowed call window: {$globalStart} to {$globalEnd}");
+        //Log::info("ADialMakeCallCommand: ✅ Allowed call window: {$globalStart} to {$globalEnd}");
 
         // Process each provider
-        $providers = ADialProvider::all();
-        Log::info("ADialMakeCallCommand: Found {$providers->count()} providers to process");
-
+        $providers = ADialProvider::all(); // note: this ORM must be obtimized well
+        Log::info("ADialMakeCallCommand: 🔍📡 Found {$providers->count()} providers to process.");
         foreach ($providers as $provider) {
             $this->processProvider($provider, $now, $timezone);
         }
 
-        Log::info('ADialMakeCallCommand: 📞✅ ADialMakeCallCommand execution completed.');
+        Log::info('ADialMakeCallCommand: 📞🏁 Execution completed successfully. ✅');
+
     }
 
     protected function processProvider($provider, $now, $timezone)
@@ -82,7 +82,7 @@ class ADialMakeCallCommand extends Command
             ->where('allow', true)
             ->get();
 
-        Log::info("ADialMakeCallCommand: Found {$files->count()} feeds for provider {$provider->name}");
+            Log::info("ADialMakeCallCommand: 📑🔍 Found {$files->count()} feeds for provider {$provider->name}.");
 
         foreach ($files as $file) {
             $this->processFile($file, $provider, $now, $timezone);
@@ -96,7 +96,7 @@ class ADialMakeCallCommand extends Command
         $to = Carbon::parse("{$file->date} {$file->to}")->timezone($timezone);
 
         if (!$now->between($from, $to)) {
-            Log::info("ADialMakeCallCommand: 🛑 Skipping File ID {$file->id}, not in call window.");
+            Log::info("ADialMakeCallCommand: 🛑📑 Skipping File ID {$file->id}, not in call window.");
             return;
         }
 
@@ -107,14 +107,14 @@ class ADialMakeCallCommand extends Command
             $activeCalls = $this->threeCxService->getAllActiveCalls();
             $currentCalls = count($activeCalls['value'] ?? []);
 
-            Log::info("ADialMakeCallCommand: Current active calls: {$currentCalls}, Limit: {$callLimit}");
+            Log::info("ADialMakeCallCommand: 📞📊 Current active calls: {$currentCalls}, Limit: {$callLimit}.");
         } catch (\Throwable $e) {
             Log::error("ADialMakeCallCommand: ❌ Error fetching active calls: " . $e->getMessage());
             return;
         }
 
         if($currentCalls > 96){
-            Log::error("ADialMakeCallCommand: ❌ active calls retched size: " . $activeCalls);
+            Log::error("ADialMakeCallCommand: 🚫📞 active calls retched size: " . $activeCalls);
             return;
         }
 
@@ -127,11 +127,11 @@ class ADialMakeCallCommand extends Command
             ->take($callLimit)
             ->get();
 
-        Log::info("ADialMakeCallCommand:Feed-count of {$feedData->count()} calls for feed ID {$file->id}");
+        //Log::info("ADialMakeCallCommand:Feed-count of {$feedData->count()} calls for feed ID {$file->id}");
 
         foreach ($feedData as $data) {
             if (!$now->between($from, $to)) {
-                Log::info("ADialMakeCallCommand: 🛑 Call window expired during execution.");
+                Log::info("ADialMakeCallCommand: 🕒🚫📞 Call window expired during execution. 🕒🚫📞");
                 break;
             }
 
@@ -141,7 +141,7 @@ class ADialMakeCallCommand extends Command
         // Mark file as done if all calls processed
         if (!ADialData::where('feed_id', $file->id)->where('state', 'new')->exists()) {
             $file->update(['is_done' => true]);
-            Log::info("ADialMakeCallCommand: ✅ All numbers called for File ID: {$file->id}");
+            Log::info("ADialMakeCallCommand: ✅📑📞 All numbers called for File Name: {$file->file_name}");
         }
     }
 
@@ -171,19 +171,12 @@ class ADialMakeCallCommand extends Command
                     'phone_number' => $data->mobile
                 ]
             );
-
-
             // Update dial data
             $data->update([
                 'state' => $status,
                 'call_date' => now(),
                 'call_id' => $callId
             ]);
-
-            Log::info("ADialMakeCallCommand: ✅ Mobile Number Called and Saved Successfully: {$data->mobile}, Call ID: {$callId}");
-
-
-            // Add a small delay between calls
             usleep(300000); // 300ms
 
 

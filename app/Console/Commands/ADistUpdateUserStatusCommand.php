@@ -83,10 +83,10 @@ class ADistUpdateUserStatusCommand extends Command
                             ]
                         );
 
-                        Log::info("UpdateUserStatusCommand: ✅ Updated user data for extension " . $user['Number']);
+                        //Log::info("UpdateUserStatusCommand: ✅ Updated user data for extension " . $user['Number']);
                     }
 
-                    $this->info('All user data updated successfully.');
+                    $this->info('✅ All user data updated successfully.');
                 }
             } else {
                 Log::error('UpdateUserStatusCommand Error: ❌ Failed to fetch users from 3CX API. Response status: ' . $response->getStatusCode());
