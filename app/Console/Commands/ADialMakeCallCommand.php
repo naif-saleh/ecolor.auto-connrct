@@ -91,10 +91,19 @@ class ADialMakeCallCommand extends Command
 
     protected function processFile($file, $provider, $now, $timezone)
     {
-        // Check time window for this file
-        $from = Carbon::parse("{$file->date} {$file->from}")->timezone($timezone);
-        $to = Carbon::parse("{$file->date} {$file->to}")->timezone($timezone);
+        // Convert times to Carbon instances with correct timezone
+        $from = Carbon::parse("{$file->date} {$file->from}", $timezone);
+        $to = Carbon::parse("{$file->date} {$file->to}", $timezone);
 
+        // If "to" time is before "from" time, assume it's on the next day
+        if ($to->lessThanOrEqualTo($from)) {
+            $to->addDay();
+        }
+
+        // Log the calculated time window
+        Log::info("ADialMakeCallCommand: Processing File ID {$file->id} | From: {$from->toDateTimeString()} | To: {$to->toDateTimeString()} | Now: {$now->toDateTimeString()}");
+
+        // Check if the current time is within the call window
         if (!$now->between($from, $to)) {
             Log::info("ADialMakeCallCommand: 🛑📑 Skipping File ID {$file->id}, not in call window.");
             return;
@@ -113,25 +122,20 @@ class ADialMakeCallCommand extends Command
             return;
         }
 
-        if($currentCalls > 96){
-            Log::error("ADialMakeCallCommand: 🚫📞 active calls retched size: " . $activeCalls);
+        if ($currentCalls > 96) {
+            Log::error("ADialMakeCallCommand: 🚫📞 Active calls reached limit: " . $currentCalls);
             return;
         }
 
-        //$callsToMake = max(0, $currentCalls - $callLimit );
-
-
-        // Make calls
+        // Fetch new calls within limit
         $feedData = ADialData::where('feed_id', $file->id)
             ->where('state', 'new')
             ->take($callLimit)
             ->get();
 
-        //Log::info("ADialMakeCallCommand:Feed-count of {$feedData->count()} calls for feed ID {$file->id}");
-
         foreach ($feedData as $data) {
             if (!$now->between($from, $to)) {
-                Log::info("ADialMakeCallCommand: 🕒🚫📞 Call window expired during execution. 🕒🚫📞");
+                Log::info("ADialMakeCallCommand: 🕒🚫📞 Call window expired during execution.");
                 break;
             }
 
@@ -144,6 +148,7 @@ class ADialMakeCallCommand extends Command
             Log::info("ADialMakeCallCommand: ✅📑📞 All numbers called for File Name: {$file->file_name}");
         }
     }
+
 
     protected function makeCallWithRetries($data, $provider)
     {

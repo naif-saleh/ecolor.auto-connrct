@@ -118,12 +118,20 @@ class ADistMakeCallCommand extends Command
 
                         $from = Carbon::parse("{$feed->date} {$feed->from}", $timezone);
                         $to = Carbon::parse("{$feed->date} {$feed->to}", $timezone);
-                        Log::info("Time Window for Feed {$feed->id}: {$from} - {$to}, Current Time: " . now()->timezone($timezone));
 
+                        // Handle overnight case: if 'to' is before 'from', assume it's on the next day
+                        if ($to->lessThanOrEqualTo($from)) {
+                            $to->addDay();
+                        }
+
+                        Log::info("Time Window for Feed {$feed->id}: {$from->toDateTimeString()} - {$to->toDateTimeString()}, Current Time: " . now()->timezone($timezone)->toDateTimeString());
+
+                        // Check if current time is within the call window
                         if (!$now->between($from, $to)) {
                             Log::info("🚫 Feed {$feed->id} is NOT within the allowed time range.");
                             continue;
                         }
+
 
                         // ✅ Fetch call data
                         $feedData = ADistData::where('feed_id', $feed->id)
