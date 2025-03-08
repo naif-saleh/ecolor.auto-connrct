@@ -10,6 +10,7 @@ use App\Models\AutoDailerReport;
 use App\Models\AutoDistributerReport;
 use App\Models\Evaluation;
 use Symfony\Component\HttpFoundation\StreamedResponse;
+use Illuminate\Support\Facades\DB;
 
 class ReportController extends Controller
 {
@@ -41,6 +42,92 @@ class ReportController extends Controller
     /**
      * display Auto Dailer Report
      */
+    // public function AutoDailerReports(Request $request)
+    // {
+    //     $filter = $request->input('filter', 'today'); // Default to 'today' if no filter is provided
+    //     $extensionFrom = $request->input('extension_from');
+    //     $extensionTo = $request->input('extension_to');
+    //     $provider = $request->input('provider');
+    //     $dateFrom = $request->input('date_from');
+    //     $dateTo = $request->input('date_to');
+
+    //     // Define status mappings
+    //     $answeredStatuses = ['Talking', 'Wexternalline', 'Transferring'];
+    //     $noAnswerStatuses = ['Wspecialmenu', 'no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
+    //     //$faildCalls = ['Dialing', 'error'];
+
+    //     // Start building the query
+    //     $query = AutoDailerReport::query();
+
+    //     // Apply provider filter if selected
+    //     if ($provider) {
+    //         $query->where('provider', $provider);
+    //     }
+
+    //     // Apply date range filters if selected
+    //     if ($dateFrom && $dateTo) {
+    //         $query->whereBetween('created_at', [
+    //             \Carbon\Carbon::parse($dateFrom)->startOfDay(),
+    //             \Carbon\Carbon::parse($dateTo)->endOfDay()
+    //         ]);
+    //     } elseif ($filter === 'today') {
+    //         // If no date range is provided and filter is 'today', default to today's data
+    //         $query->whereDate('created_at', now()->toDateString());
+    //     }
+
+    //     // Apply extension range filters if provided
+    //     if ($extensionFrom) {
+    //         $query->where('extension', '>=', $extensionFrom);
+    //     }
+    //     if ($extensionTo) {
+    //         $query->where('extension', '<=', $extensionTo);
+    //     }
+
+    //     // Clone query before applying status filters (for statistics)
+    //     $statsQuery = clone $query;
+
+    //     // Apply status filters based on selection
+    //     if ($filter === 'answered') {
+    //         $query->whereIn('status', $answeredStatuses);
+    //     } elseif ($filter === 'no answer') {
+    //         $query->whereIn('status', $noAnswerStatuses);
+    //     }
+    //     // elseif ($filter === 'faild') {
+    //     //     $query->whereIn('status', $faildCalls);
+    //     // }
+    //     // If filter is 'all', no additional status or date filter applied
+
+    //     // Get paginated results
+    //     $reports = $query->orderBy('created_at', 'desc')->paginate(50);
+
+    //     // Calculate statistics
+    //     $totalCount = $statsQuery->count();
+    //     $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
+    //     $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
+    //     // $faildCallsCount = (clone $statsQuery)->whereIn('status', $faildCalls)->count();
+
+    //     // Get distinct providers for dropdown
+    //     $providers = ADialProvider::select('name', 'extension')
+    //         ->distinct()
+    //         ->orderBy('name', 'asc')
+    //         ->orderBy('extension', 'desc')
+    //         ->get();
+
+    //     return view('reports.auto_dailer_report', compact(
+    //         'reports',
+    //         'filter',
+    //         'provider',
+    //         'providers',
+    //         'totalCount',
+    //         'answeredCount',
+    //         'noAnswerCount',
+    //         'extensionFrom',
+    //         'extensionTo',
+    //         'dateFrom',
+    //         'dateTo'
+    //     ));
+    // }
+
     public function AutoDailerReports(Request $request)
     {
         $filter = $request->input('filter', 'today'); // Default to 'today' if no filter is provided
@@ -49,11 +136,12 @@ class ReportController extends Controller
         $provider = $request->input('provider');
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
+        $timeFrom = $request->input('time_from');
+        $timeTo = $request->input('time_to');
 
         // Define status mappings
         $answeredStatuses = ['Talking', 'Wexternalline', 'Transferring'];
         $noAnswerStatuses = ['Wspecialmenu', 'no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
-        //$faildCalls = ['Dialing', 'error'];
 
         // Start building the query
         $query = AutoDailerReport::query();
@@ -74,6 +162,11 @@ class ReportController extends Controller
             $query->whereDate('created_at', now()->toDateString());
         }
 
+        // Apply time range filters if provided
+        if ($timeFrom && $timeTo) {
+            $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
+        }
+
         // Apply extension range filters if provided
         if ($extensionFrom) {
             $query->where('extension', '>=', $extensionFrom);
@@ -91,10 +184,6 @@ class ReportController extends Controller
         } elseif ($filter === 'no answer') {
             $query->whereIn('status', $noAnswerStatuses);
         }
-        // elseif ($filter === 'faild') {
-        //     $query->whereIn('status', $faildCalls);
-        // }
-        // If filter is 'all', no additional status or date filter applied
 
         // Get paginated results
         $reports = $query->orderBy('created_at', 'desc')->paginate(50);
@@ -103,7 +192,6 @@ class ReportController extends Controller
         $totalCount = $statsQuery->count();
         $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
-        // $faildCallsCount = (clone $statsQuery)->whereIn('status', $faildCalls)->count();
 
         // Get distinct providers for dropdown
         $providers = ADialProvider::select('name', 'extension')
@@ -123,10 +211,11 @@ class ReportController extends Controller
             'extensionFrom',
             'extensionTo',
             'dateFrom',
-            'dateTo'
+            'dateTo',
+            'timeFrom',
+            'timeTo'
         ));
     }
-
 
     /**
      * Export Auto Distributer AS CSV File
@@ -142,7 +231,7 @@ class ReportController extends Controller
 
         $statusMap = [
             'answered' => ['Wexternalline', 'Talking', 'Transferring'],
-            'no answer' => ['no answer', 'Routing','Dialing','error', 'Initiating'],
+            'no answer' => ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'],
             //'faild' => ['Dialing', 'error'],
         ];
 
@@ -188,7 +277,7 @@ class ReportController extends Controller
                     $report->phone_number,
                     $report->provider,
                     $report->extension,
-                   (in_array($report->status, ['Wexternalline', 'Talking']) ? 'Answered' : 'No Answer'),
+                    (in_array($report->status, ['Wexternalline', 'Talking']) ? 'Answered' : 'No Answer'),
                     $report->duration_time ? $report->duration_time : '-',
                     $report->duration_routing ? $report->duration_routing : '-',
                     $report->created_at->addHours(3)->format('H:i:s'),
