@@ -24,75 +24,78 @@
     <!-- Filters Section -->
     <div class="mb-4">
         <!-- First Line: Export and Filter Buttons -->
-        <div class="filter-buttons">
+        <div class="filter-buttons d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
             <!-- Export Button -->
-            <a href="{{ route('auto_dailer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to'), 'provider' => request('provider'), 'date_from' => request('date_from'), 'date_to' => request('date_to')]) }}"
-                class="btn btn-modern-export" id="download-autoDailer-csv-button">
+            <a href="{{ route('auto_dailer.report.export', [
+                'filter' => $filter,
+                'extension_from' => request('extension_from'),
+                'extension_to' => request('extension_to'),
+                'provider' => request('provider'),
+                'date_from' => request('date_from'),
+                'date_to' => request('date_to')
+            ]) }}" class="btn btn-success d-flex align-items-center">
                 <i class="fas fa-file-export me-2"></i> Export as CSV
             </a>
 
-            <!-- State Filters (All, Answered, No Answer, Today) -->
-            <a href="{{ url('auto-dailer-report?filter=all') }}"
-                class="btn btn-modern-filter {{ $filter === 'all' ? 'active' : '' }}" data-filter="all">
-                <i class="fas fa-list me-1"></i> All
-            </a>
-            <a href="{{ url('auto-dailer-report?filter=answered') }}"
-                class="btn btn-modern-filter {{ $filter === 'answered' ? 'active' : '' }}" data-filter="answered">
-                <i class="fas fa-phone me-1"></i> Answered
-            </a>
-            <a href="{{ url('auto-dailer-report?filter=no answer') }}"
-                class="btn btn-modern-filter {{ $filter === 'no answer' ? 'active' : '' }}" data-filter="no answer">
-                <i class="fas fa-phone-slash me-1"></i> No Answer
-            </a>
-            {{-- <a href="{{ url('auto-dailer-report?filter=faild') }}"
-                class="btn btn-modern-filter {{ $filter === 'faild' ? 'active' : '' }}" data-filter="faild">
-                <i class="fa-solid fa-user-xmark"></i>
-                </i> Faild Calls
-            </a> --}}
-            <a href="{{ url('auto-dailer-report?filter=today') }}"
-                class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}" data-filter="today">
-                <i class="fas fa-calendar-day me-1"></i> Today
-            </a>
-
+            <!-- State Filters -->
+            <div class="btn-group flex-wrap">
+                <a href="{{ url('auto-dailer-report?filter=all') }}"
+                    class="btn btn-light {{ $filter === 'all' ? 'active' : '' }}">
+                    <i class="fas fa-list me-1"></i> All
+                </a>
+                <a href="{{ url('auto-dailer-report?filter=answered') }}"
+                    class="btn btn-light {{ $filter === 'answered' ? 'active' : '' }}">
+                    <i class="fas fa-phone me-1"></i> Answered
+                </a>
+                <a href="{{ url('auto-dailer-report?filter=no answer') }}"
+                    class="btn btn-light {{ $filter === 'no answer' ? 'active' : '' }}">
+                    <i class="fas fa-phone-slash me-1"></i> No Answer
+                </a>
+                <a href="{{ url('auto-dailer-report?filter=today') }}"
+                    class="btn btn-primary {{ $filter === 'today' ? 'active' : '' }}">
+                    <i class="fas fa-calendar-day me-1"></i> Today
+                </a>
+            </div>
         </div>
 
         <!-- Second Line: Filters Form -->
         <form method="GET" action="{{ url('auto-dailer-report') }}" class="filter-form">
-            <!-- Keep current filter value -->
             <input type="hidden" name="filter" value="{{ $filter }}">
 
-            <!-- Extension Inputs -->
-            <input type="number" name="extension_from" class="form-modern" placeholder="Extension From"
-                value="{{ request('extension_from') }}">
-            <input type="number" name="extension_to" class="form-modern" placeholder="Extension To"
-                value="{{ request('extension_to') }}">
+            <div class="filter-grid">
+                <!-- Extension Inputs -->
+                <input type="number" name="extension_from" class="form-control" placeholder="Extension From"
+                    value="{{ request('extension_from') }}">
+                <input type="number" name="extension_to" class="form-control" placeholder="Extension To"
+                    value="{{ request('extension_to') }}">
 
-            <!-- Provider Dropdown - Remove onchange="this.form.submit()" -->
-            <select name="provider" class="form-modern">
-                <option value="">All Providers</option>
-                @foreach ($providers as $provider)
-                <option value="{{ $provider->name }}" {{ request('provider')==$provider->name ? 'selected' : '' }}>
-                    {{ $provider->name }} - {{ $provider->extension }}
-                </option>
-                @endforeach
-            </select>
+                <!-- Provider Dropdown -->
+                <select name="provider" class="form-control">
+                    <option value="">All Providers</option>
+                    @foreach ($providers as $provider)
+                    <option value="{{ $provider->name }}" {{ request('provider')==$provider->name ? 'selected' : '' }}>
+                        {{ $provider->name }} - {{ $provider->extension }}
+                    </option>
+                    @endforeach
+                </select>
 
-            <!-- Date Filters -->
-            <input type="date" name="date_from" class="form-modern" placeholder="From Date"
-                value="{{ request('date_from') }}">
-            <input type="date" name="date_to" class="form-modern" placeholder="To Date"
-                value="{{ request('date_to') }}">
+                <!-- Date Filters -->
+                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
+                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
 
                 <!-- Time Filters -->
-            <input type="time" name="time_from" class="form-modern" id="time_from" value="{{ request('time_from') }}">
-            <input type="time" name="time_to" class="form-modern" id="time_to" value="{{ request('time_to') }}">
+                <input type="time" name="time_from" class="form-control" id="time_from"
+                    value="{{ request('time_from') }}">
+                <input type="time" name="time_to" class="form-control" id="time_to" value="{{ request('time_to') }}">
 
-            <!-- Apply Button -->
-            <button type="submit" class="btn btn-modern-apply">
-                <i class="fas fa-filter me-2"></i> Apply
-            </button>
+                <!-- Apply Button -->
+                <button type="submit" class="btn btn-primary apply-btn">
+                    <i class="fas fa-filter me-2"></i> Apply
+                </button>
+            </div>
         </form>
     </div>
+
 
     {{-- @if ($filter !== 'today')
     <!-- Today's Statistics -->

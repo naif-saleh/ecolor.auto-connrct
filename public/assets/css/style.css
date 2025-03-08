@@ -30672,3 +30672,23 @@ dl li {
         max-width: 80%;
     }
 }
+
+/* Filters Styling */
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    align-items: center;
+}
+
+.filter-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.apply-btn {
+    grid-column: span 2;
+    justify-self: center;
+    padding: 10px 20px;
+}
