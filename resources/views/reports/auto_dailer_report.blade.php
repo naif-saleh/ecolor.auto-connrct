@@ -49,21 +49,21 @@
                 <i class="fas fa-phone-volume text-primary"></i>
                 <div>
                     <h4>Total Calls</h4>
-                    <p>{{ $totalCalls }}</p>
+                    <p>{{ $totalCount }}</p>
                 </div>
             </div>
             <div class="stat-card">
                 <i class="fas fa-phone text-success"></i>
                 <div>
                     <h4>Answered</h4>
-                    <p>{{ $answeredCalls }}</p>
+                    <p>{{ $answeredCount }}</p>
                 </div>
             </div>
             <div class="stat-card">
                 <i class="fas fa-phone-slash text-warning"></i>
                 <div>
                     <h4>No Answer</h4>
-                    <p>{{ $noAnswerCalls }}</p>
+                    <p>{{ $noAnswerCount }}</p>
                 </div>
             </div>
         </div>
