@@ -40,19 +40,19 @@
         <!-- Filter Buttons -->
         <div class="btn-group flex-wrap">
             <a href="{{ url('auto-dailer-report?filter=all') }}"
-                class="btn btn-light {{ $filter === 'all' ? 'active' : '' }}">
+                class="{{ $filter === 'all' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-list me-1"></i> All
             </a>
             <a href="{{ url('auto-dailer-report?filter=answered') }}"
-                class="btn btn-light {{ $filter === 'answered' ? 'active' : '' }}">
+                class="{{ $filter === 'answered' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-phone me-1"></i> Answered
             </a>
             <a href="{{ url('auto-dailer-report?filter=no answer') }}"
-                class="btn btn-light {{ $filter === 'no answer' ? 'active' : '' }}">
+                class="{{ $filter === 'no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-phone-slash me-1"></i> No Answer
             </a>
             <a href="{{ url('auto-dailer-report?filter=today') }}"
-                class="btn btn-primary {{ $filter === 'today' ? 'active' : '' }}">
+                class="{{ $filter === 'today' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-calendar-day me-1"></i> Today
             </a>
         </div>
