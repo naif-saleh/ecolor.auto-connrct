@@ -88,7 +88,7 @@
 
 
     <!-- Filters Form -->
-    <form method="GET" action="{{ url('auto-dailer-report') }}">
+    <form method="GET" action="{{ url('auto-distributer-report') }}">
         <input type="hidden" name="filter" value="{{ $filter }}">
 
         <div class="row g-3">
