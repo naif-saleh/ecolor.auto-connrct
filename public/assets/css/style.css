@@ -30692,3 +30692,35 @@ dl li {
     justify-self: center;
     padding: 10px 20px;
 }
+.stats-grid {
+    display: flex;
+    gap: 15px;
+    justify-content: start;
+    flex-wrap: wrap;
+}
+
+.stat-card {
+    display: flex;
+    align-items: center;
+    background: #fff;
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    width: 200px;
+    justify-content: space-between;
+}
+
+.stat-card i {
+    font-size: 24px;
+}
+
+.stat-card h4 {
+    margin: 0;
+    font-size: 16px;
+}
+
+.stat-card p {
+    font-size: 20px;
+    font-weight: bold;
+    margin: 0;
+}

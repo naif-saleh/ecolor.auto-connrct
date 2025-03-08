@@ -23,53 +23,61 @@
 
     <!-- Filters Section -->
     <div class="mb-4">
-        <!-- First Line: Export and Filter Buttons -->
-        <div class="filter-buttons d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
-            <!-- Export Button -->
-            <a href="{{ route('auto_dailer.report.export', [
-                'filter' => $filter,
-                'extension_from' => request('extension_from'),
-                'extension_to' => request('extension_to'),
-                'provider' => request('provider'),
-                'date_from' => request('date_from'),
-                'date_to' => request('date_to')
-            ]) }}" class="btn btn-success d-flex align-items-center">
-                <i class="fas fa-file-export me-2"></i> Export as CSV
+        <!-- First Row: Filter Buttons -->
+        <div class="filter-buttons d-flex flex-wrap gap-2 justify-content-start mb-3">
+            <a href="{{ url('auto-dailer-report?filter=all') }}"
+                class="btn btn-light {{ $filter === 'all' ? 'active' : '' }}">
+                <i class="fas fa-list me-1"></i> All
             </a>
+            <a href="{{ url('auto-dailer-report?filter=answered') }}"
+                class="btn btn-light {{ $filter === 'answered' ? 'active' : '' }}">
+                <i class="fas fa-phone me-1"></i> Answered
+            </a>
+            <a href="{{ url('auto-dailer-report?filter=no answer') }}"
+                class="btn btn-light {{ $filter === 'no answer' ? 'active' : '' }}">
+                <i class="fas fa-phone-slash me-1"></i> No Answer
+            </a>
+            <a href="{{ url('auto-dailer-report?filter=today') }}"
+                class="btn btn-primary {{ $filter === 'today' ? 'active' : '' }}">
+                <i class="fas fa-calendar-day me-1"></i> Today
+            </a>
+        </div>
 
-            <!-- State Filters -->
-            <div class="btn-group flex-wrap">
-                <a href="{{ url('auto-dailer-report?filter=all') }}"
-                    class="btn btn-light {{ $filter === 'all' ? 'active' : '' }}">
-                    <i class="fas fa-list me-1"></i> All
-                </a>
-                <a href="{{ url('auto-dailer-report?filter=answered') }}"
-                    class="btn btn-light {{ $filter === 'answered' ? 'active' : '' }}">
-                    <i class="fas fa-phone me-1"></i> Answered
-                </a>
-                <a href="{{ url('auto-dailer-report?filter=no answer') }}"
-                    class="btn btn-light {{ $filter === 'no answer' ? 'active' : '' }}">
-                    <i class="fas fa-phone-slash me-1"></i> No Answer
-                </a>
-                <a href="{{ url('auto-dailer-report?filter=today') }}"
-                    class="btn btn-primary {{ $filter === 'today' ? 'active' : '' }}">
-                    <i class="fas fa-calendar-day me-1"></i> Today
-                </a>
+        <!-- Second Row: Statistics Cards -->
+        <div class="stats-grid mb-3">
+            <div class="stat-card">
+                <i class="fas fa-phone-volume text-primary"></i>
+                <div>
+                    <h4>Total Calls</h4>
+                    <p>{{ $totalCalls }}</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-phone text-success"></i>
+                <div>
+                    <h4>Answered</h4>
+                    <p>{{ $answeredCalls }}</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <i class="fas fa-phone-slash text-warning"></i>
+                <div>
+                    <h4>No Answer</h4>
+                    <p>{{ $noAnswerCalls }}</p>
+                </div>
             </div>
         </div>
 
-        <!-- Second Line: Filters Form -->
+        <!-- Third Row: Filters -->
         <form method="GET" action="{{ url('auto-dailer-report') }}" class="filter-form">
             <input type="hidden" name="filter" value="{{ $filter }}">
 
             <div class="filter-grid">
-                <!-- Extension Inputs -->
                 <input type="number" name="extension_from" class="form-control" placeholder="Extension From"
                     value="{{ request('extension_from') }}">
                 <input type="number" name="extension_to" class="form-control" placeholder="Extension To"
                     value="{{ request('extension_to') }}">
 
-                <!-- Provider Dropdown -->
                 <select name="provider" class="form-control">
                     <option value="">All Providers</option>
                     @foreach ($providers as $provider)
@@ -79,22 +87,18 @@
                     @endforeach
                 </select>
 
-                <!-- Date Filters -->
                 <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
                 <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+                <input type="time" name="time_from" class="form-control" value="{{ request('time_from') }}">
+                <input type="time" name="time_to" class="form-control" value="{{ request('time_to') }}">
 
-                <!-- Time Filters -->
-                <input type="time" name="time_from" class="form-control" id="time_from"
-                    value="{{ request('time_from') }}">
-                <input type="time" name="time_to" class="form-control" id="time_to" value="{{ request('time_to') }}">
-
-                <!-- Apply Button -->
                 <button type="submit" class="btn btn-primary apply-btn">
                     <i class="fas fa-filter me-2"></i> Apply
                 </button>
             </div>
         </form>
     </div>
+
 
 
     {{-- @if ($filter !== 'today')
