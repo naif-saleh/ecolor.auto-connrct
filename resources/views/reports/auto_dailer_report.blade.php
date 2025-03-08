@@ -137,88 +137,88 @@
     </form>
 
 
-<!-- Report Table -->
-<div class="card shadow-sm border-0 rounded">
-    <div class="card-body">
-        <div class="table-responsive">
-            <table class="table table-hover align-middle text-center">
-                <thead class="bg-light-primary text-primary">
-                    <tr>
-                        <th><i class="fa-solid fa-hashtag"></i></th>
-                        <th><i class="fa-solid fa-mobile"></i> Mobile</th>
-                        <th><i class="fa-brands fa-nfc-directional"></i> Provider</th>
-                        <th><i class="fa-solid fa-phone-volume"></i> Extension</th>
-                        <th><i class="fa-solid fa-phone"></i>|<i class="fa-solid fa-phone-slash"></i> Status</th>
-                        <th><i class="fa-solid fa-circle-radiation"></i> Talking</th>
-                        <th><i class="fa-solid fa-circle-radiation"></i> Ringing</th>
-                        <th><i class="fa-solid fa-calendar-days"></i> Called At - Date</th>
-                        <th><i class="fa-solid fa-clock"></i> Called At - Time</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @forelse ($reports as $index => $report)
-                    <tr>
-                        <td>{{ $reports->firstItem() + $index }}</td>
-                        <td>{{ $report->phone_number }}</td>
-                        <td>{{ $report->provider }}</td>
-                        <td>{{ $report->extension }}</td>
-                        <td>
-                            @php
-                            $status = in_array($report->status, [
-                            'Wextension',
-                            'Wexternalline',
-                            'Talking',
-                            ])
-                            ? 'answered'
-                            // : ($report->status === 'Dialing'
-                            // ? 'falid call'
-                            : 'no answer';
+    <!-- Report Table -->
+    <div class="card shadow-sm border-0 rounded">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle text-center">
+                    <thead class="bg-light-primary text-primary">
+                        <tr>
+                            <th><i class="fa-solid fa-hashtag"></i></th>
+                            <th><i class="fa-solid fa-mobile"></i> Mobile</th>
+                            <th><i class="fa-brands fa-nfc-directional"></i> Provider</th>
+                            <th><i class="fa-solid fa-phone-volume"></i> Extension</th>
+                            <th><i class="fa-solid fa-phone"></i>|<i class="fa-solid fa-phone-slash"></i> Status</th>
+                            <th><i class="fa-solid fa-circle-radiation"></i> Talking</th>
+                            <th><i class="fa-solid fa-circle-radiation"></i> Ringing</th>
+                            <th><i class="fa-solid fa-calendar-days"></i> Called At - Date</th>
+                            <th><i class="fa-solid fa-clock"></i> Called At - Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse ($reports as $index => $report)
+                        <tr>
+                            <td>{{ $reports->firstItem() + $index }}</td>
+                            <td>{{ $report->phone_number }}</td>
+                            <td>{{ $report->provider }}</td>
+                            <td>{{ $report->extension }}</td>
+                            <td>
+                                @php
+                                $status = in_array($report->status, [
+                                'Wextension',
+                                'Wexternalline',
+                                'Talking',
+                                ])
+                                ? 'answered'
+                                // : ($report->status === 'Dialing'
+                                // ? 'falid call'
+                                : 'no answer';
 
-                            $badgeClass = match ($status) {
-                            'answered'
-                            => 'badge bg-success-subtle border border-success-subtle text-success-emphasis
-                            rounded-pill',
-                            'no answer'
-                            => 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis
-                            rounded-pill',
-                            default
-                            => 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis
-                            rounded-pill',
-                            };
-                            @endphp
-                            <span class="badge bg-{{ $badgeClass }}">
-                                {{ ucfirst($status) }}
-                            </span>
-                        </td>
-                        <td>{{ $report->duration_time ? $report->duration_time : '-' }}</td>
-                        <td>{{ $report->duration_routing ? $report->duration_routing : '-' }}</td>
-                        <td>{{ $report->created_at->format('Y-m-d') }}</td> <!-- For Date -->
-                        <td>{{ $report->created_at->format('H:i:s') }}</td> <!-- For Time -->
+                                $badgeClass = match ($status) {
+                                'answered'
+                                => 'badge bg-success-subtle border border-success-subtle text-success-emphasis
+                                rounded-pill',
+                                'no answer'
+                                => 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis
+                                rounded-pill',
+                                default
+                                => 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis
+                                rounded-pill',
+                                };
+                                @endphp
+                                <span class="badge bg-{{ $badgeClass }}">
+                                    {{ ucfirst($status) }}
+                                </span>
+                            </td>
+                            <td>{{ $report->duration_time ? $report->duration_time : '-' }}</td>
+                            <td>{{ $report->duration_routing ? $report->duration_routing : '-' }}</td>
+                            <td>{{ $report->created_at->format('Y-m-d') }}</td> <!-- For Date -->
+                            <td>{{ $report->created_at->format('H:i:s') }}</td> <!-- For Time -->
 
-                    </tr>
-                    @empty
-                    <tr>
-                        <td colspan="7">No reports found for the given filter.</td>
-                    </tr>
-                    @endforelse
-                </tbody>
-            </table>
+                        </tr>
+                        @empty
+                        <tr>
+                            <td colspan="7">No reports found for the given filter.</td>
+                        </tr>
+                        @endforelse
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
+
+    <!-- Pagination -->
+    <div class="d-flex justify-content-center">
+        {!! $reports->appends(request()->except('page'))->links('pagination::bootstrap-5') !!}
+    </div>
+
+
 </div>
 
-<!-- Pagination -->
-<div class="d-flex justify-content-center">
-    {!! $reports->appends(request()->except('page'))->links('pagination::bootstrap-5') !!}
-</div>
-
-
-</div>
 
 
 
-
- @endsection
+@endsection
 
 @section('scripts')
 

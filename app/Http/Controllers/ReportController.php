@@ -228,6 +228,8 @@ class ReportController extends Controller
         $provider = $request->input('provider');
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
+        $timeFrom = $request->input('time_from');
+        $timeTo = $request->input('time_to');
 
         $statusMap = [
             'answered' => ['Wexternalline', 'Talking', 'Transferring'],
@@ -261,6 +263,10 @@ class ReportController extends Controller
                 \Carbon\Carbon::parse($dateFrom, 'Asia/Riyadh')->startOfDay()->timezone('UTC'),
                 \Carbon\Carbon::parse($dateTo, 'Asia/Riyadh')->endOfDay()->timezone('UTC')
             ]);
+        }
+         // Apply time range filters if provided
+         if ($timeFrom && $timeTo) {
+            $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
         }
         $reports = $query->get();
         // dd('Export Query:', ['query' => $query->toSql(), 'bindings' => $query->getBindings()]);
@@ -297,34 +303,132 @@ class ReportController extends Controller
     /**
      * display Auto Distributer Report
      */
+    // public function AutoDistributerReports(Request $request)
+    // {
+    //     $filter = $request->input('filter', 'today'); // Default to 'today' filter
+    //     $extensionFrom = $request->input('extension_from');
+    //     $extensionTo = $request->input('extension_to');
+    //     $provider = $request->input('provider');
+    //     $dateFrom = $request->input('date_from');
+    //     $dateTo = $request->input('date_to');
+
+    //     // Map filter values to database values
+    //     $statusMap = [
+    //         'answered' => ['Talking', 'Wexternalline'],
+    //         'no answer' => ['Wspecialmenu', 'no answer', 'Dialing', 'Routing'],
+    //         'employee_unanswer' => ['Initiating', 'SomeOtherStatus']
+    //     ];
+
+    //     $query = AutoDistributerReport::query();
+
+    //     // Apply status filter (default to today)
+    //     if ($filter === 'today' || !$request->has('filter')) {
+    //         $query->whereDate('created_at', now()->toDateString());
+    //     } elseif ($filter === 'all') {
+    //         // No filtering by date or status for 'All'
+    //     } elseif (isset($statusMap[$filter])) {
+    //         $query->whereIn('status', $statusMap[$filter]);
+    //     }
+
+    //     // Apply extension range filters
+    //     if ($extensionFrom) {
+    //         $query->where('extension', '>=', $extensionFrom);
+    //     }
+    //     if ($extensionTo) {
+    //         $query->where('extension', '<=', $extensionTo);
+    //     }
+
+    //     // Apply provider filter
+    //     if ($provider) {
+    //         $query->where('provider', $provider);
+    //     }
+
+    //     // Apply date range filter
+    //     if ($dateFrom && $dateTo) {
+    //         $query->whereBetween('created_at', [
+    //             \Carbon\Carbon::parse($dateFrom)->startOfDay(),
+    //             \Carbon\Carbon::parse($dateTo)->endOfDay()
+    //         ]);
+    //     }
+
+    //     // Apply pagination
+    //     $reports = $query->orderBy('created_at', 'desc')->paginate(50);
+
+    //     // Calculate counts for overall report
+    //     $totalCount = AutoDistributerReport::count();
+    //     $answeredCount = AutoDistributerReport::whereIn('status', ['Wextension', 'Wexternalline', "Talking"])->count();
+    //     $noAnswerCount = AutoDistributerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer', 'Routing'])->count();
+    //     $employeeUnanswerCount = AutoDistributerReport::whereIn('status', ['Initiating', 'SomeOtherStatus'])->count();
+
+    //     // Calculate counts for "Today" (default view)
+    //     $todayTotalCount = AutoDistributerReport::whereDate('created_at', now()->toDateString())->count();
+    //     $todayAnsweredCount = AutoDistributerReport::whereDate('created_at', now()->toDateString())
+    //         ->whereIn('status', ['Wextension', 'Wexternalline', "Talking"])->count();
+    //     $todayNoAnswerCount = AutoDistributerReport::whereDate('created_at', now()->toDateString())
+    //         ->whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer', 'Routing'])->count();
+    //     $todayEmployeeUnanswerCount = AutoDistributerReport::whereDate('created_at', now()->toDateString())
+    //         ->whereIn('status', ['Initiating', 'SomeOtherStatus'])->count();
+
+    //     // Fetch distinct providers for the filter dropdown
+    //     $providers = AutoDistributerReport::select('provider')->distinct()->get();
+
+    //     return view('reports.auto_distributer_report', compact(
+    //         'reports',
+    //         'filter',
+    //         'extensionFrom',
+    //         'extensionTo',
+    //         'provider',
+    //         'providers',
+    //         'totalCount',
+    //         'answeredCount',
+    //         'noAnswerCount',
+    //         'employeeUnanswerCount',
+    //         'todayTotalCount',
+    //         'todayAnsweredCount',
+    //         'todayNoAnswerCount',
+    //         'todayEmployeeUnanswerCount'
+    //     ));
+    // }
     public function AutoDistributerReports(Request $request)
     {
-        $filter = $request->input('filter', 'today'); // Default to 'today' filter
+        $filter = $request->input('filter', 'today'); // Default to 'today' if no filter is provided
         $extensionFrom = $request->input('extension_from');
         $extensionTo = $request->input('extension_to');
         $provider = $request->input('provider');
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
+        $timeFrom = $request->input('time_from');
+        $timeTo = $request->input('time_to');
 
-        // Map filter values to database values
-        $statusMap = [
-            'answered' => ['Talking', 'Wexternalline'],
-            'no answer' => ['Wspecialmenu', 'no answer', 'Dialing', 'Routing'],
-            'employee_unanswer' => ['Initiating', 'SomeOtherStatus']
-        ];
-
+        // Define status mappings
+        $answeredStatuses = ['Talking', 'Wexternalline', 'Transferring'];
+        $noAnswerStatuses = ['Wspecialmenu', 'no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
+        $employee_unanswer = ['Initiating', 'SomeOtherStatus'];
+        // Start building the query
         $query = AutoDistributerReport::query();
 
-        // Apply status filter (default to today)
-        if ($filter === 'today' || !$request->has('filter')) {
-            $query->whereDate('created_at', now()->toDateString());
-        } elseif ($filter === 'all') {
-            // No filtering by date or status for 'All'
-        } elseif (isset($statusMap[$filter])) {
-            $query->whereIn('status', $statusMap[$filter]);
+        // Apply provider filter if selected
+        if ($provider) {
+            $query->where('provider', $provider);
         }
 
-        // Apply extension range filters
+        // Apply date range filters if selected
+        if ($dateFrom && $dateTo) {
+            $query->whereBetween('created_at', [
+                \Carbon\Carbon::parse($dateFrom)->startOfDay(),
+                \Carbon\Carbon::parse($dateTo)->endOfDay()
+            ]);
+        } elseif ($filter === 'today') {
+            // If no date range is provided and filter is 'today', default to today's data
+            $query->whereDate('created_at', now()->toDateString());
+        }
+
+        // Apply time range filters if provided
+        if ($timeFrom && $timeTo) {
+            $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
+        }
+
+        // Apply extension range filters if provided
         if ($extensionFrom) {
             $query->where('extension', '>=', $extensionFrom);
         }
@@ -332,58 +436,48 @@ class ReportController extends Controller
             $query->where('extension', '<=', $extensionTo);
         }
 
-        // Apply provider filter
-        if ($provider) {
-            $query->where('provider', $provider);
+        // Clone query before applying status filters (for statistics)
+        $statsQuery = clone $query;
+
+        // Apply status filters based on selection
+        if ($filter === 'answered') {
+            $query->whereIn('status', $answeredStatuses);
+        } elseif ($filter === 'no answer') {
+            $query->whereIn('status', $noAnswerStatuses);
         }
 
-        // Apply date range filter
-        if ($dateFrom && $dateTo) {
-            $query->whereBetween('created_at', [
-                \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-                \Carbon\Carbon::parse($dateTo)->endOfDay()
-            ]);
-        }
-
-        // Apply pagination
+        // Get paginated results
         $reports = $query->orderBy('created_at', 'desc')->paginate(50);
 
-        // Calculate counts for overall report
-        $totalCount = AutoDistributerReport::count();
-        $answeredCount = AutoDistributerReport::whereIn('status', ['Wextension', 'Wexternalline', "Talking"])->count();
-        $noAnswerCount = AutoDistributerReport::whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer', 'Routing'])->count();
-        $employeeUnanswerCount = AutoDistributerReport::whereIn('status', ['Initiating', 'SomeOtherStatus'])->count();
-
-        // Calculate counts for "Today" (default view)
-        $todayTotalCount = AutoDistributerReport::whereDate('created_at', now()->toDateString())->count();
-        $todayAnsweredCount = AutoDistributerReport::whereDate('created_at', now()->toDateString())
-            ->whereIn('status', ['Wextension', 'Wexternalline', "Talking"])->count();
-        $todayNoAnswerCount = AutoDistributerReport::whereDate('created_at', now()->toDateString())
-            ->whereIn('status', ['Wspecialmenu', 'Dialing', 'no answer', 'Routing'])->count();
-        $todayEmployeeUnanswerCount = AutoDistributerReport::whereDate('created_at', now()->toDateString())
-            ->whereIn('status', ['Initiating', 'SomeOtherStatus'])->count();
-
-        // Fetch distinct providers for the filter dropdown
-        $providers = AutoDistributerReport::select('provider')->distinct()->get();
+        // Calculate statistics
+        $totalCount = $statsQuery->count();
+        $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
+        $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
+        $todayEmployeeUnanswerCount = (clone $statsQuery)->whereIn('status', $employee_unanswer)->count();
+        // Get distinct providers for dropdown
+        $providers = ADialProvider::select('name', 'extension')
+            ->distinct()
+            ->orderBy('name', 'asc')
+            ->orderBy('extension', 'desc')
+            ->get();
 
         return view('reports.auto_distributer_report', compact(
             'reports',
             'filter',
-            'extensionFrom',
-            'extensionTo',
             'provider',
             'providers',
             'totalCount',
             'answeredCount',
             'noAnswerCount',
-            'employeeUnanswerCount',
-            'todayTotalCount',
-            'todayAnsweredCount',
-            'todayNoAnswerCount',
-            'todayEmployeeUnanswerCount'
+            'todayEmployeeUnanswerCount',
+            'extensionFrom',
+            'extensionTo',
+            'dateFrom',
+            'dateTo',
+            'timeFrom',
+            'timeTo'
         ));
     }
-
     /**
      * Export Auto Distributer AS CSV File
      */
