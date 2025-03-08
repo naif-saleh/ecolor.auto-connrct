@@ -84,11 +84,8 @@
                 value="{{ request('date_to') }}">
 
                 <!-- Time Filters -->
-            <label for="time_from">From Time:</label>
-            <input type="time" name="time_from" id="time_from" value="{{ request('time_from') }}">
-
-            <label for="time_to">To Time:</label>
-            <input type="time" name="time_to" id="time_to" value="{{ request('time_to') }}">
+            <input type="time" name="time_from" class="form-modern" id="time_from" value="{{ request('time_from') }}">
+            <input type="time" name="time_to" class="form-modern" id="time_to" value="{{ request('time_to') }}">
 
             <!-- Apply Button -->
             <button type="submit" class="btn btn-modern-apply">
