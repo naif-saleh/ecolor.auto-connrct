@@ -39,7 +39,7 @@ class ReportController extends Controller
         return view('reports.user_logs', compact('logs'));
     }
 
-    
+
 
     public function AutoDailerReports(Request $request)
     {
@@ -146,8 +146,8 @@ class ReportController extends Controller
 
         $statusMap = [
             'answered' => ['Wexternalline', 'Talking', 'Transferring'],
-            'no answer' => ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'],
-            //'faild' => ['Dialing', 'error'],
+            'no answer' => ['no answer', 'Routing', 'Dialing', 'error', ],
+            'emplooyee no answer' => ['else', 'Initiating'],
         ];
 
         $query = AutoDailerReport::query();

@@ -48,6 +48,10 @@
                 class="{{ $filter === 'no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-phone-slash me-1"></i> No Answer
             </a>
+            <a href="{{ url('auto-distributer-report?filter=emplooyee no answer') }}"
+                class="{{ $filter === 'emplooyee no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
+                <i class="fas fa-phone-slash me-1"></i> Em.No Answer
+            </a>
             <a href="{{ url('auto-distributer-report?filter=today') }}"
                 class="{{ $filter === 'today' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-calendar-day me-1"></i> Today
@@ -101,6 +105,7 @@
                 <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
             </div>
         </div>
+        @elseif($filter === 'emplooyee no answer')
         <div class="col-lg-6 col-md-6">
             <div class="card text-center p-4 shadow-sm border-0 rounded-3">
                 <i class="fas fa-phone-slash text-danger fs-1 mb-2"></i>
