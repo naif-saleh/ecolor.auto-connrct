@@ -103,7 +103,8 @@ class ReportController extends Controller
         }elseif ($filter === 'transferring') {
             $query->whereIn('status', $transferring);
         }elseif ($filter === 'new') {
-            $queryNew->whereIn('state', $notCalledStates);
+            $queryNew->whereIn('state', $notCalledStates)
+                     ->whereDate('created_at', now()->toDateString());
         }
 
 
