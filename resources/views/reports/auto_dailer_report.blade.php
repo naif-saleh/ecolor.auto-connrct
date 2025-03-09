@@ -66,62 +66,63 @@
     </div>
 
     <!-- Statistics Cards -->
-    <div class="row g-3 mb-4">
+    <div class="row row-cols-2 row-cols-md-4 g-3 mb-4">
         @if($filter === 'all' || $filter === 'today')
-        <div class="col-md-4">
-            <div class="card text-center p-3 shadow-sm">
-                <i class="fas fa-phone-volume text-primary fs-3"></i>
-                <h5 class="mt-2">Total Calls</h5>
-                <p class="fw-bold fs-4">{{ $totalCount }}</p>
+            <div class="col">
+                <div class="card text-center p-3 shadow-sm">
+                    <i class="fas fa-phone-volume text-primary fs-3"></i>
+                    <h5 class="mt-2">Total Calls</h5>
+                    <p class="fw-bold fs-4">{{ $totalCount }}</p>
+                </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-center p-3 shadow-sm">
-                <i class="fas fa-phone text-success fs-3"></i>
-                <h5 class="mt-2">Answered</h5>
-                <p class="fw-bold fs-4">{{ $answeredCount }}</p>
+            <div class="col">
+                <div class="card text-center p-3 shadow-sm">
+                    <i class="fas fa-phone text-success fs-3"></i>
+                    <h5 class="mt-2">Answered</h5>
+                    <p class="fw-bold fs-4">{{ $answeredCount }}</p>
+                </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-center p-3 shadow-sm">
-                <i class="fas fa-phone-slash text-warning fs-3"></i>
-                <h5 class="mt-2">No Answer</h5>
-                <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
+            <div class="col">
+                <div class="card text-center p-3 shadow-sm">
+                    <i class="fas fa-phone-slash text-warning fs-3"></i>
+                    <h5 class="mt-2">No Answer</h5>
+                    <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
+                </div>
             </div>
-        </div>
-        <div class="col-md-4">
-            <div class="card text-center p-3 shadow-sm">
-                <i class="fa-solid fa-right-left text-primary fs-3"></i>
-                <h5 class="mt-2">Transferring</h5>
-                <p class="fw-bold fs-4">{{ $transferedCount }}</p>
+            <div class="col">
+                <div class="card text-center p-3 shadow-sm">
+                    <i class="fa-solid fa-right-left text-primary fs-3"></i>
+                    <h5 class="mt-2">Transferring</h5>
+                    <p class="fw-bold fs-4">{{ $transferedCount }}</p>
+                </div>
             </div>
-        </div>
         @elseif($filter === 'answered')
-        <div class="col-md-6">
-            <div class="card text-center p-3 shadow-sm">
-                <i class="fas fa-phone text-success fs-3"></i>
-                <h5 class="mt-2">Answered Calls</h5>
-                <p class="fw-bold fs-4">{{ $answeredCount }}</p>
+            <div class="col">
+                <div class="card text-center p-3 shadow-sm">
+                    <i class="fas fa-phone text-success fs-3"></i>
+                    <h5 class="mt-2">Answered Calls</h5>
+                    <p class="fw-bold fs-4">{{ $answeredCount }}</p>
+                </div>
             </div>
-        </div>
         @elseif($filter === 'no answer')
-        <div class="col-md-6">
-            <div class="card text-center p-3 shadow-sm">
-                <i class="fas fa-phone-slash text-warning fs-3"></i>
-                <h5 class="mt-2">No Answer Calls</h5>
-                <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
+            <div class="col">
+                <div class="card text-center p-3 shadow-sm">
+                    <i class="fas fa-phone-slash text-warning fs-3"></i>
+                    <h5 class="mt-2">No Answer Calls</h5>
+                    <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
+                </div>
             </div>
-        </div>
         @elseif($filter === 'transferring')
-        <div class="col-md-4">
-            <div class="card text-center p-3 shadow-sm">
-                <i class="fa-solid fa-right-left text-primary fs-3"></i>
-                <h5 class="mt-2">Transferring</h5>
-                <p class="fw-bold fs-4">{{ $transferedCount }}</p>
+            <div class="col">
+                <div class="card text-center p-3 shadow-sm">
+                    <i class="fa-solid fa-right-left text-primary fs-3"></i>
+                    <h5 class="mt-2">Transferring</h5>
+                    <p class="fw-bold fs-4">{{ $transferedCount }}</p>
+                </div>
             </div>
-        </div>
         @endif
     </div>
+
 
 
     <!-- Filters Form -->
