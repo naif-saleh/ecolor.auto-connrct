@@ -51,13 +51,17 @@
                 <i class="fas fa-phone me-1"></i> Answered
             </a>
             <a href="{{ url('auto-dailer-report?filter=transferring') }}"
-                class="{{ $filter === 'answered' ? 'btn btn-primary' : 'btn btn-light' }}">
+                class="{{ $filter === 'transferring' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fa-solid fa-right-left me-1"></i> Transferring
             </a>
             <a href="{{ url('auto-dailer-report?filter=no answer') }}"
                 class="{{ $filter === 'no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-phone-slash me-1"></i> No Answer
             </a>
+            <a href="{{ url('auto-dailer-report?filter=new') }}"
+            class="{{ $filter === 'new' ? 'btn btn-primary' : 'btn btn-light' }}">
+            <i class="fas fa-phone-slash me-1"></i> Not Called
+        </a>
             <a href="{{ url('auto-dailer-report?filter=today') }}"
                 class="{{ $filter === 'today' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-calendar-day me-1"></i> Today
@@ -73,6 +77,13 @@
                     <i class="fas fa-phone-volume text-primary fs-3"></i>
                     <h5 class="mt-2">Total Calls</h5>
                     <p class="fw-bold fs-4">{{ $totalCount }}</p>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card text-center p-3 shadow-sm">
+                    <i class="fas fa-phone-volume text-primary fs-3"></i>
+                    <h5 class="mt-2">Not Called</h5>
+                    <p class="fw-bold fs-4">{{ $new }}</p>
                 </div>
             </div>
             <div class="col">
