@@ -53,8 +53,8 @@ class ReportController extends Controller
         $timeTo = $request->input('time_to');
 
         // Define status mappings
-        $answeredStatuses = ['Talking', 'Wexternalline', 'Transferring'];
-        $noAnswerStatuses = ['Wspecialmenu', 'no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
+        $answeredStatuses = ['Talking', 'Transferring'];
+        $noAnswerStatuses = ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
 
         // Start building the query
         $query = AutoDailerReport::query();
@@ -171,16 +171,17 @@ class ReportController extends Controller
         }
 
         // Apply date range filter
-        if ($dateFrom && $dateTo) {
-            $query->whereBetween('created_at', [
-                \Carbon\Carbon::parse($dateFrom, 'Asia/Riyadh')->startOfDay()->timezone('UTC'),
-                \Carbon\Carbon::parse($dateTo, 'Asia/Riyadh')->endOfDay()->timezone('UTC')
-            ]);
-        }
+        $query->whereBetween('created_at', [
+            \Carbon\Carbon::parse($dateFrom, 'Asia/Riyadh')->startOfDay(),
+            \Carbon\Carbon::parse($dateTo, 'Asia/Riyadh')->endOfDay()
+        ]);
+
          // Apply time range filters if provided
-         if ($timeFrom && $timeTo) {
-            $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
-        }
+         $utcTimeFrom = \Carbon\Carbon::parse($timeFrom, 'Asia/Riyadh')->timezone('UTC')->format('H:i:s');
+         $utcTimeTo = \Carbon\Carbon::parse($timeTo, 'Asia/Riyadh')->timezone('UTC')->format('H:i:s');
+
+         $query->whereBetween(DB::raw('TIME(created_at)'), [$utcTimeFrom, $utcTimeTo]);
+
         $reports = $query->get();
         // dd('Export Query:', ['query' => $query->toSql(), 'bindings' => $query->getBindings()]);
 
