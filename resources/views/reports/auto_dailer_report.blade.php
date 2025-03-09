@@ -60,6 +60,7 @@
 
     <!-- Statistics Cards -->
     <div class="row g-3 mb-4">
+        @if($filter === 'all' || $filter === 'today')
         <div class="col-md-4">
             <div class="card text-center p-3 shadow-sm">
                 <i class="fas fa-phone-volume text-primary fs-3"></i>
@@ -81,7 +82,25 @@
                 <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
             </div>
         </div>
+        @elseif($filter === 'answered')
+        <div class="col-md-6">
+            <div class="card text-center p-3 shadow-sm">
+                <i class="fas fa-phone text-success fs-3"></i>
+                <h5 class="mt-2">Answered Calls</h5>
+                <p class="fw-bold fs-4">{{ $answeredCount }}</p>
+            </div>
+        </div>
+        @elseif($filter === 'no answer')
+        <div class="col-md-6">
+            <div class="card text-center p-3 shadow-sm">
+                <i class="fas fa-phone-slash text-warning fs-3"></i>
+                <h5 class="mt-2">No Answer Calls</h5>
+                <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
+            </div>
+        </div>
+        @endif
     </div>
+
 
     <!-- Filters Form -->
     <form method="GET" action="{{ url('auto-dailer-report') }}">
