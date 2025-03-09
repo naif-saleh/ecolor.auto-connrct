@@ -58,10 +58,6 @@
                     class="{{ $filter === 'no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
                     <i class="fas fa-phone-slash me-1"></i> No Answer
                 </a>
-                <a href="{{ url('auto-dailer-report?filter=new') }}"
-                    class="{{ $filter === 'new' ? 'btn btn-primary' : 'btn btn-light' }}">
-                    <i class="fas fa-phone-slash me-1"></i> Not Called
-                </a>
                 <a href="{{ url('auto-dailer-report?filter=today') }}"
                     class="{{ $filter === 'today' ? 'btn btn-primary' : 'btn btn-light' }}">
                     <i class="fas fa-calendar-day me-1"></i> Today
@@ -70,77 +66,60 @@
         </div>
 
         <!-- Statistics Cards -->
-        <div class="row row-cols-2 row-cols-md-4 g-3 mb-4">
+        <div class="d-flex flex-wrap gap-3 mb-4 justify-content-center">
             @if ($filter === 'all' || $filter === 'today')
-                <div class="col">
-                    <div class="card text-center p-3 shadow-sm">
-                        <i class="fas fa-phone-volume text-primary fs-3"></i>
-                        <h5 class="mt-2">Total Calls</h5>
-                        <p class="fw-bold fs-4">{{ $totalCount }}</p>
-                    </div>
+                <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
+                    <i class="fas fa-phone-volume text-primary fs-3"></i>
+                    <h5 class="mt-2">Total Calls</h5>
+                    <p class="fw-bold fs-4">{{ $totalCount }}</p>
                 </div>
-                <div class="col">
-                    <div class="card text-center p-3 shadow-sm">
-                        <i class="fas fa-phone-volume text-primary fs-3"></i>
-                        <h5 class="mt-2">Not Called</h5>
-                        <p class="fw-bold fs-4">{{ $notCalledCount }}</p>
-                    </div>
+                <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
+                    <i class="fas fa-phone text-success fs-3"></i>
+                    <h5 class="mt-2">Answered</h5>
+                    <p class="fw-bold fs-4">{{ $answeredCount }}</p>
                 </div>
-                <div class="col">
-                    <div class="card text-center p-3 shadow-sm">
-                        <i class="fas fa-phone text-success fs-3"></i>
-                        <h5 class="mt-2">Answered</h5>
-                        <p class="fw-bold fs-4">{{ $answeredCount }}</p>
-                    </div>
+                <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
+                    <i class="fas fa-phone-slash text-warning fs-3"></i>
+                    <h5 class="mt-2">No Answer</h5>
+                    <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
                 </div>
-                <div class="col">
-                    <div class="card text-center p-3 shadow-sm">
-                        <i class="fas fa-phone-slash text-warning fs-3"></i>
-                        <h5 class="mt-2">No Answer</h5>
-                        <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
-                    </div>
+                <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
+                    <i class="fa-solid fa-right-left text-primary fs-3"></i>
+                    <h5 class="mt-2">Transferring</h5>
+                    <p class="fw-bold fs-4">{{ $transferedCount }}</p>
                 </div>
-                <div class="col">
-                    <div class="card text-center p-3 shadow-sm">
-                        <i class="fa-solid fa-right-left text-primary fs-3"></i>
-                        <h5 class="mt-2">Transferring</h5>
-                        <p class="fw-bold fs-4">{{ $transferedCount }}</p>
-                    </div>
+                <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
+                    <i class="fas fa-phone-volume text-primary fs-3"></i>
+                    <h5 class="mt-2">Not Called</h5>
+                    <p class="fw-bold fs-4">{{ $notCalledCount }}</p>
                 </div>
             @elseif($filter === 'answered')
-                <div class="col">
-                    <div class="card text-center p-3 shadow-sm">
-                        <i class="fas fa-phone text-success fs-3"></i>
-                        <h5 class="mt-2">Answered Calls</h5>
-                        <p class="fw-bold fs-4">{{ $answeredCount }}</p>
-                    </div>
+                <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
+                    <i class="fas fa-phone text-success fs-3"></i>
+                    <h5 class="mt-2">Answered Calls</h5>
+                    <p class="fw-bold fs-4">{{ $answeredCount }}</p>
                 </div>
             @elseif($filter === 'no answer')
-                <div class="col">
-                    <div class="card text-center p-3 shadow-sm">
-                        <i class="fas fa-phone-slash text-warning fs-3"></i>
-                        <h5 class="mt-2">No Answer Calls</h5>
-                        <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
-                    </div>
+                <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
+                    <i class="fas fa-phone-slash text-warning fs-3"></i>
+                    <h5 class="mt-2">No Answer Calls</h5>
+                    <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
                 </div>
             @elseif($filter === 'transferring')
-                <div class="col">
-                    <div class="card text-center p-3 shadow-sm">
-                        <i class="fa-solid fa-right-left text-primary fs-3"></i>
-                        <h5 class="mt-2">Transferring</h5>
-                        <p class="fw-bold fs-4">{{ $transferedCount }}</p>
-                    </div>
+                <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
+                    <i class="fa-solid fa-right-left text-primary fs-3"></i>
+                    <h5 class="mt-2">Transferring</h5>
+                    <p class="fw-bold fs-4">{{ $transferedCount }}</p>
                 </div>
             @elseif($filter === 'new')
-                <div class="col">
-                    <div class="card text-center p-3 shadow-sm">
-                        <i class="fas fa-phone-volume text-primary fs-3"></i>
-                        <h5 class="mt-2">Not Called</h5>
-                        <p class="fw-bold fs-4">{{ $notCalledCount }}</p>
-                    </div>
+                <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
+                    <i class="fas fa-phone-volume text-primary fs-3"></i>
+                    <h5 class="mt-2">Not Called</h5>
+                    <p class="fw-bold fs-4">{{ $notCalledCount }}</p>
                 </div>
             @endif
         </div>
+
 
 
 
