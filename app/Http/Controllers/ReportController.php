@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ADialData;
 use Illuminate\Http\Request;
 use App\Models\ActivityLog;
 use App\Models\ADialProvider;
@@ -60,6 +61,7 @@ class ReportController extends Controller
 
         // Start building the query
         $query = AutoDailerReport::query();
+        $queryNew = ADialData::query();
 
         // Apply provider filter if selected
         if ($provider) {
@@ -92,7 +94,7 @@ class ReportController extends Controller
 
         // Clone query before applying status filters (for statistics)
         $statsQuery = clone $query;
-
+        $newQuery = clone $queryNew;
         // Apply status filters based on selection
         if ($filter === 'answered') {
             $query->whereIn('status', $answeredStatuses);
@@ -101,7 +103,7 @@ class ReportController extends Controller
         }elseif ($filter === 'transferring') {
             $query->whereIn('status', $transferring);
         }elseif ($filter === 'new') {
-            $query->whereIn('status', $new);
+            $queryNew->whereIn('status', $new);
         }
 
         // Get paginated results
@@ -111,7 +113,7 @@ class ReportController extends Controller
         $totalCount = $statsQuery->count();
         $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
         $transferedCount = (clone $statsQuery)->whereIn('status', $transferring)->count();
-        $newCount = (clone $statsQuery)->whereIn('status', $new)->count();
+        $newCount = (clone $newQuery)->whereIn('status', $new)->count();
         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
 
         // Get distinct providers for dropdown
