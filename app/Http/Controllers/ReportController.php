@@ -54,7 +54,7 @@ class ReportController extends Controller
 
         // Define status mappings
         $answeredStatuses = ['Talking', 'call'];
-        $transferring = ['Transferring', 'called'];
+        $transferring = ['Transferring', 'Rerouting'];
         $noAnswerStatuses = ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
 
         // Start building the query
@@ -152,7 +152,7 @@ class ReportController extends Controller
         $statusMap = [
             'answered' => ['Talking', 'call'],
             'no answer' => ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'],
-            'transferring' => ['Transferring', 'called']
+            'transferring' => ['Transferring', 'Rerouting']
         ];
 
         $query = AutoDailerReport::query();
