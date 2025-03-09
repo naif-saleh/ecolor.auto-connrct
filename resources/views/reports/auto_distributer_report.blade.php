@@ -56,6 +56,7 @@
     </div>
     <!-- Statistics Cards -->
     <div class="row g-4 mb-4">
+        @if($filter === 'all' || $filter === 'today')
         <div class="col-lg-3 col-md-6">
             <div class="card text-center p-4 shadow-sm border-0 rounded-3">
                 <i class="fas fa-phone-volume text-primary fs-1 mb-2"></i>
@@ -84,7 +85,32 @@
                 <p class="fw-bold fs-4">{{ $todayEmployeeUnanswerCount }}</p>
             </div>
         </div>
+        @elseif($filter === 'answered')
+        <div class="col-lg-6 col-md-6">
+            <div class="card text-center p-4 shadow-sm border-0 rounded-3">
+                <i class="fas fa-phone text-success fs-1 mb-2"></i>
+                <h6 class="fw-semibold">Answered</h6>
+                <p class="fw-bold fs-4">{{ $answeredCount }}</p>
+            </div>
+        </div>
+        @elseif($filter === 'no answer')
+        <div class="col-lg-6 col-md-6">
+            <div class="card text-center p-4 shadow-sm border-0 rounded-3">
+                <i class="fas fa-phone-slash text-warning fs-1 mb-2"></i>
+                <h6 class="fw-semibold">No Answer</h6>
+                <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
+            </div>
+        </div>
+        <div class="col-lg-6 col-md-6">
+            <div class="card text-center p-4 shadow-sm border-0 rounded-3">
+                <i class="fas fa-phone-slash text-danger fs-1 mb-2"></i>
+                <h6 class="fw-semibold">Em.No Answer</h6>
+                <p class="fw-bold fs-4">{{ $todayEmployeeUnanswerCount }}</p>
+            </div>
+        </div>
+        @endif
     </div>
+
 
 
     <!-- Filters Form -->
