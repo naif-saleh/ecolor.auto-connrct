@@ -103,8 +103,7 @@ class ReportController extends Controller
         }elseif ($filter === 'transferring') {
             $query->whereIn('status', $transferring);
         }elseif ($filter === 'new') {
-            $queryNew->whereIn('state', $notCalledStates);
-            dd($queryNew->where('state', 'new')->get());
+            $queryNew->where('state', 'new')->get();
         }
 
 
