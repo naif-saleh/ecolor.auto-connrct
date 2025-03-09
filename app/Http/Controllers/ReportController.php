@@ -199,8 +199,8 @@ class ReportController extends Controller
                     (in_array($report->status, ['Wexternalline', 'Talking', 'Transferring']) ? 'Answered' : 'No Answer'),
                     $report->duration_time ? $report->duration_time : '-',
                     $report->duration_routing ? $report->duration_routing : '-',
-                    $report->created_at->addHours(3)->format('H:i:s'),
-                    $report->created_at->addHours(3)->format('Y-m-d')
+                    $report->created_at,
+                    $report->created_at
                 ]);
             }
 
