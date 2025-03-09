@@ -113,8 +113,13 @@ class ReportController extends Controller
         $totalCount = $statsQuery->count();
         $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
         $transferedCount = (clone $statsQuery)->whereIn('status', $transferring)->count();
-        $newCount = (clone $newQuery)->whereIn('state', $new)->count();
-        $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
+
+        $notCalledStates = ['new'];
+        $notCalledCount = (clone $newQuery)
+            ->whereIn('state', $notCalledStates)
+            ->whereDate('created_at', now()->toDateString())
+            ->count();
+         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
 
         // Get distinct providers for dropdown
         $providers = ADialProvider::select('name', 'extension')
@@ -132,7 +137,7 @@ class ReportController extends Controller
             'answeredCount',
             'noAnswerCount',
             'transferedCount',
-            'newCount',
+            'notCalledCount',
             'extensionFrom',
             'extensionTo',
             'dateFrom',
