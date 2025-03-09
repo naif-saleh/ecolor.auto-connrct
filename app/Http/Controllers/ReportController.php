@@ -56,7 +56,7 @@ class ReportController extends Controller
         // Define status mappings
         $answeredStatuses = ['Talking', 'call'];
         $transferring = ['Transferring', 'Rerouting'];
-        $new = ['new'];
+        $new = ['new' , 'ff'];
         $noAnswerStatuses = ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
 
         // Start building the query
