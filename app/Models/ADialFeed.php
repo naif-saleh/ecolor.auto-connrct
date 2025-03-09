@@ -70,9 +70,9 @@ class ADialFeed extends Model
      * @return \Illuminate\Database\Eloquent\Relations\Relation
      */
     public function provider()
-    {
-        return $this->hasMany(ADialProvider::class, 'id'); // hasMany instead of belongsTo
-    }
+{
+    return $this->belongsTo(ADialProvider::class, 'provider_id');
+}
 
     /**
      * Generate Slug
