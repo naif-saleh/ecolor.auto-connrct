@@ -146,8 +146,7 @@ class ReportController extends Controller
 
         $statusMap = [
             'answered' => ['Wexternalline', 'Talking', 'Transferring'],
-            'no answer' => ['no answer', 'Routing', 'Dialing', 'error', ],
-            'emplooyee no answer' => ['else', 'Initiating'],
+            'no answer' => ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'],
         ];
 
         $query = AutoDailerReport::query();
