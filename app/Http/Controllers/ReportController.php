@@ -113,7 +113,7 @@ class ReportController extends Controller
         $totalCount = $statsQuery->count();
         $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
         $transferedCount = (clone $statsQuery)->whereIn('status', $transferring)->count();
-        $newCount = (clone $newQuery)->whereIn('status', $new)->count();
+        $newCount = (clone $newQuery)->whereIn('state', $new)->count();
         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
 
         // Get distinct providers for dropdown
