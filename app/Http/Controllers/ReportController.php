@@ -103,8 +103,8 @@ class ReportController extends Controller
         }elseif ($filter === 'transferring') {
             $query->whereIn('status', $transferring);
         }elseif ($filter === 'new') {
-            $queryNew->whereIn('state', $notCalledStates)
-                     ->whereDate('created_at', now()->toDateString());
+            $queryNew->whereIn('state', $notCalledStates);
+            dd($queryNew->where('state', 'new'));
         }
 
 
@@ -115,8 +115,6 @@ class ReportController extends Controller
         $totalCount = $statsQuery->count();
         $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
         $transferedCount = (clone $statsQuery)->whereIn('status', $transferring)->count();
-
-
         $notCalledCount = (clone $newQuery)
             ->whereIn('state', $notCalledStates)
             ->whereDate('created_at', now()->toDateString())
