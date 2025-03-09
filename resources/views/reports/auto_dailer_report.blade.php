@@ -2,279 +2,284 @@
 
 @section('title', 'Auto Dailer | Report')
 @section('content')
-<div class="container">
-    <!-- Success Alert -->
-    @if (session('success'))
-    <script>
-        Swal.fire({
+    <div class="container">
+        <!-- Success Alert -->
+        @if (session('success'))
+            <script>
+                Swal.fire({
                     title: 'Success!',
                     text: "{{ session('success') }}",
                     icon: 'success',
                     confirmButtonText: 'OK'
                 });
-    </script>
-    @endif
-
-    <!-- Page Header -->
-    <div class="text-center mb-5">
-        <h2 class="fw-bold text-primary">Auto Dailer Report</h2>
-        {{-- <p class="text-muted">View and manage detailed reports on call activity.</p> --}}
-    </div>
-
-    <!-- Filters Section -->
-    <!-- First Line: Export and Filter Buttons -->
-    <!-- First Row: Export Button & Filters -->
-    <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
-        <!-- Export Button -->
-        <a href="{{ route('auto_dailer.report.export', [
-        'filter' => $filter,
-        'extension_from' => request('extension_from'),
-        'extension_to' => request('extension_to'),
-        'provider' => request('provider'),
-        'date_from' => request('date_from'),
-        'date_to' => request('date_to'),
-        'time_from' =>request('time_from'),
-        'time_to' =>request('time_to')
-
-    ]) }}" class="btn btn-success d-flex align-items-center">
-            <i class="fas fa-file-export me-2"></i> Export as CSV
-        </a>
-
-        <!-- Filter Buttons -->
-        <div class="btn-group flex-wrap">
-            <a href="{{ url('auto-dailer-report?filter=all') }}"
-                class="{{ $filter === 'all' ? 'btn btn-primary' : 'btn btn-light' }}">
-                <i class="fas fa-list me-1"></i> All
-            </a>
-            <a href="{{ url('auto-dailer-report?filter=answered') }}"
-                class="{{ $filter === 'answered' ? 'btn btn-primary' : 'btn btn-light' }}">
-                <i class="fas fa-phone me-1"></i> Answered
-            </a>
-            <a href="{{ url('auto-dailer-report?filter=transferring') }}"
-                class="{{ $filter === 'transferring' ? 'btn btn-primary' : 'btn btn-light' }}">
-                <i class="fa-solid fa-right-left me-1"></i> Transferring
-            </a>
-            <a href="{{ url('auto-dailer-report?filter=no answer') }}"
-                class="{{ $filter === 'no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
-                <i class="fas fa-phone-slash me-1"></i> No Answer
-            </a>
-            <a href="{{ url('auto-dailer-report?filter=new') }}"
-            class="{{ $filter === 'new' ? 'btn btn-primary' : 'btn btn-light' }}">
-            <i class="fas fa-phone-slash me-1"></i> Not Called
-        </a>
-            <a href="{{ url('auto-dailer-report?filter=today') }}"
-                class="{{ $filter === 'today' ? 'btn btn-primary' : 'btn btn-light' }}">
-                <i class="fas fa-calendar-day me-1"></i> Today
-            </a>
-        </div>
-    </div>
-
-    <!-- Statistics Cards -->
-    <div class="row row-cols-2 row-cols-md-4 g-3 mb-4">
-        @if($filter === 'all' || $filter === 'today')
-            <div class="col">
-                <div class="card text-center p-3 shadow-sm">
-                    <i class="fas fa-phone-volume text-primary fs-3"></i>
-                    <h5 class="mt-2">Total Calls</h5>
-                    <p class="fw-bold fs-4">{{ $totalCount }}</p>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card text-center p-3 shadow-sm">
-                    <i class="fas fa-phone-volume text-primary fs-3"></i>
-                    <h5 class="mt-2">Not Called</h5>
-                    <p class="fw-bold fs-4">{{ $notCalledCount }}</p>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card text-center p-3 shadow-sm">
-                    <i class="fas fa-phone text-success fs-3"></i>
-                    <h5 class="mt-2">Answered</h5>
-                    <p class="fw-bold fs-4">{{ $answeredCount }}</p>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card text-center p-3 shadow-sm">
-                    <i class="fas fa-phone-slash text-warning fs-3"></i>
-                    <h5 class="mt-2">No Answer</h5>
-                    <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
-                </div>
-            </div>
-            <div class="col">
-                <div class="card text-center p-3 shadow-sm">
-                    <i class="fa-solid fa-right-left text-primary fs-3"></i>
-                    <h5 class="mt-2">Transferring</h5>
-                    <p class="fw-bold fs-4">{{ $transferedCount }}</p>
-                </div>
-            </div>
-        @elseif($filter === 'answered')
-            <div class="col">
-                <div class="card text-center p-3 shadow-sm">
-                    <i class="fas fa-phone text-success fs-3"></i>
-                    <h5 class="mt-2">Answered Calls</h5>
-                    <p class="fw-bold fs-4">{{ $answeredCount }}</p>
-                </div>
-            </div>
-        @elseif($filter === 'no answer')
-            <div class="col">
-                <div class="card text-center p-3 shadow-sm">
-                    <i class="fas fa-phone-slash text-warning fs-3"></i>
-                    <h5 class="mt-2">No Answer Calls</h5>
-                    <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
-                </div>
-            </div>
-        @elseif($filter === 'transferring')
-            <div class="col">
-                <div class="card text-center p-3 shadow-sm">
-                    <i class="fa-solid fa-right-left text-primary fs-3"></i>
-                    <h5 class="mt-2">Transferring</h5>
-                    <p class="fw-bold fs-4">{{ $transferedCount }}</p>
-                </div>
-            </div>
-            @elseif($filter === 'new')
-            <div class="col">
-                <div class="card text-center p-3 shadow-sm">
-                    <i class="fas fa-phone-volume text-primary fs-3"></i>
-                    <h5 class="mt-2">Not Called</h5>
-                    <p class="fw-bold fs-4">{{ $notCalledCount }}</p>
-                </div>
-            </div>
+            </script>
         @endif
-    </div>
 
+        <!-- Page Header -->
+        <div class="text-center mb-5">
+            <h2 class="fw-bold text-primary">Auto Dailer Report</h2>
+            {{-- <p class="text-muted">View and manage detailed reports on call activity.</p> --}}
+        </div>
 
+        <!-- Filters Section -->
+        <!-- First Line: Export and Filter Buttons -->
+        <!-- First Row: Export Button & Filters -->
+        <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
+            <!-- Export Button -->
+            <a href="{{ route('auto_dailer.report.export', [
+                'filter' => $filter,
+                'extension_from' => request('extension_from'),
+                'extension_to' => request('extension_to'),
+                'provider' => request('provider'),
+                'date_from' => request('date_from'),
+                'date_to' => request('date_to'),
+                'time_from' => request('time_from'),
+                'time_to' => request('time_to'),
+            ]) }}"
+                class="btn btn-success d-flex align-items-center">
+                <i class="fas fa-file-export me-2"></i> Export as CSV
+            </a>
 
-    <!-- Filters Form -->
-    <form method="GET" action="{{ url('auto-dailer-report') }}">
-        <input type="hidden" name="filter" value="{{ $filter }}">
-
-        <div class="row g-3">
-            <!-- Extension Filters -->
-            <div class="col-md-3">
-                <input type="number" name="extension_from" class="form-control" placeholder="Extension From"
-                    value="{{ request('extension_from') }}">
-            </div>
-            <div class="col-md-3">
-                <input type="number" name="extension_to" class="form-control" placeholder="Extension To"
-                    value="{{ request('extension_to') }}">
-            </div>
-
-            <!-- Provider Dropdown -->
-            <div class="col-md-3">
-                <select name="provider" class="form-control">
-                    <option value="">All Providers</option>
-                    @foreach ($providers as $provider)
-                    <option value="{{ $provider->name }}" {{ request('provider')==$provider->name ? 'selected' : '' }}>
-                        {{ $provider->name }} - {{ $provider->extension }}
-                    </option>
-                    @endforeach
-                </select>
-            </div>
-
-            <!-- Date Filters -->
-            <div class="col-md-3">
-                <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
-            </div>
-            <div class="col-md-3">
-                <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
-            </div>
-
-            <!-- Time Filters -->
-            <div class="col-md-3">
-                <input type="time" name="time_from" class="form-control" id="time_from"
-                    value="{{ request('time_from') }}">
-            </div>
-            <div class="col-md-3">
-                <input type="time" name="time_to" class="form-control" id="time_to" value="{{ request('time_to') }}">
-            </div>
-
-            <!-- Apply Button -->
-            <div class="col-md-3 d-flex justify-content-end">
-                <button type="submit" class="btn btn-primary w-100">
-                    <i class="fas fa-filter me-2"></i> Apply
-                </button>
+            <!-- Filter Buttons -->
+            <div class="btn-group flex-wrap">
+                <a href="{{ url('auto-dailer-report?filter=all') }}"
+                    class="{{ $filter === 'all' ? 'btn btn-primary' : 'btn btn-light' }}">
+                    <i class="fas fa-list me-1"></i> All
+                </a>
+                <a href="{{ url('auto-dailer-report?filter=answered') }}"
+                    class="{{ $filter === 'answered' ? 'btn btn-primary' : 'btn btn-light' }}">
+                    <i class="fas fa-phone me-1"></i> Answered
+                </a>
+                <a href="{{ url('auto-dailer-report?filter=transferring') }}"
+                    class="{{ $filter === 'transferring' ? 'btn btn-primary' : 'btn btn-light' }}">
+                    <i class="fa-solid fa-right-left me-1"></i> Transferring
+                </a>
+                <a href="{{ url('auto-dailer-report?filter=no answer') }}"
+                    class="{{ $filter === 'no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
+                    <i class="fas fa-phone-slash me-1"></i> No Answer
+                </a>
+                <a href="{{ url('auto-dailer-report?filter=new') }}"
+                    class="{{ $filter === 'new' ? 'btn btn-primary' : 'btn btn-light' }}">
+                    <i class="fas fa-phone-slash me-1"></i> Not Called
+                </a>
+                <a href="{{ url('auto-dailer-report?filter=today') }}"
+                    class="{{ $filter === 'today' ? 'btn btn-primary' : 'btn btn-light' }}">
+                    <i class="fas fa-calendar-day me-1"></i> Today
+                </a>
             </div>
         </div>
-    </form>
+
+        <!-- Statistics Cards -->
+        <div class="row row-cols-2 row-cols-md-4 g-3 mb-4">
+            @if ($filter === 'all' || $filter === 'today')
+                <div class="col">
+                    <div class="card text-center p-3 shadow-sm">
+                        <i class="fas fa-phone-volume text-primary fs-3"></i>
+                        <h5 class="mt-2">Total Calls</h5>
+                        <p class="fw-bold fs-4">{{ $totalCount }}</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card text-center p-3 shadow-sm">
+                        <i class="fas fa-phone-volume text-primary fs-3"></i>
+                        <h5 class="mt-2">Not Called</h5>
+                        <p class="fw-bold fs-4">{{ $notCalledCount }}</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card text-center p-3 shadow-sm">
+                        <i class="fas fa-phone text-success fs-3"></i>
+                        <h5 class="mt-2">Answered</h5>
+                        <p class="fw-bold fs-4">{{ $answeredCount }}</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card text-center p-3 shadow-sm">
+                        <i class="fas fa-phone-slash text-warning fs-3"></i>
+                        <h5 class="mt-2">No Answer</h5>
+                        <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
+                    </div>
+                </div>
+                <div class="col">
+                    <div class="card text-center p-3 shadow-sm">
+                        <i class="fa-solid fa-right-left text-primary fs-3"></i>
+                        <h5 class="mt-2">Transferring</h5>
+                        <p class="fw-bold fs-4">{{ $transferedCount }}</p>
+                    </div>
+                </div>
+            @elseif($filter === 'answered')
+                <div class="col">
+                    <div class="card text-center p-3 shadow-sm">
+                        <i class="fas fa-phone text-success fs-3"></i>
+                        <h5 class="mt-2">Answered Calls</h5>
+                        <p class="fw-bold fs-4">{{ $answeredCount }}</p>
+                    </div>
+                </div>
+            @elseif($filter === 'no answer')
+                <div class="col">
+                    <div class="card text-center p-3 shadow-sm">
+                        <i class="fas fa-phone-slash text-warning fs-3"></i>
+                        <h5 class="mt-2">No Answer Calls</h5>
+                        <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
+                    </div>
+                </div>
+            @elseif($filter === 'transferring')
+                <div class="col">
+                    <div class="card text-center p-3 shadow-sm">
+                        <i class="fa-solid fa-right-left text-primary fs-3"></i>
+                        <h5 class="mt-2">Transferring</h5>
+                        <p class="fw-bold fs-4">{{ $transferedCount }}</p>
+                    </div>
+                </div>
+            @elseif($filter === 'new')
+                <div class="col">
+                    <div class="card text-center p-3 shadow-sm">
+                        <i class="fas fa-phone-volume text-primary fs-3"></i>
+                        <h5 class="mt-2">Not Called</h5>
+                        <p class="fw-bold fs-4">{{ $notCalledCount }}</p>
+                    </div>
+                </div>
+            @endif
+        </div>
 
 
-    <!-- Report Table -->
-    <div class="card shadow-sm border-0 rounded">
-        <div class="card-body">
-            <div class="table-responsive">
-                <table class="table table-hover align-middle text-center">
-                    <thead class="bg-light-primary text-primary">
-                        <tr>
-                            <th><i class="fa-solid fa-hashtag"></i></th>
-                            <th><i class="fa-solid fa-mobile"></i> Mobile</th>
-                            <th><i class="fa-brands fa-nfc-directional"></i> Provider</th>
-                            <th><i class="fa-solid fa-phone-volume"></i> Extension</th>
-                            <th><i class="fa-solid fa-phone"></i>|<i class="fa-solid fa-phone-slash"></i> Status</th>
-                            <th><i class="fa-solid fa-circle-radiation"></i> Talking</th>
-                            <th><i class="fa-solid fa-circle-radiation"></i> Ringing</th>
-                            <th><i class="fa-solid fa-calendar-days"></i> Called At - Date</th>
-                            <th><i class="fa-solid fa-clock"></i> Called At - Time</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @forelse ($reports as $index => $report)
-                        <tr>
-                            <td>{{ $reports->firstItem() + $index }}</td>
-                            <td>{{ $report->phone_number }}</td>
-                            <td>{{ $report->provider }}</td>
-                            <td>{{ $report->extension }}</td>
-                            <td>
-                                @php
-                                $status = in_array($report->status, [
-                                'Wextension',
-                                'Wexternalline',
-                                'Talking',
-                                ])
-                                ? 'answered'
-                                // : ($report->status === 'Dialing'
-                                // ? 'falid call'
-                                : 'no answer';
 
-                                $badgeClass = match ($status) {
-                                'answered'
-                                => 'badge bg-success-subtle border border-success-subtle text-success-emphasis
-                                rounded-pill',
-                                'no answer'
-                                => 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis
-                                rounded-pill',
-                                default
-                                => 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis
-                                rounded-pill',
-                                };
-                                @endphp
-                                <span class="badge bg-{{ $badgeClass }}">
-                                    {{ ucfirst($status) }}
-                                </span>
-                            </td>
-                            <td>{{ $report->duration_time ? $report->duration_time : '-' }}</td>
-                            <td>{{ $report->duration_routing ? $report->duration_routing : '-' }}</td>
-                            <td>{{ $report->created_at->format('Y-m-d') }}</td> <!-- For Date -->
-                            <td>{{ $report->created_at->format('H:i:s') }}</td> <!-- For Time -->
+        <!-- Filters Form -->
+        <form method="GET" action="{{ url('auto-dailer-report') }}">
+            <input type="hidden" name="filter" value="{{ $filter }}">
 
-                        </tr>
-                        @empty
-                        <tr>
-                            <td colspan="7">No reports found for the given filter.</td>
-                        </tr>
-                        @endforelse
-                    </tbody>
-                </table>
+            <div class="row g-3">
+                <!-- Extension Filters -->
+                <div class="col-md-3">
+                    <input type="number" name="extension_from" class="form-control" placeholder="Extension From"
+                        value="{{ request('extension_from') }}">
+                </div>
+                <div class="col-md-3">
+                    <input type="number" name="extension_to" class="form-control" placeholder="Extension To"
+                        value="{{ request('extension_to') }}">
+                </div>
+
+                <!-- Provider Dropdown -->
+                <div class="col-md-3">
+                    <select name="provider" class="form-control">
+                        <option value="">All Providers</option>
+                        @foreach ($providers as $provider)
+                            <option value="{{ $provider->name }}"
+                                {{ request('provider') == $provider->name ? 'selected' : '' }}>
+                                {{ $provider->name }} - {{ $provider->extension }}
+                            </option>
+                        @endforeach
+                    </select>
+                </div>
+
+                <!-- Date Filters -->
+                <div class="col-md-3">
+                    <input type="date" name="date_from" class="form-control" value="{{ request('date_from') }}">
+                </div>
+                <div class="col-md-3">
+                    <input type="date" name="date_to" class="form-control" value="{{ request('date_to') }}">
+                </div>
+
+                <!-- Time Filters -->
+                <div class="col-md-3">
+                    <input type="time" name="time_from" class="form-control" id="time_from"
+                        value="{{ request('time_from') }}">
+                </div>
+                <div class="col-md-3">
+                    <input type="time" name="time_to" class="form-control" id="time_to"
+                        value="{{ request('time_to') }}">
+                </div>
+
+                <!-- Apply Button -->
+                <div class="col-md-3 d-flex justify-content-end">
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="fas fa-filter me-2"></i> Apply
+                    </button>
+                </div>
+            </div>
+        </form>
+
+
+        <!-- Report Table -->
+        <div class="card shadow-sm border-0 rounded">
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle text-center">
+                        <thead class="bg-light-primary text-primary">
+                            <tr>
+                                <th><i class="fa-solid fa-hashtag"></i></th>
+                                <th><i class="fa-solid fa-mobile"></i> Mobile</th>
+                                <th><i class="fa-brands fa-nfc-directional"></i> Provider</th>
+                                <th><i class="fa-solid fa-phone-volume"></i> Extension</th>
+                                <th><i class="fa-solid fa-phone"></i>|<i class="fa-solid fa-phone-slash"></i> Status</th>
+                                <th><i class="fa-solid fa-circle-radiation"></i> Talking</th>
+                                <th><i class="fa-solid fa-circle-radiation"></i> Ringing</th>
+                                <th><i class="fa-solid fa-calendar-days"></i> Called At - Date</th>
+                                <th><i class="fa-solid fa-clock"></i> Called At - Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @forelse ($reports as $index => $report)
+                                <tr>
+                                    <td>{{ $reports->firstItem() + $index }}</td>
+                                    <td>{{ $report->phone_number }}</td>
+                                    <td>{{ $report->provider }}</td>
+                                    <td>{{ $report->extension }}</td>
+                                    <td>
+                                        @php
+                                            if ($report->state === 'new') {
+                                                $status = 'not called';
+                                            } else {
+                                                $status = in_array($report->status, [
+                                                    'Wextension',
+                                                    'Wexternalline',
+                                                    'Talking',
+                                                ])
+                                                    ? 'answered'
+                                                    : 'no answer';
+                                            }
+
+                                            $badgeClass = match ($status) {
+                                                'answered'
+                                                    => 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill',
+                                                'no answer'
+                                                    => 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill',
+                                                'not called'
+                                                    => 'badge bg-secondary-subtle border border-secondary-subtle text-secondary-emphasis rounded-pill',
+                                                default
+                                                    => 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill',
+                                            };
+                                        @endphp
+
+
+                                        <span class="badge bg-{{ $badgeClass }}">
+                                            {{ ucfirst($status) }}
+                                        </span>
+                                    </td>
+                                    <td>{{ $report->duration_time ? $report->duration_time : '-' }}</td>
+                                    <td>{{ $report->duration_routing ? $report->duration_routing : '-' }}</td>
+                                    <td>{{ $report->created_at->format('Y-m-d') }}</td> <!-- For Date -->
+                                    <td>{{ $report->created_at->format('H:i:s') }}</td> <!-- For Time -->
+
+                                </tr>
+                            @empty
+                                <tr>
+                                    <td colspan="7">No reports found for the given filter.</td>
+                                </tr>
+                            @endforelse
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
+
+        <!-- Pagination -->
+        <div class="d-flex justify-content-center">
+            {!! $reports->appends(request()->except('page'))->links('pagination::bootstrap-5') !!}
+        </div>
+
+
     </div>
-
-    <!-- Pagination -->
-    <div class="d-flex justify-content-center">
-        {!! $reports->appends(request()->except('page'))->links('pagination::bootstrap-5') !!}
-    </div>
-
-
-</div>
 
 
 
@@ -283,8 +288,8 @@
 
 @section('scripts')
 
-<script>
-    document.getElementById('download-autoDailer-csv-button').addEventListener('click', function(event) {
+    <script>
+        document.getElementById('download-autoDailer-csv-button').addEventListener('click', function(event) {
             event.preventDefault(); // Prevent default action to manage it manually
 
             const url = this.href;
@@ -354,6 +359,6 @@
                 });
             });
         });
-</script>
+    </script>
 
 @endsection
