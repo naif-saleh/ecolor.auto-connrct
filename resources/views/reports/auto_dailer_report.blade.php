@@ -132,6 +132,15 @@
                 </div>
             </div>
         @endif
+        @elseif($filter === 'new')
+        <div class="col">
+            <div class="card text-center p-3 shadow-sm">
+                <i class="fas fa-phone-volume text-primary fs-3"></i>
+                <h5 class="mt-2">Not Called</h5>
+                <p class="fw-bold fs-4">{{ $newCount }}</p>
+            </div>
+        </div>
+        @endif
     </div>
 
 
