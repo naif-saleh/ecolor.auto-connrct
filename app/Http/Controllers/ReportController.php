@@ -40,6 +40,8 @@ class ReportController extends Controller
         return view('reports.user_logs', compact('logs'));
     }
 
+
+
     public function AutoDailerReports(Request $request)
     {
         $filter = $request->input('filter', 'today');
@@ -58,18 +60,13 @@ class ReportController extends Controller
         $noAnswerStatuses = ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
 
         // Start building the queries
-        $query = AutoDailerReport::query()->with('file.provider');
-        $queryNew = ADialData::query()->with('file.provider');
+        $query = AutoDailerReport::query();
+        $queryNew = ADialData::query();
 
-        // Apply provider filter using relationship
+        // Apply provider filter if selected
         if ($provider) {
-            $query->whereHas('file', function ($q) use ($provider) {
-                $q->where('provider_id', $provider);
-            });
-
-            $queryNew->whereHas('file', function ($q) use ($provider) {
-                $q->where('provider_id', $provider);
-            });
+            $query->where('provider', $provider);
+            $queryNew->where('provider', $provider);
         }
 
         // Apply date range filters if selected
@@ -83,7 +80,7 @@ class ReportController extends Controller
                 \Carbon\Carbon::parse($dateTo)->endOfDay()
             ]);
         } elseif ($filter === 'today') {
-            // Default to today's data
+            // If no date range is provided and filter is 'today', default to today's data
             $query->whereDate('created_at', now()->toDateString());
             $queryNew->whereDate('created_at', now()->toDateString());
         }
@@ -130,7 +127,7 @@ class ReportController extends Controller
         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
 
         // Get distinct providers for dropdown
-        $providers = ADialProvider::select('id', 'name', 'extension')
+        $providers = ADialProvider::select('name', 'extension')
             ->distinct()
             ->orderBy('name', 'asc')
             ->orderBy('extension', 'desc')
@@ -154,117 +151,6 @@ class ReportController extends Controller
             'timeTo'
         ));
     }
-
-
-//     public function AutoDailerReports(Request $request)
-// {
-//     $filter = $request->input('filter', 'today');
-//     $extensionFrom = $request->input('extension_from');
-//     $extensionTo = $request->input('extension_to');
-//     $provider = $request->input('provider');
-//     $dateFrom = $request->input('date_from');
-//     $dateTo = $request->input('date_to');
-//     $timeFrom = $request->input('time_from');
-//     $timeTo = $request->input('time_to');
-
-//     // Define status mappings
-//     $answeredStatuses = ['Talking', 'call'];
-//     $transferring = ['Transferring', 'Rerouting'];
-//     $notCalledStates = ['new'];
-//     $noAnswerStatuses = ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
-
-//     // Start building the queries
-//     $query = AutoDailerReport::query();
-//     $queryNew = ADialData::query();
-
-//     // Apply provider filter if selected
-//     if ($provider) {
-//         $query->where('provider', $provider);
-//         $queryNew->where('provider', $provider);
-//     }
-
-//     // Apply date range filters if selected
-//     if ($dateFrom && $dateTo) {
-//         $query->whereBetween('created_at', [
-//             \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-//             \Carbon\Carbon::parse($dateTo)->endOfDay()
-//         ]);
-//         $queryNew->whereBetween('created_at', [
-//             \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-//             \Carbon\Carbon::parse($dateTo)->endOfDay()
-//         ]);
-//     } elseif ($filter === 'today') {
-//         // If no date range is provided and filter is 'today', default to today's data
-//         $query->whereDate('created_at', now()->toDateString());
-//         $queryNew->whereDate('created_at', now()->toDateString());
-//     }
-
-//     // Apply time range filters if provided
-//     if ($timeFrom && $timeTo) {
-//         $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
-//         $queryNew->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
-//     }
-
-//     // Apply extension range filters if provided
-//     if ($extensionFrom) {
-//         $query->where('extension', '>=', $extensionFrom);
-//         $queryNew->where('extension', '>=', $extensionFrom);
-//     }
-//     if ($extensionTo) {
-//         $query->where('extension', '<=', $extensionTo);
-//         $queryNew->where('extension', '<=', $extensionTo);
-//     }
-
-//     // Clone query before applying status filters (for statistics)
-//     $statsQuery = clone $query;
-//     $newQuery = clone $queryNew;
-
-//     // Apply status filters based on selection
-//     if ($filter === 'answered') {
-//         $query->whereIn('status', $answeredStatuses);
-//     } elseif ($filter === 'no answer') {
-//         $query->whereIn('status', $noAnswerStatuses);
-//     } elseif ($filter === 'transferring') {
-//         $query->whereIn('status', $transferring);
-//     } elseif ($filter === 'new') {
-//         $query = $queryNew->whereIn('state', $notCalledStates);
-//     }
-
-//     // Get paginated results
-//     $reports = $query->orderBy('created_at', 'desc')->paginate(50);
-
-//     // Calculate statistics
-//     $totalCount = $statsQuery->count();
-//     $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
-//     $transferedCount = (clone $statsQuery)->whereIn('status', $transferring)->count();
-//     $notCalledCount = (clone $newQuery)->whereIn('state', $notCalledStates)->count();
-//     $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
-
-//     // Get distinct providers for dropdown
-//     $providers = ADialProvider::select('name', 'extension')
-//         ->distinct()
-//         ->orderBy('name', 'asc')
-//         ->orderBy('extension', 'desc')
-//         ->get();
-
-//     return view('reports.auto_dailer_report', compact(
-//         'reports',
-//         'filter',
-//         'provider',
-//         'providers',
-//         'totalCount',
-//         'answeredCount',
-//         'noAnswerCount',
-//         'transferedCount',
-//         'notCalledCount',
-//         'extensionFrom',
-//         'extensionTo',
-//         'dateFrom',
-//         'dateTo',
-//         'timeFrom',
-//         'timeTo'
-//     ));
-// }
 
 
     /**
@@ -315,8 +201,8 @@ class ReportController extends Controller
                 \Carbon\Carbon::parse($dateTo, 'Asia/Riyadh')->endOfDay()
             ]);
         }
-         // Apply time range filters if provided
-         if ($timeFrom && $timeTo) {
+        // Apply time range filters if provided
+        if ($timeFrom && $timeTo) {
             $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
         }
         $reports = $query->get();
