@@ -56,7 +56,7 @@ class ReportController extends Controller
         // Define status mappings
         $answeredStatuses = ['Talking', 'call'];
         $transferring = ['Transferring', 'Rerouting'];
-        $new = ['new' , 'ff'];
+        $notCalledStates = ['new'];
         $noAnswerStatuses = ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
 
         // Start building the query
@@ -103,8 +103,9 @@ class ReportController extends Controller
         }elseif ($filter === 'transferring') {
             $query->whereIn('status', $transferring);
         }elseif ($filter === 'new') {
-            $queryNew->whereIn('state', $new);
+            $queryNew->whereIn('state', $notCalledStates);
         }
+
 
         // Get paginated results
         $reports = $query->orderBy('created_at', 'desc')->paginate(50);
@@ -114,7 +115,7 @@ class ReportController extends Controller
         $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
         $transferedCount = (clone $statsQuery)->whereIn('status', $transferring)->count();
 
-        $notCalledStates = ['new'];
+
         $notCalledCount = (clone $newQuery)
             ->whereIn('state', $notCalledStates)
             ->whereDate('created_at', now()->toDateString())
