@@ -103,7 +103,7 @@ class ReportController extends Controller
         }elseif ($filter === 'transferring') {
             $query->whereIn('status', $transferring);
         }elseif ($filter === 'new') {
-            $queryNew->whereIn('status', $new);
+            $queryNew->whereIn('state', $new);
         }
 
         // Get paginated results
