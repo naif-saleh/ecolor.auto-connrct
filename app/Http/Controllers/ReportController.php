@@ -53,7 +53,8 @@ class ReportController extends Controller
         $timeTo = $request->input('time_to');
 
         // Define status mappings
-        $answeredStatuses = ['Talking', 'Transferring'];
+        $answeredStatuses = ['Talking', 'call'];
+        $transferring = ['Transferring', 'called'];
         $noAnswerStatuses = ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
 
         // Start building the query
@@ -96,6 +97,8 @@ class ReportController extends Controller
             $query->whereIn('status', $answeredStatuses);
         } elseif ($filter === 'no answer') {
             $query->whereIn('status', $noAnswerStatuses);
+        }elseif ($filter === 'transferring') {
+            $query->whereIn('status', $transferring);
         }
 
         // Get paginated results
@@ -104,6 +107,7 @@ class ReportController extends Controller
         // Calculate statistics
         $totalCount = $statsQuery->count();
         $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
+        $transferedCount = (clone $statsQuery)->whereIn('status', $transferring)->count();
         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
 
         // Get distinct providers for dropdown
@@ -121,6 +125,7 @@ class ReportController extends Controller
             'totalCount',
             'answeredCount',
             'noAnswerCount',
+            'transferedCount',
             'extensionFrom',
             'extensionTo',
             'dateFrom',
@@ -145,8 +150,9 @@ class ReportController extends Controller
         $timeTo = $request->input('time_to');
 
         $statusMap = [
-            'answered' => ['Talking', 'Transferring'],
+            'answered' => ['Talking', 'call'],
             'no answer' => ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'],
+            'transferring' => ['Transferring', 'called']
         ];
 
         $query = AutoDailerReport::query();

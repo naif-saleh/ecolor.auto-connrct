@@ -50,6 +50,10 @@
                 class="{{ $filter === 'answered' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-phone me-1"></i> Answered
             </a>
+            <a href="{{ url('auto-dailer-report?filter=transferring') }}"
+                class="{{ $filter === 'answered' ? 'btn btn-primary' : 'btn btn-light' }}">
+                <i class="fa-solid fa-right-left me-1"></i> Transferring
+            </a>
             <a href="{{ url('auto-dailer-report?filter=no answer') }}"
                 class="{{ $filter === 'no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-phone-slash me-1"></i> No Answer
@@ -85,6 +89,13 @@
                 <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
             </div>
         </div>
+        <div class="col-md-4">
+            <div class="card text-center p-3 shadow-sm">
+                <i class="fa-solid fa-right-left text-primary fs-3"></i>
+                <h5 class="mt-2">Transferring</h5>
+                <p class="fw-bold fs-4">{{ $transferedCount }}</p>
+            </div>
+        </div>
         @elseif($filter === 'answered')
         <div class="col-md-6">
             <div class="card text-center p-3 shadow-sm">
@@ -99,6 +110,14 @@
                 <i class="fas fa-phone-slash text-warning fs-3"></i>
                 <h5 class="mt-2">No Answer Calls</h5>
                 <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
+            </div>
+        </div>
+        @elseif($filter === 'transferring')
+        <div class="col-md-4">
+            <div class="card text-center p-3 shadow-sm">
+                <i class="fa-solid fa-right-left text-primary fs-3"></i>
+                <h5 class="mt-2">Transferring</h5>
+                <p class="fw-bold fs-4">{{ $transferedCount }}</p>
             </div>
         </div>
         @endif
