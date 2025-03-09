@@ -196,7 +196,7 @@ class ReportController extends Controller
                     $report->phone_number,
                     $report->provider,
                     $report->extension,
-                    (in_array($report->status, ['Wexternalline', 'Talking']) ? 'Answered' : 'No Answer'),
+                    (in_array($report->status, ['Wexternalline', 'Talking', 'Transferring']) ? 'Answered' : 'No Answer'),
                     $report->duration_time ? $report->duration_time : '-',
                     $report->duration_routing ? $report->duration_routing : '-',
                     $report->created_at->addHours(3)->format('H:i:s'),
