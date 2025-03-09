@@ -44,7 +44,7 @@ class ReportController extends Controller
 
     public function AutoDailerReports(Request $request)
 {
-    $filter = $request->input('filter', 'today'); 
+    $filter = $request->input('filter', 'today');
     $extensionFrom = $request->input('extension_from');
     $extensionTo = $request->input('extension_to');
     $provider = $request->input('provider');
@@ -123,10 +123,7 @@ class ReportController extends Controller
     $totalCount = $statsQuery->count();
     $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
     $transferedCount = (clone $statsQuery)->whereIn('status', $transferring)->count();
-    $notCalledCount = (clone $newQuery)
-        ->whereIn('state', $notCalledStates)
-        ->whereDate('created_at', now()->toDateString())
-        ->count();
+    $notCalledCount = (clone $newQuery)->whereIn('state', $notCalledStates)->count();
     $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
 
     // Get distinct providers for dropdown
