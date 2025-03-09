@@ -171,17 +171,16 @@ class ReportController extends Controller
         }
 
         // Apply date range filter
-        $query->whereBetween('created_at', [
-            \Carbon\Carbon::parse($dateFrom, 'Asia/Riyadh')->startOfDay(),
-            \Carbon\Carbon::parse($dateTo, 'Asia/Riyadh')->endOfDay()
-        ]);
-
+        if ($dateFrom && $dateTo) {
+            $query->whereBetween('created_at', [
+                \Carbon\Carbon::parse($dateFrom, 'Asia/Riyadh')->startOfDay()->timezone('UTC'),
+                \Carbon\Carbon::parse($dateTo, 'Asia/Riyadh')->endOfDay()->timezone('UTC')
+            ]);
+        }
          // Apply time range filters if provided
-         $utcTimeFrom = \Carbon\Carbon::parse($timeFrom, 'Asia/Riyadh')->timezone('UTC')->format('H:i:s');
-         $utcTimeTo = \Carbon\Carbon::parse($timeTo, 'Asia/Riyadh')->timezone('UTC')->format('H:i:s');
-
-         $query->whereBetween(DB::raw('TIME(created_at)'), [$utcTimeFrom, $utcTimeTo]);
-
+         if ($timeFrom && $timeTo) {
+            $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
+        }
         $reports = $query->get();
         // dd('Export Query:', ['query' => $query->toSql(), 'bindings' => $query->getBindings()]);
 
