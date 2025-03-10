@@ -121,7 +121,7 @@ class ReportController extends Controller
         $totalCount = $statsQuery->count();
         $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
         $transferedCount = (clone $statsQuery)->whereIn('status', $transferring)->count();
-        $notCalledCount = $newQuery->whereIn('state', $notCalledStates)->count();
+        //$notCalledCount = $newQuery->whereIn('state', $notCalledStates)->count();
         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
 
         // Get distinct providers for dropdown
@@ -140,7 +140,7 @@ class ReportController extends Controller
             'answeredCount',
             'noAnswerCount',
             'transferedCount',
-            'notCalledCount',
+            //'notCalledCount',
             'extensionFrom',
             'extensionTo',
             'dateFrom',
