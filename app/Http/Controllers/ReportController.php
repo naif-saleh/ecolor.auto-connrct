@@ -103,7 +103,7 @@ class ReportController extends Controller
 
         // Clone query before applying status filters (for statistics)
         $statsQuery = clone $query;
-        $newQuery = clone $queryNew;
+        $newQuery =$queryNew;
 
         // Apply status filters based on selection
         if ($filter === 'answered') {
@@ -121,7 +121,7 @@ class ReportController extends Controller
         $totalCount = $statsQuery->count();
         $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
         $transferedCount = (clone $statsQuery)->whereIn('status', $transferring)->count();
-        //$notCalledCount = (clone $newQuery)->whereIn('state', $notCalledStates)->count();
+        $notCalledCount = $newQuery->whereIn('state', $notCalledStates)->count();
         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
 
         // Get distinct providers for dropdown
@@ -140,7 +140,7 @@ class ReportController extends Controller
             'answeredCount',
             'noAnswerCount',
             'transferedCount',
-            //'notCalledCount',
+            'notCalledCount',
             'extensionFrom',
             'extensionTo',
             'dateFrom',
