@@ -23,7 +23,7 @@
     <!-- endinject -->
  {{-- Tap Icon --}}
  <link rel="icon"
- href="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
+ href="https://ecolor.com.sa/wp-content/uploads/2023/07/ECOLOR-LOGO.svg"
  type="image/png"></head>
 
 <body>
@@ -38,8 +38,8 @@
 
                         <div class="auth-form-light text-left py-5 px-4 px-sm-5">
                             <div>
-                                <img src="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
-                                    width="60" alt="">
+                                <img src="https://ecolor.com.sa/wp-content/uploads/2023/07/ECOLOR-LOGO.svg"
+                                    width="200" alt="">
                             </div>
 
                             <h6 class="fw-light mt-4">Sign in to continue.</h6>
