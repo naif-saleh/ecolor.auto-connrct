@@ -66,19 +66,26 @@ class ReportController extends Controller
         // Apply provider filter if selected
         if ($provider) {
             $query->where('provider', $provider);
-
         }
-
+        
         // Apply date range filters if selected
         if ($dateFrom && $dateTo) {
             $query->whereBetween('created_at', [
                 \Carbon\Carbon::parse($dateFrom)->startOfDay(),
                 \Carbon\Carbon::parse($dateTo)->endOfDay()
             ]);
-
+            $notCalled = ADialData::where('state', 'new')
+            ->whereBetween('created_at', [
+                \Carbon\Carbon::parse($dateFrom)->startOfDay(),
+                \Carbon\Carbon::parse($dateTo)->endOfDay()
+            ])
+            ->count();
         } elseif ($filter === 'today') {
             // If no date range is provided and filter is 'today', default to today's data
             $query->whereDate('created_at', now()->toDateString());
+            $notCalled = ADialData::where('state', 'new')
+            ->whereDate('created_at', now()->toDateString())
+            ->count();
         }
 
         // Apply time range filters if provided
@@ -92,7 +99,7 @@ class ReportController extends Controller
         }
         if ($extensionTo) {
             $query->where('extension', '<=', $extensionTo);
-         }
+        }
 
         // Clone query before applying status filters (for statistics)
         $statsQuery = clone $query;
@@ -115,7 +122,7 @@ class ReportController extends Controller
         $queuedCount = (clone $statsQuery)->whereIn('status', $toQueue)->count();
         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
 
-        $notCalled = ADialData::where('state', '==', 'new')->count();
+
         // Get distinct providers for dropdown
         $providers = ADialProvider::select('name', 'extension')
             ->distinct()
