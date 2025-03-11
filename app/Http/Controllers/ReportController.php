@@ -164,6 +164,37 @@ class ReportController extends Controller
     }
 
     /**
+     * Export Not Called Numbers
+     */
+    public function exportTodayNotCalledCSV()
+    {
+        $notCalledData = ADialData::where('state', 'new')
+            ->whereDate('created_at', now()->toDateString())
+            ->get();
+
+        // Define CSV headers
+        $headers = [
+            "Content-Type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=today_not_called_numbers.csv",
+        ];
+
+        // Generate CSV content
+        $callback = function () use ($notCalledData) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Mobile', 'Status', 'Uploaded At']); // CSV headers
+
+            foreach ($notCalledData as $report) {
+                fputcsv($file, [$report->mobile, $report->state, $report->created_at]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+
+    /**
      * Export Auto Dailer AS CSV File
      */
     public function exportAutoDailerReport(Request $request)

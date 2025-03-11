@@ -181,6 +181,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('auto-dailer-report/export', [ReportController::class, 'exportAutoDailerReport'])->name('auto_dailer.report.export');
     // // Not Called Number Auto Dailer...........................................................................................................
     Route::get('auto-dailer-report/not-called-numbers', [ReportController::class, 'notCalledNumbers'])->name('auto_dailer.report.notCalled');
+    // // Export Not Called Number Auto Dailer...........................................................................................................
+
+    Route::get('/not-called/export-today-csv', [ReportController::class, 'exportTodayNotCalledCSV'])
+    ->name('auto_dailer.report.notCalled.exportTodayCSV');
+
 
     // // Auto Distributer Reports....................................................................................................................
     Route::get('auto-distributer-report', [ReportController::class, 'AutoDistributerReports'])->name('auto_distributer.report');
