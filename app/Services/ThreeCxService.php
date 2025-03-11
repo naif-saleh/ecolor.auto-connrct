@@ -56,11 +56,11 @@ class ThreeCxService
                 ],
                 'timeout' => 30,
             ]);
-        
+
             if ($response->getStatusCode() !== 200) {
                 throw new \Exception("Failed to fetch active calls. HTTP Status: " . $response->getStatusCode());
             }
-            Log::info(" getBody calls for provider : " . print_r($response->getBody()->getContents(), true));
+            // Log::info(" getBody calls for provider : " . print_r($response->getBody()->getContents(), true));
 
             return json_decode($response->getBody()->getContents(), true);
         } catch (\Exception $e) {
