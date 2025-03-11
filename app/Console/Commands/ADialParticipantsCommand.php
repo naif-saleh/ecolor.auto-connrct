@@ -82,7 +82,7 @@ class ADialParticipantsCommand extends Command
                             ->orWhere(function ($q) use ($now, $timezone) {
                                 // Handle overnight call windows
                                 $q->whereRaw("STR_TO_DATE(CONCAT(date, ' ', `from`), '%Y-%m-%d %H:%i:%s') <= ?", [$now])
-                                    ->whereRaw("TIME(`to`) < TIME(`from`)") 
+                                    ->whereRaw("TIME(`to`) < TIME(`from`)")
                                     ->whereRaw("STR_TO_DATE(CONCAT(DATE_ADD(date, INTERVAL 1 DAY), ' ', `to`), '%Y-%m-%d %H:%i:%s') >= ?", [$now]);
                             });
                     });
@@ -99,7 +99,8 @@ class ADialParticipantsCommand extends Command
     protected function fetchActiveProviderCalls($provider)
     {
         try {
-            return $this->threeCxService->getActiveCallsForProvider($provider->extension);
+            // return $this->threeCxService->getActiveCallsForProvider($provider->extension);
+            return $this->threeCxService->getAllActiveCalls();
         } catch (\Exception $e) {
             Log::error("ADialParticipantsCommand ❌ Failed to fetch active calls: " . $e->getMessage());
             return ['value' => []];
