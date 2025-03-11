@@ -55,7 +55,7 @@ class ReportController extends Controller
 
         // Define status mappings
         $answeredStatuses = ['Talking', 'call'];
-        $transferring = ['Transferring', 'Rerouting'];
+        $toQueue = ['Transferring', 'Rerouting'];
         $notCalledStates = ['new'];
         $noAnswerStatuses = ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
 
@@ -110,8 +110,8 @@ class ReportController extends Controller
             $query->whereIn('status', $answeredStatuses);
         } elseif ($filter === 'no answer') {
             $query->whereIn('status', $noAnswerStatuses);
-        } elseif ($filter === 'transferring') {
-            $query->whereIn('status', $transferring);
+        } elseif ($filter === 'queued') {
+            $query->whereIn('status', $toQueue);
         }
 
         // Get paginated results
@@ -120,7 +120,7 @@ class ReportController extends Controller
         // Calculate statistics
         $totalCount = $statsQuery->count();
         $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
-        $transferedCount = (clone $statsQuery)->whereIn('status', $transferring)->count();
+        $queuedCount = (clone $statsQuery)->whereIn('status', $toQueue)->count();
         //$notCalledCount = $newQuery->whereIn('state', $notCalledStates)->count();
         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
 
@@ -139,7 +139,7 @@ class ReportController extends Controller
             'totalCount',
             'answeredCount',
             'noAnswerCount',
-            'transferedCount',
+            'queuedCount',
             //'notCalledCount',
             'extensionFrom',
             'extensionTo',

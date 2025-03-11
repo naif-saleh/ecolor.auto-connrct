@@ -50,10 +50,10 @@
                     class="{{ $filter === 'answered' ? 'btn btn-primary' : 'btn btn-light' }}">
                     <i class="fas fa-phone me-1"></i> Answered
                 </a>
-                {{-- <a href="{{ url('auto-dailer-report?filter=transferring') }}"
-                    class="{{ $filter === 'transferring' ? 'btn btn-primary' : 'btn btn-light' }}">
-                    <i class="fa-solid fa-right-left me-1"></i> Transferring
-                </a> --}}
+                <a href="{{ url('auto-dailer-report?filter=queued') }}"
+                    class="{{ $filter === 'queued' ? 'btn btn-primary' : 'btn btn-light' }}">
+                    <i class="fa-solid fa-right-left me-1"></i> To Queue
+                </a>
                 <a href="{{ url('auto-dailer-report?filter=no answer') }}"
                     class="{{ $filter === 'no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
                     <i class="fas fa-phone-slash me-1"></i> No Answer
@@ -83,11 +83,11 @@
                     <h5 class="mt-2">No Answer</h5>
                     <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
                 </div>
-                {{-- <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
+                <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
                     <i class="fa-solid fa-right-left text-primary fs-3"></i>
                     <h5 class="mt-2">Transferring</h5>
-                    <p class="fw-bold fs-4">{{ $transferedCount }}</p>
-                </div> --}}
+                    <p class="fw-bold fs-4">{{ $queuedCount }}</p>
+                </div>
                 {{-- <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
                     <i class="fas fa-phone-volume text-primary fs-3"></i>
                     <h5 class="mt-2">Not Called</h5>
@@ -105,12 +105,12 @@
                     <h5 class="mt-2">No Answer Calls</h5>
                     <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
                 </div>
-            {{-- @elseif($filter === 'transferring')
+            @elseif($filter === 'queued')
                 <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
                     <i class="fa-solid fa-right-left text-primary fs-3"></i>
                     <h5 class="mt-2">Transferring</h5>
-                    <p class="fw-bold fs-4">{{ $transferedCount }}</p>
-                </div> --}}
+                    <p class="fw-bold fs-4">{{ $queuedCount }}</p>
+                </div>
 
             @endif
         </div>
