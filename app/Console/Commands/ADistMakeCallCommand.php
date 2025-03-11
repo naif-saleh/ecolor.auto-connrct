@@ -60,7 +60,7 @@ class ADistMakeCallCommand extends Command
                         'headers' => ['Authorization' => "Bearer $token"],
                         'timeout' => 10
                     ]);
-                    $participants = json_decode($participantResponse->getBody(), true);
+                    // $participants = json_decode($participantResponse->getBody(), true);
                 } catch (\GuzzleHttp\Exception\RequestException $e) {
                     Log::error("API Request Failed: " . $e->getMessage());
                     continue;
