@@ -23,7 +23,7 @@
     <!-- endinject -->
  {{-- Tap Icon --}}
  <link rel="icon"
- href="https://ecolor.com.sa/wp-content/uploads/2023/07/ECOLOR-LOGO.svg"
+ href="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
  type="image/png"></head>
 
 <body>
