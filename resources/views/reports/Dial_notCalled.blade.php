@@ -28,7 +28,7 @@
                             <th><i class="fa-solid fa-upload"></i> Uploaded At</th>
                         </tr>
                     </thead>
-                    @if (empty($notCalled))
+                    @if ($notCalled->isEmpty())
                     <div class="alert alert-warning">Only To Day Not Called Numbers You Can Export !!</div>
                     @else
                     <tbody>
