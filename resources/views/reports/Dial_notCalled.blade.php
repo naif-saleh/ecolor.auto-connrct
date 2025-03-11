@@ -10,7 +10,8 @@
         <h2 class="fw-bold text-primary">Auto Dailer - Numbers Not Called <u>{{$count}}</u></h2>
         <span>
             <a href="/auto-dailer-report" class="btn btn-dark">Back</a>
-            <a href="{{ route('auto_dailer.report.notCalled.exportTodayCSV') }}" class="btn btn-primary">Export as CSV</a>
+            <a href="{{ route('auto_dailer.report.notCalled.exportTodayCSV') }}" class="btn btn-primary">Export as
+                CSV</a>
         </span>
     </div>
 
@@ -27,6 +28,9 @@
                             <th><i class="fa-solid fa-upload"></i> Uploaded At</th>
                         </tr>
                     </thead>
+                    @if (empty($notCalled))
+                    <div class="alert alert-warning">Only To Day Not Called Numbers You Can Export !!</div>
+                    @else
                     <tbody>
                         @foreach ($notCalled as $index => $report)
                         <tr>
@@ -38,6 +42,8 @@
 
                         @endforeach
                     </tbody>
+                    @endif
+
                 </table>
             </div>
         </div>
@@ -55,7 +61,3 @@
 
 
 @endsection
-
-
-
-
