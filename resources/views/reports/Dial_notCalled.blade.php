@@ -27,7 +27,7 @@
                     <tbody>
                         @foreach ($notCalled as $index => $report)
                         <tr>
-                            <td>{{ $reports->firstItem() + $index }}</td>
+                            <td>{{ $notCalled->firstItem() + $index }}</td>
                             <td>{{ $report->mobile }}</td>
                             <td>{{ $report->state }}</td>
                             <td>{{ $report->created_at }}</td>
