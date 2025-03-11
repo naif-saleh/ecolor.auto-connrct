@@ -180,18 +180,21 @@ Route::middleware(['auth', 'admin'])->group(function () {
     // // Export Auto Dailer...........................................................................................................
     Route::get('auto-dailer-report/export', [ReportController::class, 'exportAutoDailerReport'])->name('auto_dailer.report.export');
     // // Not Called Number Auto Dailer...........................................................................................................
-    Route::get('auto-dailer-report/not-called-numbers', [ReportController::class, 'notCalledNumbers'])->name('auto_dailer.report.notCalled');
+    Route::get('auto-dailer-report/not-called-numbers', [ReportController::class, 'dialnotCalledNumbers'])->name('auto_dailer.report.notCalled');
     // // Export Not Called Number Auto Dailer...........................................................................................................
-
-    Route::get('/not-called/export-today-csv', [ReportController::class, 'exportTodayNotCalledCSV'])
-    ->name('auto_dailer.report.notCalled.exportTodayCSV');
+    Route::get('dial/not-called/export-today-csv', [ReportController::class, 'dialexportTodayNotCalledCSV'])
+        ->name('auto_dailer.report.notCalled.exportTodayCSV');
 
 
     // // Auto Distributer Reports....................................................................................................................
     Route::get('auto-distributer-report', [ReportController::class, 'AutoDistributerReports'])->name('auto_distributer.report');
     // // Export Auto Distributer...........................................................................................................
     Route::get('auto-distributer-report/export', [ReportController::class, 'exportAutoDistributerReport'])->name('auto_distributer.report.export');
-
+    // // Not Called Number Auto Distributer...........................................................................................................
+    Route::get('auto-distributer-report/not-called-numbers', [ReportController::class, 'distNotCalledNumbers'])->name('auto_distributer.report.notCalled');
+    // // Export Not Called Number Auto Distributer...........................................................................................................
+    Route::get('dist/not-called/export-today-csv', [ReportController::class, 'distexportTodayNotCalledCSV'])
+        ->name('auto_distributer.report.notCalled.exportTodayCSV');
 
     //    Manager Dashboard........................................................................................................
     Route::get('manager/dashboard', [DashboardController::class, 'getCallManagerStatisticsAutoDailer'])->name('manager.dashboard');

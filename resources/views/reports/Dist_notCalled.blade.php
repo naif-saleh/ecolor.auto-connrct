@@ -1,16 +1,16 @@
 @extends('layout.main')
 
-@section('title', 'Auto Dailer | Not Called')
+@section('title', 'Auto Distributor | Not Called')
 @section('content')
 <div class="container">
 
 
     <!-- Page Header -->
     <div class="d-flex justify-content-between text-center mb-2">
-        <h2 class="fw-bold text-primary">Auto Dailer - Numbers Not Called <u>{{$count}}</u></h2>
+        <h2 class="fw-bold text-primary">Auto Distributor - Numbers Not Called <u>{{$count}}</u></h2>
         <span>
             <a href="/auto-dailer-report" class="btn btn-dark">Back</a>
-            <a href="{{ route('auto_dailer.report.notCalled.exportTodayCSV') }}" class="btn btn-primary">Export as CSV</a>
+            <a href="{{ route('auto_distributer.report.notCalled.exportTodayCSV') }}" class="btn btn-primary">Export as CSV</a>
         </span>
     </div>
 

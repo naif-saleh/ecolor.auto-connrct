@@ -59,62 +59,66 @@
         </div>
     </div>
     <!-- Statistics Cards -->
-    <div class="row g-4 mb-4">
+    <div class="d-flex flex-wrap gap-3 mb-4">
         @if($filter === 'all' || $filter === 'today')
-        <div class="col-lg-3 col-md-6">
-            <div class="card text-center p-4 shadow-sm border-0 rounded-3">
-                <i class="fas fa-phone-volume text-primary fs-1 mb-2"></i>
-                <h6 class="fw-semibold">Total Calls</h6>
-                <p class="fw-bold fs-4">{{ $totalCount }}</p>
-            </div>
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone-volume text-primary fs-1 mb-2"></i>
+            <h6 class="fw-semibold">Total Calls</h6>
+            <p class="fw-bold fs-4">{{ $totalCount }}</p>
         </div>
-        <div class="col-lg-3 col-md-6">
-            <div class="card text-center p-4 shadow-sm border-0 rounded-3">
-                <i class="fas fa-phone text-success fs-1 mb-2"></i>
-                <h6 class="fw-semibold">Answered</h6>
-                <p class="fw-bold fs-4">{{ $answeredCount }}</p>
-            </div>
+
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone text-success fs-1 mb-2"></i>
+            <h6 class="fw-semibold">Answered</h6>
+            <p class="fw-bold fs-4">{{ $answeredCount }}</p>
         </div>
-        <div class="col-lg-3 col-md-6">
-            <div class="card text-center p-4 shadow-sm border-0 rounded-3">
-                <i class="fas fa-phone-slash text-warning fs-1 mb-2"></i>
-                <h6 class="fw-semibold">No Answer</h6>
-                <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
-            </div>
+
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone-slash text-warning fs-1 mb-2"></i>
+            <h6 class="fw-semibold">No Answer</h6>
+            <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
         </div>
-        <div class="col-lg-3 col-md-6">
-            <div class="card text-center p-4 shadow-sm border-0 rounded-3">
-                <i class="fas fa-phone-slash text-danger fs-1 mb-2"></i>
-                <h6 class="fw-semibold">Em.No Answer</h6>
-                <p class="fw-bold fs-4">{{ $todayEmployeeUnanswerCount }}</p>
-            </div>
+
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone-slash text-danger fs-1 mb-2"></i>
+            <h6 class="fw-semibold">Em.No Answer</h6>
+            <p class="fw-bold fs-4">{{ $todayEmployeeUnanswerCount }}</p>
         </div>
+
+        @if (!empty($notCalled))
+        <a href="{{ route('auto_dailer.report.notCalled') }}" style="text-decoration: none;">
+            <div class="card text-center p-4 shadow-sm flex-fill" style="min-width: 200px;">
+                <i class="fas fa-phone-slash text-primary fs-3"></i>
+                <h5 class="mt-2">Not Called</h5>
+                <p class="fw-bold fs-4">{{ $notCalled }}</p>
+            </div>
+        </a>
+        @endif
+
+
         @elseif($filter === 'answered')
-        <div class="col-lg-6 col-md-6">
-            <div class="card text-center p-4 shadow-sm border-0 rounded-3">
-                <i class="fas fa-phone text-success fs-1 mb-2"></i>
-                <h6 class="fw-semibold">Answered</h6>
-                <p class="fw-bold fs-4">{{ $answeredCount }}</p>
-            </div>
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone text-success fs-1 mb-2"></i>
+            <h6 class="fw-semibold">Answered</h6>
+            <p class="fw-bold fs-4">{{ $answeredCount }}</p>
         </div>
+
         @elseif($filter === 'no answer')
-        <div class="col-lg-6 col-md-6">
-            <div class="card text-center p-4 shadow-sm border-0 rounded-3">
-                <i class="fas fa-phone-slash text-warning fs-1 mb-2"></i>
-                <h6 class="fw-semibold">No Answer</h6>
-                <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
-            </div>
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone-slash text-warning fs-1 mb-2"></i>
+            <h6 class="fw-semibold">No Answer</h6>
+            <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
         </div>
+
         @elseif($filter === 'emplooyee no answer')
-        <div class="col-lg-6 col-md-6">
-            <div class="card text-center p-4 shadow-sm border-0 rounded-3">
-                <i class="fas fa-phone-slash text-danger fs-1 mb-2"></i>
-                <h6 class="fw-semibold">Em.No Answer</h6>
-                <p class="fw-bold fs-4">{{ $todayEmployeeUnanswerCount }}</p>
-            </div>
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone-slash text-danger fs-1 mb-2"></i>
+            <h6 class="fw-semibold">Em.No Answer</h6>
+            <p class="fw-bold fs-4">{{ $todayEmployeeUnanswerCount }}</p>
         </div>
         @endif
     </div>
+
 
 
 

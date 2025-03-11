@@ -6,6 +6,7 @@ use App\Models\ADialData;
 use Illuminate\Http\Request;
 use App\Models\ActivityLog;
 use App\Models\ADialProvider;
+use App\Models\ADistData;
 use App\Models\UserActivityLog;
 use App\Models\AutoDailerReport;
 use App\Models\AutoDistributerReport;
@@ -153,50 +154,6 @@ class ReportController extends Controller
     }
 
 
-    /**
-     * Not Called Numbers
-     */
-    public function notCalledNumbers()
-    {
-        $notCalled = ADialData::where('state', 'new')
-            ->whereDate('created_at', now()->toDateString())
-            ->paginate(200);
-        $count = ADialData::where('state', 'new')
-            ->whereDate('created_at', now()->toDateString())
-            ->count();
-        return view('reports.Dial_notCalled', compact('notCalled', 'count'));
-    }
-
-    /**
-     * Export Not Called Numbers
-     */
-    public function exportTodayNotCalledCSV()
-    {
-        $notCalledData = ADialData::where('state', 'new')
-            ->whereDate('created_at', now()->toDateString())
-            ->get();
-
-        // Define CSV headers
-        $headers = [
-            "Content-Type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=today_not_called_numbers.csv",
-        ];
-
-        // Generate CSV content
-        $callback = function () use ($notCalledData) {
-            $file = fopen('php://output', 'w');
-            fputcsv($file, ['Mobile', 'Status', 'Uploaded At']); // CSV headers
-
-            foreach ($notCalledData as $report) {
-                fputcsv($file, [$report->mobile, $report->state, $report->created_at]);
-            }
-
-            fclose($file);
-        };
-
-        return response()->stream($callback, 200, $headers);
-    }
-
 
     /**
      * Export Auto Dailer AS CSV File
@@ -282,6 +239,52 @@ class ReportController extends Controller
         return $response;
     }
 
+    /**
+     * Dialer Not Called Numbers
+     */
+    public function dialnotCalledNumbers()
+    {
+        $notCalled = ADialData::where('state', 'new')
+            ->whereDate('created_at', now()->toDateString())
+            ->paginate(200);
+        $count = ADialData::where('state', 'new')
+            ->whereDate('created_at', now()->toDateString())
+            ->count();
+        return view('reports.Dial_notCalled', compact('notCalled', 'count'));
+    }
+
+    /**
+     * Dialer Export Not Called Numbers
+     */
+    public function dialexportTodayNotCalledCSV()
+    {
+        $notCalledData = ADialData::where('state', 'new')
+            ->whereDate('created_at', now()->toDateString())
+            ->get();
+
+        // Define CSV headers
+        $headers = [
+            "Content-Type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=today_not_called_numbers.csv",
+        ];
+
+        // Generate CSV content
+        $callback = function () use ($notCalledData) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Mobile', 'Status', 'Uploaded At']); // CSV headers
+
+            foreach ($notCalledData as $report) {
+                fputcsv($file, [$report->mobile, $report->state, $report->created_at]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
+    }
+
+
+
 
     public function AutoDistributerReports(Request $request)
     {
@@ -295,8 +298,8 @@ class ReportController extends Controller
         $timeTo = $request->input('time_to');
 
         // Define status mappings
-        $answeredStatuses = ['Talking', 'Wexternalline', 'Transferring'];
-        $noAnswerStatuses = ['Wspecialmenu', 'no answer', 'Routing', 'Dialing', 'error'];
+        $answeredStatuses = ['Talking', 'Wexternalline'];
+        $noAnswerStatuses = ['Routing', 'Dialing', 'error'];
         $employee_unanswer = ['Initiating', 'SomeOtherStatus'];
         // Start building the query
         $query = AutoDistributerReport::query();
@@ -306,16 +309,30 @@ class ReportController extends Controller
             $query->where('provider', $provider);
         }
 
+
         // Apply date range filters if selected
         if ($dateFrom && $dateTo) {
             $query->whereBetween('created_at', [
                 \Carbon\Carbon::parse($dateFrom)->startOfDay(),
                 \Carbon\Carbon::parse($dateTo)->endOfDay()
             ]);
+
+            $notCalled = ADistData::where('state', 'new')
+                ->whereBetween('created_at', [
+                    \Carbon\Carbon::parse($dateFrom)->startOfDay(),
+                    \Carbon\Carbon::parse($dateTo)->endOfDay()
+                ])
+                ->count();
         } elseif ($filter === 'today') {
             // If no date range is provided and filter is 'today', default to today's data
             $query->whereDate('created_at', now()->toDateString());
+
+            $notCalled = ADistData::where('state', 'new')
+                ->whereDate('created_at', now()->toDateString())
+                ->count();
         }
+
+
 
         // Apply time range filters if provided
         if ($timeFrom && $timeTo) {
@@ -364,6 +381,7 @@ class ReportController extends Controller
             'answeredCount',
             'noAnswerCount',
             'todayEmployeeUnanswerCount',
+            'notCalled',
             'extensionFrom',
             'extensionTo',
             'dateFrom',
@@ -448,6 +466,50 @@ class ReportController extends Controller
         $response->headers->set('Content-Disposition', 'attachment; filename="auto_distributor_report.csv"');
 
         return $response;
+    }
+
+    /**
+     * Distributort Not Called Numbers
+     */
+    public function distnotCalledNumbers()
+    {
+        $notCalled = ADistData::where('state', 'new')
+            ->whereDate('created_at', now()->toDateString())
+            ->paginate(200);
+        $count = ADistData::where('state', 'new')
+            ->whereDate('created_at', now()->toDateString())
+            ->count();
+        return view('reports.Dial_notCalled', compact('notCalled', 'count'));
+    }
+
+    /**
+     * Distributort Export Not Called Numbers
+     */
+    public function distexportTodayNotCalledCSV()
+    {
+        $notCalledData = ADistData::where('state', 'new')
+            ->whereDate('created_at', now()->toDateString())
+            ->get();
+
+        // Define CSV headers
+        $headers = [
+            "Content-Type" => "text/csv",
+            "Content-Disposition" => "attachment; filename=Distributortoday_not_called_numbers.csv",
+        ];
+
+        // Generate CSV content
+        $callback = function () use ($notCalledData) {
+            $file = fopen('php://output', 'w');
+            fputcsv($file, ['Mobile', 'Status', 'Uploaded At']); // CSV headers
+
+            foreach ($notCalledData as $report) {
+                fputcsv($file, [$report->mobile, $report->state, $report->created_at]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     /**
