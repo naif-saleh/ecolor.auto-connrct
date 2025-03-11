@@ -91,11 +91,17 @@ class ReportController extends Controller
             $notCalled = ADialData::where('state', 'new')
                 ->whereDate('created_at', now()->toDateString())
                 ->count();
+        } elseif ($filter === 'all') {
+
+            $notCalled = ADialData::where('state', 'new')->count();
         }
 
         // Apply time range filters if provided
         if ($timeFrom && $timeTo) {
             $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
+            $notCalled = ADialData::where('state', 'new')
+                ->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo])
+                ->count();
         }
 
         // Apply extension range filters if provided
