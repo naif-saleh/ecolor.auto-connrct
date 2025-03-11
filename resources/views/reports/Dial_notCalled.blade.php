@@ -6,9 +6,12 @@
 
 
     <!-- Page Header -->
-    <div class="text-center mb-5">
-        <h2 class="fw-bold text-primary">Auto Dailer - Numbers Not Called {{$count}}</h2>
-        {{-- <p class="text-muted">View and manage detailed reports on call activity.</p> --}}
+    <div class="d-flex justify-content-between text-center mb-2">
+        <h2 class="fw-bold text-primary">Auto Dailer - Numbers Not Called <u>{{$count}}</u></h2>
+        <span>
+            <a href="/auto-dailer-report" class="btn btn-dark">Back</a>
+            <a href="" class="btn btn-primary">Export as CSV</a>
+        </span>
     </div>
 
     <!--Not Called Numbers Table -->
