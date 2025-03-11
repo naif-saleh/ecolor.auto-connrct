@@ -42,7 +42,7 @@
                     </tbody>
 
                     @else
-                    <div class="alert alert-warning">Only To Day Not Called Numbers You Can Export !!</div>
+                    <div class="alert alert-warning">All Numbers Are Called For Today .</div>
                     @endif
 
                 </table>
