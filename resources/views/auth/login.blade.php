@@ -22,9 +22,17 @@
     <link rel="stylesheet" href="../../assets/css/style.css">
     <!-- endinject -->
  {{-- Tap Icon --}}
- <link rel="icon"
- href="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
- type="image/png"></head>
+ @if($logo )
+ <div class="mt-3">
+    <link rel="icon"
+ href="{{ asset('storage/' . $logo) }}"
+ type="image/png">
+
+ </div>
+ @else
+ <p>No logo available</p>
+ @endif
+ </head>
 
 <body>
     <div class="container-scroller">
@@ -37,10 +45,13 @@
                     <div class="col-lg-4 mx-auto text-center">
 
                         <div class="auth-form-light text-left py-5 px-4 px-sm-5">
-                            <div>
-                                <img src="https://ecolor.com.sa/wp-content/uploads/2023/07/ECOLOR-LOGO.svg"
-                                    width="200" alt="">
+                            @if($logo )
+                            <div class="mt-3">
+                                <img src="{{ asset('storage/' . $logo) }}" alt="Current Logo" width="40">
                             </div>
+                            @else
+                            <p>No logo available</p>
+                            @endif
 
                             <h6 class="fw-light mt-4">Sign in to continue.</h6>
                             <form class="pt-3" method="POST" action="{{ route('login') }}">

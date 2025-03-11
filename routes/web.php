@@ -14,8 +14,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ManagerReportController;
 use App\Http\Controllers\SettingsController;
 
-
-/**
+ /**
  * Root Route Handling
  *
  * This route determines the landing page based on the user's authentication
@@ -34,7 +33,6 @@ use App\Http\Controllers\SettingsController;
 Route::get('/', function () {
     if (Auth::check()) {
         $user = Auth::user();
-
         if ($user->isSuperUser() || $user->isAdmin() || $user->isUser() || $user->isManagerUser()) {
             return redirect()->route('index.page'); // Redirect if Admin/Superuser
         }
@@ -91,7 +89,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/settings', [SettingsController::class, 'updateBlockTime'])->name('settings.update');
 
     Route::get('/settings/update-count-calls', [SettingsController::class, 'indexCountCall'])->name('settings.indexCountNumbers');
-    Route::post('/settings/calls-number', [SettingsController::class, 'updateCallsNumber'])->name('settings.update.callsNumber');
     /**
      * Auto Dialer Provider Routese
      *

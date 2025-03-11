@@ -2,13 +2,9 @@
 
 namespace App\Providers;
 
+use App\Models\General_Setting;
 use Illuminate\Support\ServiceProvider;
-use Illuminate\Support\Facades\Http;
-use GuzzleHttp\Client;
-use GuzzleHttp\Psr7\Request;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\View;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -17,7 +13,12 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->booting(function (){
+            View::composer('*', function ($view){
+                $logo = General_Setting::get('logo', 'default-logo.png');
+                $view->with('logo', $logo);
+            });
+        });
     }
 
     /**
@@ -27,5 +28,5 @@ class AppServiceProvider extends ServiceProvider
     {
         //
     }
-    
+
 }

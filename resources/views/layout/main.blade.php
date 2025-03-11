@@ -9,9 +9,13 @@
 
     <title>@yield('title')</title>
     {{-- Tap Icon --}}
-    <link rel="icon"
-        href="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
+    @if($logo )
+
+        <link rel="icon"
+        href="{{ asset('storage/' . $logo) }}"
         type="image/png">
+    @endif
+
     {{-- Font Awesome --}}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css"
         integrity="sha512-Evv84Mr4kqVGRNSgIGL/F/aIDqQb7xQ2vcrdIwxfjThSH8CSR7PBEakCr51Ck+w+/U6swU2Im1vVX0SVk9ABhg=="
@@ -58,81 +62,91 @@
                     <div>
 
                         <a class="navbar-brand brand-logo-mini" href="{{ route('index.page') }}">
-                            <img src="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
-                                width="40" alt="ejaada-logo">
+                            {{-- <img
+                                src="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
+                                width="40" alt="ejaada-logo"> --}}
+                            <!-- Display Current Logo -->
+                            @if($logo )
+                            <div class="mt-3">
+                                <img src="{{ asset('storage/' . $logo) }}" alt="Current Logo" width="40">
+                            </div>
+                            @else
+                            <p>No logo available</p>
+                            @endif
                         </a>
                     </div>
                     <li class="nav-item fw-semibold d-none d-lg-block ms-0">
                         @php
-                            $currentHour = now()->format('H');
+                        $currentHour = now()->format('H');
                         @endphp
 
                         <h1 class="welcome-text">
-                            @if ($currentHour < 12)
-                                Good Morning, <span class="text-black fw-bold">{{ Auth::user()->name }}</span>
-                            @else
+                            @if ($currentHour < 12) Good Morning, <span class="text-black fw-bold">{{ Auth::user()->name
+                                }}</span>
+                                @else
                                 Good Evening, <span class="text-black fw-bold">{{ Auth::user()->name }}</span>
-                            @endif
+                                @endif
                         </h1>
 
                         {{-- <h3 class="welcome-sub-text">Your performance summary this week </h3> --}}
                     </li>
                 </ul>
 
-                <ul class="navbar-nav ms-auto"> <!-- Right-aligned login/logout links -->
+                <ul class="navbar-nav ms-auto">
+                    <!-- Right-aligned login/logout links -->
                     @if (Auth::check())
-                        {{-- <li class="nav-item dropdown">
-                            <a class="nav-link count-indicator" id="notificationDropdown" href="#"
-                                data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="icon-bell"></i>
-                                <span class="count"></span>
+                    {{-- <li class="nav-item dropdown">
+                        <a class="nav-link count-indicator" id="notificationDropdown" href="#" data-bs-toggle="dropdown"
+                            aria-expanded="false">
+                            <i class="icon-bell"></i>
+                            <span class="count"></span>
+                        </a>
+                        <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list pb-0 show"
+                            aria-labelledby="notificationDropdown">
+                            <a class="dropdown-item py-3 border-bottom">
+                                <p class="mb-0 fw-medium float-start">You have 4 new notifications </p>
+                                <span class="badge badge-pill badge-primary float-end">View all</span>
                             </a>
-                            <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list pb-0 show"
-                                aria-labelledby="notificationDropdown">
-                                <a class="dropdown-item py-3 border-bottom">
-                                    <p class="mb-0 fw-medium float-start">You have 4 new notifications </p>
-                                    <span class="badge badge-pill badge-primary float-end">View all</span>
-                                </a>
-                                <a class="dropdown-item preview-item py-3">
-                                    <div class="preview-thumbnail">
-                                        <i class="mdi mdi-alert m-auto text-primary"></i>
-                                    </div>
-                                    <div class="preview-item-content">
-                                        <h6 class="preview-subject fw-normal text-dark mb-1">Application Error</h6>
-                                        <p class="fw-light small-text mb-0"> Just now </p>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item preview-item py-3">
-                                    <div class="preview-thumbnail">
-                                        <i class="mdi mdi-lock-outline m-auto text-primary"></i>
-                                    </div>
-                                    <div class="preview-item-content">
-                                        <h6 class="preview-subject fw-normal text-dark mb-1">Settings</h6>
-                                        <p class="fw-light small-text mb-0"> Private message </p>
-                                    </div>
-                                </a>
-                                <a class="dropdown-item preview-item py-3">
-                                    <div class="preview-thumbnail">
-                                        <i class="mdi mdi-airballoon m-auto text-primary"></i>
-                                    </div>
-                                    <div class="preview-item-content">
-                                        <h6 class="preview-subject fw-normal text-dark mb-1">New user registration</h6>
-                                        <p class="fw-light small-text mb-0"> 2 days ago </p>
-                                    </div>
-                                </a>
-                            </div>
-                        </li> --}}
+                            <a class="dropdown-item preview-item py-3">
+                                <div class="preview-thumbnail">
+                                    <i class="mdi mdi-alert m-auto text-primary"></i>
+                                </div>
+                                <div class="preview-item-content">
+                                    <h6 class="preview-subject fw-normal text-dark mb-1">Application Error</h6>
+                                    <p class="fw-light small-text mb-0"> Just now </p>
+                                </div>
+                            </a>
+                            <a class="dropdown-item preview-item py-3">
+                                <div class="preview-thumbnail">
+                                    <i class="mdi mdi-lock-outline m-auto text-primary"></i>
+                                </div>
+                                <div class="preview-item-content">
+                                    <h6 class="preview-subject fw-normal text-dark mb-1">Settings</h6>
+                                    <p class="fw-light small-text mb-0"> Private message </p>
+                                </div>
+                            </a>
+                            <a class="dropdown-item preview-item py-3">
+                                <div class="preview-thumbnail">
+                                    <i class="mdi mdi-airballoon m-auto text-primary"></i>
+                                </div>
+                                <div class="preview-item-content">
+                                    <h6 class="preview-subject fw-normal text-dark mb-1">New user registration</h6>
+                                    <p class="fw-light small-text mb-0"> 2 days ago </p>
+                                </div>
+                            </a>
+                        </div>
+                    </li> --}}
 
 
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('logout') }}"
-                                onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
-                                <i class="fa-solid fa-right-from-bracket"></i>
-                            </a>
-                        </li>
-                        <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
-                            @csrf
-                        </form>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('logout') }}"
+                            onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </a>
+                    </li>
+                    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+                        @csrf
+                    </form>
                     @endif
                 </ul>
 
@@ -144,169 +158,166 @@
             <nav class="sidebar sidebar-offcanvas" id="sidebar">
                 <ul class="nav">
                     @if (Auth::check() && (Auth::user()->isSuperUser() || Auth::user()->isAdmin()))
-                        <li class="nav-item">
-                            <a class="nav-link" href="{{ route('index.page') }}">
-                                <i class="mdi mdi-grid-large menu-icon"></i>
-                                <span class="menu-title">Dashboard</span>
-                            </a>
-                        </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="{{ route('index.page') }}">
+                            <i class="mdi mdi-grid-large menu-icon"></i>
+                            <span class="menu-title">Dashboard</span>
+                        </a>
+                    </li>
 
-                        <li class="nav-item nav-category">Systems Call</li>
-                        <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#ui-basic" aria-expanded="false"
-                                aria-controls="ui-basic">
-                                <i class="menu-icon mdi mdi-floor-plan"></i>
-                                <span class="menu-title">Systems</span>
-                                <i class="menu-arrow"></i>
-                            </a>
-                            <div class="collapse" id="ui-basic">
-                                <ul class="nav flex-column sub-menu">
-                                    <li class="nav-item"> <a class="nav-link"
-                                            href="{{ route('providers.index') }}">Auto
-                                            Dialer</a></li>
-                                    <li class="nav-item"> <a class="nav-link" href="{{ route('users.index') }}">Auto
-                                            Distributor</a></li>
+                    <li class="nav-item nav-category">Systems Call</li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="collapse" href="#ui-basic" aria-expanded="false"
+                            aria-controls="ui-basic">
+                            <i class="menu-icon mdi mdi-floor-plan"></i>
+                            <span class="menu-title">Systems</span>
+                            <i class="menu-arrow"></i>
+                        </a>
+                        <div class="collapse" id="ui-basic">
+                            <ul class="nav flex-column sub-menu">
+                                <li class="nav-item"> <a class="nav-link" href="{{ route('providers.index') }}">Auto
+                                        Dialer</a></li>
+                                <li class="nav-item"> <a class="nav-link" href="{{ route('users.index') }}">Auto
+                                        Distributor</a></li>
 
-                                </ul>
-                            </div>
-                        </li>
+                            </ul>
+                        </div>
+                    </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#form-elements"
-                                aria-expanded="false" aria-controls="form-elements">
-                                <i class="menu-icon mdi mdi-phone"></i>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="collapse" href="#form-elements" aria-expanded="false"
+                            aria-controls="form-elements">
+                            <i class="menu-icon mdi mdi-phone"></i>
 
-                                <span class="menu-title">Call Reports</span>
-                                <i class="menu-arrow"></i>
-                            </a>
-                            <div class="collapse" id="form-elements">
-                                <ul class="nav flex-column sub-menu">
-                                    <li class="nav-item"><a class="nav-link"
-                                            href="{{ route('auto_dailer.report') }}">Auto Dailer Report</a></li>
-                                    <li class="nav-item"><a class="nav-link"
-                                            href="{{ route('auto_distributer.report') }}">Auto Distributor Report</a>
-                                    </li>
-                                    <li class="nav-item"><a class="nav-link"
-                                            href="{{ route('evaluation') }}">Evaluation Report</a></li>
-                                </ul>
-                            </div>
-                        </li>
-                        <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#charts" aria-expanded="false"
-                                aria-controls="charts">
-                                <i class="menu-icon mdi mdi-message-text"></i>
-                                <span class="menu-title">System Reports</span>
+                            <span class="menu-title">Call Reports</span>
+                            <i class="menu-arrow"></i>
+                        </a>
+                        <div class="collapse" id="form-elements">
+                            <ul class="nav flex-column sub-menu">
+                                <li class="nav-item"><a class="nav-link" href="{{ route('auto_dailer.report') }}">Auto
+                                        Dailer Report</a></li>
+                                <li class="nav-item"><a class="nav-link"
+                                        href="{{ route('auto_distributer.report') }}">Auto Distributor Report</a>
+                                </li>
+                                <li class="nav-item"><a class="nav-link" href="{{ route('evaluation') }}">Evaluation
+                                        Report</a></li>
+                            </ul>
+                        </div>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="collapse" href="#charts" aria-expanded="false"
+                            aria-controls="charts">
+                            <i class="menu-icon mdi mdi-message-text"></i>
+                            <span class="menu-title">System Reports</span>
 
 
-                                <i class="menu-arrow"></i>
-                            </a>
-                            <div class="collapse" id="charts">
-                                <ul class="nav flex-column sub-menu">
-                                    <li class="nav-item"> <a class="nav-link"
-                                            href="{{ route('system.activity.report') }}">System Log Report</a></li>
-                                    <li class="nav-item"> <a class="nav-link"
-                                            href="{{ route('users.activity.report') }}">User Log Report</a></li>
-                                </ul>
-                            </div>
-                        </li>
+                            <i class="menu-arrow"></i>
+                        </a>
+                        <div class="collapse" id="charts">
+                            <ul class="nav flex-column sub-menu">
+                                <li class="nav-item"> <a class="nav-link"
+                                        href="{{ route('system.activity.report') }}">System Log Report</a></li>
+                                <li class="nav-item"> <a class="nav-link"
+                                        href="{{ route('users.activity.report') }}">User Log Report</a></li>
+                            </ul>
+                        </div>
+                    </li>
 
-                        <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#settings" aria-expanded="false"
-                                aria-controls="settings">
-                                <i class="mdi mdi-cog-outline"></i>
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="collapse" href="#settings" aria-expanded="false"
+                            aria-controls="settings">
+                            <i class="mdi mdi-cog-outline"></i>
 
-                                <span class="menu-title">Settings</span>
-                                <i class="menu-arrow"></i>
-                            </a>
-                            <div class="collapse" id="settings">
-                                <ul class="nav flex-column sub-menu">
-                                    <li class="nav-item"><a class="nav-link"
-                                            href="{{ route('settings.index') }}">System Time Calls</a></li>
-                                    <li class="nav-item"><a class="nav-link"
-                                            href="{{ route('settings.indexCountNumbers') }}">Count Calls</a></li>
-                                    <li class="nav-item">
-                                        <a class="nav-link" href="{{ route('users.system.index') }}">
+                            <span class="menu-title">Settings</span>
+                            <i class="menu-arrow"></i>
+                        </a>
+                        <div class="collapse" id="settings">
+                            <ul class="nav flex-column sub-menu">
+                                <li class="nav-item"><a class="nav-link" href="{{ route('settings.index') }}">System
+                                        Settings</a></li>
 
-                                            <span class="menu-title">Manage Users</span>
+                                    <a class="nav-link" href="{{ route('users.system.index') }}">
 
-                                        </a>
+                                        <span class="menu-title">Manage Users</span>
 
-                                    </li>
+                                    </a>
 
-                                </ul>
-                            </div>
-                        </li>
+                                </li>
+
+                            </ul>
+                        </div>
+                    </li>
                     @elseif (Auth::check() && Auth::user()->isManagerUser())
-                        <nav class="sidebar sidebar-offcanvas" id="sidebar">
-                            <ul class="nav">
-                                <li class="nav-item">
-                                    <a class="nav-link" href="{{ route('index.page') }}">
-                                        <i class="mdi mdi-grid-large menu-icon"></i>
-                                        <span class="menu-title">Dashboard</span>
-                                    </a>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" data-bs-toggle="collapse" href="#form-elements"
-                                        aria-expanded="false" aria-controls="form-elements">
-                                        <i class="menu-icon mdi mdi-phone"></i>
+                    <nav class="sidebar sidebar-offcanvas" id="sidebar">
+                        <ul class="nav">
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ route('index.page') }}">
+                                    <i class="mdi mdi-grid-large menu-icon"></i>
+                                    <span class="menu-title">Dashboard</span>
+                                </a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="collapse" href="#form-elements"
+                                    aria-expanded="false" aria-controls="form-elements">
+                                    <i class="menu-icon mdi mdi-phone"></i>
 
-                                        <span class="menu-title">Dialer Reports</span>
-                                        <i class="menu-arrow"></i>
-                                    </a>
-                                    <div class="collapse" id="form-elements">
-                                        <ul class="nav flex-column sub-menu">
-                                            <li class="nav-item"><a class="nav-link"
-                                                    href="{{ route('manager.dailer.report.providers') }}">Dialer
-                                                    Provider</a></li>
-                                            <li class="nav-item"><a class="nav-link"
-                                                    href="{{ route('manager.dailer.report.compaign') }}">Dialer
-                                                    Compaign</a></li>
-                                        </ul>
-                                    </div>
-                                </li>
-                                <li class="nav-item">
-                                    <a class="nav-link" data-bs-toggle="collapse" href="#form-elements"
-                                        aria-expanded="false" aria-controls="form-elements">
-                                        <i class="menu-icon mdi mdi-phone"></i>
+                                    <span class="menu-title">Dialer Reports</span>
+                                    <i class="menu-arrow"></i>
+                                </a>
+                                <div class="collapse" id="form-elements">
+                                    <ul class="nav flex-column sub-menu">
+                                        <li class="nav-item"><a class="nav-link"
+                                                href="{{ route('manager.dailer.report.providers') }}">Dialer
+                                                Provider</a></li>
+                                        <li class="nav-item"><a class="nav-link"
+                                                href="{{ route('manager.dailer.report.compaign') }}">Dialer
+                                                Compaign</a></li>
+                                    </ul>
+                                </div>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" data-bs-toggle="collapse" href="#form-elements"
+                                    aria-expanded="false" aria-controls="form-elements">
+                                    <i class="menu-icon mdi mdi-phone"></i>
 
-                                        <span class="menu-title">Distributor Reports</span>
-                                        <i class="menu-arrow"></i>
-                                    </a>
-                                    <div class="collapse" id="form-elements">
-                                        <ul class="nav flex-column sub-menu">
-                                            <li class="nav-item"><a class="nav-link"
-                                                    href="{{ route('manager.autodistributor.report.providers') }}">Distributor
-                                                    Provider</a></li>
-                                            <li class="nav-item"><a class="nav-link"
-                                                    href="{{ route('manager.autodistributor.report.compaign') }}">Distributor
-                                                    Compaign</a></li>
+                                    <span class="menu-title">Distributor Reports</span>
+                                    <i class="menu-arrow"></i>
+                                </a>
+                                <div class="collapse" id="form-elements">
+                                    <ul class="nav flex-column sub-menu">
+                                        <li class="nav-item"><a class="nav-link"
+                                                href="{{ route('manager.autodistributor.report.providers') }}">Distributor
+                                                Provider</a></li>
+                                        <li class="nav-item"><a class="nav-link"
+                                                href="{{ route('manager.autodistributor.report.compaign') }}">Distributor
+                                                Compaign</a></li>
 
-                                        </ul>
-                                    </div>
+                                    </ul>
+                                </div>
+                            </li>
+                        </ul>
+
+                    </nav>
+                    @else
+                    <li class="nav-item">
+                        <a class="nav-link" data-bs-toggle="collapse" href="#form-elements" aria-expanded="false"
+                            aria-controls="form-elements">
+                            <i class="menu-icon mdi mdi-phone"></i>
+
+                            <span class="menu-title">Call Reports</span>
+                            <i class="menu-arrow"></i>
+                        </a>
+                        <div class="collapse" id="form-elements">
+                            <ul class="nav flex-column sub-menu">
+                                <li class="nav-item"><a class="nav-link" href="{{ route('auto_dailer.report') }}">Dialer
+                                        Calls</a></li>
+                                <li class="nav-item"><a class="nav-link"
+                                        href="{{ route('auto_distributer.report') }}">Distributor Calls</a></li>
+                                <li class="nav-item"><a class="nav-link" href="{{ route('evaluation') }}">Evaluation</a>
                                 </li>
                             </ul>
-
-                        </nav>
-                    @else
-                        <li class="nav-item">
-                            <a class="nav-link" data-bs-toggle="collapse" href="#form-elements"
-                                aria-expanded="false" aria-controls="form-elements">
-                                <i class="menu-icon mdi mdi-phone"></i>
-
-                                <span class="menu-title">Call Reports</span>
-                                <i class="menu-arrow"></i>
-                            </a>
-                            <div class="collapse" id="form-elements">
-                                <ul class="nav flex-column sub-menu">
-                                    <li class="nav-item"><a class="nav-link"
-                                            href="{{ route('auto_dailer.report') }}">Dialer Calls</a></li>
-                                    <li class="nav-item"><a class="nav-link"
-                                            href="{{ route('auto_distributer.report') }}">Distributor Calls</a></li>
-                                    <li class="nav-item"><a class="nav-link"
-                                            href="{{ route('evaluation') }}">Evaluation</a></li>
-                                </ul>
-                            </div>
-                        </li>
+                        </div>
+                    </li>
                     @endif
                 </ul>
 
@@ -349,8 +360,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
 
     @if (session('success'))
-        <script>
-            window.onload = function() {
+    <script>
+        window.onload = function() {
                 Swal.fire({
                     title: 'Success!',
                     text: "{{ session('success') }}",
@@ -358,12 +369,12 @@
                     confirmButtonText: 'OK'
                 });
             };
-        </script>
+    </script>
     @endif
 
     @if (session('wrong'))
-        <script>
-            window.onload = function() {
+    <script>
+        window.onload = function() {
                 Swal.fire({
                     title: 'Wrong!',
                     text: "{{ session('wrong') }}",
@@ -371,7 +382,7 @@
                     confirmButtonText: 'OK'
                 });
             };
-        </script>
+    </script>
     @endif
 
 
