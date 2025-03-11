@@ -14,7 +14,7 @@ use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ManagerReportController;
 use App\Http\Controllers\SettingsController;
 
- /**
+/**
  * Root Route Handling
  *
  * This route determines the landing page based on the user's authentication
@@ -179,6 +179,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('auto-dailer-report', [ReportController::class, 'AutoDailerReports'])->name('auto_dailer.report');
     // // Export Auto Dailer...........................................................................................................
     Route::get('auto-dailer-report/export', [ReportController::class, 'exportAutoDailerReport'])->name('auto_dailer.report.export');
+    // // Not Called Number Auto Dailer...........................................................................................................
+    Route::get('auto-dailer-report/not-called-numbers', [ReportController::class, 'notCalledNumbers'])->name('auto_dailer.report.notCalled');
+
     // // Auto Distributer Reports....................................................................................................................
     Route::get('auto-distributer-report', [ReportController::class, 'AutoDistributerReports'])->name('auto_distributer.report');
     // // Export Auto Distributer...........................................................................................................

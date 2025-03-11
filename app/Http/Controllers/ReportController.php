@@ -67,7 +67,7 @@ class ReportController extends Controller
         if ($provider) {
             $query->where('provider', $provider);
         }
-        
+
         // Apply date range filters if selected
         if ($dateFrom && $dateTo) {
             $query->whereBetween('created_at', [
@@ -75,17 +75,17 @@ class ReportController extends Controller
                 \Carbon\Carbon::parse($dateTo)->endOfDay()
             ]);
             $notCalled = ADialData::where('state', 'new')
-            ->whereBetween('created_at', [
-                \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-                \Carbon\Carbon::parse($dateTo)->endOfDay()
-            ])
-            ->count();
+                ->whereBetween('created_at', [
+                    \Carbon\Carbon::parse($dateFrom)->startOfDay(),
+                    \Carbon\Carbon::parse($dateTo)->endOfDay()
+                ])
+                ->count();
         } elseif ($filter === 'today') {
             // If no date range is provided and filter is 'today', default to today's data
             $query->whereDate('created_at', now()->toDateString());
             $notCalled = ADialData::where('state', 'new')
-            ->whereDate('created_at', now()->toDateString())
-            ->count();
+                ->whereDate('created_at', now()->toDateString())
+                ->count();
         }
 
         // Apply time range filters if provided
@@ -149,9 +149,19 @@ class ReportController extends Controller
         ));
     }
 
+    /**
+     * Not Called Numbers
+     */
+    public function notCalledNumbers()
+    {
+        $notCalled = ADialData::where('state', 'new')
+                ->whereDate('created_at', now()->toDateString())
+                ->paginate(200);
+        return view('reports.Dial_notCalled', compact('notCalled'));
+    }
 
     /**
-     * Export Auto Distributer AS CSV File
+     * Export Auto Dailer AS CSV File
      */
     public function exportAutoDailerReport(Request $request)
     {
