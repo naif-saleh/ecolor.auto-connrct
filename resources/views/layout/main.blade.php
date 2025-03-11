@@ -59,7 +59,7 @@
 
                         <a class="navbar-brand brand-logo-mini" href="{{ route('index.page') }}">
                             <img src="https://ejaada.sa/wp-content/uploads/thegem-logos/logo_dedfcfaee88a3f71b4ad05fab3d352a4_1x.png"
-                                width="140" alt="ejaada-logo">
+                                width="40" alt="ejaada-logo">
                         </a>
                     </div>
                     <li class="nav-item fw-semibold d-none d-lg-block ms-0">
