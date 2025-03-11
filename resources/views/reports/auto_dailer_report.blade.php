@@ -84,7 +84,7 @@
         </div>
         <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
             <i class="fa-solid fa-right-left text-primary fs-3"></i>
-            <h5 class="mt-2">Transferring</h5>
+            <h5 class="mt-2">To Queue</h5>
             <p class="fw-bold fs-4">{{ $queuedCount }}</p>
         </div>
         <a href="{{ route('auto_dailer.report.notCalled') }}" style="text-decoration: none">
@@ -109,7 +109,7 @@
         @elseif($filter === 'queued')
         <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
             <i class="fa-solid fa-right-left text-primary fs-3"></i>
-            <h5 class="mt-2">Transferring</h5>
+            <h5 class="mt-2">To Queue</h5>
             <p class="fw-bold fs-4">{{ $queuedCount }}</p>
         </div>
 

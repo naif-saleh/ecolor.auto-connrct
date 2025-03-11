@@ -62,6 +62,8 @@ class ReportController extends Controller
         // Start building the queries
         $query = AutoDailerReport::query();
 
+        // Set a default value for $notCalled to prevent undefined variable error
+        $notCalled = 0;
 
         // Apply provider filter if selected
         if ($provider) {
@@ -74,6 +76,7 @@ class ReportController extends Controller
                 \Carbon\Carbon::parse($dateFrom)->startOfDay(),
                 \Carbon\Carbon::parse($dateTo)->endOfDay()
             ]);
+
             $notCalled = ADialData::where('state', 'new')
                 ->whereBetween('created_at', [
                     \Carbon\Carbon::parse($dateFrom)->startOfDay(),
@@ -83,6 +86,7 @@ class ReportController extends Controller
         } elseif ($filter === 'today') {
             // If no date range is provided and filter is 'today', default to today's data
             $query->whereDate('created_at', now()->toDateString());
+
             $notCalled = ADialData::where('state', 'new')
                 ->whereDate('created_at', now()->toDateString())
                 ->count();
@@ -122,7 +126,6 @@ class ReportController extends Controller
         $queuedCount = (clone $statsQuery)->whereIn('status', $toQueue)->count();
         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
 
-
         // Get distinct providers for dropdown
         $providers = ADialProvider::select('name', 'extension')
             ->distinct()
@@ -148,6 +151,7 @@ class ReportController extends Controller
             'timeTo'
         ));
     }
+
 
     /**
      * Not Called Numbers
