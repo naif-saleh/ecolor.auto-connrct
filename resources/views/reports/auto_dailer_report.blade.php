@@ -88,11 +88,11 @@
                     <h5 class="mt-2">Transferring</h5>
                     <p class="fw-bold fs-4">{{ $queuedCount }}</p>
                 </div>
-                {{-- <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
-                    <i class="fas fa-phone-volume text-primary fs-3"></i>
+                <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
+                    <i class="fas fa-phone-slash text-primary fs-3"></i>
                     <h5 class="mt-2">Not Called</h5>
-                    <p class="fw-bold fs-4">{{ $notCalledCount }}</p>
-                </div> --}}
+                    <p class="fw-bold fs-4">{{ $notCalled }}</p>
+                </div>
             @elseif($filter === 'answered')
                 <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
                     <i class="fas fa-phone text-success fs-3"></i>
