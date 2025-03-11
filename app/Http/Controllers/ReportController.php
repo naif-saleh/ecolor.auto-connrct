@@ -155,9 +155,12 @@ class ReportController extends Controller
     public function notCalledNumbers()
     {
         $notCalled = ADialData::where('state', 'new')
-                ->whereDate('created_at', now()->toDateString())
-                ->paginate(200);
-        return view('reports.Dial_notCalled', compact('notCalled'));
+            ->whereDate('created_at', now()->toDateString())
+            ->paginate(200);
+        $count = ADialData::where('state', 'new')
+            ->whereDate('created_at', now()->toDateString())
+            ->count();
+        return view('reports.Dial_notCalled', compact('notCalled', 'count'));
     }
 
     /**
