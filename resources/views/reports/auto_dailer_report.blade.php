@@ -88,7 +88,7 @@
             <p class="fw-bold fs-4">{{ $queuedCount }}</p>
         </div>
 
-        @if (!empty($notCalled) && $filter === 'today')
+        @if (!empty($notCalled) && now()->toDateString() === $targetDate)
         <a href="{{ route('auto_dailer.report.notCalled') }}" style="text-decoration: none">
             <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
                 <i class="fas fa-phone-slash text-primary fs-3"></i>
