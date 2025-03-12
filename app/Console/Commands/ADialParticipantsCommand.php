@@ -99,7 +99,8 @@ class ADialParticipantsCommand extends Command
     protected function fetchActiveProviderCalls($provider)
     {
         try {
-            return $this->threeCxService->getActiveCallsForProvider($provider->extension);
+            // return $this->threeCxService->getActiveCallsForProvider($provider->extension);
+            return $this->threeCxService->getAllActiveCalls();
         } catch (\Exception $e) {
             Log::error("ADialParticipantsCommand ❌ Failed to fetch active calls: " . $e->getMessage());
             return ['value' => []];
