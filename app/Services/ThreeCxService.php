@@ -58,6 +58,48 @@ class ThreeCxService
         }
     }
 
+
+    public function makeCall($data, $provider)
+    {
+        try {
+            // Make the call using ThreeCxService
+            $responseData = $this->threeCxService->makeCall(
+                $provider->extension,
+                $data->mobile
+            );
+
+            $callId = $responseData['result']['callid'] ?? null;
+            $status = $responseData['result']['status'] ?? 'unknown';
+
+            // Log call details
+            Log::info("makeCall: 📞✅ Call successful for mobile: {$data->mobile}. Call ID: {$callId}, Status: {$status}");
+
+            // Save call details in AutoDialerReport
+            AutoDailerReport::create([
+                'call_id' => $callId,
+                'status' => $status,
+                'provider' => $provider->name,
+                'extension' => $provider->extension,
+                'phone_number' => $data->mobile
+            ]);
+
+            // Update ADialData state
+            $data->update([
+                'state' => $status,
+                'call_date' => now(),
+                'call_id' => $callId
+            ]);
+
+            // Wait for 300ms before making the next call
+            usleep(300000);
+        } catch (\Exception $e) {
+            Log::error("makeCall: ❌ Call failed for number {$data->mobile}: " . $e->getMessage());
+        }
+    }
+
+
+
+
     /**
      * Get all active calls for a provider with retry mechanism
      */
@@ -92,7 +134,6 @@ class ThreeCxService
                 }
 
                 throw new \Exception("Failed to fetch active calls. HTTP Status: " . $statusCode);
-
             } catch (RequestException $e) {
                 if ($e->hasResponse() && $e->getResponse()->getStatusCode() === 429) {
                     // Rate limiting - wait and retry
@@ -280,18 +321,18 @@ class ThreeCxService
         return AutoDailerReport::whereIn('call_id', $callIds)
             ->update([
                 'status' => DB::raw("CASE call_id " .
-                    $updates->map(function($item, $callId) {
+                    $updates->map(function ($item, $callId) {
                         return "WHEN '{$callId}' THEN '{$item['status']}'";
                     })->implode(' ') .
                     " ELSE status END"),
                 'duration_time' => DB::raw("CASE call_id " .
-                    $updates->map(function($item, $callId) {
+                    $updates->map(function ($item, $callId) {
                         return "WHEN '{$callId}' THEN " .
                             ($item['duration_time'] ? "'{$item['duration_time']}'" : 'duration_time');
                     })->implode(' ') .
                     " ELSE duration_time END"),
                 'duration_routing' => DB::raw("CASE call_id " .
-                    $updates->map(function($item, $callId) {
+                    $updates->map(function ($item, $callId) {
                         return "WHEN '{$callId}' THEN " .
                             ($item['duration_routing'] ? "'{$item['duration_routing']}'" : 'duration_routing');
                     })->implode(' ') .
@@ -314,7 +355,7 @@ class ThreeCxService
         return ADialData::whereIn('call_id', $callIds)
             ->update([
                 'state' => DB::raw("CASE call_id " .
-                    $updates->map(function($item, $callId) {
+                    $updates->map(function ($item, $callId) {
                         return "WHEN '{$callId}' THEN '{$item['state']}'";
                     })->implode(' ') .
                     " ELSE state END")
