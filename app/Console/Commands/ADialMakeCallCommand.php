@@ -284,6 +284,7 @@ class ADialMakeCallCommand extends Command
             return;
         }
 
+        //$this->threeCxService->makeCall($provider->extension, $data->mobile);
         try {
             DB::beginTransaction();
 

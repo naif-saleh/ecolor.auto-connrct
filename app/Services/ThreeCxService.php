@@ -128,6 +128,7 @@ class ThreeCxService
                 'json' => ['destination' => $destination],
                 'timeout' => 10,
             ]);
+            Log::info("📞 Call made to {$destination} by {$providerExtension}");
 
             $responseData = json_decode($response->getBody()->getContents(), true);
 
