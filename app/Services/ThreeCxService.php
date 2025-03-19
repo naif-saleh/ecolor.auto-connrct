@@ -164,7 +164,7 @@ class ThreeCxService
             Cache::put($cacheKey, [
                 'callid' => $responseData['result']['callid'],
                 'timestamp' => now()
-            ], now()->addMinutes(30));
+            ], now()->addMinutes(5));
 
             return $responseData;
         } catch (\Exception $e) {
