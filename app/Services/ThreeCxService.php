@@ -47,32 +47,43 @@ class ThreeCxService
      */
     public function getActiveCallsForProvider($providerExtension)
     {
-        try {
-            $token = $this->getToken();
-            $filter = "contains(Caller, '{$providerExtension}')";
-            $url = $this->apiUrl . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
+        $retries = 0;
+        $maxRetries = 1;
 
-            $response = $this->client->get($url, [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $token,
-                    'Accept' => 'application/json',
-                ],
-                'timeout' => 30,
-            ]);
+        while ($retries <= $maxRetries) {
+            try {
+                $token = $this->getToken();
+                $filter = "contains(Caller, '{$providerExtension}')";
+                $url = $this->apiUrl . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
-            if ($response->getStatusCode() !== 200) {
-                throw new \Exception("Failed to fetch active calls. HTTP Status: " . $response->getStatusCode());
-                $this->tokenService->refreshToken();
+                $response = $this->client->get($url, [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $token,
+                        'Accept' => 'application/json',
+                    ],
+                    'timeout' => 30,
+                ]);
+
+                if ($response->getStatusCode() !== 200) {
+                    throw new \Exception("Failed to fetch active calls. HTTP Status: " . $response->getStatusCode());
+                }
+
+                return json_decode($response->getBody()->getContents(), true);
+            } catch (\Exception $e) {
+                if ($retries < $maxRetries && strpos($e->getMessage(), '401') !== false) {
+                    // If we get a 401, force token refresh and retry
+                    $this->tokenService->refreshToken();
+                    $retries++;
+                    Log::info("Token refresh attempt {$retries} after 401 error for provider {$providerExtension}");
+                    continue;
+                }
+
+                Log::error("❌ Failed to fetch active calls for provider {$providerExtension}: " . $e->getMessage());
+                throw $e;
             }
-            // Log::info(" getBody calls for provider : " . print_r($response->getBody()->getContents(), true));
-
-            return json_decode($response->getBody()->getContents(), true);
-        } catch (\Exception $e) {
-            $this->tokenService->refreshToken();
-            Log::error("❌ Failed to fetch active calls for provider {$providerExtension}: " . $e->getMessage());
-            throw $e;
         }
     }
+
 
     /**
      * Get all active calls
