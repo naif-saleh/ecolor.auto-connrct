@@ -56,18 +56,18 @@ class ThreeCxService
                 // Get a fresh token on each attempt, not just at the beginning
                 $token = $this->getToken();
                 $filter = "contains(Caller, '{$providerExtension}')";
-                $url = $this->apiUrl.'/xapi/v1/ActiveCalls?$filter='.urlencode($filter);
+                $url = $this->apiUrl . "/xapi/v1/ActiveCalls?\$filter=" . urlencode($filter);
 
                 $response = $this->client->get($url, [
                     'headers' => [
-                        'Authorization' => 'Bearer '.$token,
+                        'Authorization' => 'Bearer ' . $token,
                         'Accept' => 'application/json',
                     ],
                     'timeout' => 30,
                 ]);
 
                 if ($response->getStatusCode() !== 200) {
-                    throw new \Exception('Failed to fetch active calls. HTTP Status: '.$response->getStatusCode());
+                    throw new \Exception("Failed to fetch active calls. HTTP Status: " . $response->getStatusCode());
                 }
 
                 return json_decode($response->getBody()->getContents(), true);
@@ -77,11 +77,10 @@ class ThreeCxService
                     $this->tokenService->refreshToken();
                     $retries++;
                     Log::info("Token refresh attempt {$retries} after 401 error for provider {$providerExtension}");
-
                     continue;
                 }
 
-                Log::error("❌ Failed to fetch active calls for provider {$providerExtension}: ".$e->getMessage());
+                Log::error("❌ Failed to fetch active calls for provider {$providerExtension}: " . $e->getMessage());
                 throw $e;
             }
         }
