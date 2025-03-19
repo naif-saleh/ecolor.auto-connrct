@@ -235,13 +235,19 @@ class ADialMakeCallCommand extends Command
             ->pluck('phone_number')
             ->toArray();
 
-        // Fetch new calls within limit
+        $potentialCalls = ADialData::where('feed_id', $file->id)
+            ->where('state', 'new')
+            ->count();
+        Log::info("ADialMakeCallCommand: 🔍 Found {$potentialCalls} potential calls for file {$file->id}");
+
+        // Then modify the feedData query to temporarily disable some restrictions:
         $feedData = ADialData::where('feed_id', $file->id)
             ->where('state', 'new')
-            ->whereNotIn('mobile', $recentlyCalledNumbers)
             ->take($remainingCapacity)
-            // ->lockForUpdate()
-            ->get();
+            ->get();  
+
+        // Add this debug line after retrieving feedData:
+        Log::info("ADialMakeCallCommand: 📞 Retrieved {$feedData->count()} numbers to call");
 
         foreach ($feedData as $data) {
             if (!$now->between($from, $to)) {
