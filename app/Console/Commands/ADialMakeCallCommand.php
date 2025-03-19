@@ -111,7 +111,7 @@ class ADialMakeCallCommand extends Command
             Log::error('ADialMakeCallCommand: ❌ Error: ' . $e->getMessage());
             report($e);
         } finally {
-            
+
             Cache::forget($lockKey);
         }
     }
