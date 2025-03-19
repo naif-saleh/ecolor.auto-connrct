@@ -111,7 +111,7 @@ class ADialMakeCallCommand extends Command
             Log::error('ADialMakeCallCommand: ❌ Error: ' . $e->getMessage());
             report($e);
         } finally {
-            // Always release the lock
+            
             Cache::forget($lockKey);
         }
     }
@@ -244,7 +244,7 @@ class ADialMakeCallCommand extends Command
         $feedData = ADialData::where('feed_id', $file->id)
             ->where('state', 'new')
             ->take($remainingCapacity)
-            ->get();  
+            ->get();
 
         // Add this debug line after retrieving feedData:
         Log::info("ADialMakeCallCommand: 📞 Retrieved {$feedData->count()} numbers to call");
