@@ -290,7 +290,6 @@ class ADialMakeCallCommand extends Command
             // Mark as processing before making the call
             $data->update([
                 'state' => 'processing',
-                'processing_started_at' => now()
             ]);
 
             DB::commit();
@@ -336,7 +335,6 @@ class ADialMakeCallCommand extends Command
                 // Mark as failed
                 $data->update([
                     'state' => 'failed',
-                    'last_error' => $e->getMessage()
                 ]);
 
                 DB::commit();
