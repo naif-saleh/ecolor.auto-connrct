@@ -57,7 +57,7 @@ class ADialMakeCallCommand extends Command
      *
      * @var int
      */
-    protected $maxCallsPerMinute = 10;
+    protected $maxCallsPerMinute = 96;
 
     /**
      * Delay between calls in microseconds
