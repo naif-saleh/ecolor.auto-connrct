@@ -67,6 +67,17 @@ class TokenService
     }
 
 
-
-    
+    /**
+     * Forcefully refresh the authentication token and update the cache.
+     */
+    public function refreshToken()
+    {
+        Log::info('tokenServices: Forcing token refresh.');
+        try {
+            return $this->generateToken(); // Directly call generateToken() to refresh the token
+        } catch (\Exception $e) {
+            Log::error('tokenServices: Error refreshing token: ' . $e->getMessage());
+            return null; // Return null if refreshing fails
+        }
+    }
 }
