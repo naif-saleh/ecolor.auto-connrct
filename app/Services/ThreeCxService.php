@@ -8,6 +8,7 @@ use Carbon\Carbon;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Cache;
 
 class ThreeCxService
 {
@@ -98,10 +99,22 @@ class ThreeCxService
     }
 
     /**
-     * Make a call using 3CX API
+     * Make a call using 3CX API with improved error handling and caching
+     *
+     * @param string $providerExtension
+     * @param string $destination
+     * @return array
+     * @throws \Exception
      */
     public function makeCall($providerExtension, $destination)
     {
+        // Check cache for recent call to this number
+        $cacheKey = "recent_call_{$destination}";
+        if (Cache::has($cacheKey)) {
+            $recentCall = Cache::get($cacheKey);
+            throw new \Exception("Duplicate call attempted to {$destination}. Previous call ID: {$recentCall['callid']}");
+        }
+
         try {
             $token = $this->getToken();
             $url = $this->apiUrl . "/callcontrol/{$providerExtension}/makecall";
@@ -121,6 +134,12 @@ class ThreeCxService
             if (!isset($responseData['result']['callid'])) {
                 throw new \Exception("Missing call ID in response");
             }
+
+            // Cache this call to prevent duplicates
+            Cache::put($cacheKey, [
+                'callid' => $responseData['result']['callid'],
+                'timestamp' => now()
+            ], now()->addMinutes(30));
 
             return $responseData;
         } catch (\Exception $e) {
@@ -186,8 +205,8 @@ class ThreeCxService
             $updated = ADialData::where('call_id', $callId)->update(['state' => $status]);
 
             Log::info("ADialParticipantsCommand ☎️✅ Call status updated for call_id: {$callId}, " .
-            "Status: " . ($call['Status'] ?? 'N/A') .
-            ", Duration: " . ($currentDuration ?? 'N/A'));
+                "Status: " . ($call['Status'] ?? 'N/A') .
+                ", Duration: " . ($currentDuration ?? 'N/A'));
 
             DB::commit();
 
