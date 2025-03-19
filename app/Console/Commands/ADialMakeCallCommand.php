@@ -50,7 +50,7 @@ class ADialMakeCallCommand extends Command
      *
      * @var int
      */
-    protected $duplicateCallWindow = 30;
+    protected $duplicateCallWindow = 5;
 
     /**
      * Maximum calls per minute
