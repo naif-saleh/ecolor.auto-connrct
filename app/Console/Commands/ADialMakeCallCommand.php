@@ -240,7 +240,7 @@ class ADialMakeCallCommand extends Command
             ->where('state', 'new')
             ->whereNotIn('mobile', $recentlyCalledNumbers)
             ->take($remainingCapacity)
-            ->lockForUpdate()
+            // ->lockForUpdate()
             ->get();
 
         foreach ($feedData as $data) {
