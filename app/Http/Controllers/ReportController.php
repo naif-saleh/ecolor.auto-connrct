@@ -128,7 +128,7 @@ class ReportController extends Controller
         $reports = $query->orderBy('created_at', 'desc')->paginate(50);
 
         // Calculate statistics
-        $totalCount = $statsQuery->count();
+        $totalCount = (clone $statsQuery)->whereNotIn('status', $notCalledStates)->count();
         $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
         $queuedCount = (clone $statsQuery)->whereIn('status', $toQueue)->count();
         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
