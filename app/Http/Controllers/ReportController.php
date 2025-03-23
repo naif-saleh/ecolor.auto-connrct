@@ -55,7 +55,7 @@ class ReportController extends Controller
         $timeTo = $request->input('time_to');
 
         // Define status mappings
-        $answeredStatuses = ['Talking', 'call'];
+        $answeredStatuses = ['Talking', 'call', 'Rerouting'];
         $toQueue = ['Rerouting'];
         $notCalledStates = ['new'];
         $noAnswerStatuses = ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
