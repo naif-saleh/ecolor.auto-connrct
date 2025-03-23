@@ -27,5 +27,9 @@ class AutoDailerReport extends Model
         'is_satisfied',
     ];
 
+    public function toQueue()
+    {
+        return $this->hasMany(ToQueue::class);
+    }
 
 }

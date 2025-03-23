@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Models\ToQueue;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
@@ -315,7 +316,7 @@ class ADialMakeCallCommand extends Command
                 DB::beginTransaction();
 
                 // Create call report
-                AutoDailerReport::create([
+               $report = AutoDailerReport::create([
                     'call_id' => $callId,
                     'status' => $status,
                     'provider' => $provider->name,
@@ -323,6 +324,11 @@ class ADialMakeCallCommand extends Command
                     'phone_number' => $data->mobile
                 ]);
 
+                ToQueue::create([
+                    'call_id' => $callId,
+                    'status' => $status,
+                    'a_dial_report_id' => $report->id
+                ]);
                 // Update dial data
                 $data->update([
                     'state' => $status,
