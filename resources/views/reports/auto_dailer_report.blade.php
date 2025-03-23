@@ -96,7 +96,7 @@
                 <p class="fw-bold fs-4">{{ $notCalled }}</p>
             </div>
         </a> --}}
-        @endif
+        {{-- @endif --}}
 
         @elseif($filter === 'answered')
         <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
