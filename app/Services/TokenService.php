@@ -53,7 +53,7 @@ class TokenService
 
                 // Cache the token with its expiration time
                 // Cache::put('three_cx_token', $token, now()->addSeconds($expiresIn)); // Cache with a buffer
-                Cache::put('three_cx_token', $token, now()->addSeconds($expiresIn - 5)); 
+                Cache::put('three_cx_token', $token, now()->addSeconds($expiresIn - 10));
 
                 Log::info('tokenServices: Token generated and cached successfully.');
                 return $token;
