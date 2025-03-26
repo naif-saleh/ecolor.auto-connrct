@@ -80,9 +80,7 @@ class UpdateCallStatusJob implements ShouldQueue
         try {
             $this->batchUpdateReports($updateData);
             $this->batchUpdateDialData($callIds, $updateData);
-            Log::info("Checking call status for rerouting: " . $callStatus);
-                $this->batchUpdateToQueue($callIds, $updateData);
-            
+            $this->batchUpdateToQueue($callIds, $updateData);
 
 
             DB::commit();
@@ -162,8 +160,20 @@ class UpdateCallStatusJob implements ShouldQueue
 
     protected function batchUpdateToQueue(array $callIds, array $updateData)
     {
-        $updates = collect($updateData)->keyBy('call_id');
-        ToQueue::whereIn('call_id', $callIds)
+        // Filter only records where status is 'Rerouting'
+        $updates = collect($updateData)
+            ->filter(fn ($item) => $item['status'] === 'Rerouting')
+            ->keyBy('call_id');
+
+        // If no records to update with Rerouting status, skip the update
+        if ($updates->isEmpty()) {
+            Log::info('batchUpdateToQueue: No calls with status Rerouting, skipping update.');
+            return;
+        }
+
+        Log::info('batchUpdateToQueue: Updating calls with status Rerouting', ['callIds' => $updates->keys()->all()]);
+
+        ToQueue::whereIn('call_id', $updates->keys())
             ->update([
                 'status' => DB::raw('CASE call_id '.
                     $updates->map(fn ($item, $callId) => "WHEN '{$callId}' THEN '{$item['status']}'")->implode(' ').
@@ -176,4 +186,5 @@ class UpdateCallStatusJob implements ShouldQueue
                     ' END'),
             ]);
     }
+
 }
