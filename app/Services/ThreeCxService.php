@@ -26,16 +26,34 @@ class ThreeCxService
     }
 
     /**
-     * Get all active calls for a provider.
+     * Get a fresh token for API requests (using your existing TokenService)
+     */
+    public function getToken()
+    {
+        try {
+            $token = $this->tokenService->getToken();
+            if (! $token) {
+                throw new \Exception('Failed to retrieve a valid token');
+            }
+
+            return $token;
+        } catch (\Exception $e) {
+            Log::error('❌ Failed to retrieve token: '.$e->getMessage());
+            throw $e;
+        }
+    }
+
+    /**
+     * Get all active calls for a provider
      */
     public function getActiveCallsForProvider($providerExtension)
     {
         $retries = 0;
-        $maxRetries = 1; 
+        $maxRetries = 1;
 
         while ($retries <= $maxRetries) {
             try {
-                $token = $this->tokenService->getToken();
+                $token = $this->getToken();
                 $filter = "contains(Caller, '{$providerExtension}')";
                 $url = $this->apiUrl.'/xapi/v1/ActiveCalls?$filter='.urlencode($filter);
 
@@ -44,7 +62,7 @@ class ThreeCxService
                         'Authorization' => 'Bearer '.$token,
                         'Accept' => 'application/json',
                     ],
-                    'timeout' => 15,
+                    'timeout' => 15, // Reduced timeout to avoid blocking
                 ]);
 
                 if ($response->getStatusCode() === 200) {
@@ -54,7 +72,7 @@ class ThreeCxService
                 throw new \Exception('Failed to fetch active calls. HTTP Status: '.$response->getStatusCode());
             } catch (\Exception $e) {
                 if ($retries < $maxRetries && strpos($e->getMessage(), '401') !== false) {
-                    Log::warning('🔄 401 Unauthorized detected, refreshing token...');
+                    Log::warning("🔄 401 Unauthorized detected, refreshing token...");
 
                     // Refresh token only once
                     $this->tokenService->refreshToken();
@@ -64,11 +82,11 @@ class ThreeCxService
                 }
 
                 Log::error("❌ Error fetching active calls for provider {$providerExtension}: ".$e->getMessage());
-
                 return [];
             }
         }
     }
+
 
     /**
      * Get all active calls
