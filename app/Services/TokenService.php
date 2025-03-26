@@ -12,7 +12,6 @@ class TokenService
     protected $clientId;
     protected $clientSecret;
 
-
     public function __construct()
     {
         $this->authUrl = config('services.three_cx.api_url') . '/connect/token';
@@ -21,17 +20,13 @@ class TokenService
     }
 
     /**
-     * Get the token, either from cache or by generating a new one.
+     * Get the cached token or generate a new one if expired.
      */
     public function getToken()
     {
-        $cachedToken = Cache::get('three_cx_token');
-        if ($cachedToken) {
-            Log::info('tokenServices: Using cached token One:');
-            return $cachedToken;
-        }
-
-        return $this->generateToken();
+        return Cache::remember('three_cx_token', now()->addMinutes(55), function () {
+            return $this->generateToken();
+        });
     }
 
     /**
@@ -39,7 +34,8 @@ class TokenService
      */
     protected function generateToken()
     {
-        Log::info('tokenServices: generate new Token');
+        Log::info('🔑 Generating new token for 3CX API...');
+
         try {
             $response = Http::asForm()->post($this->authUrl, [
                 'grant_type' => 'client_credentials',
@@ -49,35 +45,31 @@ class TokenService
 
             if ($response->successful() && isset($response['access_token'])) {
                 $token = $response['access_token'];
-                $expiresIn = $response['expires_in'] ?? 60; // Default to 1 hour if not provided
+                $expiresIn = max(($response['expires_in'] ?? 3600) - 60, 300); // Ensure at least 5 min cache
 
-                // Cache the token with its expiration time
-                // Cache::put('three_cx_token', $token, now()->addSeconds($expiresIn)); // Cache with a buffer
-                Cache::put('three_cx_token', $token, now()->addSeconds($expiresIn - 10));
+                Cache::put('three_cx_token', $token, now()->addSeconds($expiresIn));
+                Log::info('✅ Token generated and cached successfully.');
 
-                Log::info('tokenServices: Token generated and cached successfully.');
                 return $token;
-            } else {
-                Log::error('tokenServices: Failed to generate token: ' . $response->body());
             }
+
+            Log::error('❌ Failed to generate token: ' . $response->body());
         } catch (\Exception $e) {
-            Log::error('tokenServices: Error generating token: ' . $e->getMessage());
+            Log::error('🚨 Token generation error: ' . $e->getMessage());
         }
 
-        return null; // Return null if token generation fails
+        return null; 
     }
 
-
     /**
-     * Forcefully refresh the authentication token and update the cache.
+     * Forcefully refresh the token and update the cache.
      */
     public function refreshToken()
     {
-        Log::info('tokenServices: Forcing token refresh.');
+        Log::warning('🔄 Forcing token refresh due to 401 Unauthorized.');
 
         return Cache::lock('three_cx_token_lock', 5)->block(5, function () {
             return $this->generateToken();
         });
     }
-
 }
