@@ -82,11 +82,11 @@
             <h5 class="mt-2">No Answer</h5>
             <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
         </div>
-        <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
+        {{-- <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
             <i class="fa-solid fa-right-left text-primary fs-3"></i>
             <h5 class="mt-2">To Queue</h5>
             <p class="fw-bold fs-4">{{ $queuedCount }}</p>
-        </div>
+        </div> --}}
 
         {{-- @if (!empty($notCalled))
         <a href="{{ route('auto_dailer.report.notCalled') }}" style="text-decoration: none">
@@ -110,14 +110,14 @@
             <h5 class="mt-2">No Answer Calls</h5>
             <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
         </div>
-        @elseif($filter === 'queued')
+        {{-- @elseif($filter === 'queued')
         <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
             <i class="fa-solid fa-right-left text-primary fs-3"></i>
             <h5 class="mt-2">To Queue</h5>
             <p class="fw-bold fs-4">{{ $queuedCount }}</p>
         </div>
 
-        @endif
+        @endif --}}
     </div>
 
 

@@ -49,11 +49,10 @@ class ThreeCxService
     public function getActiveCallsForProvider($providerExtension)
     {
         $retries = 0;
-        $maxRetries = 1;
+        $maxRetries = 2; // Increased to allow one more attempt
 
         while ($retries <= $maxRetries) {
             try {
-                // Get a fresh token on each attempt, not just at the beginning
                 $token = $this->getToken();
                 $filter = "contains(Caller, '{$providerExtension}')";
                 $url = $this->apiUrl.'/xapi/v1/ActiveCalls?$filter='.urlencode($filter);
@@ -73,10 +72,12 @@ class ThreeCxService
                 return json_decode($response->getBody()->getContents(), true);
             } catch (\Exception $e) {
                 if ($retries < $maxRetries && strpos($e->getMessage(), '401') !== false) {
-                    // Force token refresh then retry
+                    Log::warning("401 Unauthorized detected, refreshing token and retrying...");
+
+                    // Force token refresh before retrying
+                    sleep(1); 
                     $this->tokenService->refreshToken();
                     $retries++;
-                    Log::info("Token refresh attempt {$retries} after 401 error for provider {$providerExtension}");
 
                     continue;
                 }
@@ -86,6 +87,7 @@ class ThreeCxService
             }
         }
     }
+
 
     /**
      * Get all active calls

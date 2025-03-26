@@ -52,7 +52,8 @@ class TokenService
                 $expiresIn = $response['expires_in'] ?? 60; // Default to 1 hour if not provided
 
                 // Cache the token with its expiration time
-                Cache::put('three_cx_token', $token, now()->addSeconds($expiresIn)); // Cache with a buffer
+                // Cache::put('three_cx_token', $token, now()->addSeconds($expiresIn)); // Cache with a buffer
+                Cache::put('three_cx_token', $token, now()->addSeconds($expiresIn - 5)); 
 
                 Log::info('tokenServices: Token generated and cached successfully.');
                 return $token;
@@ -73,11 +74,10 @@ class TokenService
     public function refreshToken()
     {
         Log::info('tokenServices: Forcing token refresh.');
-        try {
-            return $this->generateToken(); // Directly call generateToken() to refresh the token
-        } catch (\Exception $e) {
-            Log::error('tokenServices: Error refreshing token: ' . $e->getMessage());
-            return null; // Return null if refreshing fails
-        }
+
+        return Cache::lock('three_cx_token_lock', 5)->block(5, function () {
+            return $this->generateToken();
+        });
     }
+
 }
