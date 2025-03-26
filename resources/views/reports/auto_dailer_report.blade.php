@@ -115,9 +115,9 @@
             <i class="fa-solid fa-right-left text-primary fs-3"></i>
             <h5 class="mt-2">To Queue</h5>
             <p class="fw-bold fs-4">{{ $queuedCount }}</p>
-        </div>
+        </div>--}}
 
-        @endif --}}
+        @endif
     </div>
 
 
