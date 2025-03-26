@@ -80,9 +80,11 @@ class UpdateCallStatusJob implements ShouldQueue
         try {
             $this->batchUpdateReports($updateData);
             $this->batchUpdateDialData($callIds, $updateData);
-            if($callStatus === 'Rerouting') {
+            Log::info("Checking call status for rerouting: " . json_encode($callIds));
+            if ($callStatus === 'Rerouting') {
                 $this->batchUpdateToQueue($callIds, $updateData);
             }
+
 
             DB::commit();
             Log::info('ADialParticipantsCommand ✅ Batch updated '.count($callIds).' call records');
