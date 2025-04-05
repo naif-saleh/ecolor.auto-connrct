@@ -83,7 +83,7 @@ class ADistParticipantsCommand extends Command
                     $durationRouting = $establishedAt->diff($serverNow)->format('%H:%I:%S');
                 }
                 // Transaction to update database
-                DB::beginTransaction();
+                DB::transaction();
                 try {
                     AutoDistributerReport::where('call_id', $callId)
                         ->update([

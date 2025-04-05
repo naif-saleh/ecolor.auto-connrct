@@ -38,7 +38,7 @@ class ThreeCxService
 
             return $token;
         } catch (\Exception $e) {
-            Log::error('❌ Failed to retrieve token: '.$e->getMessage());
+            Log::error('❌ Failed to retrieve token: ' . $e->getMessage());
             throw $e;
         }
     }
@@ -55,11 +55,11 @@ class ThreeCxService
             try {
                 $token = $this->getToken();
                 $filter = "contains(Caller, '{$providerExtension}')";
-                $url = $this->apiUrl.'/xapi/v1/ActiveCalls?$filter='.urlencode($filter);
+                $url = $this->apiUrl . '/xapi/v1/ActiveCalls?$filter=' . urlencode($filter);
 
                 $response = $this->client->get($url, [
                     'headers' => [
-                        'Authorization' => 'Bearer '.$token,
+                        'Authorization' => 'Bearer ' . $token,
                         'Accept' => 'application/json',
                     ],
                     'timeout' => 15, // Reduced timeout to avoid blocking
@@ -69,7 +69,7 @@ class ThreeCxService
                     return json_decode($response->getBody()->getContents(), true);
                 }
 
-                throw new \Exception('Failed to fetch active calls. HTTP Status: '.$response->getStatusCode());
+                throw new \Exception('Failed to fetch active calls. HTTP Status: ' . $response->getStatusCode());
             } catch (\Exception $e) {
                 if ($retries < $maxRetries && strpos($e->getMessage(), '401') !== false) {
                     Log::warning("🔄 401 Unauthorized detected, refreshing token...");
@@ -81,7 +81,7 @@ class ThreeCxService
                     continue;
                 }
 
-                Log::error("❌ Error fetching active calls for provider {$providerExtension}: ".$e->getMessage());
+                Log::error("❌ Error fetching active calls for provider {$providerExtension}: " . $e->getMessage());
                 return [];
             }
         }
@@ -100,11 +100,11 @@ class ThreeCxService
             try {
                 // Get a fresh token on each attempt
                 $token = $this->getToken();
-                $url = $this->apiUrl.'/xapi/v1/ActiveCalls';
+                $url = $this->apiUrl . '/xapi/v1/ActiveCalls';
 
                 $response = $this->client->get($url, [
                     'headers' => [
-                        'Authorization' => 'Bearer '.$token,
+                        'Authorization' => 'Bearer ' . $token,
                         'Accept' => 'application/json',
                     ],
                     'timeout' => 30,
@@ -121,7 +121,7 @@ class ThreeCxService
                     continue;
                 }
 
-                Log::error('❌ Failed to fetch active calls: '.$e->getMessage());
+                Log::error('❌ Failed to fetch active calls: ' . $e->getMessage());
                 throw $e;
             }
         }
@@ -147,11 +147,11 @@ class ThreeCxService
 
         try {
             $token = $this->getToken();
-            $url = $this->apiUrl."/callcontrol/{$providerExtension}/makecall";
+            $url = $this->apiUrl . "/callcontrol/{$providerExtension}/makecall";
 
             $response = $this->client->post($url, [
                 'headers' => [
-                    'Authorization' => 'Bearer '.$token,
+                    'Authorization' => 'Bearer ' . $token,
                     'Accept' => 'application/json',
                     'Content-Type' => 'application/json',
                 ],
@@ -174,7 +174,7 @@ class ThreeCxService
 
             return $responseData;
         } catch (\Exception $e) {
-            Log::error('❌ Make call failed: '.$e->getMessage());
+            Log::error('❌ Make call failed: ' . $e->getMessage());
             throw $e;
         }
     }
@@ -224,7 +224,7 @@ class ThreeCxService
         }
 
         try {
-            DB::beginTransaction();
+            DB::transaction();
 
             $report = AutoDailerReport::where('call_id', $callId)->update([
                 'status' => $status,
@@ -235,16 +235,16 @@ class ThreeCxService
             // Also update the data table for consistency
             $updated = ADialData::where('call_id', $callId)->update(['state' => $status]);
 
-            Log::info("ADialParticipantsCommand ☎️✅ Call status updated for call_id: {$callId}, ".
-                'Status: '.($call['Status'] ?? 'N/A').
-                ', Duration: '.($currentDuration ?? 'N/A'));
+            Log::info("ADialParticipantsCommand ☎️✅ Call status updated for call_id: {$callId}, " .
+                'Status: ' . ($call['Status'] ?? 'N/A') .
+                ', Duration: ' . ($currentDuration ?? 'N/A'));
 
             DB::commit();
 
             return $report;
         } catch (\Exception $e) {
             DB::rollBack();
-            Log::error("❌ Failed to update database for Call ID {$callId}: ".$e->getMessage());
+            Log::error("❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
             throw $e;
         }
     }
@@ -256,7 +256,7 @@ class ThreeCxService
     //     }
 
     //     try {
-    //         DB::beginTransaction();
+    //         DB::transaction();
 
     //         $updateData = [];
     //         $updateDataADial = [];
@@ -353,7 +353,7 @@ class ThreeCxService
     //     }
 
     //     try {
-    //         DB::beginTransaction();
+    //         DB::transaction();
 
     //         // ✅ Bulk Update ADialData
     //         foreach ($updateADialData as $callId => $updateRecord) {

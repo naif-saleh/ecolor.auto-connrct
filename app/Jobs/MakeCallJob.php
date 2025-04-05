@@ -50,8 +50,8 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
             $responseState = Http::withHeaders([
                 'Authorization' => 'Bearer ' . $token,
             ])->post(config('services.three_cx.api_url') . "/callcontrol/{$this->extension}/makecall", [
-                        'destination' => $this->feedData->mobile,
-                    ]);
+                'destination' => $this->feedData->mobile,
+            ]);
 
             if ($responseState->successful()) {
                 $responseData = $responseState->json();
@@ -133,7 +133,7 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
                                     }
 
                                     // Transaction to update database
-                                    DB::beginTransaction();
+                                    DB::transaction();
                                     try {
                                         AutoDailerReport::where('call_id', $callId)
                                             ->update([
@@ -167,8 +167,6 @@ class MakeCallJob implements ShouldBeUniqueUntilProcessing
         } catch (\Exception $e) {
             Log::error("❌ Exception: " . $e->getMessage());
         }
-
-
     }
     /**
      * Define unique job key (Ensures uniqueness for each mobile)
