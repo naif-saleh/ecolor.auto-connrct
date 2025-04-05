@@ -16,6 +16,7 @@
         "league/csv": "^9.21",
         "opcodesio/log-viewer": "^3.12",
         "predis/predis": "^2.0",
+        "sentry/sentry-laravel": "^4.13",
         "spatie/laravel-medialibrary": "^11.11",
         "zircote/swagger-php": "^4.11"
     },
