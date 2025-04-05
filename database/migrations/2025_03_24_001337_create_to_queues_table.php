@@ -11,18 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('to_queues', function (Blueprint $table) {
-            $table->id();
-            $table->string('call_id')->require();
-            $table->string('status')->require();
-            $table->string('duration_time')->nullable();
-            $table->string('duration_routing')->nullable();
+        if (!Schema::hasTable('to_queues')) {
+            Schema::create('to_queues', function (Blueprint $table) {
+                $table->id();
+                $table->string('call_id')->require();
+                $table->string('status')->require();
+                $table->string('duration_time')->nullable();
+                $table->string('duration_routing')->nullable();
 
-            $table->unsignedBigInteger('a_dial_report_id');
-            $table->foreign('a_dial_report_id')->references('id')->on('auto_dailer_reports')->onDelete('cascade');
+                $table->unsignedBigInteger('a_dial_report_id');
+                $table->foreign('a_dial_report_id')->references('id')->on('auto_dailer_reports')->onDelete('cascade');
 
-            $table->timestamps();
-        });
+                $table->timestamps();
+            });
+        }
     }
 
     /**
