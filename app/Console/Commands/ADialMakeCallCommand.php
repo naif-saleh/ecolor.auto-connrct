@@ -293,7 +293,7 @@ class ADialMakeCallCommand extends Command
 
         //$this->threeCxService->makeCall($provider->extension, $data->mobile);
         try {
-            DB::beginTransaction();
+            DB::transaction();
 
             // Mark as processing before making the call
             $data->update([
@@ -313,10 +313,10 @@ class ADialMakeCallCommand extends Command
                 $callId = $responseData['result']['callid'];
                 $status = $responseData['result']['status'];
 
-                DB::beginTransaction();
+                DB::transaction();
 
                 // Create call report
-               $report = AutoDailerReport::create([
+                $report = AutoDailerReport::create([
                     'call_id' => $callId,
                     'status' => $status,
                     'provider' => $provider->name,
@@ -343,7 +343,7 @@ class ADialMakeCallCommand extends Command
                 // Add delay between calls
                 usleep($this->callDelay);
             } catch (\Exception $e) {
-                DB::beginTransaction();
+                DB::transaction();
 
                 // Mark as failed
                 $data->update([
