@@ -247,26 +247,33 @@ class ADialMakeCallCommand extends Command
             ->take($remainingCapacity)
             ->get();
 
+        // Mark file as done if all calls processed
+        $remainingCalls = ADialData::where('feed_id', $file->id)
+            ->where('state', 'new')
+            ->count();
         // Add this debug line after retrieving feedData:
         Log::info("ADialMakeCallCommand: 📞 Retrieved {$feedData->count()} numbers to call");
 
+        // Update file status to 'calling' when processing starts
+        $file->update(['is_done' => "calling"]);
+        Log::info("ADialMakeCallCommand: 📞 File {$file->file_name} status updated to 'calling'.");
+
         foreach ($feedData as $data) {
             if (!$now->between($from, $to)) {
-                Log::info("ADialMakeCallCommand: 🕒🚫📞 Call window expired during execution.");
-                break;
+            if ($remainingCalls != 0) {
+                $file->update(['is_done' => "not_called"]);
+                Log::info("ADialMakeCallCommand: 🕒🚫📞 Time Over for File Name: {$file->file_name}. Status updated to 'not_start'.");
+            }
+            Log::info("ADialMakeCallCommand: 🕒🚫📞 Call window expired during execution.");
+            break;
             }
 
             $this->makeCall($data, $provider);
         }
 
-        // Mark file as done if all calls processed
-        $remainingCalls = ADialData::where('feed_id', $file->id)
-            ->where('state', 'new')
-            ->count();
-
         if ($remainingCalls == 0) {
-            $file->update(['is_done' => true]);
-            Log::info("ADialMakeCallCommand: ✅📑📞 All numbers called for File Name: {$file->file_name}");
+            $file->update(['is_done' => "called"]);
+            Log::info("ADialMakeCallCommand: ✅📑📞 All numbers called for File Name: {$file->file_name}. Status updated to 'called'.");
         } else {
             Log::info("ADialMakeCallCommand: 📝 File {$file->file_name} has {$remainingCalls} calls remaining.");
         }
