@@ -223,30 +223,46 @@ class ThreeCxService
             }
         }
 
-        try {
-            DB::transaction();
-
+        return DB::transaction(function () use ($callId, $status, $duration_time, $duration_routing, $call, $currentDuration) {
             $report = AutoDailerReport::where('call_id', $callId)->update([
                 'status' => $status,
                 'duration_time' => $duration_time,
                 'duration_routing' => $duration_routing,
             ]);
 
-            // Also update the data table for consistency
-            $updated = ADialData::where('call_id', $callId)->update(['state' => $status]);
+            ADialData::where('call_id', $callId)->update(['state' => $status]);
 
             Log::info("ADialParticipantsCommand ☎️✅ Call status updated for call_id: {$callId}, " .
                 'Status: ' . ($call['Status'] ?? 'N/A') .
                 ', Duration: ' . ($currentDuration ?? 'N/A'));
 
-            DB::commit();
-
             return $report;
-        } catch (\Exception $e) {
-            DB::rollBack();
-            Log::error("❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
-            throw $e;
-        }
+        });
+
+        // try {
+        //     DB::transaction();
+
+        //     $report = AutoDailerReport::where('call_id', $callId)->update([
+        //         'status' => $status,
+        //         'duration_time' => $duration_time,
+        //         'duration_routing' => $duration_routing,
+        //     ]);
+
+        //     // Also update the data table for consistency
+        //     $updated = ADialData::where('call_id', $callId)->update(['state' => $status]);
+
+        //     Log::info("ADialParticipantsCommand ☎️✅ Call status updated for call_id: {$callId}, " .
+        //         'Status: ' . ($call['Status'] ?? 'N/A') .
+        //         ', Duration: ' . ($currentDuration ?? 'N/A'));
+
+        //     DB::commit();
+
+        //     return $report;
+        // } catch (\Exception $e) {
+        //     DB::rollBack();
+        //     Log::error("❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
+        //     throw $e;
+        // }
     }
 
     // public function updateCallRecords(array $calls)

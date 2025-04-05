@@ -83,23 +83,21 @@ class ADistParticipantsCommand extends Command
                     $durationRouting = $establishedAt->diff($serverNow)->format('%H:%I:%S');
                 }
                 // Transaction to update database
-                DB::transaction();
                 try {
-                    AutoDistributerReport::where('call_id', $callId)
-                        ->update([
-                            'status' => $status,
-                            'duration_time' => $durationTime,
-                            'duration_routing' => $durationRouting
-                        ]);
+                    DB::transaction(function () use ($callId, $status, $durationTime, $durationRouting, $call) {
+                        AutoDistributerReport::where('call_id', $callId)
+                            ->update([
+                                'status' => $status,
+                                'duration_time' => $durationTime,
+                                'duration_routing' => $durationRouting
+                            ]);
 
-                    ADistData::where('call_id', $callId)
-                        ->update(['state' => $status]);
+                        ADistData::where('call_id', $callId)
+                            ->update(['state' => $status]);
 
-                    Log::info("ADistParticipantsCommand ✅ Mobile status: {$status}, Mobile: " . $call['Callee']);
-
-                    DB::commit();
+                        Log::info("ADistParticipantsCommand ✅ Mobile status: {$status}, Mobile: " . $call['Callee']);
+                    });
                 } catch (\Exception $e) {
-                    DB::rollBack();
                     Log::error("ADistParticipantsCommand ❌ Transaction Failed for call ID {$callId}: " . $e->getMessage());
                 }
             }

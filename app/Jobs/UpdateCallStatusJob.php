@@ -76,17 +76,15 @@ class UpdateCallStatusJob implements ShouldQueue
             $updateData[] = $this->prepareCallUpdateData($call);
         }
 
-        DB::transaction();
         try {
-            $this->batchUpdateReports($updateData);
-            $this->batchUpdateDialData($callIds, $updateData);
-            $this->batchUpdateToQueue($callIds, $updateData);
+            DB::transaction(function () use ($callIds, $updateData) {
+                $this->batchUpdateReports($updateData);
+                $this->batchUpdateDialData($callIds, $updateData);
+                $this->batchUpdateToQueue($callIds, $updateData);
+            });
 
-
-            DB::commit();
             Log::info('ADialParticipantsCommand ✅ Batch updated ' . count($callIds) . ' call records');
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error('ADialParticipantsCommand ❌ Batch update failed: ' . $e->getMessage());
         }
     }

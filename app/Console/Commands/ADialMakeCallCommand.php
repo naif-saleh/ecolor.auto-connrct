@@ -293,18 +293,15 @@ class ADialMakeCallCommand extends Command
 
         //$this->threeCxService->makeCall($provider->extension, $data->mobile);
         try {
-            DB::transaction();
+            DB::transaction(function () use ($data) {
+                // Mark as processing before making the call
+                $data->update([
+                    'state' => 'processing',
+                ]);
+            });
 
-            // Mark as processing before making the call
-            $data->update([
-                'state' => 'processing',
-            ]);
-
-            DB::commit();
-
-            // Separate transaction for the actual call
+            // Separate block for making the actual call
             try {
-                // Make the call
                 $responseData = $this->threeCxService->makeCall(
                     $provider->extension,
                     $data->mobile
@@ -313,49 +310,40 @@ class ADialMakeCallCommand extends Command
                 $callId = $responseData['result']['callid'];
                 $status = $responseData['result']['status'];
 
-                DB::transaction();
+                DB::transaction(function () use ($callId, $status, $data, $provider) {
+                    $report = AutoDailerReport::create([
+                        'call_id' => $callId,
+                        'status' => $status,
+                        'provider' => $provider->name,
+                        'extension' => $provider->extension,
+                        'phone_number' => $data->mobile
+                    ]);
 
-                // Create call report
-                $report = AutoDailerReport::create([
-                    'call_id' => $callId,
-                    'status' => $status,
-                    'provider' => $provider->name,
-                    'extension' => $provider->extension,
-                    'phone_number' => $data->mobile
-                ]);
+                    ToQueue::create([
+                        'call_id' => $callId,
+                        'status' => $status,
+                        'a_dial_report_id' => $report->id
+                    ]);
 
-                ToQueue::create([
-                    'call_id' => $callId,
-                    'status' => $status,
-                    'a_dial_report_id' => $report->id
-                ]);
-                // Update dial data
-                $data->update([
-                    'state' => $status,
-                    'call_date' => now(),
-                    'call_id' => $callId
-                ]);
-
-                DB::commit();
+                    $data->update([
+                        'state' => $status,
+                        'call_date' => now(),
+                        'call_id' => $callId
+                    ]);
+                });
 
                 Log::info("ADialMakeCallCommand: 📞✅📞 Call successful for mobile: {$data->mobile}. Call ID: " . $callId);
-
-                // Add delay between calls
                 usleep($this->callDelay);
             } catch (\Exception $e) {
-                DB::transaction();
-
-                // Mark as failed
-                $data->update([
-                    'state' => 'failed',
-                ]);
-
-                DB::commit();
+                DB::transaction(function () use ($data) {
+                    $data->update([
+                        'state' => 'failed',
+                    ]);
+                });
 
                 Log::error("ADialMakeCallCommand: ❌ Call Failed to number {$data->mobile}: " . $e->getMessage());
             }
         } catch (\Exception $e) {
-            DB::rollBack();
             Log::error("ADialMakeCallCommand: ❌ Database error for number {$data->mobile}: " . $e->getMessage());
         }
     }
