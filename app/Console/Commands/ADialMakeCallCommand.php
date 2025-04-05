@@ -262,7 +262,7 @@ class ADialMakeCallCommand extends Command
             if (!$now->between($from, $to)) {
             if ($remainingCalls != 0) {
                 $file->update(['is_done' => "not_called"]);
-                Log::info("ADialMakeCallCommand: 🕒🚫📞 Time Over for File Name: {$file->file_name}. Status updated to 'not_start'.");
+                Log::info("ADialMakeCallCommand: 🕒🚫📞 Time Over for File Name: {$file->file_name}");
             }
             Log::info("ADialMakeCallCommand: 🕒🚫📞 Call window expired during execution.");
             break;
