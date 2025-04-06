@@ -85,7 +85,7 @@
             <p class="fw-bold fs-4">{{ $todayEmployeeUnanswerCount }}</p>
         </div>
 
-        @if (!empty($notCalled))
+        {{-- @if (!empty($notCalled))
         <a href="{{ route('auto_dailer.report.notCalled') }}" style="text-decoration: none;">
             <div class="card text-center p-4 shadow-sm flex-fill" style="min-width: 200px;">
                 <i class="fas fa-phone-slash text-primary fs-3"></i>
@@ -93,7 +93,7 @@
                 <p class="fw-bold fs-4">{{ $notCalled }}</p>
             </div>
         </a>
-        @endif
+        @endif --}}
 
 
         @elseif($filter === 'answered')

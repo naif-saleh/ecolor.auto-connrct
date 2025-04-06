@@ -387,7 +387,7 @@ class ReportController extends Controller
             'answeredCount',
             'noAnswerCount',
             'todayEmployeeUnanswerCount',
-            'notCalled',
+            // 'notCalled',
             'extensionFrom',
             'extensionTo',
             'dateFrom',

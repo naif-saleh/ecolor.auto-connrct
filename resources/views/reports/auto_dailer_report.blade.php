@@ -49,10 +49,10 @@
                 class="{{ $filter === 'answered' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-phone me-1"></i> Answered
             </a>
-            <a href="{{ url('auto-dailer-report?filter=queued') }}"
+            {{-- <a href="{{ url('auto-dailer-report?filter=queued') }}"
                 class="{{ $filter === 'queued' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fa-solid fa-right-left me-1"></i> To Queue
-            </a>
+            </a> --}}
             <a href="{{ url('auto-dailer-report?filter=no answer') }}"
                 class="{{ $filter === 'no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-phone-slash me-1"></i> No Answer
