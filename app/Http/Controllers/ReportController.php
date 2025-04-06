@@ -306,7 +306,7 @@ class ReportController extends Controller
         // Define status mappings
         $answeredStatuses = ['Talking', 'Wexternalline'];
         $noAnswerStatuses = ['Routing', 'Dialing', 'error'];
-        $employee_unanswer = ['Initiating', 'SomeOtherStatus'];
+        $employee_unanswer = ['Initiating'];
         // Start building the query
         $query = AutoDistributerReport::query();
 
