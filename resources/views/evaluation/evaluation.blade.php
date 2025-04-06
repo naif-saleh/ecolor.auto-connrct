@@ -321,6 +321,7 @@
 
     <div class="pagination">
         {!! $reports->appends(request()->except('page'))->links('pagination::bootstrap-5') !!}
+        
     </div>
 </div>
 @endsection

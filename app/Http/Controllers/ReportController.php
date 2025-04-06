@@ -525,15 +525,13 @@ class ReportController extends Controller
      */
     public function Evaluation(Request $request)
     {
-        // Retrieve filter parameters from the request (default to 'today')
+        // Retrieve filter parameters from the request
         $filter = $request->get('filter', 'today'); // Default to 'today'
         $dateFrom = $request->get('date_from');
         $dateTo = $request->get('date_to');
 
-        // Query the Evaluation model with filters
+        // Start query
         $query = Evaluation::query();
-
-        // Check if user submitted a date range
         $hasDateRange = $dateFrom && $dateTo;
 
         // Apply 'filter' only if no custom date range is applied
@@ -555,18 +553,18 @@ class ReportController extends Controller
             ]);
         }
 
+        // Clone query BEFORE pagination for accurate stats
+        $fullQuery = clone $query;
 
+        // Statistics
+        $totalCount = $fullQuery->count();
+        $satisfiedCount = (clone $fullQuery)->where('is_satisfied', "YES")->count();
+        $unsatisfiedCount = (clone $fullQuery)->where('is_satisfied', "NO")->count();
 
-        // Paginate the results
+        // Paginate results AFTER getting statistics
         $reports = $query->orderBy('created_at', 'desc')->paginate(50);
 
-        // Calculate statistics
-        $totalCount = (clone $query)->count();
-        $satisfiedCount = (clone $query)->where('is_satisfied', "YES")->count();
-        $unsatisfiedCount = (clone $query)->where('is_satisfied', "NO")->count();
-
-
-        // Return the view with data
+        // Return the view
         return view('evaluation.evaluation', [
             'reports' => $reports,
             'filter' => $filter,
@@ -575,6 +573,7 @@ class ReportController extends Controller
             'unsatisfiedCount' => $unsatisfiedCount,
         ]);
     }
+
 
 
     /**
