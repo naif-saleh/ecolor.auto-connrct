@@ -20,6 +20,7 @@ class UpdateCallStatusJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $provider;
+    public $tries = 3;
 
     /**
      * Create a new job instance.
