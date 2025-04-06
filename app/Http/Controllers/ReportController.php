@@ -614,7 +614,7 @@ class ReportController extends Controller
         $reports = $query->get();
 
         // Define the CSV file header
-        $headers = ['#', 'Mobile', 'Is Satisfied', 'Called At - Date', 'Called At - Time'];
+        $headers = ['#', 'Mobile', 'Extension', 'Is Satisfied', 'Called At - Date', 'Called At - Time'];
 
         // Create the CSV content
         $csvContent = [];
@@ -623,6 +623,7 @@ class ReportController extends Controller
             $csvContent[] = [
                 $index + 1,
                 $report->mobile,
+                $report->extension,
                 $report->is_satisfied === 'YES' ? 'Satisfied' : 'Unsatisfied',
                 $report->created_at->addHours(3)->format('Y-m-d'), // For Date
                 $report->created_at->addHours(3)->format('H:i:s') // For Time
