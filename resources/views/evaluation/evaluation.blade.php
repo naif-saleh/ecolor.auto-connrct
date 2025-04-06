@@ -286,6 +286,7 @@
                             <tr>
                                 <th><i class="fa-solid fa-hashtag"></i></th>
                                 <th><i class="fa-solid fa-mobile"></i> Mobile</th>
+                                <th><i class="fa-solid fa-mobile"></i> Extension</th>
                                 <th><i class="fa-solid fa-thumbs-up m-1"></i> \ <i class="fa-solid fa-thumbs-down"></i> Is Satisfied</th>
                                 <th><i class="fa-solid fa-calendar-days"></i> Called At - Date</th>
                                 <th><i class="fa-solid fa-clock"></i> Called At - Time</th>
@@ -296,6 +297,7 @@
                                 <tr>
                                     <td>{{ $reports->firstItem() + $index }}</td>
                                     <td>{{ $report->mobile }}</td>
+                                    <td>{{ $report->extension }}</td>
                                     <td>
                                         <span
                                             class="badge {{ $report->is_satisfied === 'YES' ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill' }}">
