@@ -45,7 +45,7 @@ class ReportEvaluationsSeeder extends Seeder
                         $time = $matches[2];
 
                         // Convert date format
-                        $dateObj = Carbon::createFromFormat('d/m/Y H:i', $date . ' ' . $time);
+                        $dateObj = Carbon::createFromFormat('m/d/Y H:i', $date . ' ' . $time);
                         $formattedDateTime = $dateObj->format('Y-m-d H:i:s');
 
                         // Prepare data for insertion

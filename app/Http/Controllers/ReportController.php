@@ -361,7 +361,7 @@ class ReportController extends Controller
             $query->whereIn('status', $answeredStatuses);
         } elseif ($filter === 'no answer') {
             $query->whereIn('status', $noAnswerStatuses);
-        }elseif ($filter === 'emplooyee no answer') {
+        } elseif ($filter === 'emplooyee no answer') {
             $query->whereIn('status', $employee_unanswer);
         }
 
@@ -527,28 +527,35 @@ class ReportController extends Controller
     {
         // Retrieve filter parameters from the request (default to 'today')
         $filter = $request->get('filter', 'today'); // Default to 'today'
-        $dateFrom = $request->get('date_from', null);
-        $dateTo = $request->get('date_to', null);
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
 
         // Query the Evaluation model with filters
         $query = Evaluation::query();
 
-        // Apply filters for 'is_satisfied' (use filter for 1 or 0)
-        if ($filter === 'satisfied') {
-            $query->where('is_satisfied', "YES");
-        } elseif ($filter === 'unsatisfied') {
-            $query->where('is_satisfied', "NO");
-        } elseif ($filter === 'today') {
-            $query->whereDate('created_at', now()->toDateString()); // Default to today
+        // Check if user submitted a date range
+        $hasDateRange = $dateFrom && $dateTo;
+
+        // Apply 'filter' only if no custom date range is applied
+        if (!$hasDateRange) {
+            if ($filter === 'satisfied') {
+                $query->where('is_satisfied', "YES");
+            } elseif ($filter === 'unsatisfied') {
+                $query->where('is_satisfied', "NO");
+            } elseif ($filter === 'today') {
+                $query->whereDate('created_at', now()->toDateString());
+            }
         }
 
         // Apply date range filter
-        if ($dateFrom && $dateTo) {
+        if ($hasDateRange) {
             $query->whereBetween('created_at', [
                 \Carbon\Carbon::parse($dateFrom)->startOfDay(),
                 \Carbon\Carbon::parse($dateTo)->endOfDay()
             ]);
         }
+
+
 
         // Paginate the results
         $reports = $query->orderBy('created_at', 'desc')->paginate(50);
@@ -576,46 +583,33 @@ class ReportController extends Controller
     public function exportEvaluation(Request $request)
     {
         // Retrieve filter parameters from the request (if any)
-        $filter = $request->get('filter', null);
-        // $extensionFrom = $request->get('extension_from', null);
-        // $extensionTo = $request->get('extension_to', null);
-        // $provider = $request->get('provider', null);
-        $dateFrom = $request->get('date_from', null);
-        $dateTo = $request->get('date_to', null);
+        $filter = $request->query('filter');
+        $dateFrom = $request->get('date_from');
+        $dateTo = $request->get('date_to');
 
         // Query the Evaluation model with filters
         $query = Evaluation::query();
 
-        // Apply filters for 'is_satisfied' (use filter for 1 or 0)
-        if ($filter) {
+        // Apply 'filter' only if no custom date range is applied
+        $hasDateRange = $dateFrom && $dateTo;
+
+        if (!$hasDateRange) {
             if ($filter === 'satisfied') {
                 $query->where('is_satisfied', "YES");
             } elseif ($filter === 'unsatisfied') {
                 $query->where('is_satisfied', "NO");
+            } elseif ($filter === 'today') {
+                $query->whereDate('created_at', now()->toDateString());
             }
         }
 
-        // Apply other filters if provided
-        // if ($extensionFrom) {
-        //     $query->where('extension', '>=', $extensionFrom);
-        // }
-
-        // if ($extensionTo) {
-        //     $query->where('extension', '<=', $extensionTo);
-        // }
-
-        // if ($provider) {
-        //     $query->where('provider', $provider);
-        // }
-
-        if ($dateFrom) {
-            $query->whereDate('created_at', '>=', $dateFrom);
+        // Apply date range filter
+        if ($hasDateRange) {
+            $query->whereBetween('created_at', [
+                \Carbon\Carbon::parse($dateFrom)->startOfDay(),
+                \Carbon\Carbon::parse($dateTo)->endOfDay()
+            ]);
         }
-
-        if ($dateTo) {
-            $query->whereDate('created_at', '<=', $dateTo);
-        }
-
         // Get the filtered results
         $reports = $query->get();
 
