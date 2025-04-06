@@ -361,6 +361,8 @@ class ReportController extends Controller
             $query->whereIn('status', $answeredStatuses);
         } elseif ($filter === 'no answer') {
             $query->whereIn('status', $noAnswerStatuses);
+        }elseif ($filter === 'emplooyee no answer') {
+            $query->whereIn('status', $employee_unanswer);
         }
 
         // Get paginated results
