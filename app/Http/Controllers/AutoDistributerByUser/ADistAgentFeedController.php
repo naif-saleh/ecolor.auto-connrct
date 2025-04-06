@@ -129,6 +129,29 @@ class ADistAgentFeedController extends Controller
         return view('autoDistributerByUser.AgentFeed.feed', compact('agent', 'feeds'));
     }
 
+    //Download File Data
+    // This method is used to download the mobile numbers from a specific file
+    // It retrieves all mobile numbers associated with the file and creates a CSV response
+    public function downloadFileData(Request $request, ADistAgent $agent, ADistFeed $file)
+    {
+        // Get all mobile numbers for this file
+        $numbers = ADistData::where('feed_id', $file->id)->pluck('mobile')->toArray();
+
+        // Create CSV content
+        $csvContent = "Mobile Number\n";
+        foreach ($numbers as $number) {
+            $csvContent .= $number . "\n";
+        }
+
+        // Create a response with CSV headers
+        $filename = $file->file_name . '_export_' . date('Y-m-d') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        return response($csvContent, 200, $headers);
+    }
 
     public function downloadSkippedNumbers($slug)
     {
@@ -391,5 +414,5 @@ class ADistAgentFeedController extends Controller
     }
 
 
-    
+
 }

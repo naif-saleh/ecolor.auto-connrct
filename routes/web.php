@@ -122,6 +122,8 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/providers/feeds/{slug}/allow', [ADialProviderFeedController::class, 'updateAllowStatus'])->name('autodailers.files.allow');
     //Import CSV File Using Drop Zone
     Route::post('/providers/feeds/upload-file', [ADialProviderFeedController::class, 'importCsvData'])->name('autodailers.file.csv.dropzone.upload');
+    //Download File Numbers
+    Route::get('provider/{provider}/files/{file}/download', [ADialProviderFeedController::class, 'downloadFileData'])->name('provider.files.download');
 
     /**
      * Auto Distributor User Routes
@@ -149,6 +151,10 @@ Route::middleware(['auth', 'admin'])->group(function () {
     //Import CSV File Using Drop Zone
     Route::post('/agents/feeds/upload-file', [ADistAgentFeedController::class, 'importCsvData'])->name('users.file.csv.dropzone.upload');
     Route::get('agent/files/{slug}/download-skipped-numbers', [ADistAgentFeedController::class, 'downloadSkippedNumbers'])->name('users.files.downloadSkippedNumbers');
+    //Download File Numbers
+    Route::get('agent/{agent}/files/{file}/download', [ADistAgentFeedController::class, 'downloadFileData'])->name('agent.files.download');
+     
+
 
     Route::get('/today-feeds', [ADistFeedController::class, 'getTodayFeeds']);
     Route::post('/update-feed-status', [ADistFeedController::class, 'updateFeedStatus']);

@@ -81,11 +81,10 @@
 
                                     <!-- View and Delete Buttons (moved to end) -->
                                     <div>
-                                        {{-- <!-- Download Button -->
-                                    <a href="{{ url('auto-dailer/download-processed-file', $file->id) }}"
-                                        class="btn btn-dark btn-sm bg-primary mx-1" title="Download File">
-                                        <i class="fa fa-download"></i>
-                                    </a> --}}
+                                        <a href="{{ route('agent.files.download', ['agent' => $agent->id, 'file' => $file->id]) }}"
+                                            class="btn btn-primary btn-sm mx-1">
+                                             <i class="fas fa-download"></i>
+                                         </a>
 
                                         <!-- view Button -->
                                         <a href="{{ route('users.files.show', $file->slug) }}" type="button"

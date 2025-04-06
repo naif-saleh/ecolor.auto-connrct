@@ -46,14 +46,14 @@ class ADialProviderFeedController extends Controller
                 'user_id' => auth()->id(), // Ensure the user is logged in
             ]);
             // dd(Auth::user()->name);
-            // // Active Log Report...............................
-            // ActivityLog::create([
-            //     'user_id' => Auth::id(),
-            //     'operation' => Auth::user()->name . " created " . $request->name . " provider with extension " . $request->extension,
-            //     'file_type' => 'Auto-Dailer',
-            //     'file_name' => $request->name,
-            //     'operation_time' => now(),
-            // ]);
+            // Active Log Report...............................
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'operation' => Auth::user()->name . " created " . $request->name . " provider with extension " . $request->extension,
+                'file_type' => 'Auto-Dailer',
+                'file_name' => $request->name,
+                'operation_time' => now(),
+            ]);
             return redirect('/providers')->with('success', 'Provider Created Successfully');
         } catch (\Exception $e) {
             return response()->json(['error' => 'Something went wrong: ' . $e->getMessage()], 500);
@@ -71,9 +71,21 @@ class ADialProviderFeedController extends Controller
 
         try {
             $provider = ADialProvider::findOrFail($id);
+            $comment = "Provider updated from " . $provider->name . " to " . $request->name .
+                " and from " . $provider->extension . " to "  . $request->extension . " By " . Auth::user()->name;
+
             $provider->update([
                 'name' => $request->name,
                 'extension' => $request->extension,
+            ]);
+
+            // Active Log Report...............................
+            ActivityLog::create([
+                'user_id' => Auth::id(),
+                'operation' => $comment,
+                'file_type' => 'Auto-Dailer',
+                'file_name' => $request->name,
+                'operation_time' => now(),
             ]);
 
             return response()->json(['success' => 'Provider Updated Successfully']);
@@ -173,6 +185,31 @@ class ADialProviderFeedController extends Controller
         // Validates Saudi mobile numbers in these formats:
         return preg_match('/^(9665[0-9]{8}|9050[0-9]{8}|505[0-9]{8})$/', $mobile);
     }
+
+    //Download File Data
+    // This method is used to download the mobile numbers from a specific file
+    // It retrieves all mobile numbers associated with the file and creates a CSV response
+    public function downloadFileData(Request $request, ADialProvider $provider, ADialFeed $file)
+    {
+        // Get all mobile numbers for this file
+        $numbers = ADialData::where('feed_id', $file->id)->pluck('mobile')->toArray();
+
+        // Create CSV content
+        $csvContent = "Mobile Number\n";
+        foreach ($numbers as $number) {
+            $csvContent .= $number . "\n";
+        }
+
+        // Create a response with CSV headers
+        $filename = $file->file_name . '_export_' . date('Y-m-d') . '.csv';
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+        ];
+
+        return response($csvContent, 200, $headers);
+    }
+
 
     // Display all files for a provider
     public function files(ADialProvider $provider)
