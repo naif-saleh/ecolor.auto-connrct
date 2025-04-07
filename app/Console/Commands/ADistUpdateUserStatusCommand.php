@@ -44,7 +44,7 @@ class ADistUpdateUserStatusCommand extends Command
 
         try {
             $token = $this->tokenService->getToken();
-            Log::info('Update Token: ' . $token);
+            // Log::info('Update Token: ' . $token);
             // Create Guzzle client
             $client = new Client();
 
