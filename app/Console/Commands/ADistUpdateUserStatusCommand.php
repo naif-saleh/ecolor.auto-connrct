@@ -49,13 +49,22 @@ class ADistUpdateUserStatusCommand extends Command
             $client = new Client();
 
             // Fetch user data from 3CX API using Guzzle
-            $response = $client->request('GET', config('services.three_cx.api_url') . "/xapi/v1/Users", [
-                'headers' => [
-                    'Authorization' => 'Bearer ' . $token,
-                    'Accept' => 'application/json',
-                ],
-                'timeout' => 10,
-            ]);
+            $response = retry(3, function () use ($client, $token) {
+                $start = microtime(true);
+
+                $response = $client->request('GET', config('services.three_cx.api_url') . "/xapi/v1/Users", [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $token,
+                        'Accept' => 'application/json',
+                    ],
+                    'timeout' => 30,
+                ]);
+
+                $duration = round(microtime(true) - $start, 3);
+                // Log::info("✅ 3CX API call succeeded in {$duration}s");
+
+                return $response;
+            }, 1000);
 
             if ($response->getStatusCode() == 200) {
                 $users = json_decode($response->getBody()->getContents(), true);
