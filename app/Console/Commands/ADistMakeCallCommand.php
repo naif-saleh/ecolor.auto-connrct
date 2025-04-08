@@ -36,6 +36,8 @@ class ADistMakeCallCommand extends Command
             $query->whereDate('date', today())->where('allow', true);
         })->get();
 
+        Log::info('Agents fetched for processing:', ['agents' => $agents->toArray()]);
+
         foreach ($agents as $agent) {
             try {
                 // ✅ Check if agent is available for a call
