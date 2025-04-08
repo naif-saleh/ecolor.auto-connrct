@@ -80,23 +80,16 @@ class ADialMakeCallCommand extends Command
     {
         $lockKey = 'adial_make_call_running';
 
-        // Prevent concurrent execution
         if (Cache::has($lockKey)) {
             Log::info('ADialMakeCallCommand: 🔒 Another instance is already running');
             return;
         }
 
-        // Acquire lock
         Cache::put($lockKey, true, $this->lockTimeout);
 
         try {
             Log::info('✅ 📡 ADialMakeCallCommand started at ' . Carbon::now());
 
-            if (!$this->isWithinGlobalCallWindow()) {
-                return;
-            }
-
-            // Process each provider
             $providers = ADialProvider::all();
             Log::info("ADialMakeCallCommand: 🔍📡 Found {$providers->count()} providers to process.");
 
@@ -112,24 +105,24 @@ class ADialMakeCallCommand extends Command
             Log::error('ADialMakeCallCommand: ❌ Error: ' . $e->getMessage());
             report($e);
         } finally {
-
             Cache::forget($lockKey);
         }
     }
+
 
     /**
      * Check if current time is within global call window
      *
      * @return bool
      */
-    protected function isWithinGlobalCallWindow()
+    protected function isWithinGlobalCallWindow($file)
     {
         $timezone = config('app.timezone');
         $callTimeStart = General_Setting::get('call_time_start');
         $callTimeEnd = General_Setting::get('call_time_end');
 
         if (!$callTimeStart || !$callTimeEnd) {
-            Log::warning("ADialMakeCallCommand: ⚠️ Call time settings not configured. ⚠️");
+            Log::warning("ADialMakeCallCommand: ⚠️ Call time settings not configured.");
             return false;
         }
 
@@ -138,12 +131,15 @@ class ADialMakeCallCommand extends Command
         $globalEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
 
         if (!$now->between($globalStart, $globalEnd)) {
-            Log::info('ADialMakeCallCommand: 🕒🚫📞 Calls are not allowed at this time. 🕒🚫📞');
+            Log::info('ADialMakeCallCommand: 🕒🚫📞 Outside global call time.');
+            $file->update(['is_done' => 'not_called']);
+            Log::info("ADialMakeCallCommand: 📁 File '{$file->file_name}' marked as not_called.");
             return false;
         }
 
         return true;
     }
+
 
     /**
      * Process a provider and its associated feeds
@@ -158,7 +154,7 @@ class ADialMakeCallCommand extends Command
         $files = ADialFeed::where('provider_id', $provider->id)
             ->whereDate('date', today())
             ->where('allow', true)
-            ->where('is_done', false) // Only process files that aren't done
+            ->where('is_done', false)
             ->get();
 
         Log::info("ADialMakeCallCommand: 📑🔍 Found {$files->count()} feeds for provider {$provider->name}.");
@@ -167,6 +163,7 @@ class ADialMakeCallCommand extends Command
             $this->processFile($file, $provider, $now, $timezone);
         }
     }
+
 
     /**
      * Process a file and make calls for its data
@@ -179,105 +176,83 @@ class ADialMakeCallCommand extends Command
      */
     protected function processFile($file, $provider, $now, $timezone)
     {
-        // Convert times to Carbon instances with correct timezone
         $from = Carbon::parse("{$file->date} {$file->from}", $timezone);
         $to = Carbon::parse("{$file->date} {$file->to}", $timezone);
+        if ($to->lessThanOrEqualTo($from)) $to->addDay();
 
-        // If "to" time is before "from" time, assume it's on the next day
-        if ($to->lessThanOrEqualTo($from)) {
-            $to->addDay();
-        }
-
-        // Log the calculated time window
-        Log::info("ADialMakeCallCommand: Processing File ID {$file->id} | From: {$from->toDateTimeString()} | To: {$to->toDateTimeString()} | Now: {$now->toDateTimeString()}");
-
-        // Check if the current time is within the call window
         if (!$now->between($from, $to)) {
-            Log::info("ADialMakeCallCommand: 🛑📑 Skipping File ID {$file->id}, not in call window.");
+            Log::info("ADialMakeCallCommand: 🛑📑 File ID {$file->id} not in local call window.");
             return;
         }
 
-        // Rate limiting check
-        $callsInLastMinute = AutoDailerReport::where('created_at', '>=', now()->subMinute())
-            ->count();
+        if (!$this->isWithinGlobalCallWindow($file)) return;
 
+        $callsInLastMinute = AutoDailerReport::where('created_at', '>=', now()->subMinute())->count();
         if ($callsInLastMinute >= $this->maxCallsPerMinute) {
-            Log::info("ADialMakeCallCommand: ⏱️ Rate limit reached ({$callsInLastMinute} calls in last minute). Pausing.");
+            Log::info("ADialMakeCallCommand: ⏱️ Rate limit hit. Skipping.");
             return;
         }
 
-        // Check current call limits
         $callLimit = CountCalls::get('number_calls');
-
         try {
             $activeCalls = $this->threeCxService->getAllActiveCalls();
             $currentCalls = count($activeCalls['value'] ?? []);
-
-            Log::info("ADialMakeCallCommand: 📞📊 Current active calls: {$currentCalls}, Limit: {$callLimit}.");
+            Log::info("ADialMakeCallCommand: 📞📊 Active calls: {$currentCalls}, Limit: {$callLimit}.");
         } catch (\Throwable $e) {
             Log::error("ADialMakeCallCommand: ❌ Error fetching active calls: " . $e->getMessage());
             return;
         }
 
         if ($currentCalls > 96) {
-            Log::error("ADialMakeCallCommand: 🚫📞 Active calls reached limit: " . $currentCalls);
+            Log::error("ADialMakeCallCommand: 🚫 Too many active calls.");
             return;
         }
 
-        // Calculate remaining capacity
         $remainingCapacity = $callLimit - $currentCalls;
         if ($remainingCapacity <= 0) {
-            Log::info("ADialMakeCallCommand: 🚫📞 No capacity for new calls.");
+            Log::info("ADialMakeCallCommand: 🚫 No capacity left.");
             return;
         }
 
-        // Get phone numbers that haven't been called recently
         $recentlyCalledNumbers = AutoDailerReport::where('created_at', '>=', now()->subMinutes($this->duplicateCallWindow))
-            ->pluck('phone_number')
-            ->toArray();
+            ->pluck('phone_number')->toArray();
 
         $potentialCalls = ADialData::where('feed_id', $file->id)
             ->where('state', 'new')
             ->count();
+
         Log::info("ADialMakeCallCommand: 🔍 Found {$potentialCalls} potential calls for file {$file->id}");
 
-        // Then modify the feedData query to temporarily disable some restrictions:
         $feedData = ADialData::where('feed_id', $file->id)
             ->where('state', 'new')
-            ->take($remainingCapacity)
+            ->take($callLimit)
             ->get();
 
-        // Mark file as done if all calls processed
-        $remainingCalls = ADialData::where('feed_id', $file->id)
-            ->where('state', 'new')
-            ->count();
-        // Add this debug line after retrieving feedData:
-        Log::info("ADialMakeCallCommand: 📞 Retrieved {$feedData->count()} numbers to call");
-
-        // Update file status to 'calling' when processing starts
         $file->update(['is_done' => "calling"]);
         Log::info("ADialMakeCallCommand: 📞 File {$file->file_name} status updated to 'calling'.");
 
         foreach ($feedData as $data) {
             if (!$now->between($from, $to)) {
-            if ($remainingCalls != 0) {
-                $file->update(['is_done' => "not_called"]);
-                Log::info("ADialMakeCallCommand: 🕒🚫📞 Time Over for File Name: {$file->file_name}");
-            }
-            Log::info("ADialMakeCallCommand: 🕒🚫📞 Call window expired during execution.");
-            break;
+                $remainingCalls = ADialData::where('feed_id', $file->id)->where('state', 'new')->count();
+                if ($remainingCalls != 0) {
+                    $file->update(['is_done' => "not_called"]);
+                    Log::info("ADialMakeCallCommand: 🕒 File '{$file->file_name}' marked as not_called during loop.");
+                }
+                break;
             }
 
             $this->makeCall($data, $provider);
         }
 
+        $remainingCalls = ADialData::where('feed_id', $file->id)->where('state', 'new')->count();
         if ($remainingCalls == 0) {
             $file->update(['is_done' => "called"]);
-            Log::info("ADialMakeCallCommand: ✅📑📞 All numbers called for File Name: {$file->file_name}. Status updated to 'called'.");
+            Log::info("ADialMakeCallCommand: ✅ All numbers called for File '{$file->file_name}'.");
         } else {
             Log::info("ADialMakeCallCommand: 📝 File {$file->file_name} has {$remainingCalls} calls remaining.");
         }
     }
+
 
     /**
      * Make a call to a number with proper error handling and state management
