@@ -37,7 +37,7 @@ class ADistMakeCallCommand extends Command
         })->get();
 
         Log::info('Agents query executed.', ['agents_count' => $agents->count()]);
-        
+
         if ($agents->isEmpty()) {
             Log::warning('⚠️ No agents with allowed files found for today.');
         }
@@ -97,14 +97,14 @@ class ADistMakeCallCommand extends Command
                         }
 
                         foreach ($dataItems as $dataItem) {
-                            $ongoingCall = AutoDistributerReport::where('extension', $agent->extension)
-                                ->whereIn('status', ['Initiating', 'In Progress'])
-                                ->exists();
+                            // $ongoingCall = AutoDistributerReport::where('extension', $agent->extension)
+                            //     ->whereIn('status', ['Initiating', 'In Progress'])
+                            //     ->exists();
 
-                            if ($ongoingCall) {
-                                Log::info("⏳ Agent {$agent->id} has an ongoing call. Skipping this round.");
-                                break;
-                            }
+                            // if ($ongoingCall) {
+                            //     Log::info("⏳ Agent {$agent->id} has an ongoing call. Skipping this round.");
+                            //     break;
+                            // }
 
                             Log::info("☎️ Attempting call to {$dataItem->mobile}");
                             try {
