@@ -89,43 +89,45 @@ class ADistMakeCallCommand extends Command
                         }
 
                         // Find the next eligible number to call (only one per execution)
-                        $dataItem = ADistData::where('feed_id', $feed->id)
+                        $dataItems = ADistData::where('feed_id', $feed->id)
                             ->where('state', 'new')
                             ->get();
 
-                        if (!$dataItem) {
+                        if ($dataItems->isEmpty()) {
                             $this->checkIfFeedCompleted($feed);
+                            continue;
+                        }
+                        foreach ($dataItems as $dataItem) {
+                            // Check if agent has ongoing calls
+                            $ongoingCall = AutoDistributerReport::where('extension', $agent->extension)
+                                ->whereIn('status', ['Initiating', 'In Progress'])
+                                ->exists();
 
+                            if ($ongoingCall) {
+                                Log::info("⏳ Agent {$agent->id} has an ongoing call. Skipping this round.");
+                                break;
+                            }
+
+                            // Make the call
+                            Log::info("☎️ Attempting call to {$dataItem->mobile}");
+                            try {
+                                $callResponse = $this->threeCxService->makeCallDist($agent, $dataItem->mobile);
+
+                                DB::transaction(function () use ($callResponse, $dataItem, $agent, $feed) {
+                                    AutoDistributerReport::create([
+                                        'call_id' => $callResponse['result']['callid'],
+                                        'status' => "Initiating",
+                                        'extension' => $agent->extension,
+                                        'phone_number' => $callResponse['result']['party_caller_id'],
+                                        'provider' => $feed->file_name,
+                                    ]);
+                                    $dataItem->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
+                                });
+                            } catch (\Exception $e) {
+                                Log::error("❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
+                            }
                         }
 
-                        // Check if there are any ongoing calls for this agent
-                        // $ongoingCall = AutoDistributerReport::where('extension', $agent->extension)
-                        //     ->whereIn('status', ['Initiating', 'In Progress'])
-                        //     ->exists();
-
-                        // if ($ongoingCall) {
-                        //     Log::info("⏳ Agent {$agent->id} has an ongoing call in database. Skipping new call.");
-                        //     continue;
-                        // }
-
-                        // Make the call
-                        Log::info("☎️ Attempting call to {$dataItem->mobile}");
-                        try {
-                            $callResponse = $this->threeCxService->makeCallDist($agent, $dataItem->mobile);
-
-                            DB::transaction(function () use ($callResponse, $dataItem, $agent, $feed) {
-                                AutoDistributerReport::create([
-                                    'call_id' => $callResponse['result']['callid'],
-                                    'status' => "Initiating",
-                                    'extension' => $agent->extension,
-                                    'phone_number' => $callResponse['result']['party_caller_id'],
-                                    'provider' => $feed->file_name,
-                                ]);
-                                $dataItem->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
-                            });
-                        } catch (\Exception $e) {
-                            Log::error("❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
-                        }
 
                         // Process only one number per execution
                         break;
@@ -184,5 +186,4 @@ class ADistMakeCallCommand extends Command
             Log::info("ADistMakeCallCommand: 📝 File {$feed->file_name} has {$remainingCalls} calls remaining.");
         }
     }
-
 }
