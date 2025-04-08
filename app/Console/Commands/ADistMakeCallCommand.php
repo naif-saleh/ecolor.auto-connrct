@@ -167,7 +167,6 @@ class ADistMakeCallCommand extends Command
 
         if (!$now->between($globalStart, $globalEnd)) {
             Log::info('ADialMakeCallCommand: 🕒🚫📞 Outside global call time.');
-            Log::info("ADialMakeCallCommand: 📁 File '{$feed->file_name}' marked as not_called.");
             return false;
         }
 

@@ -180,13 +180,19 @@ class ADialMakeCallCommand extends Command
         $to = Carbon::parse("{$file->date} {$file->to}", $timezone);
         if ($to->lessThanOrEqualTo($from)) $to->addDay();
 
-        if (!$now->between($from, $to)) {
-            Log::info("ADialMakeCallCommand: 🛑📑 File ID {$file->id} not in local call window.");
+        if (!$now->between($from, $to) || !$this->isWithinGlobalCallWindow($file)) {
+            $remainingCalls = ADialData::where('feed_id', $file->id)->where('state', 'new')->count();
+            $status = $remainingCalls == 0 ? "called" : "not_called";
+            $file->update(['is_done' => $status]);
+
+            $logMessage = $status === "called"
+            ? "✅ All numbers called for File '{$file->file_name}'."
+            : "🚫 Time over or outside global call window for File '{$file->file_name}'. Not completed.";
+            Log::info("ADialMakeCallCommand: {$logMessage}");
+
             return;
         }
-
-        if (!$this->isWithinGlobalCallWindow($file)) return;
-
+        
         $callsInLastMinute = AutoDailerReport::where('created_at', '>=', now()->subMinute())->count();
         if ($callsInLastMinute >= $this->maxCallsPerMinute) {
             Log::info("ADialMakeCallCommand: ⏱️ Rate limit hit. Skipping.");
