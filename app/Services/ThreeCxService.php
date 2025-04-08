@@ -150,6 +150,7 @@ class ThreeCxService
             throw new \Exception("Duplicate call attempted to {$destination}. Previous call ID: {$recentCall['callid']}");
         }
 
+
         try {
             $token = $this->getToken();
             $url = $this->apiUrl . "/callcontrol/{$providerExtension}/makecall";
@@ -314,7 +315,8 @@ class ThreeCxService
     {
         // Check if the agent is already in a call
         $token = $this->getToken();
-        $response = $this->client->get("/callcontrol/{$agent->extension}/participants", [
+        $url = $this->apiUrl . "/callcontrol/{$agent->extension}/participants";
+        $response = $this->client->get($url, [
             'headers' => ['Authorization' => "Bearer $token"],
             'timeout' => 10,
         ]);
