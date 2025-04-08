@@ -86,7 +86,6 @@ class ADistMakeCallCommand extends Command
                         // Check if there are any ongoing calls for this agent
                         $ongoingCall = AutoDistributerReport::where('extension', $agent->extension)
                             ->whereIn('status', ['Initiating', 'In Progress'])
-                            ->where('attempt_time', '>', now()->subMinutes(30))
                             ->exists();
 
                         if ($ongoingCall) {
@@ -106,7 +105,7 @@ class ADistMakeCallCommand extends Command
                                     'extension' => $agent->extension,
                                     'phone_number' => $callResponse['result']['party_caller_id'],
                                     'provider' => $feed->file_name,
-                                    
+
                                 ]);
                                 $dataItem->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
                             });
