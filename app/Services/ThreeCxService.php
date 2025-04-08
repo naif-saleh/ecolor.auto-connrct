@@ -243,11 +243,9 @@ class ThreeCxService
 
 
 
-    public function getParticipants($extension)
+    public function getParticipants($extension, $token)
     {
-
         try {
-            $token = $this->getToken();
             $url = $this->apiUrl . "/callcontrol/{$extension}/participants";
             $response = $this->client->get($url, [
                 'headers' => ['Authorization' => "Bearer $token"],
@@ -260,32 +258,34 @@ class ThreeCxService
         }
     }
 
-    public function getDevices($extension)
+    public function getDevices($extension, $token)
     {
         try {
-            $token = $this->getToken();
             $url = $this->apiUrl . "/callcontrol/{$extension}/devices";
             $response = $this->client->get($url, [
                 'headers' => ['Authorization' => "Bearer $token"],
                 'timeout' => 10
             ]);
-            return json_decode($response->getBody(), true);
+            $devices = json_decode($response->getBody(), true);
+            Log::info("Devices for {$extension}: " . print_r($devices, true));
+            return $devices;
         } catch (RequestException $e) {
             Log::error("❌ Error fetching devices for {$extension}: " . $e->getMessage());
             return null;
         }
     }
 
-    public function makeCallAdist($extension, $deviceId, $destination)
+
+    public function makeCallAdist($extension, $deviceId, $destination, $token)
     {
         try {
-            $token = $this->getToken();
             $url = $this->apiUrl . "/callcontrol/{$extension}/devices/{$deviceId}/makecall";
             $response = $this->client->post($url, [
                 'headers' => ['Authorization' => "Bearer $token"],
                 'json' => ['destination' => $destination],
                 'timeout' => 10
             ]);
+            Log::info("API Response for making call: " . $response->getBody());
             return json_decode($response->getBody(), true);
         } catch (RequestException $e) {
             Log::error("❌ Error making call for {$extension}: " . $e->getMessage());
