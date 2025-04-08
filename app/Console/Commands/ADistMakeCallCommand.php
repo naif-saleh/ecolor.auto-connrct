@@ -91,11 +91,11 @@ class ADistMakeCallCommand extends Command
                         // Find the next eligible number to call (only one per execution)
                         $dataItem = ADistData::where('feed_id', $feed->id)
                             ->where('state', 'new')
-                            ->first();
+                            ->get();
 
                         if (!$dataItem) {
                             $this->checkIfFeedCompleted($feed);
-        
+
                         }
 
                         // Check if there are any ongoing calls for this agent
