@@ -67,17 +67,21 @@ class ADistMakeCallCommand extends Command
                         ->whereDate('date', today())
                         ->get();
 
-                    $feeds->update(['is_done' => 'calling']);
+
                     foreach ($feeds as $feed) {
-
+                        $feeds->update(['is_done' => 'calling']);
                         // Check if feed is within call window in general time
-                        if (!$this->isWithinGlobalCallWindow($feed)) return;
+                        if (!$this->isWithinGlobalCallWindow($feed) || !$this->threeCxService->isWithinCallWindow($feed)) {
+                            $remainingCalls = ADistData::where('feed_id', $feed->id)->where('state', 'new')->count();
+                            $status = $remainingCalls == 0 ? "called" : "not_called";
+                            $feed->update(['is_done' => $status]);
 
-                        // Check if feed is within call window
-                        if (!$this->threeCxService->isWithinCallWindow($feed)) {
-                            Log::info("🚫 Feed {$feed->id} is NOT within the allowed time range.");
-                            $feed->update(['is_done' => 'not_called']);
-                            continue;
+                            $logMessage = $status === "called"
+                                ? "✅ All numbers called for File '{$feed->file_name}'."
+                                : "🚫 Time over for File '{$feed->file_name}'. Not completed.";
+                            Log::info("ADistMakeCallCommand: {$logMessage}");
+
+                            return;
                         }
 
                         // Find the next eligible number to call (only one per execution)
@@ -86,6 +90,15 @@ class ADistMakeCallCommand extends Command
                             ->first();
 
                         if (!$dataItem) {
+                            $remainingCalls = ADistData::where('feed_id', $feed->id)->where('state', 'new')->count();
+                            $status = $remainingCalls == 0 ? "called" : "not_called";
+                            $feed->update(['is_done' => $status]);
+
+                            $logMessage = $status === "called"
+                                ? "✅ All numbers called for File '{$feed->file_name}'."
+                                : "📝 File '{$feed->file_name}' has {$remainingCalls} calls remaining.";
+                            Log::info("ADistMakeCallCommand: {$logMessage}");
+
                             continue; // No new numbers to call
                         }
 
@@ -122,8 +135,6 @@ class ADistMakeCallCommand extends Command
 
                         // Process only one number per execution
                         break;
-
-                       
                     }
                 } finally {
                     Cache::forget($lockKey);
@@ -156,7 +167,6 @@ class ADistMakeCallCommand extends Command
 
         if (!$now->between($globalStart, $globalEnd)) {
             Log::info('ADialMakeCallCommand: 🕒🚫📞 Outside global call time.');
-            $feed->update(['is_done' => 'not_called']);
             Log::info("ADialMakeCallCommand: 📁 File '{$feed->file_name}' marked as not_called.");
             return false;
         }
