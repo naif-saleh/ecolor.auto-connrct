@@ -92,15 +92,7 @@ class ADistMakeCallCommand extends Command
                             ->first();
 
                         if (!$dataItem) {
-                            $remainingCalls = ADistData::where('feed_id', $feed->id)->where('state', 'new')->count();
-                            $status = $remainingCalls == 0 ? "called" : "not_called";
-                            $feed->update(['is_done' => $status]);
-
-                            $logMessage = $status === "called"
-                                ? "✅ All numbers called for File '{$feed->file_name}'."
-                                : "📝 File '{$feed->file_name}' has {$remainingCalls} calls remaining.";
-                            Log::info("ADistMakeCallCommand: {$logMessage}");
-
+                            $this->checkIfFeedCompleted($feed);
                             continue; // No new numbers to call
                         }
 
@@ -172,4 +164,23 @@ class ADistMakeCallCommand extends Command
 
         return true;
     }
+
+
+    /**
+     * Check if a feed has any remaining calls and update status accordingly
+     *
+     * @param ADistFeed $feed
+     * @return void
+     */
+    protected function checkIfFeedCompleted(ADistFeed $feed)
+    {
+        $remainingCalls = ADistData::where('feed_id', $feed->id)->where('state', 'new')->count();
+        if ($remainingCalls == 0) {
+            $feed->update(['is_done' => "called"]);
+            Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}'.");
+        } else {
+            Log::info("ADistMakeCallCommand: 📝 File {$feed->file_name} has {$remainingCalls} calls remaining.");
+        }
+    }
+
 }

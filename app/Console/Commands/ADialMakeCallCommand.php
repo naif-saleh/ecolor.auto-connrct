@@ -132,8 +132,6 @@ class ADialMakeCallCommand extends Command
 
         if (!$now->between($globalStart, $globalEnd)) {
             Log::info('ADialMakeCallCommand: 🕒🚫📞 Outside global call time.');
-            $file->update(['is_done' => 'not_called']);
-            Log::info("ADialMakeCallCommand: 📁 File '{$file->file_name}' marked as not_called.");
             return false;
         }
 
@@ -192,7 +190,7 @@ class ADialMakeCallCommand extends Command
 
             return;
         }
-        
+
         $callsInLastMinute = AutoDailerReport::where('created_at', '>=', now()->subMinute())->count();
         if ($callsInLastMinute >= $this->maxCallsPerMinute) {
             Log::info("ADialMakeCallCommand: ⏱️ Rate limit hit. Skipping.");
@@ -250,13 +248,7 @@ class ADialMakeCallCommand extends Command
             $this->makeCall($data, $provider);
         }
 
-        $remainingCalls = ADialData::where('feed_id', $file->id)->where('state', 'new')->count();
-        if ($remainingCalls == 0) {
-            $file->update(['is_done' => "called"]);
-            Log::info("ADialMakeCallCommand: ✅ All numbers called for File '{$file->file_name}'.");
-        } else {
-            Log::info("ADialMakeCallCommand: 📝 File {$file->file_name} has {$remainingCalls} calls remaining.");
-        }
+        $this->checkIfFeedCompleted($file);
     }
 
 
@@ -335,4 +327,23 @@ class ADialMakeCallCommand extends Command
             Log::error("ADialMakeCallCommand: ❌ Database error for number {$data->mobile}: " . $e->getMessage());
         }
     }
+
+
+    /**
+     * Check if a feed has any remaining calls and update status accordingly
+     *
+     * @param ADialFeed $feed
+     * @return void
+     */
+    protected function checkIfFeedCompleted(ADialFeed $feed)
+    {
+        $remainingCalls = ADialData::where('feed_id', $feed->id)->where('state', 'new')->count();
+        if ($remainingCalls == 0) {
+            $feed->update(['is_done' => "called"]);
+            Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}'.");
+        } else {
+            Log::info("ADistMakeCallCommand: 📝 File {$feed->file_name} has {$remainingCalls} calls remaining.");
+        }
+    }
+
 }
