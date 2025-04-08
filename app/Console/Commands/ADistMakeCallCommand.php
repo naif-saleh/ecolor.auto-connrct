@@ -75,6 +75,9 @@ class ADistMakeCallCommand extends Command
 
                     foreach ($feeds as $feed) {
                         // Check call windows
+                        $feed->update()([
+                            'is_done' => "calling",
+                        ]);
                         $isGlobalWindow = $this->isWithinGlobalCallWindow($feed);
                         $isAgentWindow = $this->threeCxService->isWithinCallWindow($feed);
                         Log::info('Call window check.', ['feed_id' => $feed->id, 'is_global_window' => $isGlobalWindow, 'is_agent_window' => $isAgentWindow]);
@@ -103,7 +106,7 @@ class ADistMakeCallCommand extends Command
                         }
 
                         foreach ($dataItems as $dataItem) {
-                          
+
 
                             // ✅ Attempt to make the call
                             Log::info("☎️ Attempting call to {$dataItem->mobile}");
