@@ -54,7 +54,7 @@ class ADistAgent extends Model
      */
     public function files()
     {
-        return $this->hasMany(ADistFeed::class, 'agent_id');
+        return $this->hasMany(ADistFeed::class, 'agent_id', 'id' );
     }
 
 

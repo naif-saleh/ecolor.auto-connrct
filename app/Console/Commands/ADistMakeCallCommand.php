@@ -35,6 +35,10 @@ class ADistMakeCallCommand extends Command
         $agents = ADistAgent::whereHas('files', function ($query) {
             $query->whereDate('date', today())->where('allow', true);
         })->get();
+        
+        if ($agents->isEmpty()) {
+            Log::warning('⚠️ No agents with allowed files found for today.');
+        }
 
         // Log::info('Agents fetched for processing:', ['agents' => $agents->toArray()]);
 
