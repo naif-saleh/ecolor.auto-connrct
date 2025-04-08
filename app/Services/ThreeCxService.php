@@ -243,7 +243,7 @@ class ThreeCxService
 
 
 
-    public function getParticipants($extension, $token)
+    public function getParticipants($extension)
     {
 
         try {
@@ -260,7 +260,7 @@ class ThreeCxService
         }
     }
 
-    public function getDevices($extension, $token)
+    public function getDevices($extension)
     {
         try {
             $token = $this->getToken();
@@ -276,7 +276,7 @@ class ThreeCxService
         }
     }
 
-    public function makeCallAdist($extension, $deviceId, $destination, $token)
+    public function makeCallAdist($extension, $deviceId, $destination)
     {
         try {
             $token = $this->getToken();
