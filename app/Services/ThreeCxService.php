@@ -6,6 +6,7 @@ use App\Models\ADialData;
 use App\Models\AutoDailerReport;
 use Carbon\Carbon;
 use GuzzleHttp\Client;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -238,7 +239,44 @@ class ThreeCxService
 
             return $report;
         });
+    }
 
+
+    public function getDevicesForAgent($agentExtension)
+    {
+        try {
+            $token = $this->getToken();
+            if (!$token) {
+                Log::error("❌ Failed to retrieve API token.");
+                return [];
+            }
+
+            // Make the API call to get devices for the agent
+            $response = $this->client->get("/callcontrol/{$agentExtension}/devices", [
+                'headers' => ['Authorization' => "Bearer {$token}"],
+                'timeout' => 10,
+            ]);
+
+            // Parse the response
+            $devices = json_decode($response->getBody(), true);
+
+            if (isset($devices['result']) && is_array($devices['result'])) {
+                return $devices['result'];
+            } else {
+                Log::error("❌ No devices found for agent {$agentExtension}.");
+                return [];
+            }
+        } catch (RequestException $e) {
+            Log::error("❌ API Request failed for agent {$agentExtension}: " . $e->getMessage());
+            return [];
+        } catch (\Exception $e) {
+            Log::error("❌ General error fetching devices for agent {$agentExtension}: " . $e->getMessage());
+            return [];
+        }
+
+
+
+        
         // try {
         //     DB::transaction();
 

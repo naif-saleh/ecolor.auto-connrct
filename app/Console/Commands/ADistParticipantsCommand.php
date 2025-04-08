@@ -2,61 +2,34 @@
 
 namespace App\Console\Commands;
 
-use App\Models\ADistAgent;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
+use App\Services\ThreeCxService;
+use App\Models\AutoDailerReport;
+use App\Models\ADialData;
 use Carbon\Carbon;
-use App\Models\ADistData;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\DB;
-use App\Models\AutoDistributerReport;
 use DateTime;
-use App\Services\TokenService;
-use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
-
+use Illuminate\Support\Facades\DB;
 
 class ADistParticipantsCommand extends Command
 {
     protected $signature = 'app:ADist-participants-command';
     protected $description = 'Fetch and process participants data from 3CX API';
-    protected $tokenService;
+    protected $threeCxService;
 
-    public function __construct(TokenService $tokenService)
+    public function __construct(ThreeCxService $threeCxService)
     {
         parent::__construct();
-        $this->tokenService = $tokenService;
+        $this->threeCxService = $threeCxService;
     }
 
     public function handle()
     {
         Log::info('ADistParticipantsCommand executed at ' . Carbon::now());
 
-
-
         try {
-            $token = $this->tokenService->getToken();
-            $client = new Client([
-                'base_uri' => config('services.three_cx.api_url'),
-                'headers' => [
-                    'Accept' => 'application/json'
-                ],
-            ]);
-
-
-
-            // Fetch Active Calls
-            try {
-
-                $response = $client->get('/xapi/v1/ActiveCalls', [
-                    'headers' => ['Authorization' => "Bearer $token"]
-                ]);
-
-                $activeCalls = json_decode($response->getBody(), true);
-            } catch (RequestException $e) {
-                Log::error("ADistParticipantsCommand ❌ Failed to fetch active calls: " . $e->getMessage());
-                return;
-            }
+            // Get all active calls using the ThreeCxService
+            $activeCalls = $this->threeCxService->getAllActiveCalls();
 
             if (empty($activeCalls['value'])) {
                 Log::info("ADistParticipantsCommand ℹ️ No active calls at the moment.");
@@ -65,45 +38,40 @@ class ADistParticipantsCommand extends Command
 
             Log::info("ADistParticipantsCommand Active Calls Retrieved: " . print_r($activeCalls, true));
 
-            foreach ($activeCalls['value'] as $call) {
-                $status = $call['Status'];
-                $callId = $call['Id'];
-
-                $durationTime = null;
-                $durationRouting = null;
-
-                if ($status === 'Talking') {
-                    $establishedAt = new DateTime($call['EstablishedAt']);
-                    $serverNow = new DateTime($call['ServerNow']);
-                    $durationTime = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-                }
-                if ($status === 'Routing') {
-                    $establishedAt = new DateTime($call['EstablishedAt']);
-                    $serverNow = new DateTime($call['ServerNow']);
-                    $durationRouting = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-                }
-                // Transaction to update database
-                try {
-                    DB::transaction(function () use ($callId, $status, $durationTime, $durationRouting, $call) {
-                        AutoDistributerReport::where('call_id', $callId)
-                            ->update([
-                                'status' => $status,
-                                'duration_time' => $durationTime,
-                                'duration_routing' => $durationRouting
-                            ]);
-
-                        ADistData::where('call_id', $callId)
-                            ->update(['state' => $status]);
-
-                        Log::info("ADistParticipantsCommand ✅ Mobile status: {$status}, Mobile: " . $call['Callee']);
-                    });
-                } catch (\Exception $e) {
-                    Log::error("ADistParticipantsCommand ❌ Transaction Failed for call ID {$callId}: " . $e->getMessage());
-                }
-            }
+            // Process Active Calls
+            $this->processActiveCalls($activeCalls);
         } catch (\Exception $e) {
-            Log::error("ADistParticipantsCommand ❌ General error in fetching active calls: " . $e->getMessage());
+            Log::error("ADistParticipantsCommand ❌ Error: " . $e->getMessage());
         }
+
         Log::info("ADistParticipantsCommand ✅ Auto Dialer command execution completed.");
+    }
+
+    // Process Active Calls
+    protected function processActiveCalls($activeCalls)
+    {
+        foreach ($activeCalls['value'] as $call) {
+            $status = $call['Status'];
+            $callId = $call['Id'];
+
+            $durationTime = null;
+            $durationRouting = null;
+
+            // Calculate the duration based on status
+            if ($status === 'Talking') {
+                $establishedAt = new DateTime($call['EstablishedAt']);
+                $serverNow = new DateTime($call['ServerNow']);
+                $durationTime = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+            }
+
+            if ($status === 'Routing') {
+                $establishedAt = new DateTime($call['EstablishedAt']);
+                $serverNow = new DateTime($call['ServerNow']);
+                $durationRouting = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+            }
+
+            // Use the ThreeCxService to update the call record in the database
+            $this->threeCxService->updateCallRecord($callId, $status, $call);
+        }
     }
 }

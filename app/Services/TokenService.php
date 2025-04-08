@@ -6,6 +6,15 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
+
+
+/**
+ * Class TokenService
+ *
+ * This service handles the generation and caching of the 3CX API token.
+ * It uses Laravel's Cache and HTTP client to manage the token lifecycle.
+ */
+// @package App\Services
 class TokenService
 {
     protected $authUrl;
@@ -58,7 +67,7 @@ class TokenService
             Log::error('🚨 Token generation error: ' . $e->getMessage());
         }
 
-        return null; 
+        return null;
     }
 
     /**
@@ -73,3 +82,4 @@ class TokenService
         });
     }
 }
+
