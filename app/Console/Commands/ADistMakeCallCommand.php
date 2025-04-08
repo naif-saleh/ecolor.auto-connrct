@@ -103,15 +103,7 @@ class ADistMakeCallCommand extends Command
                         }
 
                         foreach ($dataItems as $dataItem) {
-                            // ✅ Ensure agent has no ongoing call
-                            $ongoingCall = AutoDistributerReport::where('extension', $agent->extension)
-                                ->whereIn('status', ['Initiating', 'In Progress'])
-                                ->exists();
-
-                            if ($ongoingCall) {
-                                Log::info("⏳ Agent {$agent->id} already has a pending call. Skipping.");
-                                break; // Do not call more numbers
-                            }
+                          
 
                             // ✅ Attempt to make the call
                             Log::info("☎️ Attempting call to {$dataItem->mobile}");
