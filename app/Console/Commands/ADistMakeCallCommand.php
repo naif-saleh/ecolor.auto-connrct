@@ -36,7 +36,7 @@ class ADistMakeCallCommand extends Command
             $query->whereDate('date', today())->where('allow', true);
         })->get();
 
-        Log::info('Agents fetched for processing:', ['agents' => $agents->toArray()]);
+        // Log::info('Agents fetched for processing:', ['agents' => $agents->toArray()]);
 
         foreach ($agents as $agent) {
             try {
@@ -95,7 +95,7 @@ class ADistMakeCallCommand extends Command
 
                         if (!$dataItem) {
                             $this->checkIfFeedCompleted($feed);
-                            continue; // No new numbers to call
+        
                         }
 
                         // Check if there are any ongoing calls for this agent
