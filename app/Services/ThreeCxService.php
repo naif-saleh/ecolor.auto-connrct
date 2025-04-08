@@ -251,8 +251,11 @@ class ThreeCxService
                 return [];
             }
 
+            // Ensure the API URL is complete
+            $url = $this->apiUrl . "/callcontrol/{$agentExtension}/devices";
+
             // Make the API call to get devices for the agent
-            $response = $this->client->get("/callcontrol/{$agentExtension}/devices", [
+            $response = $this->client->get($url, [
                 'headers' => ['Authorization' => "Bearer {$token}"],
                 'timeout' => 10,
             ]);
@@ -273,35 +276,8 @@ class ThreeCxService
             Log::error("❌ General error fetching devices for agent {$agentExtension}: " . $e->getMessage());
             return [];
         }
-
-
-
-        
-        // try {
-        //     DB::transaction();
-
-        //     $report = AutoDailerReport::where('call_id', $callId)->update([
-        //         'status' => $status,
-        //         'duration_time' => $duration_time,
-        //         'duration_routing' => $duration_routing,
-        //     ]);
-
-        //     // Also update the data table for consistency
-        //     $updated = ADialData::where('call_id', $callId)->update(['state' => $status]);
-
-        //     Log::info("ADialParticipantsCommand ☎️✅ Call status updated for call_id: {$callId}, " .
-        //         'Status: ' . ($call['Status'] ?? 'N/A') .
-        //         ', Duration: ' . ($currentDuration ?? 'N/A'));
-
-        //     DB::commit();
-
-        //     return $report;
-        // } catch (\Exception $e) {
-        //     DB::rollBack();
-        //     Log::error("❌ Failed to update database for Call ID {$callId}: " . $e->getMessage());
-        //     throw $e;
-        // }
     }
+
 
     // public function updateCallRecords(array $calls)
     // {

@@ -29,8 +29,8 @@ Artisan::command('inspire', function () {
 
 
 Schedule::command('app:ADial-make-call-command')->everySecond();
-// Schedule::command('app:ADist-make-call-command')->everySecond();
-Schedule::command('app:ADist-make-call-command')->everyMinute();
+Schedule::command('app:ADist-make-call-command')->everySecond();
+// Schedule::command('app:ADist-make-call-command')->everyMinute();
 
 // // Call Status Commands
 Schedule::command('app:ADial-participants-command')->everySecond();
