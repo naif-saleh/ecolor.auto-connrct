@@ -3,7 +3,9 @@
 namespace App\Services;
 
 use App\Models\ADialData;
+use App\Models\ADistAgent;
 use App\Models\ADistData;
+use App\Models\ADistFeed;
 use App\Models\AutoDailerReport;
 use App\Models\AutoDistributerReport;
 use Carbon\Carbon;
@@ -308,53 +310,62 @@ class ThreeCxService
 
 
 
-    // public function getParticipants($extension, $token)
-    // {
-    //     try {
-    //         $url = $this->apiUrl . "/callcontrol/{$extension}/participants";
-    //         $response = $this->client->get($url, [
-    //             'headers' => ['Authorization' => "Bearer $token"],
-    //             'timeout' => 10
-    //         ]);
-    //         return json_decode($response->getBody(), true);
-    //     } catch (RequestException $e) {
-    //         Log::error("❌ Error fetching participants for {$extension}: " . $e->getMessage());
-    //         return null;
-    //     }
-    // }
+    public function isAgentInCall(ADistAgent $agent)
+    {
+        // Check if the agent is already in a call
+        $token = $this->getToken();
+        $response = $this->client->get("/callcontrol/{$agent->extension}/participants", [
+            'headers' => ['Authorization' => "Bearer $token"],
+            'timeout' => 10,
+        ]);
+        $participants = json_decode($response->getBody(), true);
+        return collect($participants)->contains(fn($p) => in_array($p['status'], ['Connected', 'Dialing', 'Ringing']));
+    }
 
-    // public function getDevices($extension, $token)
-    // {
-    //     try {
-    //         $url = $this->apiUrl . "/callcontrol/{$extension}/devices";
-    //         $response = $this->client->get($url, [
-    //             'headers' => ['Authorization' => "Bearer $token"],
-    //             'timeout' => 10
-    //         ]);
-    //         $devices = json_decode($response->getBody(), true);
-    //         Log::info("Devices for {$extension}: " . print_r($devices, true));
-    //         return $devices;
-    //     } catch (RequestException $e) {
-    //         Log::error("❌ Error fetching devices for {$extension}: " . $e->getMessage());
-    //         return null;
-    //     }
-    // }
+    public function isWithinCallWindow(ADistFeed $feed)
+    {
+        // Check if the current time is within the allowed time window
+        $timezone = config('app.timezone');
+        $now = now()->timezone($timezone);
+        $from = Carbon::parse("{$feed->date} {$feed->from}", $timezone);
+        $to = Carbon::parse("{$feed->date} {$feed->to}", $timezone);
 
+        if ($to->lessThanOrEqualTo($from)) {
+            $to->addDay(); // Handle overnight case
+        }
 
-    // public function makeCallAdist($extension, $deviceId, $destination, $token)
-    // {
-    //     try {
-    //         $url = $this->apiUrl . "/callcontrol/{$extension}/devices/{$deviceId}/makecall";
-    //         $response = $this->client->post($url, [
-    //             'headers' => ['Authorization' => "Bearer $token"],
-    //             'json' => ['destination' => $destination],
-    //             'timeout' => 10
-    //         ]);
-    //         Log::info("API Response for making call: " . $response->getBody());
-    //         return json_decode($response->getBody(), true);
-    //     } catch (RequestException $e) {
-    //         Log::error("❌ Error making call for {$extension}: " . $e->getMessage());
-    //         return null;
-    //     }
-    // }
+        return $now->between($from, $to);
+    }
+
+    public function makeCallDist(ADistAgent $agent, $destination)
+    {
+        // Make a call to the given destination
+        $token = $this->getToken();
+        $mobileDevice = $this->getDeviceForAgent($agent);
+
+        if (!$mobileDevice) {
+            throw new \Exception("No 3CX Mobile Client device found for agent {$agent->extension}");
+        }
+
+        $response = $this->client->post("/callcontrol/{$agent->extension}/devices/{$mobileDevice['device_id']}/makecall", [
+            'headers' => ['Authorization' => "Bearer $token"],
+            'json' => ['destination' => $destination],
+            'timeout' => 10,
+        ]);
+
+        return json_decode($response->getBody(), true);
+    }
+
+    public function getDeviceForAgent(ADistAgent $agent)
+    {
+        // Fetch devices for agent and return the mobile device
+        $token = $this->getToken();
+        $response = $this->client->get("/callcontrol/{$agent->extension}/devices", [
+            'headers' => ['Authorization' => "Bearer $token"],
+            'timeout' => 10,
+        ]);
+        $devices = json_decode($response->getBody(), true);
+
+        return collect($devices)->firstWhere('user_agent', '3CX Mobile Client');
+    }
 }
