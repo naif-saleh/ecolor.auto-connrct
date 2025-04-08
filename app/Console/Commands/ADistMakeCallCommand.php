@@ -67,10 +67,16 @@ class ADistMakeCallCommand extends Command
                         ->whereDate('date', today())
                         ->get();
 
+                    $feeds->update(['is_done' => 'calling']);
                     foreach ($feeds as $feed) {
+
+                        // Check if feed is within call window in general time
+                        if (!$this->isWithinGlobalCallWindow($feed)) return;
+
                         // Check if feed is within call window
                         if (!$this->threeCxService->isWithinCallWindow($feed)) {
                             Log::info("🚫 Feed {$feed->id} is NOT within the allowed time range.");
+                            $feed->update(['is_done' => 'not_called']);
                             continue;
                         }
 
@@ -116,6 +122,14 @@ class ADistMakeCallCommand extends Command
 
                         // Process only one number per execution
                         break;
+
+                        $remainingCalls = ADistData::where('feed_id', $feed->id)->where('state', 'new')->count();
+                        if ($remainingCalls == 0) {
+                            $feed->update(['is_done' => "called"]);
+                            Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}'.");
+                        } else {
+                            Log::info("ADistMakeCallCommand: 📝 File {$feed->file_name} has {$remainingCalls} calls remaining.");
+                        }
                     }
                 } finally {
                     Cache::forget($lockKey);
@@ -124,5 +138,35 @@ class ADistMakeCallCommand extends Command
                 Log::error("❌ General error: " . $e->getMessage());
             }
         }
+    }
+
+    /**
+     * Check if current time is within global call window
+     *
+     * @return bool
+     */
+    protected function isWithinGlobalCallWindow($feed)
+    {
+        $timezone = config('app.timezone');
+        $callTimeStart = General_Setting::get('call_time_start');
+        $callTimeEnd = General_Setting::get('call_time_end');
+
+        if (!$callTimeStart || !$callTimeEnd) {
+            Log::warning("ADistMakeCallCommand: ⚠️ Call time settings not configured.");
+            return false;
+        }
+
+        $now = now()->timezone($timezone);
+        $globalStart = Carbon::parse(date('Y-m-d') . ' ' . $callTimeStart)->timezone($timezone);
+        $globalEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
+
+        if (!$now->between($globalStart, $globalEnd)) {
+            Log::info('ADialMakeCallCommand: 🕒🚫📞 Outside global call time.');
+            $feed->update(['is_done' => 'not_called']);
+            Log::info("ADialMakeCallCommand: 📁 File '{$feed->file_name}' marked as not_called.");
+            return false;
+        }
+
+        return true;
     }
 }

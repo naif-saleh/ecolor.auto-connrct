@@ -63,14 +63,22 @@
                                 <td>
                                     <div>
                                         <span
-                                            class="{{ $file->is_done ? 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill' : 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill' }}">
+                                            class="{{ $file->is_done == false ? 'badge bg-secondary text-white rounded-pill' : ($file->is_done === 'calling' ? 'badge bg-primary text-white rounded-pill' : ($file->is_done === 'not_called' ? 'badge bg-danger text-white rounded-pill' : 'badge bg-success text-white rounded-pill')) }}">
                                             <i
-                                                class="{{ $file->is_done ? 'fa fa-check-circle' : 'fa fa-exclamation-circle' }}"></i>
-                                            {{ $file->is_done ? 'Called' : 'Not Complated Yet' }}
+                                                class="{{ $file->is_done == false ? 'fa-solid fa-circle' : ($file->is_done === 'calling' ? 'fa-solid fa-phone' : ($file->is_done === 'not_called' ? 'fa-solid fa-times-circle' : 'fa-solid fa-check-circle')) }}"></i>
+                                            @if ($file->is_done == false)
+                                                Not Started
+                                            @elseif ($file->is_done === 'calling')
+                                                Calling
+                                            @elseif ($file->is_done === 'not_called')
+                                                Not Completed
+                                            @elseif ($file->is_done === 'called')
+                                                Completed
+                                            @endif
                                         </span>
                                     </div>
                                 </td>
-                                </td>
+
 
 
 
