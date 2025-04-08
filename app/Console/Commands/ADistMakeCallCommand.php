@@ -4,26 +4,28 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use App\Services\ThreeCXService;
+use GuzzleHttp\Client;
+use GuzzleHttp\Exception\RequestException;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\ADistAgent;
 use App\Models\ADistFeed;
 use App\Models\ADistData;
 use App\Models\AutoDistributerReport;
+use App\Services\TokenService;
 use App\Models\General_Setting;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
 class ADistMakeCallCommand extends Command
 {
     protected $signature = 'app:ADist-make-call-command';
     protected $description = 'Initiate auto-distributor calls';
-    protected $threeCXService;
+    protected $tokenService;
 
-    public function __construct(ThreeCXService $threeCXService)
+    public function __construct(TokenService $tokenService)
     {
         parent::__construct();
-        $this->threeCXService = $threeCXService;
+        $this->tokenService = $tokenService;
     }
 
     public function handle()
@@ -40,15 +42,27 @@ class ADistMakeCallCommand extends Command
 
             try {
                 // ✅ Fetch API Token
-                $token = $this->threeCXService->getToken();
+                $token = $this->tokenService->getToken();
                 if (!$token) {
                     Log::error("❌ Failed to retrieve API token.");
                     continue;
                 }
 
+                // ✅ Setup API Client
+                $client = new Client([
+                    'base_uri' => config('services.three_cx.api_url'),
+                    'headers' => ['Accept' => 'application/json'],
+                ]);
+
                 // ✅ Check if agent is in a call
-                $participants = $this->threeCXService->getParticipants($agent->extension, $token);
-                if (!$participants) {
+                try {
+                    $participantResponse = $client->get("/callcontrol/{$agent->extension}/participants/", [
+                        'headers' => ['Authorization' => "Bearer $token"],
+                        'timeout' => 10
+                    ]);
+                    $participants = json_decode($participantResponse->getBody(), true);
+                } catch (\GuzzleHttp\Exception\RequestException $e) {
+                    Log::error("API Request Failed: " . $e->getMessage());
                     continue;
                 }
 
@@ -132,8 +146,15 @@ class ADistMakeCallCommand extends Command
                         }
 
                         // ✅ Fetch agent devices
-                        $devices = $this->threeCXService->getDevices($agent->extension, $token);
-                        if (!$devices) {
+                        try {
+                            $devicesResponse = $client->get("/callcontrol/{$agent->extension}/devices", [
+                                'headers' => ['Authorization' => "Bearer $token"],
+                                'timeout' => 10
+                            ]);
+                            $devices = json_decode($devicesResponse->getBody(), true);
+                            Log::info("📱 Agent Devices: " . print_r($devices, true));
+                        } catch (RequestException $e) {
+                            Log::error("❌ Device fetch failed: " . $e->getMessage());
                             continue;
                         }
 
@@ -162,27 +183,33 @@ class ADistMakeCallCommand extends Command
                             Log::info("☎️ Attempting call to {$dataItem->mobile} using Device ID: {$mobileDevice['device_id']}");
 
                             try {
-                                $callResponse = $this->threeCXService->makeCallAdist($agent->extension, $mobileDevice['device_id'], $dataItem->mobile, $token);
-                                if ($callResponse) {
-                                    Log::info("📞 Call Initiated Response: " . print_r($callResponse, true));
+                                $response = $client->post("/callcontrol/{$agent->extension}/devices/{$mobileDevice['device_id']}/makecall", [
+                                    'headers' => ['Authorization' => "Bearer $token"],
+                                    'json' => ['destination' => $dataItem->mobile],
+                                    'timeout' => 10
+                                ]);
+                                $callResponse = json_decode($response->getBody(), true);
 
-                                    // ✅ Update DB for this specific number
-                                    DB::transaction(function () use ($callResponse, $dataItem, $agent, $feed) {
-                                        AutoDistributerReport::create([
-                                            'call_id' => $callResponse['result']['callid'],
-                                            'status' => "Initiating",
-                                            'extension' => $agent->extension,
-                                            'phone_number' => $callResponse['result']['party_caller_id'],
-                                            'provider' => $feed->file_name,
-                                            'attempt_time' => now(),
-                                        ]);
-                                        $dataItem->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
-                                    });
+                                Log::info("📞 Call Initiated Response: " . print_r($callResponse, true));
 
-                                    // Break after successful call to avoid multiple simultaneous calls
-                                    break;
-                                }
-                            } catch (\Exception $e) {
+                                // ✅ Update DB for this specific number
+                                DB::transaction(function () use ($callResponse, $dataItem, $agent, $feed) {
+                                    AutoDistributerReport::create([
+                                        'call_id' => $callResponse['result']['callid'],
+                                        'status' => "Initiating",
+                                        'extension' => $agent->extension,
+                                        'phone_number' => $callResponse['result']['party_caller_id'],
+                                        'provider' => $feed->file_name,
+                                        'attempt_time' => now(),
+                                    ]);
+                                    $dataItem->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
+                                });
+
+                                // Break after successful call to avoid multiple simultaneous calls
+                                // If you want to call all numbers in sequence, remove this break
+                                break;
+
+                            } catch (RequestException $e) {
                                 Log::error("❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
                                 // Update state to indicate call attempt failed
                                 $dataItem->update(['state' => "Failed"]);
