@@ -106,7 +106,7 @@ class ADistMakeCallCommand extends Command
                                     'extension' => $agent->extension,
                                     'phone_number' => $callResponse['result']['party_caller_id'],
                                     'provider' => $feed->file_name,
-                                    'attempt_time' => now(),
+                                    
                                 ]);
                                 $dataItem->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
                             });
