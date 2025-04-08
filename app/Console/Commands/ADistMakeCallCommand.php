@@ -69,7 +69,9 @@ class ADistMakeCallCommand extends Command
 
 
                     foreach ($feeds as $feed) {
-                        $feeds->update(['is_done' => 'calling']);
+                        // Update each feed individually
+                        $feed->update(['is_done' => 'calling']);
+
                         // Check if feed is within call window in general time
                         if (!$this->isWithinGlobalCallWindow($feed) || !$this->threeCxService->isWithinCallWindow($feed)) {
                             $remainingCalls = ADistData::where('feed_id', $feed->id)->where('state', 'new')->count();
@@ -87,51 +89,50 @@ class ADistMakeCallCommand extends Command
                         // Find the next eligible number to call (only one per execution)
                         $dataItem = ADistData::where('feed_id', $feed->id)
                             ->where('state', 'new')
-                            ->get();
-                        foreach ($dataItem as $item) {
-                            if (!$item) {
-                                $remainingCalls = ADistData::where('feed_id', $feed->id)->where('state', 'new')->count();
-                                $status = $remainingCalls == 0 ? "called" : "not_called";
-                                $feed->update(['is_done' => $status]);
+                            ->first();
 
-                                $logMessage = $status === "called"
-                                    ? "✅ All numbers called for File '{$feed->file_name}'."
-                                    : "📝 File '{$feed->file_name}' has {$remainingCalls} calls remaining.";
-                                Log::info("ADistMakeCallCommand: {$logMessage}");
+                        if (!$dataItem) {
+                            $remainingCalls = ADistData::where('feed_id', $feed->id)->where('state', 'new')->count();
+                            $status = $remainingCalls == 0 ? "called" : "not_called";
+                            $feed->update(['is_done' => $status]);
 
-                                continue; // No new numbers to call
-                            }
+                            $logMessage = $status === "called"
+                                ? "✅ All numbers called for File '{$feed->file_name}'."
+                                : "📝 File '{$feed->file_name}' has {$remainingCalls} calls remaining.";
+                            Log::info("ADistMakeCallCommand: {$logMessage}");
 
-                            // Check if there are any ongoing calls for this agent
-                            $ongoingCall = AutoDistributerReport::where('extension', $agent->extension)
-                                ->whereIn('status', ['Initiating', 'In Progress'])
-                                ->exists();
-
-                            if ($ongoingCall) {
-                                Log::info("⏳ Agent {$agent->id} has an ongoing call in database. Skipping new call.");
-                                continue;
-                            }
-
-                            // Make the call
-                            Log::info("☎️ Attempting call to {$item->mobile}");
-                            try {
-                                $callResponse = $this->threeCxService->makeCallDist($agent, $item->mobile);
-
-                                DB::transaction(function () use ($callResponse, $item, $agent, $feed) {
-                                    AutoDistributerReport::create([
-                                        'call_id' => $callResponse['result']['callid'],
-                                        'status' => "Initiating",
-                                        'extension' => $agent->extension,
-                                        'phone_number' => $callResponse['result']['party_caller_id'],
-                                        'provider' => $feed->file_name,
-
-                                    ]);
-                                    $item->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
-                                });
-                            } catch (\Exception $e) {
-                                Log::error("❌ Call to {$item->mobile} failed: " . $e->getMessage());
-                            }
+                            continue; // No new numbers to call
                         }
+
+                        // Check if there are any ongoing calls for this agent
+                        $ongoingCall = AutoDistributerReport::where('extension', $agent->extension)
+                            ->whereIn('status', ['Initiating', 'In Progress'])
+                            ->exists();
+
+                        if ($ongoingCall) {
+                            Log::info("⏳ Agent {$agent->id} has an ongoing call in database. Skipping new call.");
+                            continue;
+                        }
+
+                        // Make the call
+                        Log::info("☎️ Attempting call to {$dataItem->mobile}");
+                        try {
+                            $callResponse = $this->threeCxService->makeCallDist($agent, $dataItem->mobile);
+
+                            DB::transaction(function () use ($callResponse, $dataItem, $agent, $feed) {
+                                AutoDistributerReport::create([
+                                    'call_id' => $callResponse['result']['callid'],
+                                    'status' => "Initiating",
+                                    'extension' => $agent->extension,
+                                    'phone_number' => $callResponse['result']['party_caller_id'],
+                                    'provider' => $feed->file_name,
+                                ]);
+                                $dataItem->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
+                            });
+                        } catch (\Exception $e) {
+                            Log::error("❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
+                        }
+
                         // Process only one number per execution
                         break;
                     }
