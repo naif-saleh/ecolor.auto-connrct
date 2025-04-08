@@ -242,163 +242,47 @@ class ThreeCxService
     }
 
 
-    public function getDevicesForAgent($agentExtension)
+
+    public function getParticipants($extension, $token)
     {
         try {
-            $token = $this->getToken();
-            if (!$token) {
-                Log::error("❌ Failed to retrieve API token.");
-                return [];
-            }
-
-            // Ensure the API URL is complete
-            $url = $this->apiUrl . "/callcontrol/{$agentExtension}/devices";
-
-            // Make the API call to get devices for the agent
-            $response = $this->client->get($url, [
-                'headers' => ['Authorization' => "Bearer {$token}"],
-                'timeout' => 10,
+            $response = $this->client->get("/callcontrol/{$extension}/participants", [
+                'headers' => ['Authorization' => "Bearer $token"],
+                'timeout' => 10
             ]);
-
-            // Parse the response
-            $devices = json_decode($response->getBody(), true);
-
-            if (isset($devices['result']) && is_array($devices['result'])) {
-                return $devices['result'];
-            } else {
-                Log::error("❌ No devices found for agent {$agentExtension}.");
-                return [];
-            }
+            return json_decode($response->getBody(), true);
         } catch (RequestException $e) {
-            Log::error("❌ API Request failed for agent {$agentExtension}: " . $e->getMessage());
-            return [];
-        } catch (\Exception $e) {
-            Log::error("❌ General error fetching devices for agent {$agentExtension}: " . $e->getMessage());
-            return [];
+            Log::error("❌ Error fetching participants for {$extension}: " . $e->getMessage());
+            return null;
         }
     }
 
+    public function getDevices($extension, $token)
+    {
+        try {
+            $response = $this->client->get("/callcontrol/{$extension}/devices", [
+                'headers' => ['Authorization' => "Bearer $token"],
+                'timeout' => 10
+            ]);
+            return json_decode($response->getBody(), true);
+        } catch (RequestException $e) {
+            Log::error("❌ Error fetching devices for {$extension}: " . $e->getMessage());
+            return null;
+        }
+    }
 
-    // public function updateCallRecords(array $calls)
-    // {
-    //     if (empty($calls)) {
-    //         return;
-    //     }
-
-    //     try {
-    //         DB::transaction();
-
-    //         $updateData = [];
-    //         $updateDataADial = [];
-
-    //         foreach ($calls as $call) {
-    //             $callId = $call['call_id'];
-    //             $status = $call['status'];
-    //             $provider = $call['provider'] ?? null;
-    //             $extension = $call['extension'] ?? null;
-    //             $phoneNumber = $call['phone_number'] ?? null;
-    //             $callData = $call['call_data'] ?? null;
-
-    //             $updateEntry = ['status' => $status];
-
-    //             // ✅ Calculate durations if call data exists
-    //             if ($callData && isset($callData['EstablishedAt'], $callData['ServerNow'])) {
-    //                 $establishedAt = Carbon::parse($callData['EstablishedAt']);
-    //                 $serverNow = Carbon::parse($callData['ServerNow']);
-    //                 $currentDuration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-
-    //                 if ($status === 'Talking') {
-    //                     $updateEntry['duration_time'] = $currentDuration;
-    //                 } elseif ($status === 'Routing') {
-    //                     $updateEntry['duration_routing'] = $currentDuration;
-    //                 }
-    //             } else {
-    //                 // ✅ Preserve existing durations
-    //                 $existingRecord = AutoDailerReport::where('call_id', $callId)->first(['duration_time', 'duration_routing']);
-    //                 if ($existingRecord) {
-    //                     if ($status === 'Talking' && isset($existingRecord->duration_time)) {
-    //                         $updateEntry['duration_time'] = $existingRecord->duration_time;
-    //                     } elseif ($status === 'Routing' && isset($existingRecord->duration_routing)) {
-    //                         $updateEntry['duration_routing'] = $existingRecord->duration_routing;
-    //                     }
-    //                 }
-    //             }
-
-    //             // ✅ Add provider info if available
-    //             if ($provider) $updateEntry['provider'] = $provider;
-    //             if ($extension) $updateEntry['extension'] = $extension;
-    //             if ($phoneNumber) $updateEntry['phone_number'] = $phoneNumber;
-
-    //             // ✅ Prepare bulk update data
-    //             $updateData[] = array_merge(['call_id' => $callId], $updateEntry);
-    //             $updateDataADial[] = ['call_id' => $callId, 'state' => $status];
-    //         }
-
-    //         // ✅ Bulk update `AutoDailerReport`
-    //         DB::table('auto_dailer_reports')
-    //             ->upsert($updateData, ['call_id'], array_keys($updateEntry));
-
-    //         // ✅ Bulk update `ADialData`
-    //         DB::table('a_dial_data')
-    //             ->upsert($updateDataADial, ['call_id'], ['state']);
-
-    //         DB::commit();
-
-    //         Log::info("✅ Successfully updated " . count($calls) . " calls in batch.");
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         Log::error("❌ Batch update failed: " . $e->getMessage());
-    //     }
-    // }
-
-    // public function updateCallRecordsBatch($calls)
-    // {
-    //     if (empty($calls)) {
-    //         return;
-    //     }
-
-    //     $updateADialData = [];
-    //     $callUpdates = [];
-
-    //     foreach ($calls as $call) {
-    //         $callId = $call['Id'] ?? null;
-    //         $status = $call['Status'] ?? 'Unknown';
-
-    //         if (!$callId) {
-    //             continue;
-    //         }
-
-    //         $establishedAt = isset($call['EstablishedAt']) ? Carbon::parse($call['EstablishedAt']) : null;
-    //         $serverNow = isset($call['ServerNow']) ? Carbon::parse($call['ServerNow']) : Carbon::now();
-    //         $currentDuration = $establishedAt ? $establishedAt->diff($serverNow)->format('%H:%I:%S') : null;
-
-    //         $callUpdates[$callId] = [
-    //             'status' => $status,
-    //             'duration_time' => ($status === 'Talking' && $currentDuration) ? $currentDuration : null,
-    //             'duration_routing' => ($status === 'Routing' && $currentDuration) ? $currentDuration : null,
-    //             'phone_number' =>  DB::raw('phone_number') ? DB::raw('phone_number') : 'Missing',
-    //         ];
-
-    //         $updateADialData[$callId] = ['state' => $status];
-    //     }
-
-    //     try {
-    //         DB::transaction();
-
-    //         // ✅ Bulk Update ADialData
-    //         foreach ($updateADialData as $callId => $updateRecord) {
-    //             ADialData::where('call_id', $callId)->update($updateRecord);
-    //         }
-
-    //         // ✅ Bulk Update AutoDailerReport
-    //         foreach ($callUpdates as $callId => $updateRecord) {
-    //             AutoDailerReport::where('call_id', $callId)->update($updateRecord);
-    //         }
-
-    //         DB::commit();
-    //     } catch (\Exception $e) {
-    //         DB::rollBack();
-    //         Log::error("❌ Batch update failed: " . $e->getMessage());
-    //     }
-    // }
+    public function makeCallAdist($extension, $deviceId, $destination, $token)
+    {
+        try {
+            $response = $this->client->post("/callcontrol/{$extension}/devices/{$deviceId}/makecall", [
+                'headers' => ['Authorization' => "Bearer $token"],
+                'json' => ['destination' => $destination],
+                'timeout' => 10
+            ]);
+            return json_decode($response->getBody(), true);
+        } catch (RequestException $e) {
+            Log::error("❌ Error making call for {$extension}: " . $e->getMessage());
+            return null;
+        }
+    }
 }

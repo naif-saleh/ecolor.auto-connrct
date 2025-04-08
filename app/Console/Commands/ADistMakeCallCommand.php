@@ -4,26 +4,26 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
-use App\Services\ThreeCxService;
-use Illuminate\Support\Facades\DB;
+use App\Services\ThreeCXService;
 use Carbon\Carbon;
 use App\Models\ADistAgent;
 use App\Models\ADistFeed;
 use App\Models\ADistData;
 use App\Models\AutoDistributerReport;
 use App\Models\General_Setting;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
 
 class ADistMakeCallCommand extends Command
 {
     protected $signature = 'app:ADist-make-call-command';
     protected $description = 'Initiate auto-distributor calls';
-    protected $threeCxService;
+    protected $threeCXService;
 
-    public function __construct(ThreeCxService $threeCxService)
+    public function __construct(ThreeCXService $threeCXService)
     {
         parent::__construct();
-        $this->threeCxService = $threeCxService;
+        $this->threeCXService = $threeCXService;
     }
 
     public function handle()
@@ -37,9 +37,20 @@ class ADistMakeCallCommand extends Command
         })->get();
 
         foreach ($agents as $agent) {
+
             try {
-                // ✅ Check if agent is in a call using ThreeCxService
-                $participants = $this->threeCxService->getActiveCallsForProvider($agent->extension);
+                // ✅ Fetch API Token
+                $token = $this->threeCXService->getToken();
+                if (!$token) {
+                    Log::error("❌ Failed to retrieve API token.");
+                    continue;
+                }
+
+                // ✅ Check if agent is in a call
+                $participants = $this->threeCXService->getParticipants($agent->extension, $token);
+                if (!$participants) {
+                    continue;
+                }
 
                 $isBusy = collect($participants)->contains(fn($p) => isset($p['status']) && in_array($p['status'], ['Connected', 'Dialing', 'Ringing']));
                 if ($isBusy) {
@@ -60,6 +71,7 @@ class ADistMakeCallCommand extends Command
                 }
 
                 try {
+
                     // ✅ Fetch call time settings
                     $callTimeStart = General_Setting::get('call_time_start');
                     $callTimeEnd = General_Setting::get('call_time_end');
@@ -76,6 +88,7 @@ class ADistMakeCallCommand extends Command
                         Log::info("⏱️ Current time {$now} is outside allowed call hours.");
                         continue;
                     }
+
 
                     // ✅ Fetch Feeds
                     $feeds = ADistFeed::where('agent_id', $agent->id)
@@ -105,6 +118,7 @@ class ADistMakeCallCommand extends Command
                             continue;
                         }
 
+
                         // ✅ Fetch call data
                         $feedData = ADistData::where('feed_id', $feed->id)
                             ->where('state', 'new')
@@ -118,10 +132,20 @@ class ADistMakeCallCommand extends Command
                         }
 
                         // ✅ Fetch agent devices
-                        $devices = $this->threeCxService->getDevicesForAgent($agent->extension);
+                        $devices = $this->threeCXService->getDevices($agent->extension, $token);
+                        if (!$devices) {
+                            continue;
+                        }
 
                         // Find the right device
-                        $mobileDevice = collect($devices)->first(fn($device) => $device['user_agent'] === '3CX Mobile Client');
+                        $mobileDevice = null;
+                        foreach ($devices as $device) {
+                            if ($device['user_agent'] === '3CX Mobile Client') {
+                                $mobileDevice = $device;
+                                break;
+                            }
+                        }
+
                         if (!$mobileDevice) {
                             Log::error("❌ No 3CX Mobile Client device found for agent {$agent->extension}");
                             continue;
@@ -138,27 +162,26 @@ class ADistMakeCallCommand extends Command
                             Log::info("☎️ Attempting call to {$dataItem->mobile} using Device ID: {$mobileDevice['device_id']}");
 
                             try {
-                                $callResponse = $this->threeCxService->makeCall($agent->extension, $dataItem->mobile);
+                                $callResponse = $this->threeCXService->makeCallAdist($agent->extension, $mobileDevice['device_id'], $dataItem->mobile, $token);
+                                if ($callResponse) {
+                                    Log::info("📞 Call Initiated Response: " . print_r($callResponse, true));
 
-                                Log::info("📞 Call Initiated Response: " . print_r($callResponse, true));
+                                    // ✅ Update DB for this specific number
+                                    DB::transaction(function () use ($callResponse, $dataItem, $agent, $feed) {
+                                        AutoDistributerReport::create([
+                                            'call_id' => $callResponse['result']['callid'],
+                                            'status' => "Initiating",
+                                            'extension' => $agent->extension,
+                                            'phone_number' => $callResponse['result']['party_caller_id'],
+                                            'provider' => $feed->file_name,
+                                            'attempt_time' => now(),
+                                        ]);
+                                        $dataItem->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
+                                    });
 
-                                // ✅ Update DB for this specific number
-                                DB::transaction(function () use ($callResponse, $dataItem, $agent, $feed) {
-                                    AutoDistributerReport::create([
-                                        'call_id' => $callResponse['result']['callid'],
-                                        'status' => "Initiating",
-                                        'extension' => $agent->extension,
-                                        'phone_number' => $callResponse['result']['party_caller_id'],
-                                        'provider' => $feed->file_name,
-                                        'attempt_time' => now(),
-                                    ]);
-                                    $dataItem->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
-                                });
-
-                                // Break after successful call to avoid multiple simultaneous calls
-                                // If you want to call all numbers in sequence, remove this break
-                                break;
-
+                                    // Break after successful call to avoid multiple simultaneous calls
+                                    break;
+                                }
                             } catch (\Exception $e) {
                                 Log::error("❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
                                 // Update state to indicate call attempt failed
