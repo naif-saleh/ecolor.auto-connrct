@@ -344,12 +344,11 @@ class ThreeCxService
         // Make a call to the given destination
         $token = $this->getToken();
         $mobileDevice = $this->getDeviceForAgent($agent);
-
         if (!$mobileDevice) {
             throw new \Exception("No 3CX Mobile Client device found for agent {$agent->extension}");
         }
-
-        $response = $this->client->post("/callcontrol/{$agent->extension}/devices/{$mobileDevice['device_id']}/makecall", [
+        $url = $this->apiUrl . "/callcontrol/{$agent->extension}/devices/{$mobileDevice['device_id']}/makecall";
+        $response = $this->client->post($url, [
             'headers' => ['Authorization' => "Bearer $token"],
             'json' => ['destination' => $destination],
             'timeout' => 10,
