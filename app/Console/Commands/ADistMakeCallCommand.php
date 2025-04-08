@@ -105,14 +105,14 @@ class ADistMakeCallCommand extends Command
                         }
 
                         // Check if there are any ongoing calls for this agent
-                        $ongoingCall = AutoDistributerReport::where('extension', $agent->extension)
-                            ->whereIn('status', ['Initiating', 'In Progress'])
-                            ->exists();
+                        // $ongoingCall = AutoDistributerReport::where('extension', $agent->extension)
+                        //     ->whereIn('status', ['Initiating', 'In Progress'])
+                        //     ->exists();
 
-                        if ($ongoingCall) {
-                            Log::info("⏳ Agent {$agent->id} has an ongoing call in database. Skipping new call.");
-                            continue;
-                        }
+                        // if ($ongoingCall) {
+                        //     Log::info("⏳ Agent {$agent->id} has an ongoing call in database. Skipping new call.");
+                        //     continue;
+                        // }
 
                         // Make the call
                         Log::info("☎️ Attempting call to {$dataItem->mobile}");
