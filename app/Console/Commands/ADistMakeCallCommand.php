@@ -57,9 +57,6 @@ class ADistMakeCallCommand extends Command
                 }
 
                 try {
-                    // Standard time checks and other validations...
-                    // ...
-
                     // ✅ Fetch Feeds
                     $feeds = ADistFeed::where('agent_id', $agent->id)
                         ->where('allow', true)
@@ -67,18 +64,22 @@ class ADistMakeCallCommand extends Command
                         ->whereDate('date', today())
                         ->get();
 
-                    $feeds->update(['is_done' => 'calling']);
+                    // Remove the bulk update here - don't mark all feeds as "calling" at once
+
                     foreach ($feeds as $feed) {
+                        // Check if feed is within global call window
+                        if (!$this->isWithinGlobalCallWindow($feed)) {
+                            continue; // Continue to next feed
+                        }
 
-                        // Check if feed is within call window in general time
-                        if (!$this->isWithinGlobalCallWindow($feed)) return;
-
-                        // Check if feed is within call window
+                        // Check if feed is within its specific call window
                         if (!$this->threeCxService->isWithinCallWindow($feed)) {
                             Log::info("🚫 Feed {$feed->id} is NOT within the allowed time range.");
-                            $feed->update(['is_done' => 'not_called']);
                             continue;
                         }
+
+                        // Now that we know this feed is ready to be processed, mark it as "calling"
+                        $feed->update(['is_done' => 'calling']);
 
                         // Find the next eligible number to call (only one per execution)
                         $dataItem = ADistData::where('feed_id', $feed->id)
@@ -86,7 +87,9 @@ class ADistMakeCallCommand extends Command
                             ->first();
 
                         if (!$dataItem) {
-                            continue; // No new numbers to call
+                            // No new numbers to call - check if all numbers are processed
+                            $this->checkIfFeedCompleted($feed);
+                            continue;
                         }
 
                         // Check if there are any ongoing calls for this agent
@@ -111,24 +114,22 @@ class ADistMakeCallCommand extends Command
                                     'extension' => $agent->extension,
                                     'phone_number' => $callResponse['result']['party_caller_id'],
                                     'provider' => $feed->file_name,
-
+                                    'attempt_time' => now(),
                                 ]);
                                 $dataItem->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
                             });
+
+                            // Check if this was the last number in the feed
+                            $this->checkIfFeedCompleted($feed);
+
+                            // Process only one number per execution
+                            break;
                         } catch (\Exception $e) {
                             Log::error("❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
                             $dataItem->update(['state' => "Failed"]);
-                        }
 
-                        // Process only one number per execution
-                        break;
-
-                        $remainingCalls = ADistData::where('feed_id', $feed->id)->where('state', 'new')->count();
-                        if ($remainingCalls == 0) {
-                            $feed->update(['is_done' => "called"]);
-                            Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}'.");
-                        } else {
-                            Log::info("ADistMakeCallCommand: 📝 File {$feed->file_name} has {$remainingCalls} calls remaining.");
+                            // Check if this was the last number in the feed
+                            $this->checkIfFeedCompleted($feed);
                         }
                     }
                 } finally {
@@ -141,8 +142,26 @@ class ADistMakeCallCommand extends Command
     }
 
     /**
+     * Check if a feed has any remaining calls and update status accordingly
+     *
+     * @param ADistFeed $feed
+     * @return void
+     */
+    protected function checkIfFeedCompleted(ADistFeed $feed)
+    {
+        $remainingCalls = ADistData::where('feed_id', $feed->id)->where('state', 'new')->count();
+        if ($remainingCalls == 0) {
+            $feed->update(['is_done' => "called"]);
+            Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}'.");
+        } else {
+            Log::info("ADistMakeCallCommand: 📝 File {$feed->file_name} has {$remainingCalls} calls remaining.");
+        }
+    }
+
+    /**
      * Check if current time is within global call window
      *
+     * @param ADistFeed $feed
      * @return bool
      */
     protected function isWithinGlobalCallWindow($feed)
@@ -161,9 +180,9 @@ class ADistMakeCallCommand extends Command
         $globalEnd = Carbon::parse(date('Y-m-d') . ' ' . $callTimeEnd)->timezone($timezone);
 
         if (!$now->between($globalStart, $globalEnd)) {
-            Log::info('ADialMakeCallCommand: 🕒🚫📞 Outside global call time.');
+            Log::info('ADistMakeCallCommand: 🕒🚫📞 Outside global call time.');
             $feed->update(['is_done' => 'not_called']);
-            Log::info("ADialMakeCallCommand: 📁 File '{$feed->file_name}' marked as not_called.");
+            Log::info("ADistMakeCallCommand: 📁 File '{$feed->file_name}' marked as not_called.");
             return false;
         }
 
