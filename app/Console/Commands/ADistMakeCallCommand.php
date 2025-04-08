@@ -44,16 +44,19 @@ class ADistMakeCallCommand extends Command
 
         foreach ($agents as $agent) {
             try {
+                // Skip if agent is already on a call
                 if ($this->threeCxService->isAgentInCall($agent)) {
                     Log::info("⚠️ Agent {$agent->id} ({$agent->extension}) is currently in a call.");
                     continue;
                 }
 
+                // Skip if agent is not available
                 if ($agent->status !== "Available") {
                     Log::info("⏳ Agent {$agent->id} ({$agent->extension}) is not available - Status: {$agent->status}");
                     continue;
                 }
 
+                // Lock the agent process to prevent race condition
                 $lockKey = "agent_call_lock_{$agent->id}";
                 if (!Cache::add($lockKey, true, now()->addSeconds(10))) {
                     Log::info("🚫 Agent {$agent->id} is locked by another process");
@@ -61,6 +64,7 @@ class ADistMakeCallCommand extends Command
                 }
 
                 try {
+                    // Fetch feeds for this agent
                     $feeds = ADistFeed::where('agent_id', $agent->id)
                         ->where('allow', true)
                         ->where('is_done', false)
@@ -70,6 +74,7 @@ class ADistMakeCallCommand extends Command
                     Log::info('Feeds fetched for agent.', ['agent_id' => $agent->id, 'feeds_count' => $feeds->count()]);
 
                     foreach ($feeds as $feed) {
+                        // Check call windows
                         $isGlobalWindow = $this->isWithinGlobalCallWindow($feed);
                         $isAgentWindow = $this->threeCxService->isWithinCallWindow($feed);
                         Log::info('Call window check.', ['feed_id' => $feed->id, 'is_global_window' => $isGlobalWindow, 'is_agent_window' => $isAgentWindow]);
@@ -87,6 +92,7 @@ class ADistMakeCallCommand extends Command
                             continue;
                         }
 
+                        // Get new numbers to call
                         $dataItems = ADistData::where('feed_id', $feed->id)
                             ->where('state', 'new')
                             ->get();
@@ -97,16 +103,19 @@ class ADistMakeCallCommand extends Command
                         }
 
                         foreach ($dataItems as $dataItem) {
-                            // $ongoingCall = AutoDistributerReport::where('extension', $agent->extension)
-                            //     ->whereIn('status', ['Initiating', 'In Progress'])
-                            //     ->exists();
+                            // ✅ Ensure agent has no ongoing call
+                            $ongoingCall = AutoDistributerReport::where('extension', $agent->extension)
+                                ->whereIn('status', ['Initiating', 'In Progress'])
+                                ->exists();
 
-                            // if ($ongoingCall) {
-                            //     Log::info("⏳ Agent {$agent->id} has an ongoing call. Skipping this round.");
-                            //     break;
-                            // }
+                            if ($ongoingCall) {
+                                Log::info("⏳ Agent {$agent->id} already has a pending call. Skipping.");
+                                break; // Do not call more numbers
+                            }
 
+                            // ✅ Attempt to make the call
                             Log::info("☎️ Attempting call to {$dataItem->mobile}");
+
                             try {
                                 $callResponse = $this->threeCxService->makeCallDist($agent, $dataItem->mobile);
 
@@ -118,23 +127,29 @@ class ADistMakeCallCommand extends Command
                                         'phone_number' => $callResponse['result']['party_caller_id'],
                                         'provider' => $feed->file_name,
                                     ]);
-                                    $dataItem->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
+                                    $dataItem->update([
+                                        'state' => "Initiating",
+                                        'call_id' => $callResponse['result']['callid'],
+                                    ]);
                                 });
+
+                                break; // ✅ Only make one call per agent per execution
                             } catch (\Exception $e) {
                                 Log::error("❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
                             }
                         }
 
-                        break;
+                        break; // ✅ Stop after processing one feed per agent
                     }
                 } finally {
                     Cache::forget($lockKey);
                 }
             } catch (\Exception $e) {
-                Log::error("❌ General error: " . $e->getMessage());
+                Log::error("❌ General error for agent {$agent->id}: " . $e->getMessage());
             }
         }
     }
+
 
     /**
      * Check if current time is within global call window
