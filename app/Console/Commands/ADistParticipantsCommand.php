@@ -71,7 +71,7 @@ class ADistParticipantsCommand extends Command
             }
 
             // Use the ThreeCxService to update the call record in the database
-            $this->threeCxService->updateCallRecord($callId, $status, $call);
+            $this->threeCxService->AutoDistributerReport($callId, $status, $call);
         }
     }
 }
