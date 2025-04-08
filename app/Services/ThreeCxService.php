@@ -362,7 +362,8 @@ class ThreeCxService
     {
         // Fetch devices for agent and return the mobile device
         $token = $this->getToken();
-        $response = $this->client->get("/callcontrol/{$agent->extension}/devices", [
+        $url = $this->apiUrl . "/callcontrol/{$agent->extension}/devices";
+        $response = $this->client->get($url, [
             'headers' => ['Authorization' => "Bearer $token"],
             'timeout' => 10,
         ]);
