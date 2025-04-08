@@ -80,7 +80,7 @@ class ADistMakeCallCommand extends Command
                         ]);
                         $isGlobalWindow = $this->isWithinGlobalCallWindow($feed);
                         $isAgentWindow = $this->threeCxService->isWithinCallWindow($feed);
-                        Log::info('Call window check.', ['feed_id' => $feed->id, 'is_global_window' => $isGlobalWindow, 'is_agent_window' => $isAgentWindow]);
+                        // Log::info('Call window check.', ['feed_id' => $feed->id, 'is_global_window' => $isGlobalWindow, 'is_agent_window' => $isAgentWindow]);
 
                         if (!$isGlobalWindow || !$isAgentWindow) {
                             $remainingCalls = ADistData::where('feed_id', $feed->id)->where('state', 'new')->count();
