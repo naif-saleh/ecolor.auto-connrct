@@ -32,12 +32,17 @@ class ADistMakeCallCommand extends Command
         $timezone = config('app.timezone');
         Log::info("Using timezone: {$timezone}");
 
+        // Count agents and log
         $agents = ADistAgent::whereHas('files', function ($query) {
             $query->whereDate('date', today())->where('allow', true);
         })->get();
 
+        Log::info("Found " . $agents->count() . " agents with files scheduled for today");
+
         foreach ($agents as $agent) {
             try {
+                Log::info("Processing agent {$agent->id} with extension {$agent->extension}");
+
                 // ✅ Check if agent is available for a call
                 if ($this->threeCxService->isAgentInCall($agent)) {
                     Log::info("⚠️ Agent {$agent->id} ({$agent->extension}) is currently in a call.");
@@ -64,11 +69,15 @@ class ADistMakeCallCommand extends Command
                         ->whereDate('date', today())
                         ->get();
 
-                    // Remove the bulk update here - don't mark all feeds as "calling" at once
+                    Log::info("Found " . $feeds->count() . " feeds for agent {$agent->id}");
 
+                    // Process each feed
                     foreach ($feeds as $feed) {
+                        Log::info("Processing feed {$feed->id} with time window from {$feed->from} to {$feed->to}");
+
                         // Check if feed is within global call window
                         if (!$this->isWithinGlobalCallWindow($feed)) {
+                            Log::info("🚫 Feed {$feed->id} is NOT within global call window");
                             continue; // Continue to next feed
                         }
 
@@ -77,6 +86,8 @@ class ADistMakeCallCommand extends Command
                             Log::info("🚫 Feed {$feed->id} is NOT within the allowed time range.");
                             continue;
                         }
+
+                        Log::info("✅ Feed {$feed->id} is within the allowed time window");
 
                         // Now that we know this feed is ready to be processed, mark it as "calling"
                         $feed->update(['is_done' => 'calling']);
@@ -87,10 +98,13 @@ class ADistMakeCallCommand extends Command
                             ->first();
 
                         if (!$dataItem) {
+                            Log::info("❌ No new numbers to call for feed {$feed->id}");
                             // No new numbers to call - check if all numbers are processed
                             $this->checkIfFeedCompleted($feed);
                             continue;
                         }
+
+                        Log::info("📞 Found number to call: {$dataItem->mobile} for feed {$feed->id}");
 
                         // Check if there are any ongoing calls for this agent
                         $ongoingCall = AutoDistributerReport::where('extension', $agent->extension)
@@ -106,6 +120,7 @@ class ADistMakeCallCommand extends Command
                         Log::info("☎️ Attempting call to {$dataItem->mobile}");
                         try {
                             $callResponse = $this->threeCxService->makeCallDist($agent, $dataItem->mobile);
+                            Log::info("✅ Call initiated. Response: " . json_encode($callResponse));
 
                             DB::transaction(function () use ($callResponse, $dataItem, $agent, $feed) {
                                 AutoDistributerReport::create([
@@ -114,7 +129,6 @@ class ADistMakeCallCommand extends Command
                                     'extension' => $agent->extension,
                                     'phone_number' => $callResponse['result']['party_caller_id'],
                                     'provider' => $feed->file_name,
-                                    'attempt_time' => now(),
                                 ]);
                                 $dataItem->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
                             });
