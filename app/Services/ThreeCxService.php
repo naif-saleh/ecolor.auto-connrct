@@ -245,8 +245,11 @@ class ThreeCxService
 
     public function getParticipants($extension, $token)
     {
+
         try {
-            $response = $this->apiUrl->get("/callcontrol/{$extension}/participants", [
+            $token = $this->getToken();
+            $url = $this->apiUrl . "/callcontrol/{$extension}/participants";
+            $response = $this->client->get($url, [
                 'headers' => ['Authorization' => "Bearer $token"],
                 'timeout' => 10
             ]);
@@ -260,7 +263,9 @@ class ThreeCxService
     public function getDevices($extension, $token)
     {
         try {
-            $response = $this->apiUrl->get("/callcontrol/{$extension}/devices", [
+            $token = $this->getToken();
+            $url = $this->apiUrl . "/callcontrol/{$extension}/devices";
+            $response = $this->client->get($url, [
                 'headers' => ['Authorization' => "Bearer $token"],
                 'timeout' => 10
             ]);
@@ -274,7 +279,9 @@ class ThreeCxService
     public function makeCallAdist($extension, $deviceId, $destination, $token)
     {
         try {
-            $response = $this->apiUrl->post("/callcontrol/{$extension}/devices/{$deviceId}/makecall", [
+            $token = $this->getToken();
+            $url = $this->apiUrl . "/callcontrol/{$extension}/devices/{$deviceId}/makecall";
+            $response = $this->client->post($url, [
                 'headers' => ['Authorization' => "Bearer $token"],
                 'json' => ['destination' => $destination],
                 'timeout' => 10
