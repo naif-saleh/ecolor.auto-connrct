@@ -75,7 +75,7 @@ class ADistMakeCallCommand extends Command
 
                     foreach ($feeds as $feed) {
                         // Check call windows
-                        $feed->update()([
+                        $feed->update([
                             'is_done' => "calling",
                         ]);
                         $isGlobalWindow = $this->isWithinGlobalCallWindow($feed);
