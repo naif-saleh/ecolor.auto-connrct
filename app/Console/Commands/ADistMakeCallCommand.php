@@ -37,7 +37,6 @@ class ADistMakeCallCommand extends Command
         })->get();
 
         foreach ($agents as $agent) {
-
             try {
                 // ✅ Check if agent is available for a call
                 if ($this->threeCxService->isAgentInCall($agent)) {
@@ -52,7 +51,7 @@ class ADistMakeCallCommand extends Command
 
                 // ✅ Lock agent to avoid multiple processes
                 $lockKey = "agent_call_lock_{$agent->id}";
-                if (!Cache::add($lockKey, true, now()->addSeconds(10))) {
+                if (!Cache::add($lockKey, true, now()->addMinutes(30))) { // Extended lock time
                     Log::info("🚫 Agent {$agent->id} is locked by another process");
                     continue; // Skip agent if they are locked
                 }
@@ -90,24 +89,31 @@ class ADistMakeCallCommand extends Command
                         }
 
                         // ✅ Process each feed
-                        $feedData = ADistData::where('feed_id', $feed->id)
+                        $numbers = ADistData::where('feed_id', $feed->id)
                             ->where('state', 'new')
+                            ->orderBy('id') // Ensure consistent order
                             ->get();
 
-                        foreach ($feedData as $dataItem) {
-                            // Check agent availability before each call
-                            if ($agent->status !== "Available") {
-                                Log::info("⏳ Agent {$agent->id} ({$agent->extension}) is no longer available.");
-                                break; // Stop processing numbers if agent becomes unavailable
+                        if ($numbers->isEmpty()) {
+                            Log::info("No new numbers found for feed {$feed->id}");
+                            continue;
+                        }
+
+                        // Process one number at a time, tracking completion status
+                        foreach ($numbers as $dataItem) {
+                            // Double-check agent status before each call
+                            if (!$this->checkAgentReadiness($agent)) {
+                                Log::info("⚠️ Agent {$agent->id} no longer ready for calls");
+                                break; // Exit the loop if agent is not ready
                             }
 
-                            Log::info("☎️ Attempting call to {$dataItem->mobile}");
+                            Log::info("☎️ Attempting call to {$dataItem->mobile} for feed {$feed->id}");
 
                             try {
-                                // ✅ Make the call using the ThreeCxService
+                                // ✅ Make the call
                                 $callResponse = $this->threeCxService->makeCallDist($agent, $dataItem->mobile);
+                                $callId = $callResponse['result']['callid'];
 
-                                // ✅ Update database with call details
                                 DB::transaction(function () use ($callResponse, $dataItem, $agent, $feed) {
                                     AutoDistributerReport::create([
                                         'call_id' => $callResponse['result']['callid'],
@@ -119,20 +125,93 @@ class ADistMakeCallCommand extends Command
                                     ]);
                                     $dataItem->update(['state' => "Initiating", 'call_id' => $callResponse['result']['callid']]);
                                 });
+
+                                // ✅ Wait for call to complete before processing next number
+                                $this->waitForCallToComplete($agent, $callId);
                             } catch (\Exception $e) {
                                 Log::error("❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
                                 $dataItem->update(['state' => "Failed"]);
+                                // Wait briefly before trying next number after failure
+                                sleep(3);
                             }
-
-                            sleep(2); // Add a delay between calls
                         }
                     }
                 } finally {
                     Cache::forget($lockKey);
                 }
             } catch (\Exception $e) {
-                Log::error("❌ General error: " . $e->getMessage());
+                Log::error("❌ General error processing agent {$agent->id}: " . $e->getMessage());
             }
+        }
+    }
+
+    /**
+     * Check if agent is ready to make calls
+     *
+     * @param ADistAgent $agent
+     * @return bool
+     */
+    private function checkAgentReadiness(ADistAgent $agent)
+    {
+        // Refresh agent status
+        $agent->refresh();
+
+        // Check if agent is in a call
+        if ($this->threeCxService->isAgentInCall($agent)) {
+            return false;
+        }
+
+        // Check if agent is available
+        if ($agent->status !== "Available") {
+            return false;
+        }
+
+        return true;
+    }
+
+    /**
+     * Wait for a call to complete before moving to the next number
+     *
+     * @param ADistAgent $agent
+     * @param string $callId
+     * @return void
+     */
+    private function waitForCallToComplete(ADistAgent $agent, $callId)
+    {
+        Log::info("⏳ Monitoring call $callId for completion");
+
+        $maxWaitTime = 300; // Max wait time (5 minutes)
+        $checkInterval = 5; // Check every 5 seconds
+        $elapsed = 0;
+
+        while ($elapsed < $maxWaitTime) {
+            // Check if agent is still in a call
+            if (!$this->threeCxService->isAgentInCall($agent)) {
+                Log::info("✅ Call $callId completed - Agent no longer in call");
+
+                // Update call status in database
+                $report = AutoDistributerReport::where('call_id', $callId)->first();
+                if ($report) {
+                    $report->update(['status' => 'Completed', 'end_time' => now()]);
+                }
+
+                // Wait a moment before allowing next call
+                sleep(2);
+                return;
+            }
+
+            // Wait before checking again
+            sleep($checkInterval);
+            $elapsed += $checkInterval;
+        }
+
+        // If we reach here, the call exceeded the maximum wait time
+        Log::warning("⚠️ Timeout waiting for call $callId to complete after {$maxWaitTime} seconds");
+
+        // Update report with timeout status
+        $report = AutoDistributerReport::where('call_id', $callId)->first();
+        if ($report) {
+            $report->update(['status' => 'Timeout']);
         }
     }
 }
