@@ -42,19 +42,19 @@ class ADistMakeCallCommand extends Command
                 // ✅ Check if agent is available for a call
                 if ($this->threeCxService->isAgentInCall($agent)) {
                     Log::info("⚠️ Agent {$agent->id} ({$agent->extension}) is currently in a call.");
-                    continue;
+                    continue; // Skip the entire agent if they are in a call
                 }
 
                 if ($agent->status !== "Available") {
                     Log::info("⏳ Agent {$agent->id} ({$agent->extension}) is not available - Status: {$agent->status}");
-                    continue;
+                    continue; // Skip the entire agent if they are not available
                 }
 
                 // ✅ Lock agent to avoid multiple processes
                 $lockKey = "agent_call_lock_{$agent->id}";
                 if (!Cache::add($lockKey, true, now()->addSeconds(10))) {
                     Log::info("🚫 Agent {$agent->id} is locked by another process");
-                    continue;
+                    continue; // Skip agent if they are locked
                 }
 
                 try {
