@@ -49,13 +49,13 @@
                 class="{{ $filter === 'answered' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-phone me-1"></i> Answered
             </a>
-            {{-- <a href="{{ url('auto-dailer-report?filter=queued') }}"
-                class="{{ $filter === 'queued' ? 'btn btn-primary' : 'btn btn-light' }}">
-                <i class="fa-solid fa-right-left me-1"></i> To Queue
-            </a> --}}
+            <a href="{{ url('auto-dailer-report?filter=no answer queue') }}"
+                class="{{ $filter === 'no answer queue' ? 'btn btn-primary' : 'btn btn-light' }}">
+                <i class="fa-solid fa-right-left me-1"></i>Queue Unanswered
+            </a>
             <a href="{{ url('auto-dailer-report?filter=no answer') }}"
                 class="{{ $filter === 'no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
-                <i class="fas fa-phone-slash me-1"></i> No Answer
+                <i class="fas fa-phone-slash me-1"></i> Unanswered
             </a>
             <a href="{{ url('auto-dailer-report?filter=today') }}"
                 class="{{ $filter === 'today' ? 'btn btn-primary' : 'btn btn-light' }}">
@@ -67,26 +67,39 @@
     <!-- Statistics Cards -->
     <div class="d-flex flex-wrap gap-3 mb-4 justify-content-center">
         @if ($filter === 'all' || $filter === 'today')
-        <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
+
+         @if (!empty($totalCount))
+         <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
             <i class="fas fa-phone-volume text-primary fs-3"></i>
             <h5 class="mt-2">Total Calls</h5>
             <p class="fw-bold fs-4">{{ $totalCount }}</p>
         </div>
+        @endif
+
+        @if (!empty($answeredCount))
         <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
             <i class="fas fa-phone text-success fs-3"></i>
             <h5 class="mt-2">Answered</h5>
             <p class="fw-bold fs-4">{{ $answeredCount }}</p>
         </div>
-        <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
-            <i class="fas fa-phone-slash text-warning fs-3"></i>
-            <h5 class="mt-2">No Answer</h5>
-            <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
-        </div>
-        {{-- <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
-            <i class="fa-solid fa-right-left text-primary fs-3"></i>
-            <h5 class="mt-2">To Queue</h5>
-            <p class="fw-bold fs-4">{{ $queuedCount }}</p>
-        </div> --}}
+       @endif
+
+       @if (!empty($noAnswerCount))
+       <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
+        <i class="fas fa-phone-slash text-warning fs-3"></i>
+        <h5 class="mt-2">Unanswered</h5>
+        <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
+    </div>
+      @endif
+
+      @if (!empty($noAnswerQueue))
+       <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
+        <i class="fas fa-phone-slash text-warning fs-3"></i>
+        <h5 class="mt-2">Unanswered Queue</h5>
+        <p class="fw-bold fs-4">{{ $noAnswerQueue }}</p>
+    </div>
+      @endif
+
 
         {{-- @if (!empty($notCalled))
         <a href="{{ route('auto_dailer.report.notCalled') }}" style="text-decoration: none">
@@ -107,15 +120,15 @@
         @elseif($filter === 'no answer')
         <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
             <i class="fas fa-phone-slash text-warning fs-3"></i>
-            <h5 class="mt-2">No Answer Calls</h5>
+            <h5 class="mt-2">Unanswered Calls</h5>
             <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
         </div>
-        {{-- @elseif($filter === 'queued')
+        @elseif($filter === 'no answer queue')
         <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
             <i class="fa-solid fa-right-left text-primary fs-3"></i>
-            <h5 class="mt-2">To Queue</h5>
-            <p class="fw-bold fs-4">{{ $queuedCount }}</p>
-        </div>--}}
+            <h5 class="mt-2">Unanswered Queue</h5>
+            <p class="fw-bold fs-4">{{ $noAnswerQueue }}</p>
+        </div>
 
         @endif
     </div>

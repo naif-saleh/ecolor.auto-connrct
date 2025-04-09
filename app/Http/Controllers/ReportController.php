@@ -56,7 +56,7 @@ class ReportController extends Controller
 
         // Define status mappings
         $answeredStatuses = ['Talking', 'call', 'Rerouting'];
-        $toQueue = ['Rerouting'];
+        $noAnswerQueue = ['Rerouting', 'Transferring'];
         $notCalledStates = ['new'];
         $noAnswerStatuses = ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
 
@@ -120,8 +120,8 @@ class ReportController extends Controller
             $query->whereIn('status', $answeredStatuses);
         } elseif ($filter === 'no answer') {
             $query->whereIn('status', $noAnswerStatuses);
-        } elseif ($filter === 'queued') {
-            $query->whereIn('status', $toQueue);
+        } elseif ($filter === 'no answer queue') {
+            $query->whereIn('status', $noAnswerQueue);
         }
 
         // Get paginated results
@@ -130,7 +130,7 @@ class ReportController extends Controller
         // Calculate statistics
         $totalCount = (clone $statsQuery)->count();
         $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
-        $queuedCount = (clone $statsQuery)->whereIn('status', $toQueue)->count();
+        $noAnswerQueue = (clone $statsQuery)->whereIn('status', $noAnswerQueue)->count();
         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
 
         // Get distinct providers for dropdown
@@ -148,7 +148,7 @@ class ReportController extends Controller
             'totalCount',
             'answeredCount',
             'noAnswerCount',
-            'queuedCount',
+            'noAnswerQueue',
             'notCalled',
             'extensionFrom',
             'extensionTo',
