@@ -204,9 +204,10 @@ class ADistAgentFeedController extends Controller
         // Find the file by slug instead of using route model binding
         $file = ADistFeed::where('slug', $slug)->firstOrFail();
         $numbers = ADistData::where('feed_id', $file->id)->count();
+        $called = ADistData::where('feed_id', $file->id)->where('state', '!=' , 'new')->count();
         $data = ADistData::where('feed_id', $file->id)->paginate(400);
 
-        return view('autoDistributerByUser.AgentFeed.show', compact('file', 'data', 'numbers'));
+        return view('autoDistributerByUser.AgentFeed.show', compact('file', 'data', 'numbers', 'called'));
     }
 
     // Active and Inactine File

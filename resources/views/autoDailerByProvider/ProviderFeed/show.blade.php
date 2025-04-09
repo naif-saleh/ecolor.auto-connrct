@@ -3,7 +3,7 @@
 @section('content')
     <div class="container">
         <div class="d-flex justify-content-between">
-            <h2>File Name: {{ $file->file_name }} contains <u>{{ $numbers }}</u> Numbers - Called on {{$called}}</h2>
+            <h2>File Name: {{ $file->file_name }} contains <u>{{ $numbers }}</u> Numbers - Called on <u>{{$called}}</u></h2>
             <a href="{{ route('provider.files.index', $file->provider_id) }}" class="btn btn-primary mb-2">Back</a>
         </div>
 
