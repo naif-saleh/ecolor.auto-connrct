@@ -232,10 +232,10 @@
                                             }
 
                                             $badgeClass = match ($status) {
-                                                'answered'
+                                                'Answered'
                                                     => 'badge bg-success-subtle border border-success-subtle text-success-emphasis
                                 rounded-pill',
-                                                'no answer'
+                                                'Unanswered'
                                                     => 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis
                                 rounded-pill',
                                                 'not called'
