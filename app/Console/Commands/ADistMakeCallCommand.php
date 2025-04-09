@@ -108,13 +108,15 @@ class ADistMakeCallCommand extends Command
 
                         $notifiedAgents = []; // 🔒 Agents already notified
                         foreach ($dataItems as $dataItem) {
-
-
                             // ✅ Attempt to make the call
                             Log::info("☎️ Attempting call to {$dataItem->mobile}");
 
-
                             foreach ($agents as $agent) {
+                                // Skip if the agent has already been notified
+                                if (in_array($agent->id, $notifiedAgents)) {
+                                    continue;
+                                }
+
                                 try {
                                     $callResponse = $this->threeCxService->makeCallDist($agent, $dataItem->mobile);
 
@@ -137,14 +139,12 @@ class ADistMakeCallCommand extends Command
                                     Log::error("☎️❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
 
                                     // 🛑 Notify only if this agent hasn't been notified yet
-                                    if (!in_array($agent->id, $notifiedAgents)) {
-                                        try {
-                                            $agent->notify(new AgentCallFailed($agent->extension, $dataItem->mobile));
-                                            $notifiedAgents[] = $agent->id; // ✅ Mark as notified
-                                            Log::error("☎️✅ Success Notify to agent {$agent->extension} about call failure.");
-                                        } catch (\Exception $ex) {
-                                            Log::error("❗ Failed to notify agent {$agent->extension}: " . $ex->getMessage());
-                                        }
+                                    try {
+                                        $agent->notify(new AgentCallFailed($agent->extension, $dataItem->mobile));
+                                        $notifiedAgents[] = $agent->id; // ✅ Mark as notified
+                                        Log::error("☎️✅ Success Notify to agent {$agent->extension} about call failure.");
+                                    } catch (\Exception $ex) {
+                                        Log::error("❗ Failed to notify agent {$agent->extension}: " . $ex->getMessage());
                                     }
                                 }
                             }
