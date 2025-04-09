@@ -14,7 +14,6 @@ use App\Models\General_Setting;
 use App\Services\ThreeCxService;
 use Illuminate\Support\Facades\Cache;
 use App\Notifications\AgentCallFailed;
-
 class ADistMakeCallCommand extends Command
 {
     protected $signature = 'app:ADist-make-call-command';
@@ -106,47 +105,40 @@ class ADistMakeCallCommand extends Command
                             continue;
                         }
 
-                        $notifiedAgents = []; // 🔒 Agents already notified
                         foreach ($dataItems as $dataItem) {
+
+
                             // ✅ Attempt to make the call
                             Log::info("☎️ Attempting call to {$dataItem->mobile}");
 
-                            foreach ($agents as $agent) {
-                                // Skip if the agent has already been notified
-                                if (in_array($agent->id, $notifiedAgents)) {
-                                    continue;
-                                }
+                            try {
+                                $callResponse = $this->threeCxService->makeCallDist($agent, $dataItem->mobile);
 
+                                DB::transaction(function () use ($callResponse, $dataItem, $agent, $feed) {
+                                    AutoDistributerReport::create([
+                                        'call_id' => $callResponse['result']['callid'],
+                                        'status' => "Initiating",
+                                        'extension' => $agent->extension,
+                                        'phone_number' => $callResponse['result']['party_caller_id'],
+                                        'provider' => $feed->file_name,
+                                    ]);
+                                    $dataItem->update([
+                                        'state' => "Initiating",
+                                        'call_id' => $callResponse['result']['callid'],
+                                    ]);
+                                });
+
+                                break; // ✅ Only make one call per agent per execution
+                            } catch (\Exception $e) {
+                                Log::error("☎️❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
                                 try {
-                                    $callResponse = $this->threeCxService->makeCallDist($agent, $dataItem->mobile);
-
-                                    DB::transaction(function () use ($callResponse, $dataItem, $agent, $feed) {
-                                        AutoDistributerReport::create([
-                                            'call_id' => $callResponse['result']['callid'],
-                                            'status' => "Initiating",
-                                            'extension' => $agent->extension,
-                                            'phone_number' => $callResponse['result']['party_caller_id'],
-                                            'provider' => $feed->file_name,
-                                        ]);
-                                        $dataItem->update([
-                                            'state' => "Initiating",
-                                            'call_id' => $callResponse['result']['callid'],
-                                        ]);
-                                    });
-
-                                    break; // ✅ Only one call per agent
-                                } catch (\Exception $e) {
-                                    Log::error("☎️❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
-
-                                    // 🛑 Notify only if this agent hasn't been notified yet
-                                    try {
-                                        $agent->notify(new AgentCallFailed($agent->extension, $dataItem->mobile));
-                                        $notifiedAgents[] = $agent->id; // ✅ Mark as notified
-                                        Log::error("☎️✅ Success Notify to agent {$agent->extension} about call failure.");
-                                    } catch (\Exception $ex) {
-                                        Log::error("❗ Failed to notify agent {$agent->extension}: " . $ex->getMessage());
-                                    }
+                                    $agent->notify(new AgentCallFailed($agent->extension, $dataItem->mobile));
+                                    Log::error("☎️✅ Success Notify to agent {$agent->extension} about call failure.");
+                                } catch (\Exception $ex) {
+                                    Log::error("❗ Failed to notify agent {$agent->extension}: " . $ex->getMessage());
                                 }
+
+
                             }
                         }
 
