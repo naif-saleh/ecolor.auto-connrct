@@ -409,6 +409,8 @@ class ReportController extends Controller
         $provider = $request->input('provider');
         $dateFrom = $request->input('date_from');
         $dateTo = $request->input('date_to');
+        $timeFrom = $request->input('time_from');
+        $timeTo = $request->input('time_to');
 
         $statusMap = [
             'answered' => ['Talking', 'Wexternalline'],
@@ -425,11 +427,15 @@ class ReportController extends Controller
         }
 
         if ($extensionFrom) {
-            $query->where('extension', '>=', $extensionFrom);
+            $query->where('extension', '>=', (string) $extensionFrom);
+        }
+        if ($extensionTo) {
+            $query->where('extension', '<=', (string) $extensionTo);
         }
 
-        if ($extensionTo) {
-            $query->where('extension', '<=', $extensionTo);
+
+        if ($timeFrom && $timeTo) {
+            $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
         }
 
         if (!empty($provider)) {
