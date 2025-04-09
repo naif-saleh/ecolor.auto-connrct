@@ -13,6 +13,8 @@ use App\Models\AutoDistributerReport;
 use App\Models\General_Setting;
 use App\Services\ThreeCxService;
 use Illuminate\Support\Facades\Cache;
+use App\Notifications\AgentCallFailed;
+use Illuminate\Support\Facades\Notification;
 
 class ADistMakeCallCommand extends Command
 {
@@ -131,6 +133,8 @@ class ADistMakeCallCommand extends Command
                                 break; // ✅ Only make one call per agent per execution
                             } catch (\Exception $e) {
                                 Log::error("☎️❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
+                                Notification::route('database', $agent->id)
+                                    ->notify(new AgentCallFailed($agent->extension, $dataItem->mobile));
                             }
                         }
 

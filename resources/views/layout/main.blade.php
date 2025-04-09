@@ -11,9 +11,7 @@
     {{-- Tap Icon --}}
     @if($logo )
 
-        <link rel="icon"
-        href="{{ asset('storage/' . $logo) }}"
-        type="image/png">
+    <link rel="icon" href="{{ asset('storage/' . $logo) }}" type="image/png">
     @endif
 
     {{-- Font Awesome --}}
@@ -39,6 +37,8 @@
     <!-- inject:css -->
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <!-- endinject -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
 
 
 </head>
@@ -95,47 +95,30 @@
                 <ul class="navbar-nav ms-auto">
                     <!-- Right-aligned login/logout links -->
                     @if (Auth::check())
-                    {{-- <li class="nav-item dropdown">
-                        <a class="nav-link count-indicator" id="notificationDropdown" href="#" data-bs-toggle="dropdown"
-                            aria-expanded="false">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link count-indicator dropdown-toggle" id="notificationDropdown" href="#"
+                            role="button" data-bs-toggle="dropdown" aria-expanded="false">
                             <i class="icon-bell"></i>
-                            <span class="count"></span>
+                            <span class="count bg-danger text-white rounded-circle">4</span>
                         </a>
-                        <div class="dropdown-menu dropdown-menu-right navbar-dropdown preview-list pb-0 show"
-                            aria-labelledby="notificationDropdown">
-                            <a class="dropdown-item py-3 border-bottom">
-                                <p class="mb-0 fw-medium float-start">You have 4 new notifications </p>
-                                <span class="badge badge-pill badge-primary float-end">View all</span>
-                            </a>
-                            <a class="dropdown-item preview-item py-3">
-                                <div class="preview-thumbnail">
-                                    <i class="mdi mdi-alert m-auto text-primary"></i>
+
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
+                            @foreach(auth()->user()->unreadNotifications as $note)
+                            <li class="dropdown-item d-flex align-items-start py-3">
+                                <div class="me-3">
+                                    <i class="mdi mdi-alert-circle text-danger fs-4"></i>
                                 </div>
-                                <div class="preview-item-content">
-                                    <h6 class="preview-subject fw-normal text-dark mb-1">Application Error</h6>
-                                    <p class="fw-light small-text mb-0"> Just now </p>
+                                <div>
+                                    <h6 class="fw-normal text-dark mb-1">{{ $note->data['title'] }}</h6>
+                                    <p class="fw-light small mb-0">{{ $note->data['body'] }}</p>
                                 </div>
-                            </a>
-                            <a class="dropdown-item preview-item py-3">
-                                <div class="preview-thumbnail">
-                                    <i class="mdi mdi-lock-outline m-auto text-primary"></i>
-                                </div>
-                                <div class="preview-item-content">
-                                    <h6 class="preview-subject fw-normal text-dark mb-1">Settings</h6>
-                                    <p class="fw-light small-text mb-0"> Private message </p>
-                                </div>
-                            </a>
-                            <a class="dropdown-item preview-item py-3">
-                                <div class="preview-thumbnail">
-                                    <i class="mdi mdi-airballoon m-auto text-primary"></i>
-                                </div>
-                                <div class="preview-item-content">
-                                    <h6 class="preview-subject fw-normal text-dark mb-1">New user registration</h6>
-                                    <p class="fw-light small-text mb-0"> 2 days ago </p>
-                                </div>
-                            </a>
-                        </div>
-                    </li> --}}
+                            </li>
+                            @endforeach
+                        </ul>
+
+                    </li>
+
+
 
 
                     <li class="nav-item">
@@ -236,97 +219,97 @@
                                 <li class="nav-item"><a class="nav-link" href="{{ route('settings.index') }}">System
                                         Settings</a></li>
 
-                                    <a class="nav-link" href="{{ route('users.system.index') }}">
+                                <a class="nav-link" href="{{ route('users.system.index') }}">
 
-                                        <span class="menu-title">Manage Users</span>
+                                    <span class="menu-title">Manage Users</span>
 
-                                    </a>
+                                </a>
 
-                                </li>
-
-                            </ul>
-                        </div>
                     </li>
-                    @elseif (Auth::check() && Auth::user()->isManagerUser())
-                    <nav class="sidebar sidebar-offcanvas" id="sidebar">
-                        <ul class="nav">
-                            <li class="nav-item">
-                                <a class="nav-link" href="{{ route('index.page') }}">
-                                    <i class="mdi mdi-grid-large menu-icon"></i>
-                                    <span class="menu-title">Dashboard</span>
-                                </a>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" data-bs-toggle="collapse" href="#form-elements"
-                                    aria-expanded="false" aria-controls="form-elements">
-                                    <i class="menu-icon mdi mdi-phone"></i>
 
-                                    <span class="menu-title">Dialer Reports</span>
-                                    <i class="menu-arrow"></i>
-                                </a>
-                                <div class="collapse" id="form-elements">
-                                    <ul class="nav flex-column sub-menu">
-                                        <li class="nav-item"><a class="nav-link"
-                                                href="{{ route('manager.dailer.report.providers') }}">Dialer
-                                                Provider</a></li>
-                                        <li class="nav-item"><a class="nav-link"
-                                                href="{{ route('manager.dailer.report.compaign') }}">Dialer
-                                                Compaign</a></li>
-                                    </ul>
-                                </div>
-                            </li>
-                            <li class="nav-item">
-                                <a class="nav-link" data-bs-toggle="collapse" href="#form-elements"
-                                    aria-expanded="false" aria-controls="form-elements">
-                                    <i class="menu-icon mdi mdi-phone"></i>
-
-                                    <span class="menu-title">Distributor Reports</span>
-                                    <i class="menu-arrow"></i>
-                                </a>
-                                <div class="collapse" id="form-elements">
-                                    <ul class="nav flex-column sub-menu">
-                                        <li class="nav-item"><a class="nav-link"
-                                                href="{{ route('manager.autodistributor.report.providers') }}">Distributor
-                                                Provider</a></li>
-                                        <li class="nav-item"><a class="nav-link"
-                                                href="{{ route('manager.autodistributor.report.compaign') }}">Distributor
-                                                Compaign</a></li>
-
-                                    </ul>
-                                </div>
-                            </li>
-                        </ul>
-
-                    </nav>
-                    @else
-                    <li class="nav-item">
-                        <a class="nav-link" data-bs-toggle="collapse" href="#form-elements" aria-expanded="false"
-                            aria-controls="form-elements">
-                            <i class="menu-icon mdi mdi-phone"></i>
-
-                            <span class="menu-title">Call Reports</span>
-                            <i class="menu-arrow"></i>
-                        </a>
-                        <div class="collapse" id="form-elements">
-                            <ul class="nav flex-column sub-menu">
-                                <li class="nav-item"><a class="nav-link" href="{{ route('auto_dailer.report') }}">Dialer
-                                        Calls</a></li>
-                                <li class="nav-item"><a class="nav-link"
-                                        href="{{ route('auto_distributer.report') }}">Distributor Calls</a></li>
-                                <li class="nav-item"><a class="nav-link" href="{{ route('evaluation') }}">Evaluation</a>
-                                </li>
-                            </ul>
-                        </div>
-                    </li>
-                    @endif
                 </ul>
-
-            </nav>
-            <!-- partial -->
-            @yield('content')
-            <!-- main-panel ends -->
         </div>
-        <!-- page-body-wrapper ends -->
+        </li>
+        @elseif (Auth::check() && Auth::user()->isManagerUser())
+        <nav class="sidebar sidebar-offcanvas" id="sidebar">
+            <ul class="nav">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ route('index.page') }}">
+                        <i class="mdi mdi-grid-large menu-icon"></i>
+                        <span class="menu-title">Dashboard</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="collapse" href="#form-elements" aria-expanded="false"
+                        aria-controls="form-elements">
+                        <i class="menu-icon mdi mdi-phone"></i>
+
+                        <span class="menu-title">Dialer Reports</span>
+                        <i class="menu-arrow"></i>
+                    </a>
+                    <div class="collapse" id="form-elements">
+                        <ul class="nav flex-column sub-menu">
+                            <li class="nav-item"><a class="nav-link"
+                                    href="{{ route('manager.dailer.report.providers') }}">Dialer
+                                    Provider</a></li>
+                            <li class="nav-item"><a class="nav-link"
+                                    href="{{ route('manager.dailer.report.compaign') }}">Dialer
+                                    Compaign</a></li>
+                        </ul>
+                    </div>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" data-bs-toggle="collapse" href="#form-elements" aria-expanded="false"
+                        aria-controls="form-elements">
+                        <i class="menu-icon mdi mdi-phone"></i>
+
+                        <span class="menu-title">Distributor Reports</span>
+                        <i class="menu-arrow"></i>
+                    </a>
+                    <div class="collapse" id="form-elements">
+                        <ul class="nav flex-column sub-menu">
+                            <li class="nav-item"><a class="nav-link"
+                                    href="{{ route('manager.autodistributor.report.providers') }}">Distributor
+                                    Provider</a></li>
+                            <li class="nav-item"><a class="nav-link"
+                                    href="{{ route('manager.autodistributor.report.compaign') }}">Distributor
+                                    Compaign</a></li>
+
+                        </ul>
+                    </div>
+                </li>
+            </ul>
+
+        </nav>
+        @else
+        <li class="nav-item">
+            <a class="nav-link" data-bs-toggle="collapse" href="#form-elements" aria-expanded="false"
+                aria-controls="form-elements">
+                <i class="menu-icon mdi mdi-phone"></i>
+
+                <span class="menu-title">Call Reports</span>
+                <i class="menu-arrow"></i>
+            </a>
+            <div class="collapse" id="form-elements">
+                <ul class="nav flex-column sub-menu">
+                    <li class="nav-item"><a class="nav-link" href="{{ route('auto_dailer.report') }}">Dialer
+                            Calls</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('auto_distributer.report') }}">Distributor
+                            Calls</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ route('evaluation') }}">Evaluation</a>
+                    </li>
+                </ul>
+            </div>
+        </li>
+        @endif
+        </ul>
+
+        </nav>
+        <!-- partial -->
+        @yield('content')
+        <!-- main-panel ends -->
+    </div>
+    <!-- page-body-wrapper ends -->
     </div>
     <!-- container-scroller -->
     <!-- plugins:js -->
@@ -358,6 +341,8 @@
     <!-- Bootstrap & Dropzone JS (Include before closing body tag) -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
 
     @if (session('success'))
     <script>
