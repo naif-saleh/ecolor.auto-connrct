@@ -24,13 +24,15 @@
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
         <!-- Export Button -->
         <a href="{{ route('auto_dailer.report.export', [
-            'filter' => $filter,
-            'extension_from' => request('extension_from'),
-            'extension_to' => request('extension_to'),
-            'provider' => request('provider'),
-            'date_from' => request('date_from'),
-            'date_to' => request('date_to')
-        ]) }}" class="btn btn-success d-flex align-items-center">
+                'filter' => $filter,
+                'extension_from' => request('extension_from'),
+                'extension_to' => request('extension_to'),
+                'provider' => request('provider'),
+                'date_from' => request('date_from'),
+                'date_to' => request('date_to'),
+                'time_from' => request('time_from'),
+                'time_to' => request('time_to'),
+            ]) }}" class="btn btn-success d-flex align-items-center">
             <i class="fas fa-file-export me-2"></i> Export as CSV
         </a>
 
