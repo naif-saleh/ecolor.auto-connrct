@@ -89,8 +89,8 @@ class ADistMakeCallCommand extends Command
                             $feed->update(['is_done' => $status]);
 
                             $logMessage = $status === "called"
-                                ? "✅ All numbers called for File '{$feed->file_name}'."
-                                : "🚫 Time over for File '{$feed->file_name}'. Not completed.";
+                                ? "✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}'."
+                                : "🚫 Time over for File '{$feed->file_name}' - Agent '{$agent->extension}'. Not completed.";
                             Log::info("ADistMakeCallCommand: {$logMessage}");
 
                             continue;
@@ -102,7 +102,7 @@ class ADistMakeCallCommand extends Command
                             ->get();
 
                         if ($dataItems->isEmpty()) {
-                            $this->checkIfFeedCompleted($feed);
+                            $this->checkIfFeedCompleted($feed, $agent);
                             continue;
                         }
 
@@ -182,12 +182,12 @@ class ADistMakeCallCommand extends Command
      * @param ADistFeed $feed
      * @return void
      */
-    protected function checkIfFeedCompleted(ADistFeed $feed)
+    protected function checkIfFeedCompleted(ADistFeed $feed , ADistAgent $agent)
     {
         $remainingCalls = ADistData::where('feed_id', $feed->id)->where('state', 'new')->count();
         if ($remainingCalls == 0) {
             $feed->update(['is_done' => "called"]);
-            Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}'.");
+            Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}.");
         } else {
             Log::info("ADistMakeCallCommand: 📝 File {$feed->file_name} has {$remainingCalls} calls remaining.");
         }
