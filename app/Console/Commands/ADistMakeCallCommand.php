@@ -130,7 +130,7 @@ class ADistMakeCallCommand extends Command
 
                                 break; // ✅ Only make one call per agent per execution
                             } catch (\Exception $e) {
-                                Log::error("❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
+                                Log::error("☎️❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
                             }
                         }
 
