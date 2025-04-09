@@ -226,9 +226,10 @@ class ADialProviderFeedController extends Controller
         // Find the file by slug instead of using route model binding
         $file = ADialFeed::where('slug', $slug)->firstOrFail();
         $numbers = ADialData::where('feed_id', $file->id)->count();
+        $called = ADialData::where('feed_id', $file->id)->where('state', '!=' , 'new')->count();
         $data = ADialData::where('feed_id', $file->id)->paginate(400);
 
-        return view('autoDailerByProvider.ProviderFeed.show', compact('file', 'data', 'numbers'));
+        return view('autoDailerByProvider.ProviderFeed.show', compact('file', 'data', 'numbers', 'called'));
     }
 
 

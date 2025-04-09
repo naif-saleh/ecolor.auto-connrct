@@ -3,7 +3,7 @@
 @section('content')
     <div class="container">
         <div class="d-flex justify-content-between">
-            <h2>File Name: {{ $file->file_name }} contains <u>{{ $numbers }}</u> Numbers</h2>
+            <h2>File Name: {{ $file->file_name }} contains <u>{{ $numbers }}</u> Numbers - Called on {{$called}}</h2>
             <a href="{{ route('provider.files.index', $file->provider_id) }}" class="btn btn-primary mb-2">Back</a>
         </div>
 
@@ -19,7 +19,7 @@
                 <tbody>
                     @foreach ($data as $row)
                         <tr>
-                             
+
                             <td>{{ $row->mobile ?? 'N/A' }}</td>
                             <td>{{ $row->state ?? 'N/A' }}</td>
                         </tr>
