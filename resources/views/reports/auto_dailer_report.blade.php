@@ -227,8 +227,8 @@
                                                     'Wexternalline',
                                                     'Talking',
                                                 ])
-                                                    ? 'answered'
-                                                    : 'no answer';
+                                                    ? 'Answered'
+                                                    : 'Unanswered';
                                             }
 
                                             $badgeClass = match ($status) {
