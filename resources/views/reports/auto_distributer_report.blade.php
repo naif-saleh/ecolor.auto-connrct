@@ -23,7 +23,7 @@
 
     <div class="d-flex flex-wrap justify-content-between align-items-center mb-3">
         <!-- Export Button -->
-        <a href="{{ route('auto_dailer.report.export', [
+        <a href="{{ route('auto_distributer.report.export', [
                 'filter' => $filter,
                 'extension_from' => request('extension_from'),
                 'extension_to' => request('extension_to'),
