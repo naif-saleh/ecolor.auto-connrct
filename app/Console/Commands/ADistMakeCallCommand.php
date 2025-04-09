@@ -14,6 +14,7 @@ use App\Models\General_Setting;
 use App\Services\ThreeCxService;
 use Illuminate\Support\Facades\Cache;
 use App\Notifications\AgentCallFailed;
+
 class ADistMakeCallCommand extends Command
 {
     protected $signature = 'app:ADist-make-call-command';
@@ -131,14 +132,6 @@ class ADistMakeCallCommand extends Command
                                 break; // ✅ Only make one call per agent per execution
                             } catch (\Exception $e) {
                                 Log::error("☎️❌ Call to {$dataItem->mobile} failed: " . $e->getMessage());
-                                try {
-                                    $agent->notify(new AgentCallFailed($agent->extension, $dataItem->mobile));
-                                    Log::error("☎️✅ Success Notify to agent {$agent->extension} about call failure.");
-                                } catch (\Exception $ex) {
-                                    Log::error("❗ Failed to notify agent {$agent->extension}: " . $ex->getMessage());
-                                }
-
-
                             }
                         }
 
