@@ -320,6 +320,7 @@ class ThreeCxService
             'headers' => ['Authorization' => "Bearer $token"],
             'timeout' => 10,
         ]);
+        Log::info('Response from isAgentInCall:', ['response' => $response->getBody()->getContents()]);
         $participants = json_decode($response->getBody(), true);
         return collect($participants)->contains(fn($p) => in_array($p['status'], ['Connected', 'Dialing', 'Ringing']));
     }
