@@ -426,13 +426,13 @@ class ReportController extends Controller
             $query->whereIn('status', $statusMap[$filter]);
         }
 
-        if ($extensionFrom) {
-            $query->where('extension', '>=', (string) $extensionFrom);
-        }
-        if ($extensionTo) {
-            $query->where('extension', '<=', (string) $extensionTo);
+        if (!empty($extensionFrom)) {
+            $query->where('extension', '>=', $extensionFrom);
         }
 
+        if (!empty($extensionTo)) {
+            $query->where('extension', '<=', $extensionTo);
+        }
 
         if ($timeFrom && $timeTo) {
             $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
@@ -456,7 +456,7 @@ class ReportController extends Controller
             $handle = fopen('php://output', 'w');
 
             // Write the CSV header
-            fputcsv($handle, ['Mobile', 'Provider', 'Extension', 'State', 'duration', 'Time', 'Date']);
+            fputcsv($handle, ['Mobile', 'Provider', 'Extension', 'State', 'Duration', 'Time', 'Date']);
 
             // Write each report row
             foreach ($reports as $report) {
@@ -464,14 +464,12 @@ class ReportController extends Controller
                     $report->phone_number,
                     $report->provider,
                     $report->extension,
-                    //logic for status
                     $report->status === 'Talking' ? 'Answered' : ($report->status === 'Routing' ? 'No Answer' : ($report->status === 'Initiating' ? 'Employee No Answer' : 'No Answer')),
                     $report->duration_time ? $report->duration_time : '-',
                     $report->created_at->addHours(3)->format('H:i:s'),
                     $report->created_at->addHours(3)->format('Y-m-d')
                 ]);
             }
-
 
             fclose($handle);
         });
