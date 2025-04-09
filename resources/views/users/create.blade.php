@@ -56,6 +56,7 @@
                 <label for="role">Role</label>
                 <select class="form-control @error('role') is-invalid @enderror" id="role" name="role">
                     <option value="user" {{ old('role') == 'user' ? 'selected' : '' }}>User</option>
+                    <option value="branch" {{ old('role') == 'branch' ? 'selected' : '' }}>Branch</option>
                     <option value="manager" {{ old('role') == 'manager' ? 'selected' : '' }}>Manager</option>
                     <option value="admin" {{ old('role') == 'admin' ? 'selected' : '' }}>Admin</option>
                     <option value="superuser" {{ old('role') == 'superuser' ? 'selected' : '' }}>Super Admin</option>

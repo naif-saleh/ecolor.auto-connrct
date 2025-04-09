@@ -139,8 +139,9 @@
         <div class="container-fluid page-body-wrapper">
             <!-- partial:partials/_sidebar.html -->
             <nav class="sidebar sidebar-offcanvas" id="sidebar">
+                 @if (Auth::check() && (Auth::user()->isSuperUser() || Auth::user()->isAdmin()))
                 <ul class="nav">
-                    @if (Auth::check() && (Auth::user()->isSuperUser() || Auth::user()->isAdmin()))
+
                     <li class="nav-item">
                         <a class="nav-link" href="{{ route('index.page') }}">
                             <i class="mdi mdi-grid-large menu-icon"></i>
@@ -228,8 +229,99 @@
                     </li>
 
                 </ul>
+
+
+                
         </div>
         </li>
+        @elseif (Auth::check() && Auth::user()->isBranch())
+        <ul class="nav">
+
+           <li class="nav-item">
+               <a class="nav-link" href="{{ route('index.page') }}">
+                   <i class="mdi mdi-grid-large menu-icon"></i>
+                   <span class="menu-title">Dashboard</span>
+               </a>
+           </li>
+
+           <li class="nav-item nav-category">Systems Call</li>
+           <li class="nav-item">
+               <a class="nav-link" data-bs-toggle="collapse" href="#ui-basic" aria-expanded="false"
+                   aria-controls="ui-basic">
+                   <i class="menu-icon mdi mdi-floor-plan"></i>
+                   <span class="menu-title">Systems</span>
+                   <i class="menu-arrow"></i>
+               </a>
+               <div class="collapse" id="ui-basic">
+                   <ul class="nav flex-column sub-menu">
+                       <li class="nav-item"> <a class="nav-link" href="{{ route('providers.index') }}">Auto
+                               Dialer</a></li>
+                       <li class="nav-item"> <a class="nav-link" href="{{ route('users.index') }}">Auto
+                               Distributor</a></li>
+
+                   </ul>
+               </div>
+           </li>
+
+           <li class="nav-item">
+               <a class="nav-link" data-bs-toggle="collapse" href="#form-elements" aria-expanded="false"
+                   aria-controls="form-elements">
+                   <i class="menu-icon mdi mdi-phone"></i>
+
+                   <span class="menu-title">Call Reports</span>
+                   <i class="menu-arrow"></i>
+               </a>
+               <div class="collapse" id="form-elements">
+                   <ul class="nav flex-column sub-menu">
+                       <li class="nav-item"><a class="nav-link" href="{{ route('auto_dailer.report') }}">Auto
+                               Dailer Report</a></li>
+                       <li class="nav-item"><a class="nav-link"
+                               href="{{ route('auto_distributer.report') }}">Auto Distributor Report</a>
+                       </li>
+                       <li class="nav-item"><a class="nav-link" href="{{ route('evaluation') }}">Evaluation
+                               Report</a></li>
+                   </ul>
+               </div>
+           </li>
+           {{-- <li class="nav-item">
+               <a class="nav-link" data-bs-toggle="collapse" href="#charts" aria-expanded="false"
+                   aria-controls="charts">
+                   <i class="menu-icon mdi mdi-message-text"></i>
+                   <span class="menu-title">System Reports</span>
+
+
+                   <i class="menu-arrow"></i>
+               </a>
+               <div class="collapse" id="charts">
+                   <ul class="nav flex-column sub-menu">
+                       <li class="nav-item"> <a class="nav-link"
+                               href="{{ route('system.activity.report') }}">System Log Report</a></li>
+                       <li class="nav-item"> <a class="nav-link"
+                               href="{{ route('users.activity.report') }}">User Log Report</a></li>
+                   </ul>
+               </div>
+           </li> --}}
+
+           {{-- <li class="nav-item">
+               <a class="nav-link" data-bs-toggle="collapse" href="#settings" aria-expanded="false"
+                   aria-controls="settings">
+                   <i class="mdi mdi-cog-outline"></i>
+
+                   <span class="menu-title">Settings</span>
+                   <i class="menu-arrow"></i>
+               </a>
+               <div class="collapse" id="settings">
+                   <ul class="nav flex-column sub-menu">
+                       <li class="nav-item"><a class="nav-link" href="{{ route('settings.index') }}">System
+                               Settings</a></li>
+
+                       <a class="nav-link" href="{{ route('users.system.index') }}">
+
+                           <span class="menu-title">Manage Users</span>
+
+                       </a>
+
+           </li> --}}
         @elseif (Auth::check() && Auth::user()->isManagerUser())
         <nav class="sidebar sidebar-offcanvas" id="sidebar">
             <ul class="nav">

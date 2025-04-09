@@ -49,6 +49,11 @@
                                             <i class="fa fa-eye"></i>
                                         </a>
 
+
+                                        @if (Auth::check() && (Auth::user()->isSuperUser() || Auth::user()->isAdmin()))
+
+
+
                                         {{-- Edit Provider --}}
                                         <a href="#" class="btn btn-warning btn-sm ml-2 edit-btn"
                                             data-id="{{ $provider->id }}" data-name="{{ $provider->name }}"
@@ -67,7 +72,7 @@
                                                 <i class="fa fa-trash"></i>
                                             </button>
                                         </form>
-
+                                        @endif
 
 
                                     </td>

@@ -87,4 +87,14 @@ class User extends Authenticatable
     {
         return $this->role === 'user';
     }
+
+     /**
+     * Check if the user has a standard user role.
+     *
+     * @return bool
+     */
+    public function isBranch()
+    {
+        return $this->role === 'branch';
+    }
 }
