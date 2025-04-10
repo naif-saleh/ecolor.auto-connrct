@@ -166,6 +166,9 @@ class ReportController extends Controller
     /**
      * Export Auto Dailer AS CSV File
      */
+    /**
+     * Export Auto Dailer AS CSV File
+     */
     public function exportAutoDailerReport(Request $request)
     {
         $filter = $request->query('filter');
@@ -177,6 +180,7 @@ class ReportController extends Controller
         $timeFrom = $request->input('time_from');
         $timeTo = $request->input('time_to');
 
+        // Define status mappings
         $statusMap = [
             'answered' => ['Talking', 'call'],
             'no answer' => ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'],
@@ -186,42 +190,59 @@ class ReportController extends Controller
 
         $query = AutoDailerReport::query();
 
-        if ($filter === 'today') {
-            $query->whereDate('created_at', now()->toDateString());
-        } elseif ($filter && isset($statusMap[$filter])) {
+        // Apply filter based on status
+        if ($filter && isset($statusMap[$filter])) {
             $query->whereIn('status', $statusMap[$filter]);
         }
 
-        if ($extensionFrom) {
-            $query->where('extension', '>=', $extensionFrom);
-        }
-
-        if ($extensionTo) {
-            $query->where('extension', '<=', $extensionTo);
-        }
-
-        if ($provider) {
-            $query->where('provider', $provider);
-        }
-
-        // Apply date range filter
+        // Apply date filters - date_from/date_to take precedence over 'today' filter
         if ($dateFrom && $dateTo) {
-            $query->whereBetween('created_at', [
-                \Carbon\Carbon::parse($dateFrom, 'Asia/Riyadh')->startOfDay(),
-                \Carbon\Carbon::parse($dateTo, 'Asia/Riyadh')->endOfDay()
+            // Use explicit date range if provided
+            $carbonFrom = \Carbon\Carbon::parse($dateFrom)->startOfDay();
+            $carbonTo = \Carbon\Carbon::parse($dateTo)->endOfDay();
+            $query->whereBetween('created_at', [$carbonFrom, $carbonTo]);
+
+            Log::info('Using date range for auto-dialer export:', [
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'carbon_from' => $carbonFrom->toDateTimeString(),
+                'carbon_to' => $carbonTo->toDateTimeString()
             ]);
-        }elseif ($filter === 'today') {
+        } elseif ($filter === 'today') {
             // Only apply "today" filter if no explicit date range
             $today = now()->toDateString();
             $query->whereDate('created_at', $today);
-            Log::info('Using today filter for export:', ['today' => $today]);
+            Log::info('Using today filter for auto-dialer export:', ['today' => $today]);
         }
+
         // Apply time range filters if provided
         if ($timeFrom && $timeTo) {
             $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
         }
+
+        // Apply extension filters
+        if (!empty($extensionFrom)) {
+            $query->where('extension', '>=', $extensionFrom);
+        }
+        if (!empty($extensionTo)) {
+            $query->where('extension', '<=', $extensionTo);
+        }
+
+        // Apply provider filter
+        if (!empty($provider)) {
+            $query->where('provider', $provider);
+        }
+
+        // Debug the query SQL and count before executing
+        $sql = $query->toSql();
+        $bindings = $query->getBindings();
+        Log::info('Auto-dialer export query:', ['sql' => $sql, 'bindings' => $bindings]);
+
+        // Get the results
         $reports = $query->get();
-        // dd('Export Query:', ['query' => $query->toSql(), 'bindings' => $query->getBindings()]);
+
+        // Log the count of reports found
+        Log::info('Auto-dialer export results count:', ['count' => $reports->count()]);
 
         $response = new StreamedResponse(function () use ($reports) {
             $handle = fopen('php://output', 'w');
@@ -238,8 +259,8 @@ class ReportController extends Controller
                     (in_array($report->status, ['Wexternalline', 'Talking', 'Transferring']) ? 'Answered' : 'No Answer'),
                     $report->duration_time ? $report->duration_time : '-',
                     $report->duration_routing ? $report->duration_routing : '-',
-                    $report->created_at,
-                    $report->created_at
+                    $report->created_at->addHours(3)->format('H:i:s'),
+                    $report->created_at->addHours(3)->format('Y-m-d')
                 ]);
             }
 
