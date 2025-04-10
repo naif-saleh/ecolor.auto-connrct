@@ -99,7 +99,8 @@ class ThreeCxService
     public function getAllActiveCalls()
     {
         $retries = 0;
-        $maxRetries = 1;
+        $maxRetries = 3; // Increase max retries
+        $retryDelay = 2; // Delay between retries
 
         while ($retries <= $maxRetries) {
             try {
@@ -117,20 +118,30 @@ class ThreeCxService
 
                 return json_decode($response->getBody()->getContents(), true);
             } catch (\Exception $e) {
-                if ($retries < $maxRetries && (strpos($e->getMessage(), '401') !== false)) {
+                 if ($retries < $maxRetries && strpos($e->getMessage(), 'cURL error 28') !== false) {
+                    Log::warning("⏳ Retry attempt {$retries} due to timeout (cURL error 28)");
+
+                     sleep($retryDelay);
+                    $retries++;
+                    continue;
+                }
+
+                // Handle 401 token refresh
+                if ($retries < $maxRetries && strpos($e->getMessage(), '401') !== false) {
                     // If we get a 401, force token refresh and retry
                     $this->tokenService->refreshToken();
                     $retries++;
                     Log::info("Token refresh attempt {$retries} after 401 error");
-
                     continue;
                 }
 
+                // Log the error and throw it after retries
                 Log::error('❌ Failed to fetch active calls: ' . $e->getMessage());
                 throw $e;
             }
         }
     }
+
 
     /**
      * Make a call using 3CX API with improved error handling and caching
