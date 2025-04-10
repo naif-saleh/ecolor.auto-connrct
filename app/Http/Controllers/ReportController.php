@@ -435,13 +435,13 @@ class ReportController extends Controller
                 $carbonFrom = \Carbon\Carbon::parse($dateFrom)->startOfDay(),
                 $carbonTo = \Carbon\Carbon::parse($dateTo)->endOfDay()
             ]);
-
-            Log::info('Parsed Date Range for Report:', [
-                'date_from_export' => $dateFrom,
-                'date_to_export' => $dateTo,
-                'carbon_from_export' => $carbonFrom->toDateTimeString(),
-                'carbon_to_export' => $carbonTo->toDateTimeString(),
-            ]);
+        }
+        Log::info('Parsed Date Range for Report:', [
+            'date_from_export' => $dateFrom,
+            'date_to_export' => $dateTo,
+            'carbon_from_export' => $carbonFrom->toDateTimeString(),
+            'carbon_to_export' => $carbonTo->toDateTimeString(),
+        ]);
 
         // Apply time range filters if provided
         if ($timeFrom && $timeTo) {
