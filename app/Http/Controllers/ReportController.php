@@ -466,21 +466,6 @@ class ReportController extends Controller
 
 
 
-        // if ($dateFrom && $dateTo) {
-        //     $query->whereBetween('created_at', [
-        //         $carbonFrom =  Carbon::parse($dateFrom, 'Asia/Riyadh')->timezone('UTC')->startOfDay(),
-        //         $carbonTo =  Carbon::parse($dateTo, 'Asia/Riyadh')->timezone('UTC')->endOfDay()
-        //     ]);
-        // }
-
-
-
-        Log::info('Parsed Date Range for Report:', [
-            'date_from_export' => $dateFrom,
-            'date_to_export' => $dateTo,
-            'carbon_from_export' => $carbonFrom->toDateTimeString(),
-            'carbon_to_export' => $carbonTo->toDateTimeString(),
-        ]);
         $reports = $query->get();
 
         $response = new StreamedResponse(function () use ($reports) {
