@@ -428,11 +428,11 @@ class ReportController extends Controller
         $timeFrom = $request->input('time_from');
         $timeTo = $request->input('time_to');
 
-        // Define status mappings - make them match the view function
+        // Define status mappings
         $answeredStatuses = ['Talking', 'Wexternalline'];
         $noAnswerStatuses = ['Routing', 'Dialing', 'error'];
         $noAnswerQueue = ['Rerouting', 'Transferring'];
-        $employee_unanswer = ['Initiating'];
+        $employeeUnanswered = ['Initiating'];
 
         $query = AutoDistributerReport::query();
 
@@ -442,37 +442,26 @@ class ReportController extends Controller
         } elseif ($filter === 'no answer') {
             $query->whereIn('status', $noAnswerStatuses);
         } elseif ($filter === 'emplooyee no answer') {
-            $query->whereIn('status', $employee_unanswer);
+            $query->whereIn('status', $employeeUnanswered);
         } elseif ($filter === 'queue no answer') {
             $query->whereIn('status', $noAnswerQueue);
         }
 
-        // Apply date filters - don't use "today" if date_from/date_to are provided
+        // Date filtering
         if ($dateFrom && $dateTo) {
-            // Use explicit date range if provided
             $carbonFrom = \Carbon\Carbon::parse($dateFrom)->startOfDay();
             $carbonTo = \Carbon\Carbon::parse($dateTo)->endOfDay();
             $query->whereBetween('created_at', [$carbonFrom, $carbonTo]);
-
-            // Log::info('Using date range for export:', [
-            //     'date_from' => $dateFrom,
-            //     'date_to' => $dateTo,
-            //     'carbon_from' => $carbonFrom->toDateTimeString(),
-            //     'carbon_to' => $carbonTo->toDateTimeString()
-            // ]);
         } elseif ($filter === 'today') {
-            // Only apply "today" filter if no explicit date range
-            $today = now()->toDateString();
-            $query->whereDate('created_at', $today);
-            Log::info('Using today filter for export:', ['today' => $today]);
+            $query->whereDate('created_at', now()->toDateString());
         }
 
-        // Apply time range filters if provided (only once)
+        // Time filter
         if ($timeFrom && $timeTo) {
             $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
         }
 
-        // Apply extension filters
+        // Extension range
         if (!empty($extensionFrom)) {
             $query->where('extension', '>=', $extensionFrom);
         }
@@ -480,38 +469,41 @@ class ReportController extends Controller
             $query->where('extension', '<=', $extensionTo);
         }
 
-        // Apply provider filter
+        // Provider
         if (!empty($provider)) {
             $query->where('provider', $provider);
         }
 
-        // Debug the query SQL and count before executing
-        $sql = $query->toSql();
-        $bindings = $query->getBindings();
-        Log::info('Export query:', ['sql' => $sql, 'bindings' => $bindings]);
+        // Debug SQL
+        Log::info('Export query:', [
+            'sql' => $query->toSql(),
+            'bindings' => $query->getBindings()
+        ]);
 
-        // Get the results
-        $reports = $query->get();
-
-        // Log the count of reports found
-        Log::info('Export results count:', ['count' => $reports->count()]);
-
-        $response = new StreamedResponse(function () use ($reports) {
+        $response = new StreamedResponse(function () use ($query) {
             $handle = fopen('php://output', 'w');
 
-            // Write the CSV header
+            // CSV header
             fputcsv($handle, ['Mobile', 'Provider', 'Extension', 'State', 'Duration', 'Time', 'Date']);
 
-            // Write each report row
-            foreach ($reports as $report) {
+            foreach ($query->cursor() as $report) {
+                // Map status to readable label
+                $state = match ($report->status) {
+                    'Talking', 'Wexternalline' => 'Answered',
+                    'Routing', 'Dialing', 'error' => 'Unanswered',
+                    'Initiating' => 'Employee Unanswered',
+                    'Rerouting', 'Transferring' => 'Queue Unanswered',
+                    default => $report->status,
+                };
+
                 fputcsv($handle, [
-                    $report->phone_number,
-                    $report->provider,
-                    $report->extension,
-                    $report->status === 'Talking' ? 'Answered' : ($report->status === 'Routing' ? 'Unanswered' : ($report->status === 'Initiating' ? 'Employee Unanswered' : 'Queue Unanswered')),
-                    $report->duration_time ? $report->duration_time : '-',
-                    $report->created_at->addHours(3)->format('H:i:s'),
-                    $report->created_at->addHours(3)->format('Y-m-d')
+                    $report->phone_number ?? '-',
+                    $report->provider ?? '-',
+                    $report->extension ?? '-',
+                    $state,
+                    $report->duration_time ?? '-',
+                    optional($report->created_at)?->addHours(3)->format('H:i:s') ?? '-',
+                    optional($report->created_at)?->addHours(3)->format('Y-m-d') ?? '-',
                 ]);
             }
 
@@ -523,6 +515,7 @@ class ReportController extends Controller
 
         return $response;
     }
+
 
     /**
      * Distributort Not Called Numbers
