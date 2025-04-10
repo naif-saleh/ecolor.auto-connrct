@@ -93,8 +93,8 @@
 
 
                 @if (!empty($noAnswerQueueCount))
-                <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
-                    <i class="fas fa-phone-slash text-danger fs-3"></i>
+                <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+                    <i class="fas fa-phone-slash text-primary fs-3"></i>
                     <h5 class="mt-2">Unanswered Queue</h5>
                     <p class="fw-bold fs-4">{{ $noAnswerQueueCount }}</p>
                 </div>
@@ -128,8 +128,8 @@
             </div>
 
             @elseif($filter === 'queue no answer')
-            <div class="card text-center p-3 shadow-sm flex-fill" style="min-width: 180px;">
-                <i class="fas fa-phone-slash text-danger fs-3"></i>
+            <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+                <i class="fas fa-phone-slash text-primary fs-3"></i>
                 <h5 class="mt-2">Unanswered Queue</h5>
                 <p class="fw-bold fs-4">{{ $noAnswerQueueCount }}</p>
             </div>
@@ -228,30 +228,26 @@
                             <td>{{ $report->extension }}</td>
                             <td>
                                 @php
-                                $status = '';
-                                if ($report->status === 'Talking') {
-                                $status = 'answered';
-                                } elseif ($report->status === 'Routing' || $report->status === 'Dialing') {
-                                $status = 'no answer';
-                                } else {
-                                $status = 'Employee not answer';
-                                }
+                                    $statusMap = [
+                                        'Talking' => 'Answered',
+                                        'Routing' => 'Unanswered',
+                                        'Dialing' => 'Unanswered',
+                                        'Transferring' => 'Queue Unanswered',
+                                        'Rerouting' => 'Queue Unanswered',
+                                    ];
 
-                                $badgeClass = match ($status) {
-                                'answered'
-                                => 'badge bg-success-subtle border border-success-subtle text-success-emphasis
-                                rounded-pill',
-                                'no answer'
-                                => 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis
-                                rounded-pill',
-                                default
-                                => 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis
-                                rounded-pill',
-                                };
+                                    $status = $statusMap[$report->status] ?? 'Employee Unanswered';
+
+                                    $badgeClass = match ($status) {
+                                        'Answered' => 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill',
+                                        'Unanswered' => 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill',
+                                        'Queue Unanswered' => 'badge bg-secondary-subtle border border-secondary-subtle text-secondary-emphasis rounded-pill',
+                                        default => 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill',
+                                    };
                                 @endphp
 
 
-                                <span class="badge bg-{{ $badgeClass }}">
+                                <span class="{{ $badgeClass }}">
                                     {{ ucfirst($status) }}
                                 </span>
                             </td>
