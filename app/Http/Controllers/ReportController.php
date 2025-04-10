@@ -244,7 +244,7 @@ class ReportController extends Controller
                     $report->phone_number,
                     $report->provider,
                     $report->extension,
-                    (in_array($report->status, ['Wexternalline', 'Talking', 'Transferring']) ? 'Answered' : 'No Answer'),
+                    $report->status === 'Talking' ? 'Answered' : ($report->status === 'Routing' ? 'Unanswered'  : 'Queue Unanswered'),
                     $report->duration_time ? $report->duration_time : '-',
                     $report->duration_routing ? $report->duration_routing : '-',
                     $report->created_at->addHours(3)->format('H:i:s'),
@@ -513,7 +513,7 @@ class ReportController extends Controller
                     $report->phone_number,
                     $report->provider,
                     $report->extension,
-                    $report->status === 'Talking' ? 'Answered' : ($report->status === 'Routing' ? 'No Answer' : ($report->status === 'Initiating' ? 'Employee No Answer' : 'No Answer')),
+                    $report->status === 'Talking' ? 'Answered' : ($report->status === 'Routing' ? 'Unanswered' : ($report->status === 'Initiating' ? 'Employee Unanswered' : 'Queue Unanswered')),
                     $report->duration_time ? $report->duration_time : '-',
                     $report->created_at->addHours(3)->format('H:i:s'),
                     $report->created_at->addHours(3)->format('Y-m-d')
