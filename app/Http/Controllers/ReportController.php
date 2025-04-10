@@ -347,6 +347,7 @@ class ReportController extends Controller
             $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
         }
 
+
         // Apply extension range filters if provided
         if ($extensionFrom) {
             $query->where('extension', '>=', $extensionFrom);
@@ -428,6 +429,25 @@ class ReportController extends Controller
             $query->whereIn('status', $statusMap[$filter]);
         }
 
+        // Apply date range filters if selected
+        if ($dateFrom && $dateTo) {
+            $query->whereBetween('created_at', [
+                $carbonFrom = \Carbon\Carbon::parse($dateFrom)->startOfDay(),
+                $carbonTo = \Carbon\Carbon::parse($dateTo)->endOfDay()
+            ]);
+
+            Log::info('Parsed Date Range for Report:', [
+                'date_from_export' => $dateFrom,
+                'date_to_export' => $dateTo,
+                'carbon_from_export' => $carbonFrom->toDateTimeString(),
+                'carbon_to_export' => $carbonTo->toDateTimeString(),
+            ]);
+
+        // Apply time range filters if provided
+        if ($timeFrom && $timeTo) {
+            $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
+        }
+
         if (!empty($extensionFrom)) {
             $query->where('extension', '>=', $extensionFrom);
         }
@@ -446,20 +466,20 @@ class ReportController extends Controller
 
 
 
-        if ($dateFrom && $dateTo) {
-            $query->whereBetween('created_at', [
-                $carbonFrom =  Carbon::parse($dateFrom, 'Asia/Riyadh')->timezone('UTC')->startOfDay(),
-                $carbonTo =  Carbon::parse($dateTo, 'Asia/Riyadh')->timezone('UTC')->endOfDay()
-            ]);
-        }
+        // if ($dateFrom && $dateTo) {
+        //     $query->whereBetween('created_at', [
+        //         $carbonFrom =  Carbon::parse($dateFrom, 'Asia/Riyadh')->timezone('UTC')->startOfDay(),
+        //         $carbonTo =  Carbon::parse($dateTo, 'Asia/Riyadh')->timezone('UTC')->endOfDay()
+        //     ]);
+        // }
 
-         
+
 
         Log::info('Parsed Date Range for Report:', [
-            'date_from_original' => $dateFrom,
-            'date_to_original' => $dateTo,
-            'carbon_from' => $carbonFrom->toDateTimeString(),
-            'carbon_to' => $carbonTo->toDateTimeString(),
+            'date_from_export' => $dateFrom,
+            'date_to_export' => $dateTo,
+            'carbon_from_export' => $carbonFrom->toDateTimeString(),
+            'carbon_to_export' => $carbonTo->toDateTimeString(),
         ]);
         $reports = $query->get();
 
