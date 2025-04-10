@@ -10,15 +10,15 @@
             <table class="table table-bordered">
                 <thead>
                     <tr>
-
+                        <th>#</th>
                         <th>Mobile Number</th>
                         <th>state</th>
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($data as $row)
+                    @foreach ($data as $index as $row)
                         <tr>
-
+                            <td>{{ $index + 1 }}</td>
                             <td>{{ $row->mobile ?? 'N/A' }}</td>
                             <td>{{ $row->state ?? 'N/A' }}</td>
                         </tr>
