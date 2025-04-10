@@ -163,9 +163,7 @@ class ReportController extends Controller
 
 
 
-    /**
-     * Export Auto Dailer AS CSV File
-     */
+
     /**
      * Export Auto Dailer AS CSV File
      */
@@ -335,6 +333,7 @@ class ReportController extends Controller
         $answeredStatuses = ['Talking', 'Wexternalline'];
         $noAnswerStatuses = ['Routing', 'Dialing', 'error'];
         $employee_unanswer = ['Initiating'];
+        $noAnswerQueue = ['Rerouting', 'Transferring'];
         // Start building the query
         $query = AutoDistributerReport::query();
 
@@ -392,6 +391,8 @@ class ReportController extends Controller
             $query->whereIn('status', $noAnswerStatuses);
         } elseif ($filter === 'emplooyee no answer') {
             $query->whereIn('status', $employee_unanswer);
+        }elseif ($filter === 'queue no answer') {
+            $query->whereIn('status', $noAnswerQueue);
         }
 
         // Get paginated results
@@ -401,6 +402,7 @@ class ReportController extends Controller
         $totalCount = $statsQuery->count();
         $answeredCount = (clone $statsQuery)->whereIn('status', $answeredStatuses)->count();
         $noAnswerCount = (clone $statsQuery)->whereIn('status', $noAnswerStatuses)->count();
+        $noAnswerQueueCount = (clone $statsQuery)->whereIn('status', $noAnswerQueue)->count();
         $todayEmployeeUnanswerCount = (clone $statsQuery)->whereIn('status', $employee_unanswer)->count();
         // Get distinct providers for dropdown
         $providers = ADialProvider::select('name', 'extension')
@@ -418,7 +420,7 @@ class ReportController extends Controller
             'answeredCount',
             'noAnswerCount',
             'todayEmployeeUnanswerCount',
-            // 'notCalled',
+            'noAnswerQueueCount',
             'extensionFrom',
             'extensionTo',
             'dateFrom',
@@ -444,6 +446,7 @@ class ReportController extends Controller
         // Define status mappings - make them match the view function
         $answeredStatuses = ['Talking', 'Wexternalline'];
         $noAnswerStatuses = ['Routing', 'Dialing', 'error'];
+        $noAnswerQueue = ['Rerouting', 'Transferring'];
         $employee_unanswer = ['Initiating'];
 
         $query = AutoDistributerReport::query();
@@ -455,6 +458,8 @@ class ReportController extends Controller
             $query->whereIn('status', $noAnswerStatuses);
         } elseif ($filter === 'emplooyee no answer') {
             $query->whereIn('status', $employee_unanswer);
+        }elseif ($filter === 'queue no answer') {
+            $query->whereIn('status', $noAnswerQueue);
         }
 
         // Apply date filters - don't use "today" if date_from/date_to are provided
