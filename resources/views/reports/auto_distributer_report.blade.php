@@ -94,7 +94,7 @@
 
                 @if (!empty($noAnswerQueueCount))
                 <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
-                    <i class="fas fa-phone-slash text-primary fs-3"></i>
+                    <i class="fas fa-phone-slash text-primary fs-1 mb-2"></i>
                     <h5 class="mt-2">Unanswered Queue</h5>
                     <p class="fw-bold fs-4">{{ $noAnswerQueueCount }}</p>
                 </div>
@@ -129,7 +129,7 @@
 
             @elseif($filter === 'queue no answer')
             <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
-                <i class="fas fa-phone-slash text-primary fs-3"></i>
+                <i class="fas fa-phone-slash text-primary fs-1 mb-2"></i>
                 <h5 class="mt-2">Unanswered Queue</h5>
                 <p class="fw-bold fs-4">{{ $noAnswerQueueCount }}</p>
             </div>
