@@ -241,14 +241,14 @@ class ReportController extends Controller
             // Write each report row
             foreach ($reports as $report) {
                 fputcsv($handle, [
-                    $report->phone_number,
-                    $report->provider,
-                    $report->extension,
-                    $report->status === 'Talking' ? 'Answered' : ($report->status === 'Routing' ? 'Unanswered'  : 'Queue Unanswered'),
-                    $report->duration_time ? $report->duration_time : '-',
-                    $report->duration_routing ? $report->duration_routing : '-',
-                    $report->created_at->addHours(3)->format('H:i:s'),
-                    $report->created_at->addHours(3)->format('Y-m-d')
+                    $report->phone_number ?? '-',
+                    $report->provider ?? '-',
+                    $report->extension ?? '-',
+                    $report->status === 'Talking' ? 'Answered' : ($report->status === 'Routing' ? 'Unanswered' : 'Queue Unanswered'),
+                    $report->duration_time ?? '-',
+                    $report->duration_routing ?? '-',
+                    optional($report->created_at)->addHours(3)->format('H:i:s') ?? '-',
+                    optional($report->created_at)->addHours(3)->format('Y-m-d') ?? '-'
                 ]);
             }
 

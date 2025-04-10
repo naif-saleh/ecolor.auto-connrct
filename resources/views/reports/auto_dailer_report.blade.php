@@ -45,10 +45,6 @@
                 class="{{ $filter === 'all' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-list me-1"></i> All
             </a>
-            <a href="{{ url('auto-dailer-report?filter=answered') }}"
-                class="{{ $filter === 'answered' ? 'btn btn-primary' : 'btn btn-light' }}">
-                <i class="fas fa-phone me-1"></i> Answered
-            </a>
             <a href="{{ url('auto-dailer-report?filter=no answer queue') }}"
                 class="{{ $filter === 'no answer queue' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fa-solid fa-right-left me-1"></i>Queue Unanswered
@@ -56,6 +52,10 @@
             <a href="{{ url('auto-dailer-report?filter=no answer') }}"
                 class="{{ $filter === 'no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-phone-slash me-1"></i> Unanswered
+            </a>
+            <a href="{{ url('auto-dailer-report?filter=answered') }}"
+                class="{{ $filter === 'answered' ? 'btn btn-primary' : 'btn btn-light' }}">
+                <i class="fas fa-phone me-1"></i> Answered
             </a>
             <a href="{{ url('auto-dailer-report?filter=today') }}"
                 class="{{ $filter === 'today' ? 'btn btn-primary' : 'btn btn-light' }}">
