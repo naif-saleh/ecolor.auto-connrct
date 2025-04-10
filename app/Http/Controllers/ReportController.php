@@ -415,58 +415,70 @@ class ReportController extends Controller
         $timeFrom = $request->input('time_from');
         $timeTo = $request->input('time_to');
 
-        $statusMap = [
-            'answered' => ['Talking', 'Wexternalline'],
-            'no answer' => ['Wspecialmenu', 'no answer', 'Dialing', 'Routing'],
-            'employee_unanswer' => ['Initiating', 'SomeOtherStatus']
-        ];
+        // Define status mappings - make them match the view function
+        $answeredStatuses = ['Talking', 'Wexternalline'];
+        $noAnswerStatuses = ['Routing', 'Dialing', 'error'];
+        $employee_unanswer = ['Initiating'];
 
         $query = AutoDistributerReport::query();
 
-        if ($filter === 'today') {
-            $query->whereDate('created_at', now()->toDateString());
-        } elseif ($filter && isset($statusMap[$filter])) {
-            $query->whereIn('status', $statusMap[$filter]);
+        // Apply filter based on status
+        if ($filter === 'answered') {
+            $query->whereIn('status', $answeredStatuses);
+        } elseif ($filter === 'no answer') {
+            $query->whereIn('status', $noAnswerStatuses);
+        } elseif ($filter === 'emplooyee no answer') {
+            $query->whereIn('status', $employee_unanswer);
         }
 
-        // Apply date range filters if selected
+        // Apply date filters - don't use "today" if date_from/date_to are provided
         if ($dateFrom && $dateTo) {
-            $query->whereBetween('created_at', [
-                \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-                \Carbon\Carbon::parse($dateTo)->endOfDay()
-            ]);
-        }
-        // Log::info('Parsed Date Range for Report:', [
-        //     'date_from_export' => $dateFrom,
-        //     'date_to_export' => $dateTo,
-        //     'carbon_from_export' => $carbonFrom->toDateTimeString(),
-        //     'carbon_to_export' => $carbonTo->toDateTimeString(),
-        // ]);
+            // Use explicit date range if provided
+            $carbonFrom = \Carbon\Carbon::parse($dateFrom)->startOfDay();
+            $carbonTo = \Carbon\Carbon::parse($dateTo)->endOfDay();
+            $query->whereBetween('created_at', [$carbonFrom, $carbonTo]);
 
-        // Apply time range filters if provided
+            Log::info('Using date range for export:', [
+                'date_from' => $dateFrom,
+                'date_to' => $dateTo,
+                'carbon_from' => $carbonFrom->toDateTimeString(),
+                'carbon_to' => $carbonTo->toDateTimeString()
+            ]);
+        } elseif ($filter === 'today') {
+            // Only apply "today" filter if no explicit date range
+            $today = now()->toDateString();
+            $query->whereDate('created_at', $today);
+            Log::info('Using today filter for export:', ['today' => $today]);
+        }
+
+        // Apply time range filters if provided (only once)
         if ($timeFrom && $timeTo) {
             $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
         }
 
+        // Apply extension filters
         if (!empty($extensionFrom)) {
             $query->where('extension', '>=', $extensionFrom);
         }
-
         if (!empty($extensionTo)) {
             $query->where('extension', '<=', $extensionTo);
         }
 
-        if ($timeFrom && $timeTo) {
-            $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
-        }
-
+        // Apply provider filter
         if (!empty($provider)) {
             $query->where('provider', $provider);
         }
 
+        // Debug the query SQL and count before executing
+        $sql = $query->toSql();
+        $bindings = $query->getBindings();
+        Log::info('Export query:', ['sql' => $sql, 'bindings' => $bindings]);
 
-
+        // Get the results
         $reports = $query->get();
+
+        // Log the count of reports found
+        Log::info('Export results count:', ['count' => $reports->count()]);
 
         $response = new StreamedResponse(function () use ($reports) {
             $handle = fopen('php://output', 'w');
