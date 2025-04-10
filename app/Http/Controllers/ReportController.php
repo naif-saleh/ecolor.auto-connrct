@@ -157,6 +157,7 @@ class ReportController extends Controller
     /**
      * Export Auto Dailer AS CSV File
      */
+
     public function exportAutoDailerReport(Request $request)
     {
         $filter = $request->query('filter');
@@ -168,7 +169,6 @@ class ReportController extends Controller
         $timeFrom = $request->input('time_from');
         $timeTo = $request->input('time_to');
 
-        // Define status mappings
         $statusMap = [
             'answered' => ['Talking', 'call'],
             'no answer' => ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'],
@@ -178,14 +178,11 @@ class ReportController extends Controller
 
         $query = AutoDailerReport::query();
 
-        // Apply filter based on status
         if ($filter && isset($statusMap[$filter])) {
             $query->whereIn('status', $statusMap[$filter]);
         }
 
-        // Apply date filters - date_from/date_to take precedence over 'today' filter
         if ($dateFrom && $dateTo) {
-            // Use explicit date range if provided
             $carbonFrom = \Carbon\Carbon::parse($dateFrom)->startOfDay();
             $carbonTo = \Carbon\Carbon::parse($dateTo)->endOfDay();
             $query->whereBetween('created_at', [$carbonFrom, $carbonTo]);
@@ -197,59 +194,70 @@ class ReportController extends Controller
                 'carbon_to' => $carbonTo->toDateTimeString()
             ]);
         } elseif ($filter === 'today') {
-            // Only apply "today" filter if no explicit date range
             $today = now()->toDateString();
             $query->whereDate('created_at', $today);
             Log::info('Using today filter for auto-dialer export:', ['today' => $today]);
         }
 
-        // Apply time range filters if provided
         if ($timeFrom && $timeTo) {
             $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
         }
 
-        // Apply extension filters
         if (!empty($extensionFrom)) {
             $query->where('extension', '>=', $extensionFrom);
         }
+
         if (!empty($extensionTo)) {
             $query->where('extension', '<=', $extensionTo);
         }
 
-        // Apply provider filter
         if (!empty($provider)) {
             $query->where('provider', $provider);
         }
 
-        // Debug the query SQL and count before executing
-        $sql = $query->toSql();
-        $bindings = $query->getBindings();
-        Log::info('Auto-dialer export query:', ['sql' => $sql, 'bindings' => $bindings]);
+        Log::info('Auto-dialer export query:', [
+            'sql' => $query->toSql(),
+            'bindings' => $query->getBindings()
+        ]);
 
-        // Get the results
-        $reports = $query->get();
-
-        // Log the count of reports found
-        Log::info('Auto-dialer export results count:', ['count' => $reports->count()]);
+        try {
+            $reports = $query->get() ?? collect();
+            Log::info('Auto-dialer export results count:', ['count' => $reports->count()]);
+        } catch (\Exception $e) {
+            Log::error('Failed to fetch auto-dialer report data:', ['error' => $e->getMessage()]);
+            abort(500, 'Internal Server Error - Query Failed');
+        }
 
         $response = new StreamedResponse(function () use ($reports) {
             $handle = fopen('php://output', 'w');
+            if ($handle === false) {
+                Log::error('Failed to open php://output for writing');
+                return;
+            }
 
-            // Write the CSV header
             fputcsv($handle, ['Mobile', 'Provider', 'Extension', 'State', 'Talking', 'Routing', 'Time', 'Date']);
 
-            // Write each report row
             foreach ($reports as $report) {
-                fputcsv($handle, [
-                    $report->phone_number ?? '-',
-                    $report->provider ?? '-',
-                    $report->extension ?? '-',
-                    $report->status === 'Talking' ? 'Answered' : ($report->status === 'Routing' ? 'Unanswered' : 'Queue Unanswered'),
-                    $report->duration_time ?? '-',
-                    $report->duration_routing ?? '-',
-                    optional($report->created_at)->addHours(3)->format('H:i:s') ?? '-',
-                    optional($report->created_at)->addHours(3)->format('Y-m-d') ?? '-'
-                ]);
+                try {
+                    $createdAt = $report->created_at ? $report->created_at->copy()->addHours(3) : null;
+
+                    fputcsv($handle, [
+                        $report->phone_number ?? '-',
+                        $report->provider ?? '-',
+                        $report->extension ?? '-',
+                        $report->status === 'Talking' ? 'Answered' : ($report->status === 'Routing' ? 'Unanswered' : 'Queue Unanswered'),
+                        $report->duration_time ?? '-',
+                        $report->duration_routing ?? '-',
+                        $createdAt ? $createdAt->format('H:i:s') : '-',
+                        $createdAt ? $createdAt->format('Y-m-d') : '-'
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Error writing report row to CSV:', [
+                        'report_id' => $report->id ?? 'N/A',
+                        'error' => $e->getMessage()
+                    ]);
+                    continue;
+                }
             }
 
             fclose($handle);
@@ -260,6 +268,7 @@ class ReportController extends Controller
 
         return $response;
     }
+
 
     /**
      * Dialer Not Called Numbers
