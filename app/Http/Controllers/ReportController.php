@@ -432,16 +432,16 @@ class ReportController extends Controller
         // Apply date range filters if selected
         if ($dateFrom && $dateTo) {
             $query->whereBetween('created_at', [
-                $carbonFrom = \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-                $carbonTo = \Carbon\Carbon::parse($dateTo)->endOfDay()
+                \Carbon\Carbon::parse($dateFrom)->startOfDay(),
+                \Carbon\Carbon::parse($dateTo)->endOfDay()
             ]);
         }
-        Log::info('Parsed Date Range for Report:', [
-            'date_from_export' => $dateFrom,
-            'date_to_export' => $dateTo,
-            'carbon_from_export' => $carbonFrom->toDateTimeString(),
-            'carbon_to_export' => $carbonTo->toDateTimeString(),
-        ]);
+        // Log::info('Parsed Date Range for Report:', [
+        //     'date_from_export' => $dateFrom,
+        //     'date_to_export' => $dateTo,
+        //     'carbon_from_export' => $carbonFrom->toDateTimeString(),
+        //     'carbon_to_export' => $carbonTo->toDateTimeString(),
+        // ]);
 
         // Apply time range filters if provided
         if ($timeFrom && $timeTo) {
