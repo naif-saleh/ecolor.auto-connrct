@@ -442,13 +442,13 @@ class ReportController extends Controller
             $query->where('provider', $provider);
         }
 
-        // Apply date range filter
         if ($dateFrom && $dateTo) {
             $query->whereBetween('created_at', [
-                \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-                \Carbon\Carbon::parse($dateTo)->endOfDay()
+                \Carbon\Carbon::parse($dateFrom)->subHours(3)->startOfDay(),
+                \Carbon\Carbon::parse($dateTo)->subHours(3)->endOfDay()
             ]);
         }
+
 
         $reports = $query->get();
 
