@@ -219,17 +219,13 @@ class ReportController extends Controller
             'bindings' => $query->getBindings(),
         ]);
 
-        $reports = $query->get();
-        Log::info('Export results count:', ['count' => $reports->count()]);
-
-        $response = new StreamedResponse(function () use ($reports) {
+        $response = new StreamedResponse(function () use ($query) {
             $handle = fopen('php://output', 'w');
 
             // Write the CSV header
             fputcsv($handle, ['Mobile', 'Provider', 'Extension', 'State', 'Talking Time', 'Routing Time', 'Time', 'Date']);
 
-            foreach ($reports as $report) {
-                // Human readable status
+            foreach ($query->cursor() as $report) {
                 $state = match ($report->status) {
                     'Talking', 'call' => 'Answered',
                     'Routing', 'Dialing', 'no answer', 'error' => 'Unanswered',
@@ -257,6 +253,7 @@ class ReportController extends Controller
 
         return $response;
     }
+
 
 
     /**
