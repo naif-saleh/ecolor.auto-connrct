@@ -57,10 +57,9 @@ class ReportController extends Controller
         $timeTo = $request->input('time_to');
 
         // Define status mappings
-        $answeredStatuses = ['Talking', 'call', 'Rerouting'];
+        $answeredStatuses = ['Talking', 'Wexternalline'];
         $noAnswerQueue = ['Rerouting', 'Transferring'];
-        $notCalledStates = ['new'];
-        $noAnswerStatuses = ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
+        $noAnswerStatuses = ['Routing', 'Dialing', 'error', 'Initiating', 'Rerouting', 'Transferring'];
 
         // Start building the queries
         $query = AutoDailerReport::query();
@@ -79,13 +78,6 @@ class ReportController extends Controller
                 \Carbon\Carbon::parse($dateFrom)->startOfDay(),
                 \Carbon\Carbon::parse($dateTo)->endOfDay()
             ]);
-
-            $notCalled = ADialData::where('state', 'new')
-                ->whereBetween('created_at', [
-                    \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-                    \Carbon\Carbon::parse($dateTo)->endOfDay()
-                ])
-                ->count();
         } elseif ($filter === 'today') {
             // If no date range is provided and filter is 'today', default to today's data
             $query->whereDate('created_at', now()->toDateString());
@@ -100,9 +92,7 @@ class ReportController extends Controller
 
         // Apply time range filters if provided
         if ($timeFrom && $timeTo) {
-            $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
-            $notCalled = ADialData::where('state', 'new')
-                ->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo])
+            $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo])
                 ->count();
         }
 
@@ -331,7 +321,7 @@ class ReportController extends Controller
 
         // Define status mappings
         $answeredStatuses = ['Talking', 'Wexternalline'];
-        $noAnswerStatuses = ['Routing', 'Dialing', 'error'];
+        $noAnswerStatuses = ['Routing', 'Dialing', 'error', 'Rerouting', 'Transferring'];
         $employee_unanswer = ['Initiating'];
         $noAnswerQueue = ['Rerouting', 'Transferring'];
         // Start building the query
@@ -391,7 +381,7 @@ class ReportController extends Controller
             $query->whereIn('status', $noAnswerStatuses);
         } elseif ($filter === 'emplooyee no answer') {
             $query->whereIn('status', $employee_unanswer);
-        }elseif ($filter === 'queue no answer') {
+        } elseif ($filter === 'queue no answer') {
             $query->whereIn('status', $noAnswerQueue);
         }
 
@@ -458,7 +448,7 @@ class ReportController extends Controller
             $query->whereIn('status', $noAnswerStatuses);
         } elseif ($filter === 'emplooyee no answer') {
             $query->whereIn('status', $employee_unanswer);
-        }elseif ($filter === 'queue no answer') {
+        } elseif ($filter === 'queue no answer') {
             $query->whereIn('status', $noAnswerQueue);
         }
 
