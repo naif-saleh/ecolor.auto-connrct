@@ -42,22 +42,24 @@
                 class="{{ $filter === 'all' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-list me-1"></i> All
             </a>
-            <a href="{{ url('auto-distributer-report?filter=answered') }}"
-                class="{{ $filter === 'answered' ? 'btn btn-primary' : 'btn btn-light' }}">
-                <i class="fas fa-phone me-1"></i> Answered
-            </a>
-            <a href="{{ url('auto-distributer-report?filter=no answer') }}"
-                class="{{ $filter === 'no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
-                <i class="fas fa-phone-slash me-1"></i> No Answer
+            <a href="{{ url('auto-distributer-report?filter=queue no answer') }}"
+                class="{{ $filter === 'queue no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
+                <i class="fa-solid fa-right-left me-1"></i>Queue Unanswered
             </a>
             <a href="{{ url('auto-distributer-report?filter=emplooyee no answer') }}"
                 class="{{ $filter === 'emplooyee no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-phone-slash me-1"></i> Em.No Answer
             </a>
-            <a href="{{ url('auto-distributer-report?filter=queue no answer') }}"
-                class="{{ $filter === 'queue no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
-                <i class="fa-solid fa-right-left me-1"></i>Queue Unanswered
+            <a href="{{ url('auto-distributer-report?filter=no answer') }}"
+                class="{{ $filter === 'no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
+                <i class="fas fa-phone-slash me-1"></i> No Answer
             </a>
+
+            <a href="{{ url('auto-distributer-report?filter=answered') }}"
+                class="{{ $filter === 'answered' ? 'btn btn-primary' : 'btn btn-light' }}">
+                <i class="fas fa-phone me-1"></i> Answered
+            </a>
+
             <a href="{{ url('auto-distributer-report?filter=today') }}"
                 class="{{ $filter === 'today' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-calendar-day me-1"></i> Today
@@ -67,80 +69,80 @@
     <!-- Statistics Cards -->
     <div class="d-flex flex-wrap gap-3 mb-4">
         @if($filter === 'all' || $filter === 'today')
-                @if (!empty($totalCount))
-                <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
-                    <i class="fas fa-phone-volume text-primary fs-1 mb-2"></i>
-                    <h6 class="fw-semibold">Total Calls</h6>
-                    <p class="fw-bold fs-4">{{ $totalCount }}</p>
-                </div>
-                @endif
+        @if (!empty($totalCount))
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone-volume text-primary fs-1 mb-2"></i>
+            <h6 class="fw-semibold">Total Calls</h6>
+            <p class="fw-bold fs-4">{{ $totalCount }}</p>
+        </div>
+        @endif
 
-                @if (!empty($answeredCount))
-                <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
-                    <i class="fas fa-phone text-success fs-1 mb-2"></i>
-                    <h6 class="fw-semibold">Answered</h6>
-                    <p class="fw-bold fs-4">{{ $answeredCount }}</p>
-                </div>
-                @endif
+        @if (!empty($answeredCount))
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone text-success fs-1 mb-2"></i>
+            <h6 class="fw-semibold">Answered</h6>
+            <p class="fw-bold fs-4">{{ $answeredCount }}</p>
+        </div>
+        @endif
 
-                @if (!empty($noAnswerCount))
-                <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
-                    <i class="fas fa-phone-slash text-warning fs-1 mb-2"></i>
-                    <h6 class="fw-semibold">Unanswered</h6>
-                    <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
-                </div>
-                @endif
-
-
-                @if (!empty($noAnswerQueueCount))
-                <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
-                    <i class="fas fa-phone-slash text-primary fs-1 mb-2"></i>
-                    <h6 class="fw-semibold">Unanswered Queue</h6>
-                    <p class="fw-bold fs-4">{{ $noAnswerQueueCount }}</p>
-                </div>
-                @endif
+        @if (!empty($noAnswerCount))
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone-slash text-warning fs-1 mb-2"></i>
+            <h6 class="fw-semibold">Unanswered</h6>
+            <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
+        </div>
+        @endif
 
 
-                @if (!empty($todayEmployeeUnanswerCount))
-                <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
-                    <i class="fas fa-phone-slash text-danger fs-1 mb-2"></i>
-                    <h6 class="fw-semibold">Em-Unanswered</h6>
-                    <p class="fw-bold fs-4">{{ $todayEmployeeUnanswerCount }}</p>
-                </div>
-                @endif
+        @if (!empty($noAnswerQueueCount))
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone-slash text-primary fs-1 mb-2"></i>
+            <h6 class="fw-semibold">Unanswered Queue</h6>
+            <p class="fw-bold fs-4">{{ $noAnswerQueueCount }}</p>
+        </div>
+        @endif
 
 
+        @if (!empty($todayEmployeeUnanswerCount))
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone-slash text-danger fs-1 mb-2"></i>
+            <h6 class="fw-semibold">Em-Unanswered</h6>
+            <p class="fw-bold fs-4">{{ $todayEmployeeUnanswerCount }}</p>
+        </div>
+        @endif
 
 
 
-            @elseif($filter === 'answered')
-            <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
-                <i class="fas fa-phone text-success fs-1 mb-2"></i>
-                <h6 class="fw-semibold">Answered</h6>
-                <p class="fw-bold fs-4">{{ $answeredCount }}</p>
-            </div>
 
-            @elseif($filter === 'no answer')
-            <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
-                <i class="fas fa-phone-slash text-warning fs-1 mb-2"></i>
-                <h6 class="fw-semibold">No Answer</h6>
-                <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
-            </div>
 
-            @elseif($filter === 'queue no answer')
-            <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
-                <i class="fas fa-phone-slash text-primary fs-1 mb-2"></i>
-                <h6 class="fw-semibold">Unanswered Queue</h5>
+        @elseif($filter === 'answered')
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone text-success fs-1 mb-2"></i>
+            <h6 class="fw-semibold">Answered</h6>
+            <p class="fw-bold fs-4">{{ $answeredCount }}</p>
+        </div>
+
+        @elseif($filter === 'no answer')
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone-slash text-warning fs-1 mb-2"></i>
+            <h6 class="fw-semibold">No Answer</h6>
+            <p class="fw-bold fs-4">{{ $noAnswerCount }}</p>
+        </div>
+
+        @elseif($filter === 'queue no answer')
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone-slash text-primary fs-1 mb-2"></i>
+            <h6 class="fw-semibold">Unanswered Queue</h5>
                 <p class="fw-bold fs-4">{{ $noAnswerQueueCount }}</p>
-            </div>
+        </div>
 
 
-            @elseif($filter === 'emplooyee no answer')
-            <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
-                <i class="fas fa-phone-slash text-danger fs-1 mb-2"></i>
-                <h6 class="fw-semibold">Em.No Answer</h6>
-                <p class="fw-bold fs-4">{{ $todayEmployeeUnanswerCount }}</p>
-            </div>
+        @elseif($filter === 'emplooyee no answer')
+        <div class="card text-center p-4 shadow-sm border-0 rounded-3 flex-fill" style="min-width: 200px;">
+            <i class="fas fa-phone-slash text-danger fs-1 mb-2"></i>
+            <h6 class="fw-semibold">Em.No Answer</h6>
+            <p class="fw-bold fs-4">{{ $todayEmployeeUnanswerCount }}</p>
+        </div>
         @endif
     </div>
 
@@ -228,22 +230,26 @@
                             <td>{{ $report->extension }}</td>
                             <td>
                                 @php
-                                    $statusMap = [
-                                        'Talking' => 'Answered',
-                                        'Routing' => 'Unanswered',
-                                        'Dialing' => 'Unanswered',
-                                        'Transferring' => 'Queue Unanswered',
-                                        'Rerouting' => 'Queue Unanswered',
-                                    ];
+                                $statusMap = [
+                                'Talking' => 'Answered',
+                                'Routing' => 'Unanswered',
+                                'Dialing' => 'Unanswered',
+                                'Transferring' => 'Queue Unanswered',
+                                'Rerouting' => 'Queue Unanswered',
+                                ];
 
-                                    $status = $statusMap[$report->status] ?? 'Employee Unanswered';
+                                $status = $statusMap[$report->status] ?? 'Employee Unanswered';
 
-                                    $badgeClass = match ($status) {
-                                        'Answered' => 'badge bg-success-subtle border border-success-subtle text-success-emphasis rounded-pill',
-                                        'Unanswered' => 'badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill',
-                                        'Queue Unanswered' => 'badge bg-secondary-subtle border border-secondary-subtle text-secondary-emphasis rounded-pill',
-                                        default => 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis rounded-pill',
-                                    };
+                                $badgeClass = match ($status) {
+                                'Answered' => 'badge bg-success-subtle border border-success-subtle
+                                text-success-emphasis rounded-pill',
+                                'Unanswered' => 'badge bg-warning-subtle border border-warning-subtle
+                                text-warning-emphasis rounded-pill',
+                                'Queue Unanswered' => 'badge bg-secondary-subtle border border-secondary-subtle
+                                text-secondary-emphasis rounded-pill',
+                                default => 'badge bg-danger-subtle border border-danger-subtle text-danger-emphasis
+                                rounded-pill',
+                                };
                                 @endphp
 
 
