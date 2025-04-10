@@ -7,23 +7,13 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use App\Models\ADialProvider;
- use App\Services\ThreeCxService;
- use App\Jobs\UpdateCallStatusJob;
+use App\Services\ThreeCxService;
+use App\Jobs\UpdateCallStatusJob;
 
 class ADialParticipantsCommand extends Command
 {
-    /**
-     * The name and signature of the console command.
-     *
-     * @var string
-     */
     protected $signature = 'app:ADial-participants-command';
 
-    /**
-     * The console command description.
-     *
-     * @var string
-     */
     protected $description = 'Update call statuses for active participants';
 
     protected $threeCxService;
@@ -40,7 +30,6 @@ class ADialParticipantsCommand extends Command
         Log::info('✅ 📡 ADialParticipantsCommand started at ' . $startTime);
 
         try {
-            // Check DB connection first
             if (!$this->checkDatabaseConnection()) {
                 Log::error("ADialParticipantsCommand ❌ Database connection test failed");
                 return 1;
@@ -56,9 +45,6 @@ class ADialParticipantsCommand extends Command
         }
     }
 
-    /**
-     * Verify database connection is working
-     */
     protected function checkDatabaseConnection()
     {
         try {
@@ -76,7 +62,6 @@ class ADialParticipantsCommand extends Command
         $timezone = config('app.timezone');
         $now = now()->timezone($timezone);
 
-        // Get providers with active feeds or ongoing calls
         $providers = $this->getActiveProviders($now, $timezone);
 
         Log::info("ADialParticipantsCommand: 🟢🔍 Total active providers found: " . $providers->count());
@@ -100,16 +85,14 @@ class ADialParticipantsCommand extends Command
                         ->whereColumn('a_dial_providers.id', 'a_dial_feeds.provider_id')
                         ->where('allow', 1)
                         ->where(function ($q) use ($now) {
-                            // Same-day call windows
                             $q->where(function ($inner) use ($now) {
-                                $inner->whereRaw("STR_TO_DATE(CONCAT(date, ' ', from), '%Y-%m-%d %H:%i:%s') <= ?", [$now])
-                                    ->whereRaw("STR_TO_DATE(CONCAT(date, ' ', to), '%Y-%m-%d %H:%i:%s') >= ?", [$now]);
+                                $inner->whereRaw("STR_TO_DATE(CONCAT(`date`, ' ', `from`), '%Y-%m-%d %H:%i:%s') <= ?", [$now])
+                                      ->whereRaw("STR_TO_DATE(CONCAT(`date`, ' ', `to`), '%Y-%m-%d %H:%i:%s') >= ?", [$now]);
                             })
-                            // Overnight call windows
                             ->orWhere(function ($inner) use ($now) {
-                                $inner->whereRaw("STR_TO_DATE(CONCAT(date, ' ', from), '%Y-%m-%d %H:%i:%s') <= ?", [$now])
-                                    ->whereRaw("TIME(to) < TIME(from)")
-                                    ->whereRaw("STR_TO_DATE(CONCAT(DATE_ADD(date, INTERVAL 1 DAY), ' ', to), '%Y-%m-%d %H:%i:%s') >= ?", [$now]);
+                                $inner->whereRaw("STR_TO_DATE(CONCAT(`date`, ' ', `from`), '%Y-%m-%d %H:%i:%s') <= ?", [$now])
+                                      ->whereRaw("TIME(`to`) < TIME(`from`)")
+                                      ->whereRaw("STR_TO_DATE(CONCAT(DATE_ADD(`date`, INTERVAL 1 DAY), ' ', `to`), '%Y-%m-%d %H:%i:%s') >= ?", [$now]);
                             });
                         });
                 })->get();
@@ -122,7 +105,6 @@ class ADialParticipantsCommand extends Command
                     return collect([]);
                 }
 
-                // Wait before retry with exponential backoff
                 sleep($backoffSeconds * $attempts);
             }
         }
