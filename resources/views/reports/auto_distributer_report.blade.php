@@ -54,7 +54,7 @@
                 class="{{ $filter === 'emplooyee no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fas fa-phone-slash me-1"></i> Em.No Answer
             </a>
-            <a href="{{ url('auto-dailer-report?filter=queue no answer') }}"
+            <a href="{{ url('auto-distributer-report?filter=queue no answer') }}"
                 class="{{ $filter === 'queue no answer' ? 'btn btn-primary' : 'btn btn-light' }}">
                 <i class="fa-solid fa-right-left me-1"></i>Queue Unanswered
             </a>
