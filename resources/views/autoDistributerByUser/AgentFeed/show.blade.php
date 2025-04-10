@@ -16,7 +16,7 @@
                     </tr>
                 </thead>
                 <tbody>
-                    @foreach ($data as $index as $row)
+                    @foreach ($data as $index => $row)
                         <tr>
                             <td>{{ $index + 1 }}</td>
                             <td>{{ $row->mobile ?? 'N/A' }}</td>
