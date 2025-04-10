@@ -172,7 +172,6 @@ class ReportController extends Controller
         $answeredStatuses = ['Talking', 'call'];
         $noAnswerStatuses = ['no answer', 'Routing', 'Dialing', 'error', 'Initiating'];
         $noAnswerQueue = ['Rerouting', 'Transferring'];
-        $newStatuses = ['new', 'newN'];
 
         $query = AutoDailerReport::query();
 
@@ -181,10 +180,8 @@ class ReportController extends Controller
             $query->whereIn('status', $answeredStatuses);
         } elseif ($filter === 'no answer') {
             $query->whereIn('status', $noAnswerStatuses);
-        } elseif ($filter === 'transferring') {
+        } elseif ($filter === 'no answer queue') {
             $query->whereIn('status', $noAnswerQueue);
-        } elseif ($filter === 'new') {
-            $query->whereIn('status', $newStatuses);
         }
 
         // Apply date filters
@@ -236,9 +233,7 @@ class ReportController extends Controller
                 $state = match ($report->status) {
                     'Talking', 'call' => 'Answered',
                     'Routing', 'Dialing', 'no answer', 'error' => 'Unanswered',
-                    'Initiating' => 'Employee Unanswered',
                     'Transferring', 'Rerouting' => 'Queue Unanswered',
-                    'new', 'newN' => 'New',
                     default => $report->status
                 };
 
