@@ -87,15 +87,6 @@
             <p class="fw-bold fs-4">{{ $todayEmployeeUnanswerCount }}</p>
         </div>
 
-        {{-- @if (!empty($notCalled))
-        <a href="{{ route('auto_dailer.report.notCalled') }}" style="text-decoration: none;">
-            <div class="card text-center p-4 shadow-sm flex-fill" style="min-width: 200px;">
-                <i class="fas fa-phone-slash text-primary fs-3"></i>
-                <h5 class="mt-2">Not Called</h5>
-                <p class="fw-bold fs-4">{{ $notCalled }}</p>
-            </div>
-        </a>
-        @endif --}}
 
 
         @elseif($filter === 'answered')
@@ -176,120 +167,6 @@
             </div>
         </div>
     </form>
-    <!-- Filters Section -->
-    {{-- <div class="mb-4">
-        <!-- First Line: Export and Filter Buttons -->
-        <div class="filter-buttons">
-            <!-- Export Button -->
-            <a href="{{ route('auto_distributer.report.export', ['filter' => $filter, 'extension_from' => request('extension_from'), 'extension_to' => request('extension_to')]) }}"
-                class="btn btn-modern-export" id="download-autoDistributer-csv-button">
-                <i class="fas fa-file-export me-2"></i> Export as CSV
-            </a>
-
-
-            <!-- State Filters (All, Answered, No Answer, Today) -->
-            <a href="{{ url('auto-distributer-report?filter=all') }}"
-                class="btn btn-modern-filter {{ $filter === 'all' ? 'active' : '' }}">
-                <i class="fas fa-list me-1"></i> All
-            </a>
-
-            <a href="{{ url('auto-distributer-report?filter=answered') }}"
-                class="btn btn-modern-filter {{ $filter === 'answered' ? 'active' : '' }}">
-                <i class="fas fa-phone me-1"></i> Answered
-            </a>
-            <a href="{{ url('auto-distributer-report?filter=no answer') }}"
-                class="btn btn-modern-filter {{ $filter === 'no answer' ? 'active' : '' }}">
-                <i class="fas fa-phone-slash me-1"></i> No Answer
-            </a>
-            <a href="{{ url('auto-distributer-report?filter=employee_unanswer') }}"
-                class="btn btn-modern-filter {{ $filter === 'employee_unanswer' ? 'active' : '' }}">
-                <i class="fas fa-user-times me-1"></i> Employee Unanswer
-            </a>
-            <a href="{{ url('auto-distributer-report?filter=today') }}"
-                class="btn btn-modern-filter {{ $filter === 'today' ? 'active' : '' }}">
-                <i class="fas fa-calendar-day me-1"></i> Today
-            </a>
-
-        </div>
-
-        <!-- Second Line: Filters Form -->
-        <form method="GET" action="{{ url('auto-distributer-report') }}" class="filter-form">
-            <!-- Extension Inputs -->
-            <input type="number" name="extension_from" class="form-modern" placeholder="Extension From"
-                value="{{ request('extension_from') }}">
-            <input type="number" name="extension_to" class="form-modern" placeholder="Extension To"
-                value="{{ request('extension_to') }}">
-
-            <!-- Provider Dropdown -->
-            <select name="provider" class="form-modern" onchange="this.form.submit()">
-                <option value="">All Providers</option>
-                @foreach ($providers as $provider)
-                <option value="{{ $provider->provider }}" {{ request('provider')==$provider->provider ? 'selected' : ''
-                    }}>
-                    {{ $provider->provider }}
-                </option>
-                @endforeach
-            </select>
-
-            <!-- Date Filters -->
-            <input type="date" name="date_from" class="form-modern" placeholder="From Date"
-                value="{{ request('date_from') }}">
-            <input type="date" name="date_to" class="form-modern" placeholder="To Date"
-                value="{{ request('date_to') }}">
-
-            <!-- Apply Button -->
-            <button type="submit" class="btn btn-modern-apply">
-                <i class="fas fa-filter me-2"></i> Apply
-            </button>
-        </form>
-    </div>
-
-    <!-- Statistics section -->
-    <div class="row mb-5 text-center justify-content-center">
-        <div class="col-md-2 col-sm-3">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <h5 class="text-center text-primary fs-6"><i class="fa-solid fa-phone-volume"></i> Total Calls</h5>
-                    <h3 class="fw-bold fs-5 text-center">{{ $filter === 'today' ? $todayTotalCount : $totalCount }}
-                    </h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 col-sm-3">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <h5 class="text-center text-success fs-6"><i class="fa-solid fa-phone m-1"></i> Answered</h5>
-                    <h3 class="fw-bold fs-5 text-center">
-                        {{ $filter === 'today' ? $todayAnsweredCount : $answeredCount }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 col-sm-3">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <h5 class="text-center text-warning fs-6"><i class="fa-solid fa-phone-slash"></i> No Answer</h5>
-                    <h3 class="fw-bold fs-5 text-center">
-                        {{ $filter === 'today' ? $todayNoAnswerCount : $noAnswerCount }}</h3>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-2 col-sm-3">
-            <div class="card shadow-sm border-0">
-                <div class="card-body">
-                    <h5 class="text-center text-danger fs-6"><i class="fa-solid fa-user-xmark"></i> Unanswered</h5>
-                    <h3 class="fw-bold fs-5 text-center">
-                        {{ $filter === 'today' ? $todayEmployeeUnanswerCount : $employeeUnanswerCount }}</h3>
-                </div>
-            </div>
-        </div>
-    </div> --}}
-
-
-
-
-
-
-
 
     <!-- Report Table -->
     <div class="card shadow-sm border-0 rounded">
