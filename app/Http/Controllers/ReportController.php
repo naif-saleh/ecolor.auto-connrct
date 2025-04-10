@@ -11,8 +11,10 @@ use App\Models\UserActivityLog;
 use App\Models\AutoDailerReport;
 use App\Models\AutoDistributerReport;
 use App\Models\Evaluation;
+use Illuminate\Support\Carbon;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ReportController extends Controller
 {
@@ -442,14 +444,17 @@ class ReportController extends Controller
             $query->where('provider', $provider);
         }
 
+
+
         if ($dateFrom && $dateTo) {
             $query->whereBetween('created_at', [
-                \Carbon\Carbon::parse($dateFrom)->subHours(3)->startOfDay(),
-                \Carbon\Carbon::parse($dateTo)->subHours(3)->endOfDay()
+                Carbon::parse($dateFrom, 'Asia/Riyadh')->timezone('UTC')->startOfDay(),
+                Carbon::parse($dateTo, 'Asia/Riyadh')->timezone('UTC')->endOfDay()
             ]);
         }
 
-
+        Log::info('Date From:', [$dateFrom]);
+        Log::info('Date To:', [$dateTo]);
         $reports = $query->get();
 
         $response = new StreamedResponse(function () use ($reports) {
