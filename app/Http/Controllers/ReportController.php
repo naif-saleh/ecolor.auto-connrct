@@ -210,6 +210,11 @@ class ReportController extends Controller
                 \Carbon\Carbon::parse($dateFrom, 'Asia/Riyadh')->startOfDay(),
                 \Carbon\Carbon::parse($dateTo, 'Asia/Riyadh')->endOfDay()
             ]);
+        }elseif ($filter === 'today') {
+            // Only apply "today" filter if no explicit date range
+            $today = now()->toDateString();
+            $query->whereDate('created_at', $today);
+            Log::info('Using today filter for export:', ['today' => $today]);
         }
         // Apply time range filters if provided
         if ($timeFrom && $timeTo) {
@@ -438,12 +443,12 @@ class ReportController extends Controller
             $carbonTo = \Carbon\Carbon::parse($dateTo)->endOfDay();
             $query->whereBetween('created_at', [$carbonFrom, $carbonTo]);
 
-            Log::info('Using date range for export:', [
-                'date_from' => $dateFrom,
-                'date_to' => $dateTo,
-                'carbon_from' => $carbonFrom->toDateTimeString(),
-                'carbon_to' => $carbonTo->toDateTimeString()
-            ]);
+            // Log::info('Using date range for export:', [
+            //     'date_from' => $dateFrom,
+            //     'date_to' => $dateTo,
+            //     'carbon_from' => $carbonFrom->toDateTimeString(),
+            //     'carbon_to' => $carbonTo->toDateTimeString()
+            // ]);
         } elseif ($filter === 'today') {
             // Only apply "today" filter if no explicit date range
             $today = now()->toDateString();
