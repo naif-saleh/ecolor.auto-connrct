@@ -49,6 +49,54 @@ class ThreeCxService
     }
 
     /**
+     * Get all users from 3cx API
+     * @return array
+     */
+    public function getUsersFromThreeCxApi()
+    {
+        $retries = 0;
+        $maxRetries = 1;
+
+        while ($retries <= $maxRetries) {
+            try {
+                $token = $this->getToken();
+                $url = config('services.three_cx.api_url') . '/xapi/v1/Users';
+
+                $response = $this->client->get($url, [
+                    'headers' => [
+                        'Authorization' => 'Bearer ' . $token,
+                        'Accept'        => 'application/json',
+                    ],
+                    'timeout' => 30,
+                ]);
+
+                if ($response->getStatusCode() === 200) {
+                    return json_decode($response->getBody()->getContents(), true);
+                }
+
+                throw new \Exception('Failed to fetch users. HTTP Status: ' . $response->getStatusCode());
+            } catch (\Exception $e) {
+                if ($retries < $maxRetries && strpos($e->getMessage(), '401') !== false) {
+                    Log::warning("🔄 401 Unauthorized detected, refreshing token...");
+
+                    $this->tokenService->refreshToken();
+                    $retries++;
+
+                    continue;
+                }
+
+                Log::error("❌ Error fetching users from 3CX API: " . $e->getMessage());
+                return [];
+            }
+        }
+    }
+
+
+
+
+
+
+    /**
      * Get all active calls for a provider
      */
     public function getActiveCallsForProvider($providerExtension)
@@ -118,10 +166,10 @@ class ThreeCxService
 
                 return json_decode($response->getBody()->getContents(), true);
             } catch (\Exception $e) {
-                 if ($retries < $maxRetries && strpos($e->getMessage(), 'cURL error 28') !== false) {
+                if ($retries < $maxRetries && strpos($e->getMessage(), 'cURL error 28') !== false) {
                     Log::warning("⏳ Retry attempt {$retries} due to timeout (cURL error 28)");
 
-                     sleep($retryDelay);
+                    sleep($retryDelay);
                     $retries++;
                     continue;
                 }
