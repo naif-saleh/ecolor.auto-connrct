@@ -87,7 +87,7 @@ class ADistUpdateUserStatusCommand extends Command
                     ]
                 );
 
-                $this->info('✅ All user data updated successfully.');
+                Log::info('✅ All user data updated successfully.');
             } else {
                 Log::error('UpdateUserStatusCommand Error: ❌ No users returned from 3CX API.');
                 $this->error('No users returned from 3CX API.');
