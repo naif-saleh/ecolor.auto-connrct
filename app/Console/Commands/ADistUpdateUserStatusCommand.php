@@ -43,7 +43,7 @@ class ADistUpdateUserStatusCommand extends Command
 
         try {
             // Get users via token service (includes retry + refresh logic)
-            $users = $this->tokenService->getUsersFromThreeCxApi();
+            $users = $this->threeCxService->getUsersFromThreeCxApi();
 
             if (isset($users['value']) && is_array($users['value'])) {
                 Log::info("
