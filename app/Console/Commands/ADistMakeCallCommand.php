@@ -114,6 +114,7 @@ class ADistMakeCallCommand extends Command
                             continue;
                         } else {
                             if($isComplate) {
+                                $feed->update(['is_done' => "called"]);
                                 Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}'.");
 
                             } else {
