@@ -93,11 +93,12 @@ class ADistMakeCallCommand extends Command
 
                         $feed->update(['is_done' => $status]);
                         // Check call windows
-                        if ($feed->is_done != "called") {
+                        if ($feed->is_done !== "called") {
+                            $newStatus = "calling";
                             $feed->update([
-                                'is_done' => "calling",
+                                'is_done' => $newStatus,
                             ]);
-                            Log::info("ADistMakeCallCommand: File '{$feed->file_name}' - Agent '{$agent->extension}'. file status updated to '{$feed->is_done}'");
+                            Log::info("ADistMakeCallCommand: File '{$feed->file_name}' - Agent '{$agent->extension}'. file status updated to '{$newStatus}'");
                         }
 
                         if (!$isGlobalWindow || !$isAgentWindow) {
