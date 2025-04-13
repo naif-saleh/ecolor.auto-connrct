@@ -34,9 +34,9 @@ class ADistMakeCallCommand extends Command
         Log::info("Using timezone: {$timezone}");
 
         $agents = ADistAgent::whereHas('files', function ($query) {
-            $query->where('is_done', '!=' , 'called')
-                  ->where('allow', true)
-                  ->whereDate('created_at', Carbon::today());
+            $query->where('is_done', '!=', 'called')
+                ->where('allow', true)
+                ->whereDate('created_at', Carbon::today());
         })->get();
         Log::info('Agents query executed.', ['agents_count' => $agents->count()]);
 
@@ -76,16 +76,6 @@ class ADistMakeCallCommand extends Command
                     Log::info('Feeds fetched for agent.', ['agent_id' => $agent->id, 'feeds_count' => $feeds->count()]);
 
                     foreach ($feeds as $feed) {
-                        // Check call windows
-                        $feed->update([
-                            'is_done' => "calling",
-                        ]);
-
-                        // Get new numbers to call
-                        $dataItems = ADistData::where('feed_id', $feed->id)
-                            ->where('state', 'new')
-                            ->get();
-
                         $isComplate = $this->checkIfFeedCompleted($feed, $agent);
                         $isGlobalWindow = $this->isWithinGlobalCallWindow($feed);
                         $isAgentWindow = $this->threeCxService->isWithinCallWindow($feed);
@@ -94,10 +84,20 @@ class ADistMakeCallCommand extends Command
                         $notCalled = ADistData::where('feed_id', $feed->id)
                             ->where('state', 'new')
                             ->count();
+
+                        // Get new numbers to call
+                        $dataItems = ADistData::where('feed_id', $feed->id)
+                            ->where('state', 'new')
+                            ->get();
                         $status = $remainingCalls == 0 ? "called" : ($remainingCalls === $dataItems ? 0 : "not_called");
+
                         $feed->update(['is_done' => $status]);
-
-
+                        // Check call windows
+                        if (!$isComplate) {
+                            $feed->update([
+                                'is_done' => "calling",
+                            ]);
+                        }
 
                         if (!$isGlobalWindow || !$isAgentWindow) {
                             if (!$isComplate) {
@@ -107,22 +107,18 @@ class ADistMakeCallCommand extends Command
                                 Log::info("ADistMakeCallCommand: ⏳ File '{$feed->file_name}' - Agent '{$agent->extension}' has not started yet.");
                                 $feed->update(['is_done' => 0]);
                             } elseif ($isComplate) {
-                                Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}'.");
-                                $feed->update(['is_done' => "called"]);
+                                Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}'. file status updated to '{$feed->is_done}'");
                             }
                             Log::info("ADistMakeCallCommand: 🚫 Time is not within for File '{$feed->file_name}' - Agent '{$agent->extension}'");
                             continue;
                         } else {
-                            if($isComplate) {
-                                $feed->update(['is_done' => "called"]);
+                            if ($isComplate) {
                                 Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}'. File status updated to '{$feed->is_done}'.");
-
                             } else {
                                 Log::info("ADistMakeCallCommand: 📝 File {$feed->file_name} is calling.");
                                 $feed->update(['is_done' => "calling"]);
                             }
                             Log::info("ADistMakeCallCommand: ✅ Time is within for File '{$feed->file_name}' - Agent '{$agent->extension}'");
-
                         }
 
 
@@ -209,7 +205,7 @@ class ADistMakeCallCommand extends Command
         $remainingCalls = ADistData::where('feed_id', $feed->id)->where('state', 'new')->count();
         if ($remainingCalls == 0) {
             $feed->update(['is_done' => "called"]);
-            Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}.");
+            Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}. file status updated to '{$feed->is_done}'.");
         } else {
             Log::info("ADistMakeCallCommand: 📝 File {$feed->file_name} has {$remainingCalls} calls remaining.");
         }
