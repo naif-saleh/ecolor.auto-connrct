@@ -93,7 +93,7 @@ class ADistMakeCallCommand extends Command
 
                         $feed->update(['is_done' => $status]);
                         // Check call windows
-                        if (!$isComplate) {
+                        if ($feed->is_done != "called") {
                             $feed->update([
                                 'is_done' => "calling",
                             ]);
