@@ -102,7 +102,7 @@ class ADistMakeCallCommand extends Command
                         // }
 
                         if (!$isGlobalWindow || !$isAgentWindow) {
-                            if (!$isComplate) {
+                            if ($remainingCalls != 0 ) {
                                 Log::info("ADistMakeCallCommand: 🚫 Time over for File '{$feed->file_name}' - Agent '{$agent->extension}'. Not completed.");
                                 $feed->update(['is_done' => "not_called"]);
                             } elseif ($notCalled === $dataItems->count()) {
