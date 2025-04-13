@@ -56,36 +56,23 @@ class ADistUpdateUserStatusCommand extends Command
 
                 $bulkData = [];
 
-                foreach ($users['value'] as $user) {
-                    $bulkData[] = [
-                        'three_cx_user_id' => $user['Id'],
-                        'status'           => $user['CurrentProfileName'],
-                        'displayName'      => $user['DisplayName'],
-                        'email'            => $user['EmailAddress'],
-                        'QueueStatus'      => $user['QueueStatus'],
-                        'extension'        => $user['Number'],
-                        'firstName'        => $user['FirstName'],
-                        'lastName'         => $user['LastName'],
-                        'updated_at'       => now(),
-                        'created_at'       => now(),
-                    ];
+                foreach (array_chunk($bulkData, 100) as $chunk) {
+                    ADistAgent::upsert(
+                        $chunk,
+                        ['three_cx_user_id'],
+                        [
+                            'status',
+                            'displayName',
+                            'email',
+                            'QueueStatus',
+                            'extension',
+                            'firstName',
+                            'lastName',
+                            'updated_at'
+                        ]
+                    );
                 }
 
-                // ✅ Use upsert for better performance
-                ADistAgent::upsert(
-                    $bulkData,
-                    ['three_cx_user_id'], // Unique key
-                    [
-                        'status',
-                        'displayName',
-                        'email',
-                        'QueueStatus',
-                        'extension',
-                        'firstName',
-                        'lastName',
-                        'updated_at'
-                    ]
-                );
 
                 Log::info('✅ All user data updated successfully.');
             } else {
