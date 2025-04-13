@@ -108,13 +108,13 @@ class ADistMakeCallCommand extends Command
                                 Log::info("ADistMakeCallCommand: ⏳ File '{$feed->file_name}' - Agent '{$agent->extension}' has not started yet.");
                                 $feed->update(['is_done' => 0]);
                             } elseif ($isComplate) {
-                                Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}'. file status updated to '{$feed->is_done}'");
+                                Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}'. file status updated to '{$feed->is_done}' - slug: {$feed->slug}");
                             }
                             Log::info("ADistMakeCallCommand: 🚫 Time is not within for File '{$feed->file_name}' - Agent '{$agent->extension}'");
                             continue;
                         } else {
                             if ($isComplate) {
-                                Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}'. File status updated to '{$feed->is_done}'.");
+                                Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}'. File status updated to '{$feed->is_done}' - slug: {$feed->slug}.");
                             } else {
                                 Log::info("ADistMakeCallCommand: 📝 File {$feed->file_name} is calling.");
                                 $feed->update(['is_done' => "calling"]);
@@ -206,7 +206,7 @@ class ADistMakeCallCommand extends Command
         $remainingCalls = ADistData::where('feed_id', $feed->id)->where('state', 'new')->count();
         if ($remainingCalls == 0) {
             $feed->update(['is_done' => "called"]);
-            Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}. file status updated to '{$feed->is_done}'.");
+            Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}. file status updated to '{$feed->is_done}' - slug: {$feed->slug}.");
         } else {
             Log::info("ADistMakeCallCommand: 📝 File {$feed->file_name} has {$remainingCalls} calls remaining.");
         }
