@@ -56,16 +56,18 @@ class ADistUpdateUserStatusCommand extends Command
 
                 foreach ($users['value'] as $user) {
                     ADistAgent::updateOrCreate(
-                        ['three_cx_user_id' => $user['id']],
+                        ['three_cx_user_id' => $user['Id']],
                         [
-                            'status' => $user['status'] ?? null,
-                            'displayName' => $user['displayName'] ?? null,
-                            'email' => $user['email'] ?? null,
-                            'QueueStatus' => $user['QueueStatus'] ?? null,
-                            'extension' => $user['extension'] ?? null,
-                            'firstName' => $user['firstName'] ?? null,
-                            'lastName' => $user['lastName'] ?? null,
-                            'updated_at' => Carbon::now(),
+                            'three_cx_user_id' => $user['Id'],
+                            'status'           => $user['CurrentProfileName'],
+                            'displayName'      => $user['DisplayName'],
+                            'email'            => $user['EmailAddress'],
+                            'QueueStatus'      => $user['QueueStatus'],
+                            'extension'        => $user['Number'],
+                            'firstName'        => $user['FirstName'],
+                            'lastName'         => $user['LastName'],
+                            'updated_at'       => now(),
+                            'created_at'       => now(),
                         ]
                     );
                 }
