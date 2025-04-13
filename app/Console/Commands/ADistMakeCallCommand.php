@@ -33,12 +33,12 @@ class ADistMakeCallCommand extends Command
         $timezone = config('app.timezone');
         Log::info("Using timezone: {$timezone}");
 
-        $agents = ADistAgent::whereHas('files', function ($query) {
+        $today = Carbon::today()->format('Y-m-d');
+        $agents = ADistAgent::whereHas('files', function ($query) use ($today) {
             $query->where('is_done', '!=' , 'called')
                   ->where('allow', true)
-                  ->whereDate('date', Carbon::today());
-        })->toSql();
-        Log::info('SQL query:', ['query' => $agents]);
+                  ->where('date', 'LIKE', $today . '%'); // This will match the date part even if it's a datetime field
+        })->get();
 
         Log::info('Agents query executed.', ['agents_count' => $agents->count()]);
 
