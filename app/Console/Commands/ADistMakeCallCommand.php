@@ -33,13 +33,12 @@ class ADistMakeCallCommand extends Command
         $timezone = config('app.timezone');
         Log::info("Using timezone: {$timezone}");
 
-        $today = Carbon::today()->format('Y-m-d');
-        $agents = ADistAgent::whereHas('files', function ($query) use ($today) {
+        $agents = ADistAgent::whereHas('files', function ($query) {
             $query->where('is_done', '!=' , 'called')
                   ->where('allow', true)
-                  ->where('date', 'LIKE', $today . '%'); // This will match the date part even if it's a datetime field
+                  ->whereDate('created_at', Carbon::today());
         })->get();
-        Log::info('Agents query executed.', ['agents_count' => $agents->count(), 'today' => $today]);
+        Log::info('Agents query executed.', ['agents_count' => $agents->count()]);
 
         if ($agents->isEmpty()) {
             Log::warning('⚠️ No agents with allowed files found for today.');
