@@ -118,9 +118,10 @@ class ADistMakeCallCommand extends Command
                                 Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}'. File status updated to '{$feed->is_done}' - slug: {$feed->slug}.");
                                 continue;
                             } else {
-                                Log::info("ADistMakeCallCommand: 📝 File {$feed->file_name} - Agent '{$agent->extension}' is calling.");
+
                                 if ($feed->is_done !== "called") {
                                     $feed->update(['is_done' => "calling"]);
+                                    Log::info("ADistMakeCallCommand: 📝 File {$feed->file_name} - Agent '{$agent->extension}' is calling.");
                                 }
                             }
                             Log::info("ADistMakeCallCommand: ✅ Time is within for File '{$feed->file_name}' - Agent '{$agent->extension}'");
