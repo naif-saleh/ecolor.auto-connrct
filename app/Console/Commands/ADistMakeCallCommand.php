@@ -34,7 +34,7 @@ class ADistMakeCallCommand extends Command
         Log::info("Using timezone: {$timezone}");
 
         $agents = ADistAgent::whereHas('files', function ($query) {
-            $query->whereDate('date', Carbon::today()->toDateString())->where('allow', true);
+            $query->whereDate('is_done', '!=' , 'called')->where('allow', true);
         })->get();
 
         Log::info('Agents query executed.', ['agents_count' => $agents->count()]);
