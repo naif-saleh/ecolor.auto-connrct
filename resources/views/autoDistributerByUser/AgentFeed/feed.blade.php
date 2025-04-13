@@ -69,7 +69,7 @@
                                             @if ($file->is_done == false || $file->is_done == 0 || $file->is_done == 'false')
                                                 Not Started
                                             @elseif ($file->is_done === 'calling')
-                                                Calling
+                                                Calling ...
                                             @elseif ($file->is_done === 'not_called')
                                                 Not Completed
                                             @elseif ($file->is_done === 'called')
