@@ -91,15 +91,15 @@ class ADistMakeCallCommand extends Command
                             ->get();
                         $status = $remainingCalls == 0 ? "called" : ($remainingCalls === $dataItems ? 0 : "not_called");
 
-                        $feed->update(['is_done' => $status]);
-                        // Check call windows
-                        if ($feed->is_done !== "called") {
-                            $newStatus = "calling";
-                            $feed->update([
-                                'is_done' => $newStatus,
-                            ]);
-                            Log::info("ADistMakeCallCommand: File '{$feed->file_name}' - Agent '{$agent->extension}'. file status updated to '{$newStatus}'");
-                        }
+                        // $feed->update(['is_done' => $status]);
+                        // // Check call windows
+                        // if ($feed->is_done !== "called") {
+                        //     $newStatus = "calling";
+                        //     $feed->update([
+                        //         'is_done' => $newStatus,
+                        //     ]);
+                        //     Log::info("ADistMakeCallCommand: File '{$feed->file_name}' - Agent '{$agent->extension}'. file status updated to '{$newStatus}'");
+                        // }
 
                         if (!$isGlobalWindow || !$isAgentWindow) {
                             if (!$isComplate) {
