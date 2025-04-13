@@ -39,8 +39,7 @@ class ADistMakeCallCommand extends Command
                   ->where('allow', true)
                   ->where('date', 'LIKE', $today . '%'); // This will match the date part even if it's a datetime field
         })->get();
-
-        Log::info('Agents query executed.', ['agents_count' => $agents->count()]);
+        Log::info('Agents query executed.', ['agents_count' => $agents->count(), 'today' => $today]);
 
         if ($agents->isEmpty()) {
             Log::warning('⚠️ No agents with allowed files found for today.');
