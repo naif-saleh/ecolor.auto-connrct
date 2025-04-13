@@ -36,8 +36,9 @@ class ADistMakeCallCommand extends Command
         $agents = ADistAgent::whereHas('files', function ($query) {
             $query->where('is_done', '!=' , 'called')
                   ->where('allow', true)
-                  ->whereDate('date', Carbon::today());  
-        })->get();
+                  ->whereDate('date', Carbon::today());
+        })->toSql();
+        Log::info('SQL query:', ['query' => $agents]);
 
         Log::info('Agents query executed.', ['agents_count' => $agents->count()]);
 
