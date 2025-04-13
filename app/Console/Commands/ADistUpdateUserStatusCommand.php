@@ -54,21 +54,18 @@ class ADistUpdateUserStatusCommand extends Command
                 \t-----------------------------------------------------------------------
                 ");
 
-                $bulkData = [];
-
-                foreach (array_chunk($bulkData, 100) as $chunk) {
-                    ADistAgent::upsert(
-                        $chunk,
-                        ['three_cx_user_id'],
+                foreach ($users['value'] as $user) {
+                    ADistAgent::updateOrCreate(
+                        ['three_cx_user_id' => $user['id']],
                         [
-                            'status',
-                            'displayName',
-                            'email',
-                            'QueueStatus',
-                            'extension',
-                            'firstName',
-                            'lastName',
-                            'updated_at'
+                            'status' => $user['status'] ?? null,
+                            'displayName' => $user['displayName'] ?? null,
+                            'email' => $user['email'] ?? null,
+                            'QueueStatus' => $user['QueueStatus'] ?? null,
+                            'extension' => $user['extension'] ?? null,
+                            'firstName' => $user['firstName'] ?? null,
+                            'lastName' => $user['lastName'] ?? null,
+                            'updated_at' => Carbon::now(),
                         ]
                     );
                 }
