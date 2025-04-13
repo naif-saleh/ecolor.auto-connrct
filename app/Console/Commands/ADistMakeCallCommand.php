@@ -70,7 +70,7 @@ class ADistMakeCallCommand extends Command
                     $feeds = ADistFeed::where('agent_id', $agent->id)
                         ->where('allow', true)
                         ->where('is_done', '!=', 'called')
-                        ->whereDate('date', today())
+                        ->whereDate('created_at', Carbon::today())
                         ->get();
 
                     Log::info('Feeds fetched for agent.', ['agent_id' => $agent->id, 'feeds_count' => $feeds->count()]);
