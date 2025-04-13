@@ -109,6 +109,7 @@ class ADistMakeCallCommand extends Command
                                 Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}'.");
                                 $feed->update(['is_done' => "called"]);
                             }
+                            Log::info("ADistMakeCallCommand: 🚫 Time is not within for File '{$feed->file_name}' - Agent '{$agent->extension}'");
                             continue;
                         } else {
                             if($isComplate) {
@@ -118,6 +119,7 @@ class ADistMakeCallCommand extends Command
                                 Log::info("ADistMakeCallCommand: 📝 File {$feed->file_name} is calling.");
                                 $feed->update(['is_done' => "calling"]);
                             }
+                            Log::info("ADistMakeCallCommand: ✅ Time is within for File '{$feed->file_name}' - Agent '{$agent->extension}'");
 
                         }
 
