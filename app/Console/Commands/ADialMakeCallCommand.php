@@ -90,7 +90,16 @@ class ADialMakeCallCommand extends Command
         try {
             Log::info('✅ 📡 ADialMakeCallCommand started at ' . Carbon::now());
 
-            $providers = ADialProvider::all();
+
+            $providers = ADialProvider::whereHas('files', function ($query) {
+                $query->where('is_done', '!=', 'called')
+                    ->where('allow', true)
+                    ->whereDate('created_at', Carbon::today());
+            })->get();
+            if ($providers->isEmpty()) {
+                Log::info('ADialMakeCallCommand: ⚠️ No providers with allowed files found for today.');
+                return;
+            }
             Log::info("ADialMakeCallCommand: 🔍📡 Found {$providers->count()} providers to process.");
 
             $timezone = config('app.timezone');

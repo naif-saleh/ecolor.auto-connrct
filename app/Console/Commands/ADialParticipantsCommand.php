@@ -2,13 +2,13 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use App\Jobs\UpdateCallStatusJob;
 use App\Models\ADialProvider;
 use App\Services\ThreeCxService;
-use App\Jobs\UpdateCallStatusJob;
+use Carbon\Carbon;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ADialParticipantsCommand extends Command
 {
@@ -27,11 +27,12 @@ class ADialParticipantsCommand extends Command
     public function handle()
     {
         $startTime = Carbon::now();
-        Log::info('✅ 📡 ADialParticipantsCommand started at ' . $startTime);
+        Log::info('✅ 📡 ADialParticipantsCommand started at '.$startTime);
 
         try {
-            if (!$this->checkDatabaseConnection()) {
-                Log::error("ADialParticipantsCommand ❌ Database connection test failed");
+            if (! $this->checkDatabaseConnection()) {
+                Log::error('ADialParticipantsCommand ❌ Database connection test failed');
+
                 return 1;
             }
 
@@ -40,7 +41,8 @@ class ADialParticipantsCommand extends Command
             $executionTime = $startTime->diffInMilliseconds($endTime);
             Log::info("ADialParticipantsCommand ✅ Execution completed in {$executionTime} ms.");
         } catch (\Exception $e) {
-            Log::error("ADialParticipantsCommand ❌ Execution failed: " . $e->getMessage());
+            Log::error('ADialParticipantsCommand ❌ Execution failed: '.$e->getMessage());
+
             return 1;
         }
     }
@@ -49,10 +51,12 @@ class ADialParticipantsCommand extends Command
     {
         try {
             DB::connection()->getPdo();
-            Log::info("ADialParticipantsCommand ✅ Database connection successful");
+            Log::info('ADialParticipantsCommand ✅ Database connection successful');
+
             return true;
         } catch (\Exception $e) {
-            Log::error("ADialParticipantsCommand ❌ Database connection failed: " . $e->getMessage());
+            Log::error('ADialParticipantsCommand ❌ Database connection failed: '.$e->getMessage());
+
             return false;
         }
     }
@@ -64,7 +68,7 @@ class ADialParticipantsCommand extends Command
 
         $providers = $this->getActiveProviders($now, $timezone);
 
-        Log::info("ADialParticipantsCommand: 🟢🔍 Total active providers found: " . $providers->count());
+        Log::info('ADialParticipantsCommand: 🟢🔍 Total active providers found: '.$providers->count());
 
         foreach ($providers as $provider) {
             $this->processProviderCalls($provider, $now, $timezone);
@@ -87,21 +91,22 @@ class ADialParticipantsCommand extends Command
                         ->where(function ($q) use ($now) {
                             $q->where(function ($inner) use ($now) {
                                 $inner->whereRaw("STR_TO_DATE(CONCAT(`date`, ' ', `from`), '%Y-%m-%d %H:%i:%s') <= ?", [$now])
-                                      ->whereRaw("STR_TO_DATE(CONCAT(`date`, ' ', `to`), '%Y-%m-%d %H:%i:%s') >= ?", [$now]);
+                                    ->whereRaw("STR_TO_DATE(CONCAT(`date`, ' ', `to`), '%Y-%m-%d %H:%i:%s') >= ?", [$now]);
                             })
-                            ->orWhere(function ($inner) use ($now) {
-                                $inner->whereRaw("STR_TO_DATE(CONCAT(`date`, ' ', `from`), '%Y-%m-%d %H:%i:%s') <= ?", [$now])
-                                      ->whereRaw("TIME(`to`) < TIME(`from`)")
-                                      ->whereRaw("STR_TO_DATE(CONCAT(DATE_ADD(`date`, INTERVAL 1 DAY), ' ', `to`), '%Y-%m-%d %H:%i:%s') >= ?", [$now]);
-                            });
+                                ->orWhere(function ($inner) use ($now) {
+                                    $inner->whereRaw("STR_TO_DATE(CONCAT(`date`, ' ', `from`), '%Y-%m-%d %H:%i:%s') <= ?", [$now])
+                                        ->whereRaw('TIME(`to`) < TIME(`from`)')
+                                        ->whereRaw("STR_TO_DATE(CONCAT(DATE_ADD(`date`, INTERVAL 1 DAY), ' ', `to`), '%Y-%m-%d %H:%i:%s') >= ?", [$now]);
+                                });
                         });
                 })->get();
             } catch (\Exception $e) {
                 $attempts++;
-                Log::warning("ADialParticipantsCommand ⚠️ Connection attempt {$attempts} failed: " . $e->getMessage());
+                Log::warning("ADialParticipantsCommand ⚠️ Connection attempt {$attempts} failed: ".$e->getMessage());
 
                 if ($attempts >= $maxRetries) {
-                    Log::error("ADialParticipantsCommand ❌ All connection attempts failed");
+                    Log::error('ADialParticipantsCommand ❌ All connection attempts failed');
+
                     return collect([]);
                 }
 
@@ -118,7 +123,7 @@ class ADialParticipantsCommand extends Command
             UpdateCallStatusJob::dispatch($provider);
             Log::info("ADialParticipantsCommand ✅ Dispatched job for provider {$provider->id}");
         } catch (\Exception $e) {
-            Log::error("ADialParticipantsCommand ❌ Failed to dispatch job for provider {$provider->id}: " . $e->getMessage());
+            Log::error("ADialParticipantsCommand ❌ Failed to dispatch job for provider {$provider->id}: ".$e->getMessage());
         }
     }
 
@@ -127,7 +132,8 @@ class ADialParticipantsCommand extends Command
         try {
             return $this->threeCxService->getActiveCallsForProvider($provider->extension);
         } catch (\Exception $e) {
-            Log::error("ADialParticipantsCommand ❌ Failed to fetch active calls: " . $e->getMessage());
+            Log::error('ADialParticipantsCommand ❌ Failed to fetch active calls: '.$e->getMessage());
+
             return ['value' => []];
         }
     }

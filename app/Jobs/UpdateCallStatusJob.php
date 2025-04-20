@@ -42,7 +42,7 @@ class UpdateCallStatusJob implements ShouldQueue
             $activeCalls = $threeCxService->getActiveCallsForProvider($this->provider->extension);
 
             if (!isset($activeCalls['value']) || empty($activeCalls['value'])) {
-                Log::info("ADialParticipantsCommand 🔍⚠️📡 No active calls found for provider {$this->provider->extension}");
+                Log::info("Queue 🔍⚠️📡 No active calls found for provider {$this->provider->extension}");
 
                 return;
             }
@@ -52,9 +52,9 @@ class UpdateCallStatusJob implements ShouldQueue
 
             // $providerEndTime = Carbon::now();
             // $executionTime = $providerStartTime->diffInMilliseconds($providerEndTime);
-            // Log::info("ADialParticipantsCommand ⏳ Execution time for provider {$this->provider->extension}: {$executionTime} ms");
+            // Log::info("Queue ⏳ Execution time for provider {$this->provider->extension}: {$executionTime} ms");
         } catch (\Exception $e) {
-            Log::error("ADialParticipantsCommand ❌ Failed to process calls for provider {$this->provider->extension}: " . $e->getMessage());
+            Log::error("Queue ❌ Failed to process calls for provider {$this->provider->extension}: " . $e->getMessage());
         }
     }
 
@@ -68,7 +68,7 @@ class UpdateCallStatusJob implements ShouldQueue
             $callStatus = $call['Status'] ?? null;
 
             if (! $callId || ! $callStatus) {
-                Log::warning('ADialParticipantsCommand ⚠️ Incomplete call data: ' . json_encode($call));
+                Log::warning('Queue ⚠️ Incomplete call data: ' . json_encode($call));
 
                 continue;
             }
@@ -84,9 +84,9 @@ class UpdateCallStatusJob implements ShouldQueue
                 $this->batchUpdateToQueue($callIds, $updateData);
             });
 
-            Log::info('ADialParticipantsCommand ✅ Batch updated ' . count($callIds) . ' call records');
+            Log::info('Queue ✅ Batch updated ' . count($callIds) . ' call records');
         } catch (\Exception $e) {
-            Log::error('ADialParticipantsCommand ❌ Batch update failed: ' . $e->getMessage());
+            Log::error('Queue ❌ Batch update failed: ' . $e->getMessage());
         }
     }
 
@@ -158,29 +158,11 @@ class UpdateCallStatusJob implements ShouldQueue
 
     protected function batchUpdateToQueue(array $callIds, array $updateData)
     {
-        // Filter only records where status is 'Rerouting'
-        $updates = collect($updateData)
-            ->filter(fn($item) => $item['status'] === 'Rerouting')
-            ->keyBy('call_id');
-
-        // If no records to update with Rerouting status, skip the update
-        if ($updates->isEmpty()) {
-            Log::info('batchUpdateToQueue: No calls with status Rerouting, skipping update.');
-            return;
-        }
-
-        Log::info('batchUpdateToQueue: Updating calls with status Rerouting', ['callIds' => $updates->keys()->all()]);
-
-        ToQueue::whereIn('call_id', $updates->keys())
+        $updates = collect($updateData)->keyBy('call_id');
+        ToQueue::whereIn('call_id', $callIds)
             ->update([
                 'status' => DB::raw('CASE call_id ' .
                     $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN '{$item['status']}'")->implode(' ') .
-                    ' END'),
-                'duration_time' => DB::raw('CASE call_id ' .
-                    $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN " . ($item['duration_time'] ? "'{$item['duration_time']}'" : 'duration_time'))->implode(' ') .
-                    ' END'),
-                'duration_routing' => DB::raw('CASE call_id ' .
-                    $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN " . ($item['duration_routing'] ? "'{$item['duration_routing']}'" : 'duration_routing'))->implode(' ') .
                     ' END'),
             ]);
     }

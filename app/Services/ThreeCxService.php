@@ -312,60 +312,52 @@ class ThreeCxService
      */
     public function AutoDistributerReport($callId, $status, $call)
     {
-        $duration_time = null;
-        $duration_routing = null;
-        $currentDuration = null;
+        try {
+            return DB::transaction(function () use ($callId, $status, $call) {
+                // Get the existing record in the same transaction to prevent connection issues
+                $existingRecord = AutoDistributerReport::where('call_id', $callId)->first();
 
-        // Calculate durations if call data is provided
-        if ($call && isset($call['EstablishedAt'], $call['ServerNow'])) {
-            $establishedAt = Carbon::parse($call['EstablishedAt']);
-            $serverNow = Carbon::parse($call['ServerNow']);
-            $currentDuration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
-
-            // Retrieve existing record to preserve any existing durations
-            $existingRecord = AutoDistributerReport::where('call_id', $callId)->first();
-
-            if ($existingRecord) {
-                // Update durations based on current status
-                switch ($status) {
-                    case 'Talking':
-                        $duration_time = $currentDuration;
-                        $duration_routing = $existingRecord->duration_routing;
-                        break;
-                    case 'Routing':
-                        $duration_routing = $currentDuration;
-                        $duration_time = $existingRecord->duration_time;
-                        break;
-                    default:
-                        $duration_time = $existingRecord->duration_time;
-                        $duration_routing = $existingRecord->duration_routing;
-                }
-            }
-        } else {
-            // If updating without call data, preserve existing durations
-            $existingRecord = AutoDistributerReport::where('call_id', $callId)->first();
-
-            if ($existingRecord) {
                 $duration_time = $existingRecord->duration_time ?? null;
                 $duration_routing = $existingRecord->duration_routing ?? null;
-            }
+                $currentDuration = null;
+
+                // Calculate durations if call data is provided
+                if ($call && isset($call['EstablishedAt'], $call['ServerNow'])) {
+                    $establishedAt = Carbon::parse($call['EstablishedAt']);
+                    $serverNow = Carbon::parse($call['ServerNow']);
+                    $currentDuration = $establishedAt->diff($serverNow)->format('%H:%I:%S');
+
+                    // Update durations based on current status
+                    switch ($status) {
+                        case 'Talking':
+                            $duration_time = $currentDuration;
+                            break;
+                        case 'Routing':
+                            $duration_routing = $currentDuration;
+                            break;
+                    }
+                }
+
+                // Update records
+                $report = AutoDistributerReport::where('call_id', $callId)->update([
+                    'status' => $status,
+                    'duration_time' => $duration_time,
+                    'duration_routing' => $duration_routing,
+                ]);
+
+                ADistData::where('call_id', $callId)->update(['state' => $status]);
+
+                Log::info("ADistParticipantsCommand ☎️✅ Call status updated for call_id: {$callId}, " .
+                    'Status: ' . ($call['Status'] ?? 'N/A') .
+                    ', Duration: ' . ($currentDuration ?? 'N/A'));
+
+                return $report;
+            }, 3); // Add retry attempt parameter
+        } catch (\Exception $e) {
+            Log::error("AutoDistributerReport failed: " . $e->getMessage());
+            // Consider whether to rethrow or handle differently
+            throw $e;
         }
-
-        return DB::transaction(function () use ($callId, $status, $duration_time, $duration_routing, $call, $currentDuration) {
-            $report = AutoDistributerReport::where('call_id', $callId)->update([
-                'status' => $status,
-                'duration_time' => $duration_time,
-                'duration_routing' => $duration_routing,
-            ]);
-
-            ADistData::where('call_id', $callId)->update(['state' => $status]);
-
-            Log::info("ADistParticipantsCommand ☎️✅ Call status updated for call_id: {$callId}, " .
-                'Status: ' . ($call['Status'] ?? 'N/A') .
-                ', Duration: ' . ($currentDuration ?? 'N/A'));
-
-            return $report;
-        });
     }
 
 
