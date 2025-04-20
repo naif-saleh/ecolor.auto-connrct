@@ -37,7 +37,7 @@ Schedule::command('app:ADial-participants-command')->everySecond();
 Schedule::command('app:ADist-participants-command')->everySecond();
 
 // // Update User Status Commands
-Schedule::command('app:adist-update-user-status')->everySecond();
+Schedule::command('app:ADist-update-user-status-command')->everySecond();
 
 
 

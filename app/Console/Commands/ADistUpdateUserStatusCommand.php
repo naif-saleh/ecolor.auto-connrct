@@ -14,7 +14,7 @@ class ADistUpdateUserStatusCommand extends Command
      *
      * @var string
      */
-    protected $signature = 'app:adist-update-user-status';
+    protected $signature = 'app:ADist-update-user-status-command';
 
     /**
      * The console command description.
