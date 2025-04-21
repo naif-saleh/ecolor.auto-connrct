@@ -2,17 +2,16 @@
 
 namespace App\Jobs;
 
+use App\Models\ADistAgent;
+use App\Services\ThreeCxService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Cache;
-use App\Models\ADistAgent;
-use App\Services\ThreeCxService;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class ADistUpdateUserStatusJob implements ShouldQueue
 {
@@ -31,10 +30,7 @@ class ADistUpdateUserStatusJob implements ShouldQueue
     /**
      * Create a new job instance.
      */
-    public function __construct()
-    {
-       
-    }
+    public function __construct() {}
 
     /**
      * Execute the job.
@@ -46,6 +42,7 @@ class ADistUpdateUserStatusJob implements ShouldQueue
 
         if (Cache::has($lockKey)) {
             Log::info('ADistUpdateUserStatusJob: Another instance is already running');
+
             return;
         }
 
@@ -63,9 +60,11 @@ class ADistUpdateUserStatusJob implements ShouldQueue
                     if (isset($result['value']) && is_array($result['value'])) {
                         return $result;
                     }
+
                     return null;
                 } catch (\Exception $e) {
-                    Log::error('Failed to fetch users: ' . $e->getMessage());
+                    Log::error('Failed to fetch users: '.$e->getMessage());
+
                     return null;
                 }
             });
@@ -76,37 +75,34 @@ class ADistUpdateUserStatusJob implements ShouldQueue
                 $pdo = $connection->getPdo();
 
                 // Check if connection is still alive
-                if (!$pdo || !$this->isConnectionAlive($pdo)) {
+                if (! $pdo || ! $this->isConnectionAlive($pdo)) {
                     $connection->reconnect();
                     $pdo = $connection->getPdo();
                 }
 
-                // Use a single transaction for better performance
-                DB::transaction(function () use ($users) {
-                    foreach ($users['value'] as $user) {
-                        ADistAgent::updateOrCreate(
-                            ['three_cx_user_id' => $user['Id']],
-                            [
-                                'three_cx_user_id' => $user['Id'],
-                                'status'           => $user['CurrentProfileName'],
-                                'displayName'      => $user['DisplayName'],
-                                'email'            => $user['EmailAddress'],
-                                'QueueStatus'      => $user['QueueStatus'],
-                                'extension'        => $user['Number'],
-                                'firstName'        => $user['FirstName'],
-                                'lastName'         => $user['LastName'],
-                                'updated_at'       => now(),
-                            ]
-                        );
-                    }
-                }, 3);
+                // Proceed without wrapping in a transaction
+                foreach ($users['value'] as $user) {
+                    ADistAgent::updateOrCreate(
+                        ['three_cx_user_id' => $user['Id']],
+                        [
+                            'three_cx_user_id' => $user['Id'],
+                            'status' => $user['CurrentProfileName'],
+                            'displayName' => $user['DisplayName'],
+                            'email' => $user['EmailAddress'],
+                            'QueueStatus' => $user['QueueStatus'],
+                            'extension' => $user['Number'],
+                            'firstName' => $user['FirstName'],
+                            'lastName' => $user['LastName'],
+                            'updated_at' => now(),
+                        ]
+                    );
+                }
 
                 $executionTime = round(microtime(true) - $startTime, 3);
-                // Log::info("ADistUpdateUserStatusJob: ✅ Updated {count($users['value'])} users in {$executionTime}s");
-                Log::info("ADistUpdateUserStatusJob: ✅ Updated " . count($users['value']) . " users in {$executionTime}s");
+                Log::info('ADistUpdateUserStatusJob: ✅ Updated '.count($users['value'])." users in {$executionTime}s");
             }
         } catch (\Exception $e) {
-            Log::error('ADistUpdateUserStatusJob Error: ' . $e->getMessage());
+            Log::error('ADistUpdateUserStatusJob Error: '.$e->getMessage());
             throw $e;
         } finally {
             Cache::forget($lockKey);
@@ -120,6 +116,7 @@ class ADistUpdateUserStatusJob implements ShouldQueue
     {
         try {
             $pdo->query('SELECT 1');
+
             return true;
         } catch (\Exception $e) {
             return false;
@@ -131,7 +128,7 @@ class ADistUpdateUserStatusJob implements ShouldQueue
      */
     public function failed(\Throwable $exception): void
     {
-        Log::error('ADistUpdateUserStatusJob failed: ' . $exception->getMessage());
+        Log::error('ADistUpdateUserStatusJob failed: '.$exception->getMessage());
         Cache::forget('adist_update_user_status_running');
     }
 }
