@@ -20,6 +20,7 @@ class UpdateCallStatusJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     protected $provider;
+
     public $tries = 3;
 
     /**
@@ -41,7 +42,7 @@ class UpdateCallStatusJob implements ShouldQueue
             // Fetch active calls for the provider
             $activeCalls = $threeCxService->getActiveCallsForProvider($this->provider->extension);
 
-            if (!isset($activeCalls['value']) || empty($activeCalls['value'])) {
+            if (! isset($activeCalls['value']) || empty($activeCalls['value'])) {
                 Log::info("Queue 🔍⚠️📡 No active calls found for provider {$this->provider->extension}");
 
                 return;
@@ -54,7 +55,7 @@ class UpdateCallStatusJob implements ShouldQueue
             // $executionTime = $providerStartTime->diffInMilliseconds($providerEndTime);
             // Log::info("Queue ⏳ Execution time for provider {$this->provider->extension}: {$executionTime} ms");
         } catch (\Exception $e) {
-            Log::error("Queue ❌ Failed to process calls for provider {$this->provider->extension}: " . $e->getMessage());
+            Log::error("Queue ❌ Failed to process calls for provider {$this->provider->extension}: ".$e->getMessage());
         }
     }
 
@@ -68,7 +69,7 @@ class UpdateCallStatusJob implements ShouldQueue
             $callStatus = $call['Status'] ?? null;
 
             if (! $callId || ! $callStatus) {
-                Log::warning('Queue ⚠️ Incomplete call data: ' . json_encode($call));
+                Log::warning('Queue ⚠️ Incomplete call data: '.json_encode($call));
 
                 continue;
             }
@@ -78,15 +79,22 @@ class UpdateCallStatusJob implements ShouldQueue
         }
 
         try {
-            DB::transaction(function () use ($callIds, $updateData) {
+            if (! DB::transactionLevel()) {
+                DB::transaction(function () use ($callIds, $updateData) {
+                    $this->batchUpdateReports($updateData);
+                    $this->batchUpdateDialData($callIds, $updateData);
+                    $this->batchUpdateToQueue($callIds, $updateData);
+                });
+            } else {
+                // If already inside a transaction, run updates directly
                 $this->batchUpdateReports($updateData);
                 $this->batchUpdateDialData($callIds, $updateData);
                 $this->batchUpdateToQueue($callIds, $updateData);
-            });
+            }
 
-            Log::info('Queue ✅ Batch updated ' . count($callIds) . ' call records');
+            Log::info('Queue ✅ Batch updated '.count($callIds).' call records');
         } catch (\Exception $e) {
-            Log::error('Queue ❌ Batch update failed: ' . $e->getMessage());
+            Log::error('Queue ❌ Batch update failed: '.$e->getMessage());
         }
     }
 
@@ -133,14 +141,14 @@ class UpdateCallStatusJob implements ShouldQueue
 
         AutoDailerReport::whereIn('call_id', $updates->keys())
             ->update([
-                'status' => DB::raw('CASE call_id ' .
-                    $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN '{$item['status']}'")->implode(' ') .
+                'status' => DB::raw('CASE call_id '.
+                    $updates->map(fn ($item, $callId) => "WHEN '{$callId}' THEN '{$item['status']}'")->implode(' ').
                     ' END'),
-                'duration_time' => DB::raw('CASE call_id ' .
-                    $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN " . ($item['duration_time'] ? "'{$item['duration_time']}'" : 'duration_time'))->implode(' ') .
+                'duration_time' => DB::raw('CASE call_id '.
+                    $updates->map(fn ($item, $callId) => "WHEN '{$callId}' THEN ".($item['duration_time'] ? "'{$item['duration_time']}'" : 'duration_time'))->implode(' ').
                     ' END'),
-                'duration_routing' => DB::raw('CASE call_id ' .
-                    $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN " . ($item['duration_routing'] ? "'{$item['duration_routing']}'" : 'duration_routing'))->implode(' ') .
+                'duration_routing' => DB::raw('CASE call_id '.
+                    $updates->map(fn ($item, $callId) => "WHEN '{$callId}' THEN ".($item['duration_routing'] ? "'{$item['duration_routing']}'" : 'duration_routing'))->implode(' ').
                     ' END'),
             ]);
     }
@@ -150,8 +158,8 @@ class UpdateCallStatusJob implements ShouldQueue
         $updates = collect($updateData)->keyBy('call_id');
         ADialData::whereIn('call_id', $callIds)
             ->update([
-                'state' => DB::raw('CASE call_id ' .
-                    $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN '{$item['status']}'")->implode(' ') .
+                'state' => DB::raw('CASE call_id '.
+                    $updates->map(fn ($item, $callId) => "WHEN '{$callId}' THEN '{$item['status']}'")->implode(' ').
                     ' END'),
             ]);
     }
@@ -161,8 +169,8 @@ class UpdateCallStatusJob implements ShouldQueue
         $updates = collect($updateData)->keyBy('call_id');
         ToQueue::whereIn('call_id', $callIds)
             ->update([
-                'status' => DB::raw('CASE call_id ' .
-                    $updates->map(fn($item, $callId) => "WHEN '{$callId}' THEN '{$item['status']}'")->implode(' ') .
+                'status' => DB::raw('CASE call_id '.
+                    $updates->map(fn ($item, $callId) => "WHEN '{$callId}' THEN '{$item['status']}'")->implode(' ').
                     ' END'),
             ]);
     }
