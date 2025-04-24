@@ -28,8 +28,11 @@ class ADistAgent extends Model
         'isRegistred',
         'QueueStatus',
         'extension',
-        'status'
+        'status',
+        'is_active',
     ];
+
+   
 
     /**
      * Define a relationship with the User model.

@@ -1,133 +1,185 @@
 @extends('layout.main')
 @section('title', 'Distributor | Agents')
-
+@include('autoDistributerByUser.Agent.__updateFeedModal')
+@include('autoDistributerByUser.Agent.__Dis_dropZoneUploadFile')
 @section('content')
-    <div class="container py-5">
-        <div class="d-flex flex-column flex-md-row justify-content-between align-items-center mb-4 gap-3">
-            <div class="d-flex flex-column flex-md-column align-items-center align-items-md-start">
-                <h2 class="mb-0 text-center text-md-left mdern-welcome-text">Auto Distributer Agents</h2>
-                <span>
-                    {{-- Upload CSV File --}}
-                    <a href="#" class="btn btn-outline-secondary w-auto mt-4" data-bs-toggle="modal"
-                        data-bs-target="#uploadModal"><i class="ti-upload btn-icon-prepend"></i> Upload File</a>
-                    <a href="larg_auto_dist_file .csv" class="btn btn-info mt-4" download><i
-                            class="fa-solid fa-download"></i> Auto
-                        Distributor Demo File</a>
-                    <button class="btn btn-warning mt-4" onclick="fetchTodayFeeds()"><i class="fas fa-gear"></i>
-                        Manage Today Feeds</button>
-                    @include('autoDistributerByUser.Agent.__updateFeedModal')
-                    @include('autoDistributerByUser.Agent.__Dis_dropZoneUploadFile')
-                </span>
-            </div>
+<div class="container">
+    <h1>Auto Distributer Agents</h1>
 
-            {{-- Actions Section --}}
-            <div class="d-flex justify-content-between align-items-center">
-                {{-- Search Users Field --}}
-                <input type="text" id="search-input" class="form-control form-control-lg"
-                    placeholder="Search by name..." />
-            </div>
 
+    {{-- Actions Section --}}
+    <div class="row mb-3">
+        <div class="col-md-8 d-flex gap-2">
+            <a href="#" class="btn btn-outline-secondary" data-bs-toggle="modal" data-bs-target="#uploadModal">
+                <i class="fa fa-upload"></i> Upload File
+            </a>
+            <a href="larg_auto_dist_file .csv" class="btn btn-info">
+                <i class="fa fa-file"></i> Auto Distributor Demo File
+            </a>
+            <button class="btn btn-warning" onclick="fetchTodayFeeds()">
+                <i class="fa fa-rss"></i> Manage Today Feeds
+            </button>
         </div>
-
-        {{-- Alert for No Users --}}
-        @if ($agents->isEmpty())
-            <div class="alert alert-warning text-center">
-                <i class="fa-solid fa-circle-exclamation"></i> No Auto Distributerer Agent found. Click "Import Users" to
-                add one.
-            </div>
-        @else
-            {{-- Users Table --}}
-            <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th><i class="fa-solid fa-user-large"></i> Agent Name</th>
-                            <th><i class="fa-solid fa-phone-volume"></i> Agent Extension</th>
-                            <th><i class="fa-solid fa-user-check"></i> Status</th>
-                            <th><i class="fa-solid fa-user-check"></i> Queue</th>
-                            <th><i class="fa-solid fa-gear"></i> Action</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-
-
-
-                    <tbody id="users-table-body">
-                        @foreach ($agents as $agent)
-                            <tr class="user-row">
-                                <td class="name">{{ $agent->displayName }}</td>
-                                <td class="extension">{{ $agent->extension }}</td>
-                                <td class="status {{ $agent->status === 'Available' ? 'text-success' : 'text-warning' }}">
-                                    <b>{{ $agent->status }} <i
-                                            class="{{ $agent->status === 'Available' ? 'fa-solid fa-check' : 'fa-solid fa-exclamation' }}"></i></b>
-                                </td>
-                                <td>{{$agent->QueueStatus}}</td>
-                                <td class="d-flex justify-content-start gap-2">
-                                    <a href=" {{ route('users.files.create', $agent->id) }}" class="btn btn-primary btn-sm">
-                                        <i class="fa fa-plus"></i>
-                                    </a>
-                                    <a href=" {{ route('users.files.index', $agent->id) }}" class="btn btn-info btn-sm">
-                                        <i class="fa fa-eye"></i>
-                                    </a>
-                                </td>
-                            </tr>
-                        @endforeach
-                    </tbody>
-
-                </table>
-            </div>
-        @endif
-
-        {{-- <div class="pagination-wrapper d-flex justify-content-center mt-4">
-            <ul class="pagination">
-                <li class="page-item {{ $agents->onFirstPage() ? 'disabled' : '' }}">
-                    <a class="page-link" href="{{ $agents->previousPageUrl() }}" tabindex="-1"
-                        aria-disabled="true">Previous</a>
-                </li>
-                @foreach ($agents->getUrlRange(1, $agents->lastPage()) as $page => $url)
-                    <li class="page-item {{ $agents->currentPage() == $page ? 'active' : '' }}">
-                        <a class="page-link" href="{{ $url }}">{{ $page }}</a>
-                    </li>
-                @endforeach
-                <li class="page-item {{ $agents->hasMorePages() ? '' : 'disabled' }}">
-                    <a class="page-link" href="{{ $agents->nextPageUrl() }}">Next</a>
-                </li>
-            </ul>
-        </div> --}}
-
+        <div class="col-md-4">
+            {{-- Search Users Field --}}
+            <input type="text" id="search-input" class="form-control form-control-sm" placeholder="Search by name..." />
+        </div>
     </div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            // Search functionality
-            const searchInput = document.getElementById('search-input');
-            const tableRows = document.querySelectorAll('.user-row'); // Add class 'user-row' to each row
+    @if($error)
+    <div class="alert alert-danger">
+        <strong>Error:</strong> {{ $error }}
+    </div>
+    @endif
 
-            searchInput.addEventListener('input', function() {
-                const searchValue = searchInput.value.toLowerCase();
+    @if(isset($maxAgents) && $isLicenseValid && !$error)
+    <div class="alert alert-info">
+        <strong>License Information:</strong> You can activate up to {{ $maxAgents }} agents.
+        Currently <span id="activeAgentsCount">{{ $activeAgentsCount }}</span> out of {{ $totalAgents }} agents are
+        active.
+    </div>
+    @endif
 
-                tableRows.forEach(row => {
-                    const name = row.querySelector('.name').textContent.toLowerCase();
-                    const extension = row.querySelector('.extension').textContent.toLowerCase();
-                    const status = row.querySelector('.status').textContent.toLowerCase();
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th width="5%">Active</th>
+                        <th><i class="fa fa-user"></i> Agent Name</th>
+                        <th><i class="fa fa-phone"></i> Extension</th>
+                        <th><i class="fa fa-signal"></i> Status</th>
+                        <th><i class="fa fa-list"></i> Queue</th>
+                        <th><i class="fa fa-tools"></i> Action</th>
+                    </tr>
+                </thead>
+                <tbody id="users-table-body">
+                    @forelse($allAgents as $agent)
+                    <tr class="user-row {{ $agent->is_active ? 'table-success' : ''}}" >
+                        <td>
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input agent-toggle" data-id="{{ $agent->id }}"
+                                    {{ $agent->is_active ? 'checked' : '' }}
+                                {{ (!$isLicenseValid || $maxAgents <= 0) ? 'disabled' : '' }}>
+                            </div>
+                        </td>
+                        <td class="name">{{ $agent->displayName }}</td>
+                        <td class="extension">{{ $agent->extension }}</td>
+                        <td class="status">
+                            @if($agent->status == 'Available')
+                            <span class="text-success">Available <i class="fa fa-check"></i></span>
+                            @else
+                            <span class="text-danger">{{ $agent->status }}</span>
+                            @endif
+                        </td>
+                        <td>{{ $agent->QueueStatus }}</td>
+                        <td>
+                            @if($agent->is_active)
+                            <div class="btn-group">
+                                <a href="{{ route('users.files.create', $agent->id) }}" class="btn btn-sm btn-primary">
+                                    <i class="fa fa-plus"></i>
+                                </a>
+                                <a href="{{ route('users.files.index', $agent->id) }}" class="btn btn-sm btn-info">
+                                    <i class="fa fa-eye"></i>
+                                </a>
+                            </div>
+                            @else
+                            <span class="text-danger">Agent is Inactive <i class="fa fa-x"></i></span>
 
-                    // Show row if any field matches search value
-                    if (name.includes(searchValue) || extension.includes(searchValue) || status
-                        .includes(searchValue)) {
-                        row.style.display = '';
-                    } else {
-                        row.style.display = 'none';
+                            @endif
+                        </td>
+                    </tr>
+                    @empty
+                    <tr>
+                        <td colspan="6" class="text-center">No agents found</td>
+                    </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        if (typeof jQuery === 'undefined') {
+            console.error('jQuery not loaded');
+            return;
+        }
+
+        $(document).ready(function() {
+            // Maximum allowed agents (from license)
+            const maxAgents = @json($maxAgents ?? 0);
+
+            // Toggle agent active status
+            $('.agent-toggle').on('change', function() {
+                const agentId = $(this).data('id');
+                const isChecked = $(this).prop('checked');
+                const $row = $(this).closest('tr');
+                const checkbox = this;
+
+                $.ajax({
+                    url: '{{ route("auto-distributor.toggle-agent") }}',
+                    type: 'POST',
+                    data: {
+                        agent_id: agentId,
+                        activate: isChecked,
+                        _token: '{{ csrf_token() }}'
+                    },
+                    success: function(response) {
+                        if (isChecked) {
+                            $row.addClass('table-success');
+                            setTimeout(()=>{
+                                location.reload();
+                            }, 1000)
+                        } else {
+                            $row.removeClass('table-success');
+                        }
+
+                        $('#activeAgentsCount').text(response.activeCount);
+                        toastr.success(response.message);
+                    },
+                    error: function(xhr) {
+                        // Revert checkbox state
+                        $(checkbox).prop('checked', !isChecked);
+                        $row.toggleClass('table-success', !isChecked);
+
+                        const response = xhr.responseJSON;
+                        toastr.error(response?.message || 'An error occurred while updating agent status.');
                     }
                 });
             });
 
-            // Confirm Delete Function
-            window.confirmDelete = function(id) {
-                if (confirm('Are you sure you want to delete this user?')) {
-                    document.getElementById('delete-form-' + id).submit();
+            // Enforce license limit before activating agent
+                $('.agent-toggle').on('click', function(e) {
+                // Check if we're trying to activate (not already checked)
+                const willBeChecked = !$(this).prop('checked');
+
+                if (!willBeChecked) {
+                    return true; // We're unchecking, always allow
                 }
-            };
+
+                const currentlyActive = $('.agent-toggle:checked').length;
+
+                // Since we're checking a new box, we need to see if this would exceed the limit
+                if (currentlyActive >= maxAgents) {
+                    e.preventDefault();
+                    toastr.error(`License limit reached. Maximum ${maxAgents} agents allowed. Please upgrade your license.`);
+                    return false;
+                }
+
+                if (willBeChecked) {
+                setTimeout(() => {
+                    location.reload();
+                }, 1000); // Delay for smooth UX
+            }
+
+                return true;
+            });
         });
+
 
         Dropzone.options.fileDropzone = {
             paramName: "file",
@@ -237,8 +289,44 @@
         };
 
 
-        // Update feeds
-        function fetchTodayFeeds() {
+
+    });
+</script>
+
+<script>
+     document.addEventListener('DOMContentLoaded', function() {
+            // Search functionality
+            const searchInput = document.getElementById('search-input');
+            const tableRows = document.querySelectorAll('.user-row'); // Add class 'user-row' to each row
+
+            searchInput.addEventListener('input', function() {
+                const searchValue = searchInput.value.toLowerCase();
+
+                tableRows.forEach(row => {
+                    const name = row.querySelector('.name').textContent.toLowerCase();
+                    const extension = row.querySelector('.extension').textContent.toLowerCase();
+                    const status = row.querySelector('.status').textContent.toLowerCase();
+
+                    // Show row if any field matches search value
+                    if (name.includes(searchValue) || extension.includes(searchValue) || status
+                        .includes(searchValue)) {
+                        row.style.display = '';
+                    } else {
+                        row.style.display = 'none';
+                    }
+                });
+            });
+
+            // Confirm Delete Function
+            window.confirmDelete = function(id) {
+                if (confirm('Are you sure you want to delete this user?')) {
+                    document.getElementById('delete-form-' + id).submit();
+                }
+            };
+        });
+
+    // Update feeds
+    function fetchTodayFeeds() {
             fetch('/today-feeds')
                 .then(response => response.json())
                 .then(feeds => {
@@ -327,6 +415,6 @@
                 })
                 .catch(error => console.error('Error:', error));
         }
-    </script>
+</script>
 
 @endsection

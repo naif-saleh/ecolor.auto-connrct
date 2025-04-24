@@ -13,7 +13,7 @@ use App\Models\AutoDistributerReport;
 use App\Models\General_Setting;
 use App\Services\ThreeCxService;
 use Illuminate\Support\Facades\Cache;
-use App\Notifications\AgentCallFailed;
+use App\Services\LicenseService;
 
 class ADistMakeCallCommand extends Command
 {
@@ -21,10 +21,20 @@ class ADistMakeCallCommand extends Command
     protected $description = 'Initiate auto-distributor calls';
     protected $threeCxService;
 
-    public function __construct(ThreeCxService $threeCxService)
+     /**
+     * LicenseService Service
+     *
+     * @var LicenseService
+     */
+    protected $licenseService;
+
+
+    public function __construct(ThreeCxService $threeCxService, LicenseService $licenseService)
     {
         parent::__construct();
         $this->threeCxService = $threeCxService;
+        $this->licenseService = $licenseService;
+
     }
 
     public function handle()
@@ -119,9 +129,11 @@ class ADistMakeCallCommand extends Command
                                 continue;
                             } else {
 
-                                if ($feed->is_done !== "called") {
-                                    $feed->update(['is_done' => "calling"]);
+                                if ($this->checkIfFeedCompleted($feed, $agent)) {
+                                    Log::info("ADistMakeCallCommand: ✅ All numbers called for File '{$feed->file_name}' - Agent '{$agent->extension}'. file status updated to '{$feed->is_done}' - slug: {$feed->slug}");
+                                }else{
                                     Log::info("ADistMakeCallCommand: 📝 File {$feed->file_name} - Agent '{$agent->extension}' is calling.");
+                                    $feed->update(['is_done' => "calling"]);
                                 }
                             }
                             Log::info("ADistMakeCallCommand: ✅ Time is within for File '{$feed->file_name}' - Agent '{$agent->extension}'");
@@ -137,7 +149,7 @@ class ADistMakeCallCommand extends Command
                             Log::info("☎️ Attempting call to {$dataItem->mobile}");
 
                             try {
-                                $callResponse = $this->threeCxService->makeCallDist($agent, $dataItem->mobile);
+                                $this->checkLicenseAndMakeCall($agent, $dataItem, $callResponse);
 
                                 DB::transaction(function () use ($callResponse, $dataItem, $agent, $feed) {
                                     AutoDistributerReport::create([
@@ -168,6 +180,60 @@ class ADistMakeCallCommand extends Command
                 Log::error("❌ General error for agent {$agent->id}: " . $e->getMessage());
             }
         }
+    }
+
+
+     /**
+     * Check license validity and make call if license is valid
+     *
+     * @param  object  $dataItem
+     * @param  object  $agent
+     * @return void
+     */
+    private function checkLicenseAndMakeCall($agent, $dataItem, &$callResponse)
+    {
+        try {
+            // Check if license is valid (not expired and active)
+            if (! $this->licenseService->isLicenseValid()) {
+                if ($this->licenseService->isLicenseExpaired()) {
+                    Log::info('Auto-Distributor: ❌ License expired. Please renew your license.') ;
+                    return false;
+                }
+
+                if (! $this->licenseService->isLicenseActive()) {
+                    Log::info('Auto-Distributor: 🚫 License not activated. Please activate your license.');
+                    return false;
+                }
+
+                Log::info('Auto-Distributor: ❌ Your license is not valid. Please check your license status.') ;
+                return false;
+            }
+
+            // Get Auto Distributor module settings
+            $moduleSettings = $this->licenseService->getModuleSettings('auto_distributor_moduales');
+
+            if (! $moduleSettings) {
+                Log::info('Auto-Distributor: 🚫 Auto Distributor module is not enabled in your license. Please upgrade.') ;
+                return false;
+            }
+
+
+            if (!$this->licenseService->checkDistCallsCount()) {
+                Log::info('Auto-Distributor: 🚫 Maximum Calls limit reached. Please upgrade your license. ') ;
+                return false;
+            }
+
+            // All checks passed
+            $callResponse = $this->threeCxService->makeCallDist($agent, $dataItem->mobile);
+             $this->licenseService->decrementDistCalls();
+        } catch (\Exception $e) {
+            report($e); // Log the exception
+
+            Log::info('Auto-Distributor: An error occurred while checking license. Please try again later.') ;
+        }
+
+
+
     }
 
 

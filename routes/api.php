@@ -4,6 +4,8 @@ use Illuminate\Http\Request;
 use App\Http\Controllers\ApiController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AutoDistributerByUser\AdistFeedController;
+use App\Http\Controllers\Webhook\AdialWebhookController;
+use App\Http\Controllers\Webhook\AdistWebhookController;
 
 /**
  * Authenticated Routes (Protected by Sanctum)
@@ -38,4 +40,22 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
  */
 Route::middleware(['api'])->group(function () {
     Route::post('evaluation', [ApiController::class, 'evaluation']);
+});
+
+
+Route::post('/licens.ecolor/allow-license-key', [ApiController::class, 'PostLicen'])->name('PostLicen');
+
+
+// Webhook routes Auto Distributor
+Route::prefix('auto-distributor/webhooks')->group(function () {
+    Route::post('numbers', [AdistWebhookController::class, 'receive']);
+    Route::get('numbers/status/{batchId}', [AdistWebhookController::class, 'checkStatus']);
+});
+
+
+
+// Webhook routes Auto Distributor
+Route::prefix('auto-dialer/webhooks')->group(function () {
+    Route::post('numbers', [AdialWebhookController::class, 'receive']);
+    Route::get('numbers/status/{batchId}', [AdialWebhookController::class, 'checkStatus']);
 });

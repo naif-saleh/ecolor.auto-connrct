@@ -2,23 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ADialData;
-use Illuminate\Http\Request;
 use App\Models\ActivityLog;
+use App\Models\ADialData;
 use App\Models\ADialProvider;
 use App\Models\ADistData;
-use App\Models\UserActivityLog;
 use App\Models\AutoDailerReport;
 use App\Models\AutoDistributerReport;
 use App\Models\Evaluation;
+use App\Models\License;
+use App\Models\UserActivityLog;
+use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
-use Symfony\Component\HttpFoundation\StreamedResponse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class ReportController extends Controller
 {
-
     /**
      * Active Log Report method
      */
@@ -42,8 +42,6 @@ class ReportController extends Controller
 
         return view('reports.user_logs', compact('logs'));
     }
-
-
 
     public function AutoDailerReports(Request $request)
     {
@@ -76,7 +74,7 @@ class ReportController extends Controller
         if ($dateFrom && $dateTo) {
             $query->whereBetween('created_at', [
                 \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-                \Carbon\Carbon::parse($dateTo)->endOfDay()
+                \Carbon\Carbon::parse($dateTo)->endOfDay(),
             ]);
         } elseif ($filter === 'today') {
             // If no date range is provided and filter is 'today', default to today's data
@@ -151,9 +149,6 @@ class ReportController extends Controller
         ));
     }
 
-
-
-
     /**
      * Export Auto Dailer AS CSV File
      */
@@ -201,20 +196,20 @@ class ReportController extends Controller
         }
 
         // Extension filters
-        if (!empty($extensionFrom)) {
+        if (! empty($extensionFrom)) {
             $query->where('extension', '>=', $extensionFrom);
         }
-        if (!empty($extensionTo)) {
+        if (! empty($extensionTo)) {
             $query->where('extension', '<=', $extensionTo);
         }
 
         // Provider filter
-        if (!empty($provider)) {
+        if (! empty($provider)) {
             $query->where('provider', $provider);
         }
 
         // Debug SQL
-        Log::info('AutoDialer Export Query:', [
+        Log::info('Autoevaluation Export Query:', [
             'sql' => $query->toSql(),
             'bindings' => $query->getBindings(),
         ]);
@@ -241,7 +236,7 @@ class ReportController extends Controller
                     $report->duration_time ?? '-',
                     $report->duration_routing ?? '-',
                     optional($report->created_at)?->addHours(3)->format('H:i:s') ?? '-',
-                    optional($report->created_at)?->addHours(3)->format('Y-m-d') ?? '-'
+                    optional($report->created_at)?->addHours(3)->format('Y-m-d') ?? '-',
                 ]);
             }
 
@@ -254,8 +249,6 @@ class ReportController extends Controller
         return $response;
     }
 
-
-
     /**
      * Dialer Not Called Numbers
      */
@@ -267,6 +260,7 @@ class ReportController extends Controller
         $count = ADialData::where('state', 'new')
             ->whereDate('created_at', now()->toDateString())
             ->count();
+
         return view('reports.Dial_notCalled', compact('notCalled', 'count'));
     }
 
@@ -281,8 +275,8 @@ class ReportController extends Controller
 
         // Define CSV headers
         $headers = [
-            "Content-Type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=today_not_called_numbers.csv",
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename=today_not_called_numbers.csv',
         ];
 
         // Generate CSV content
@@ -299,9 +293,6 @@ class ReportController extends Controller
 
         return response()->stream($callback, 200, $headers);
     }
-
-
-
 
     public function AutoDistributerReports(Request $request)
     {
@@ -327,18 +318,17 @@ class ReportController extends Controller
             $query->where('provider', $provider);
         }
 
-
         // Apply date range filters if selected
         if ($dateFrom && $dateTo) {
             $query->whereBetween('created_at', [
                 \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-                \Carbon\Carbon::parse($dateTo)->endOfDay()
+                \Carbon\Carbon::parse($dateTo)->endOfDay(),
             ]);
 
             $notCalled = ADistData::where('state', 'new')
                 ->whereBetween('created_at', [
                     \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-                    \Carbon\Carbon::parse($dateTo)->endOfDay()
+                    \Carbon\Carbon::parse($dateTo)->endOfDay(),
                 ])
                 ->count();
         } elseif ($filter === 'today') {
@@ -350,13 +340,10 @@ class ReportController extends Controller
                 ->count();
         }
 
-
-
         // Apply time range filters if provided
         if ($timeFrom && $timeTo) {
             $query->whereBetween(DB::raw('TIME(created_at)'), [$timeFrom, $timeTo]);
         }
-
 
         // Apply extension range filters if provided
         if ($extensionFrom) {
@@ -414,6 +401,7 @@ class ReportController extends Controller
             'timeTo'
         ));
     }
+
     /**
      * Export Auto Distributer AS CSV File
      */
@@ -462,22 +450,22 @@ class ReportController extends Controller
         }
 
         // Extension range
-        if (!empty($extensionFrom)) {
+        if (! empty($extensionFrom)) {
             $query->where('extension', '>=', $extensionFrom);
         }
-        if (!empty($extensionTo)) {
+        if (! empty($extensionTo)) {
             $query->where('extension', '<=', $extensionTo);
         }
 
         // Provider
-        if (!empty($provider)) {
+        if (! empty($provider)) {
             $query->where('provider', $provider);
         }
 
         // Debug SQL
         Log::info('Export query:', [
             'sql' => $query->toSql(),
-            'bindings' => $query->getBindings()
+            'bindings' => $query->getBindings(),
         ]);
 
         $response = new StreamedResponse(function () use ($query) {
@@ -516,7 +504,6 @@ class ReportController extends Controller
         return $response;
     }
 
-
     /**
      * Distributort Not Called Numbers
      */
@@ -528,6 +515,7 @@ class ReportController extends Controller
         $count = ADistData::where('state', 'new')
             ->whereDate('created_at', now()->toDateString())
             ->count();
+
         return view('reports.Dial_notCalled', compact('notCalled', 'count'));
     }
 
@@ -542,8 +530,8 @@ class ReportController extends Controller
 
         // Define CSV headers
         $headers = [
-            "Content-Type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=Distributortoday_not_called_numbers.csv",
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename=Distributortoday_not_called_numbers.csv',
         ];
 
         // Generate CSV content
@@ -576,11 +564,11 @@ class ReportController extends Controller
         $hasDateRange = $dateFrom && $dateTo;
 
         // Apply 'filter' only if no custom date range is applied
-        if (!$hasDateRange) {
+        if (! $hasDateRange) {
             if ($filter === 'satisfied') {
-                $query->where('is_satisfied', "YES");
+                $query->where('is_satisfied', 'YES');
             } elseif ($filter === 'unsatisfied') {
-                $query->where('is_satisfied', "NO");
+                $query->where('is_satisfied', 'NO');
             } elseif ($filter === 'today') {
                 $query->whereDate('created_at', now()->toDateString());
             }
@@ -590,7 +578,7 @@ class ReportController extends Controller
         if ($hasDateRange) {
             $query->whereBetween('created_at', [
                 \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-                \Carbon\Carbon::parse($dateTo)->endOfDay()
+                \Carbon\Carbon::parse($dateTo)->endOfDay(),
             ]);
         }
 
@@ -599,11 +587,15 @@ class ReportController extends Controller
 
         // Statistics
         $totalCount = $fullQuery->count();
-        $satisfiedCount = (clone $fullQuery)->where('is_satisfied', "YES")->count();
-        $unsatisfiedCount = (clone $fullQuery)->where('is_satisfied', "NO")->count();
+        $satisfiedCount = (clone $fullQuery)->where('is_satisfied', 'YES')->count();
+        $unsatisfiedCount = (clone $fullQuery)->where('is_satisfied', 'NO')->count();
 
         // Paginate results AFTER getting statistics
         $reports = $query->orderBy('created_at', 'desc')->paginate(50);
+
+        $enabled = false;
+        // Check license validity
+        $this->checkLicenseAndMakeCall($enabled);
 
         // Return the view
         return view('evaluation.evaluation', [
@@ -612,10 +604,72 @@ class ReportController extends Controller
             'totalCount' => $totalCount,
             'satisfiedCount' => $satisfiedCount,
             'unsatisfiedCount' => $unsatisfiedCount,
+            'enabled' => $enabled,
         ]);
     }
 
+    /**
+     * Check license validity and make call if license is valid
+     *
+     * @return void
+     */
+    private function checkLicenseAndMakeCall(&$enabled)
+    {
+        try {
+            // Get license details
+            $license_start_date = Carbon::parse(License::get('start_date'));
+            $license_end_date = Carbon::parse(License::get('end_date'));
+            $license_status = License::get('status');
 
+            // Get dialer module data
+            $evaluation_setting = DB::table('licenses')->where('key', 'evaluation_moduales')->first();
+
+            // If evaluation module doesn't exist, don't proceed with call
+            if (! $evaluation_setting) {
+                Log::info('evaluation: ❌ evaluation module not found. ');
+
+                return;
+            }
+
+            // Parse evaluation settings
+            $evaluation_data = json_decode($evaluation_setting->value, true);
+
+            // Handle potential JSON decode failures
+            if (json_last_error() !== JSON_ERROR_NONE || ! is_array($evaluation_data)) {
+                Log::error('evaluation: ❌ evaluation module is disabled, please Upgrade. ');
+
+                return;
+            }
+
+            // Check if module is enabled
+            $is_enabled = isset($evaluation_data['enabled']) ? (bool) $evaluation_data['enabled'] : false;
+
+            // Check license validity in a sequential manner
+            if (! now()->between($license_start_date, $license_end_date)) {
+                Log::info('evaluation: ❌ License expired. ');
+
+                return;
+            }
+
+            if ($license_status !== 'Active') {
+                Log::info('evaluation: ❌ License not activated. ');
+
+                return;
+            }
+
+            if (! $is_enabled) {
+                Log::info('evaluation: ❌ evaluation module is disabled. ');
+
+                return;
+            }
+
+            // If all checks pass, set enabled to true
+            $enabled = true;
+            
+        } catch (\Exception $e) {
+            Log::error("evaluation: ❌ License check error: {$e->getMessage()}");
+        }
+    }
 
     /**
      * Export Evaluation
@@ -633,11 +687,11 @@ class ReportController extends Controller
         // Apply 'filter' only if no custom date range is applied
         $hasDateRange = $dateFrom && $dateTo;
 
-        if (!$hasDateRange) {
+        if (! $hasDateRange) {
             if ($filter === 'satisfied') {
-                $query->where('is_satisfied', "YES");
+                $query->where('is_satisfied', 'YES');
             } elseif ($filter === 'unsatisfied') {
-                $query->where('is_satisfied', "NO");
+                $query->where('is_satisfied', 'NO');
             } elseif ($filter === 'today') {
                 $query->whereDate('created_at', now()->toDateString());
             }
@@ -647,7 +701,7 @@ class ReportController extends Controller
         if ($hasDateRange) {
             $query->whereBetween('created_at', [
                 \Carbon\Carbon::parse($dateFrom)->startOfDay(),
-                \Carbon\Carbon::parse($dateTo)->endOfDay()
+                \Carbon\Carbon::parse($dateTo)->endOfDay(),
             ]);
         }
         // Get the filtered results
@@ -666,8 +720,15 @@ class ReportController extends Controller
                 $report->extension,
                 $report->is_satisfied === 'YES' ? 'Satisfied' : 'Unsatisfied',
                 $report->created_at->addHours(3)->format('Y-m-d'), // For Date
-                $report->created_at->addHours(3)->format('H:i:s') // For Time
+                $report->created_at->addHours(3)->format('H:i:s'), // For Time
             ];
+        }
+
+        $enabled = false;
+        // Check license validity
+        $this->checkLicenseAndMakeCall($enabled);
+        if(!$enabled) {
+            return redirect()->back()->with('wrong', 'Evaluation module is disabled. Please Upgrade');
         }
 
         // Create the CSV response
@@ -684,11 +745,11 @@ class ReportController extends Controller
 
         // Return the CSV response with the correct headers
         return response()->stream($callback, 200, [
-            "Content-type" => "text/csv",
-            "Content-Disposition" => "attachment; filename=Evaluation.csv",
-            "Cache-Control" => "no-store, no-cache, must-revalidate",
-            "Cache-Control" => "post-check=0, pre-check=0",
-            "Pragma" => "public"
+            'Content-type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename=Evaluation.csv',
+            'Cache-Control' => 'no-store, no-cache, must-revalidate',
+            'Cache-Control' => 'post-check=0, pre-check=0',
+            'Pragma' => 'public',
         ]);
     }
 }

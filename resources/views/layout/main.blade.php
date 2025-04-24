@@ -38,6 +38,8 @@
     <link rel="stylesheet" href="{{ asset('assets/css/style.css') }}">
     <!-- endinject -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Include Toastr for nice notifications -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
 
 
 
@@ -225,13 +227,18 @@
                                     <span class="menu-title">Manage Users</span>
 
                                 </a>
+                                <a class="nav-link" href="{{ route('licen.index') }}">
+
+                                    <span class="menu-title">License</span>
+
+                                </a>
 
                     </li>
 
                 </ul>
 
 
-                
+
         </div>
         </li>
         @elseif (Auth::check() && Auth::user()->isBranch())
@@ -399,6 +406,7 @@
         </nav>
         <!-- partial -->
         @yield('content')
+        @yield('scripts')
         <!-- main-panel ends -->
     </div>
     <!-- page-body-wrapper ends -->
@@ -434,6 +442,10 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/dropzone/5.9.3/min/dropzone.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+    <!-- Add in the head section of your layout.main template -->
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 
     @if (session('success'))

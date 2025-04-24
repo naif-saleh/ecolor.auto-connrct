@@ -21,6 +21,7 @@ class ADialSkippedNumbers extends Model
         'uploaded_by',
         'provider_id',
         'feed_id',
+        'webhook_batch_id'
 
     ];
 }

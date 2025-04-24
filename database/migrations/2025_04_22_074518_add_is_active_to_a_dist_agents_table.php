@@ -11,12 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('a_dial_providers', function (Blueprint $table) {
-            $table->id();
-            $table->string('name');
-            $table->string('extension');
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
-            $table->timestamps();
+        Schema::table('a_dist_agents', function (Blueprint $table) {
+            $table->boolean('is_active')->default(false);
         });
     }
 
@@ -25,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('a_dial_providers');
+        Schema::table('a_dist_agents', function (Blueprint $table) {
+            $table->dropColumn('is_active');
+        });
     }
 };

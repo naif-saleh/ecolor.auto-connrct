@@ -3,76 +3,164 @@
 namespace App\Http\Controllers\AutoDailerByProvider;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Models\ActivityLog;
 use App\Models\ADialData;
 use App\Models\ADialFeed;
 use App\Models\ADialProvider;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Storage;
-use App\Models\ActivityLog;
+use App\Models\License;
+use App\Services\LicenseService;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ADialProviderFeedController extends Controller
 {
+    protected $licenseService;
 
-    //Auto Dialer Index
-    public function index()
+    public function __construct(LicenseService $licenseService)
     {
-        $providers = ADialProvider::paginate(30);
-        return view('autoDailerByProvider.Provider.index', compact('providers'));
+        $this->licenseService = $licenseService;
     }
 
-    //Create Provider
+    // Auto Dialer Index
+    public function index(LicenseService $licenseService)
+    {
+        $providers = ADialProvider::paginate(30);
+        $maxProviders = $licenseService->getMaxAutoDialerProvider();
+        $isLicenseValid = $licenseService->isLicenseValid();
+        $isLicenseExpaired = $licenseService->isLicenseExpaired();
+
+        return view('autoDailerByProvider.Provider.index', compact('providers', 'maxProviders', 'isLicenseValid', 'isLicenseExpaired'));
+    }
+
+    // Create Provider
     public function create()
     {
         return view('autoDailerByProvider.Provider.create');
     }
 
     // Store New Provider
-    public function store(Request $request)
+    public function store(Request $request, LicenseService $licenseService)
     {
         $request->validate([
             'name' => 'required|string|max:255|unique:a_dial_providers,name',
-            'extension' => 'nullable|string|max:50',
+            'extension' => 'required|string|max:50',
         ]);
 
+        DB::beginTransaction();
         try {
-            ADialProvider::create([
+            // Check license before creating provider
+            $licenseCheck = $this->checkLicense();
+
+            if ($licenseCheck !== true) {
+                DB::rollBack();
+
+                return response()->json([
+                    'status' => 'error',
+                    'message' => $licenseCheck,
+                ], 403);
+            }
+
+            // Create provider
+            $provider = ADialProvider::create([
                 'name' => $request->name,
                 'extension' => $request->extension,
-                'user_id' => auth()->id(), // Ensure the user is logged in
+                'user_id' => auth()->id(),
             ]);
-            // dd(Auth::user()->name);
-            // Active Log Report...............................
+
+            // Record the activity
             ActivityLog::create([
                 'user_id' => Auth::id(),
-                'operation' => Auth::user()->name . " created " . $request->name . " provider with extension " . $request->extension,
-                'file_type' => 'Auto-Dailer',
+                'operation' => Auth::user()->name.' created '.$request->name.' provider with extension '.$request->extension,
+                'file_type' => 'Auto-Dialer',
                 'file_name' => $request->name,
                 'operation_time' => now(),
             ]);
-            return redirect('/providers')->with('success', 'Provider Created Successfully');
+
+            // Update the available providers count in license
+            $licenseService->decrementProviderCount();
+
+            DB::commit();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Provider Created Successfully',
+            ]);
+
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Something went wrong: ' . $e->getMessage()], 500);
+            DB::rollBack();
+            report($e); // Log the error
+            Log::error('Provider creation failed: '.$e->getMessage());
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Provider could not be created: '.$e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Check license validity for provider creation
+     *
+     * @return bool|string True if license is valid, error message otherwise
+     */
+    private function checkLicense()
+    {
+        try {
+            // Check if license is valid (not expired and active)
+            if (! $this->licenseService->isLicenseValid()) {
+                if ($this->licenseService->isLicenseExpaired()) {
+                    return 'License expired. Please renew your license.';
+                }
+
+                if (! $this->licenseService->isLicenseActive()) {
+                    return 'License not activated. Please activate your license.';
+                }
+
+                return 'Your license is not valid. Please check your license status.';
+            }
+
+            // Get Auto Dialer module settings
+            $moduleSettings = $this->licenseService->getModuleSettings('auto_dialer_modules');
+
+            if (! $moduleSettings) {
+                return 'Auto Dialer module is not enabled in your license. Please upgrade.';
+            }
+
+            // Check if max providers limit is reached
+            $maxProviders = isset($moduleSettings['max_providers']) ? (int) $moduleSettings['max_providers'] : 0;
+
+            if ($maxProviders <= 0) {
+                return 'Maximum provider limit reached. Please upgrade your license.';
+            }
+
+            // All checks passed
+            return true;
+        } catch (\Exception $e) {
+            report($e); // Log the exception
+
+            return 'An error occurred while checking license. Please try again later.';
         }
     }
 
 
-    //Update Provider
+
+    // Update Provider
     public function updateProvider(Request $request, $id)
     {
         $request->validate([
-            'name' => 'required|string|max:255|unique:a_dial_providers,name,' . $id,
+            'name' => 'required|string|max:255|unique:a_dial_providers,name,'.$id,
             'extension' => 'nullable|string|max:50',
         ]);
 
         try {
             $provider = ADialProvider::findOrFail($id);
-            $comment = "Provider updated from " . $provider->name . " to " . $request->name .
-                " and from " . $provider->extension . " to "  . $request->extension . " By " . Auth::user()->name;
+            $comment = 'Provider updated from '.$provider->name.' to '.$request->name.
+                ' and from '.$provider->extension.' to '.$request->extension.' By '.Auth::user()->name;
 
             $provider->update([
                 'name' => $request->name,
@@ -90,21 +178,19 @@ class ADialProviderFeedController extends Controller
 
             return response()->json(['success' => 'Provider Updated Successfully']);
         } catch (\Exception $e) {
-            return response()->json(['error' => 'Something went wrong: ' . $e->getMessage()], 500);
+            return response()->json(['error' => 'Something went error: '.$e->getMessage()], 500);
         }
     }
 
-
-
-    //Create File For a Provider
+    // Create File For a Provider
     public function createFile(ADialProvider $provider)
     {
         $providers = ADialProvider::find($provider);
+
         return view('autoDailerByProvider.ProviderFeed.create', compact('provider'));
     }
 
-
-    //Store New File For a Provider
+    // Store New File For a Provider
     public function storeFile(Request $request, ADialProvider $provider)
     {
         $request->validate([
@@ -121,7 +207,7 @@ class ADialProviderFeedController extends Controller
         // Create a record for the file
         $file = ADialFeed::create([
             'file_name' => $request->file_name,
-            'slug' => Str::slug($request->file_name . '-' . time()),
+            'slug' => Str::slug($request->file_name.'-'.time()),
             'is_done' => false,
             'allow' => false,
             'from' => $request->from,
@@ -137,7 +223,7 @@ class ADialProviderFeedController extends Controller
         return redirect()->route('provider.files.index', $provider)->with('success', 'File added and data imported successfully!');
     }
 
-    //Proccessing CSV File Data
+    // Proccessing CSV File Data
     private function processCsvFile($filePath, $provider, $fileId)
     {
         $file = Storage::get($filePath);
@@ -147,7 +233,7 @@ class ADialProviderFeedController extends Controller
 
         foreach ($lines as $line) {
             $mobile = trim($line); // Assuming each line contains only a mobile number
-            Log::info('mobile executed at ' . $mobile);
+            Log::info('mobile executed at '.$mobile);
 
             if ($this->isValidMobile($mobile)) {
                 // If mobile is valid, add to batch data
@@ -160,7 +246,8 @@ class ADialProviderFeedController extends Controller
                 ];
             } else {
                 // Log invalid number and continue to the next one
-                Log::info('This mobile not valid ' . $mobile);
+                Log::info('This mobile not valid '.$mobile);
+
                 continue; // Skip invalid mobile and move to the next line
             }
 
@@ -171,22 +258,20 @@ class ADialProviderFeedController extends Controller
             }
         }
 
-
-
         // Insert remaining records
-        if (!empty($batchData)) {
+        if (! empty($batchData)) {
             ADialData::insert($batchData);
         }
     }
 
-    //Validate If Mobile Number is_KSA
+    // Validate If Mobile Number is_KSA
     private function isValidMobile($mobile)
     {
         // Validates Saudi mobile numbers in these formats:
         return preg_match('/^(9665[0-9]{8}|9050[0-9]{8}|505[0-9]{8})$/', $mobile);
     }
 
-    //Download File Data
+    // Download File Data
     // This method is used to download the mobile numbers from a specific file
     // It retrieves all mobile numbers associated with the file and creates a CSV response
     public function downloadFileData(Request $request, ADialProvider $provider, ADialFeed $file)
@@ -197,43 +282,41 @@ class ADialProviderFeedController extends Controller
         // Create CSV content
         $csvContent = "Mobile Number\n";
         foreach ($numbers as $number) {
-            $csvContent .= $number . "\n";
+            $csvContent .= $number."\n";
         }
 
         // Create a response with CSV headers
-        $filename = $file->file_name . '_export_' . date('Y-m-d') . '.csv';
+        $filename = $file->file_name.'_export_'.date('Y-m-d').'.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         return response($csvContent, 200, $headers);
     }
 
-
     // Display all files for a provider
     public function files(ADialProvider $provider)
     {
         $files = $provider->files()->orderBy('created_at', 'desc')->paginate(5);
+
         // Relationship defined in the provider model
         return view('autoDailerByProvider.ProviderFeed.feed', compact('provider', 'files'));
     }
 
-
-    //Show Data Inside File
+    // Show Data Inside File
     public function showFileContent($slug)
     {
         // Find the file by slug instead of using route model binding
         $file = ADialFeed::where('slug', $slug)->firstOrFail();
         $numbers = ADialData::where('feed_id', $file->id)->count();
-        $called = ADialData::where('feed_id', $file->id)->where('state', '!=' , 'new')->count();
+        $called = ADialData::where('feed_id', $file->id)->where('state', '!=', 'new')->count();
         $data = ADialData::where('feed_id', $file->id)->paginate(400);
 
         return view('autoDailerByProvider.ProviderFeed.show', compact('file', 'data', 'numbers', 'called'));
     }
 
-
-    //Update File : File_name, From, To, Date
+    // Update File : File_name, From, To, Date
     public function update(Request $request, $slug)
     {
         $request->validate([
@@ -244,9 +327,9 @@ class ADialProviderFeedController extends Controller
         ]);
 
         $file = ADialFeed::where('slug', $slug)->firstOrFail();
-        $comment = "feed update from " . $file->from . " to " . $request->from .
-            " and from to " . $file->to . " to "  . $request->to .
-            " and date to " . $file->date . " to "  . $request->date;
+        $comment = 'feed update from '.$file->from.' to '.$request->from.
+            ' and from to '.$file->to.' to '.$request->to.
+            ' and date to '.$file->date.' to '.$request->date;
 
         $file->update([
             'file_name' => $request->file_name,
@@ -257,7 +340,7 @@ class ADialProviderFeedController extends Controller
         // Active Log Report...............................
         ActivityLog::create([
             'user_id' => Auth::id(),
-            'operation' =>  $comment,
+            'operation' => $comment,
             'file_id' => $file->id,
             'file_type' => 'Auto-Dailer',
             'file_name' => $file->file_name,
@@ -267,10 +350,7 @@ class ADialProviderFeedController extends Controller
         return back()->with('success', 'File updated successfully');
     }
 
-
-
-
-    //Delete File with All Data
+    // Delete File with All Data
     public function destroy($slug)
     {
         try {
@@ -284,13 +364,16 @@ class ADialProviderFeedController extends Controller
         }
     }
 
-
-
     // Delete Provider with All Files
-    public function destroyProvider($id)
+    public function destroyProvider(ADialProvider $provider)
     {
-        $provider = ADialProvider::where('id', $id)->first();
         $provider->delete();
+        $this->licenseService->incrementProviderCount();
+
+        if (request()->ajax()) {
+            return response()->json(['success' => true, 'message' => 'Provider Deleted Successfully']);
+        }
+
         return back()->with('success', 'Provider Deleted Successfully');
     }
 
@@ -307,7 +390,7 @@ class ADialProviderFeedController extends Controller
         // Active Log Report...............................
         ActivityLog::create([
             'user_id' => Auth::id(),
-            'operation' => $file->allow ? 'Active' : "Inactive",
+            'operation' => $file->allow ? 'Active' : 'Inactive',
             'file_id' => $file->id,
             'file_type' => 'Auto-Dailer',
             'file_name' => $file->file_name,
@@ -317,6 +400,7 @@ class ADialProviderFeedController extends Controller
         if ($file->allow === false) {
             return back()->with('inactive', 'File is Disactivited ⚠️');
         }
+
         return back()->with('active', 'File is Activited ✅');
     }
 
@@ -332,8 +416,8 @@ class ADialProviderFeedController extends Controller
         if (($handle = fopen($request->file, 'r')) !== false) {
             $header = fgetcsv($handle);
 
-            if (!$header) {
-                return response()->json(['errors' => ["Failed to read the CSV header."]], 422);
+            if (! $header) {
+                return response()->json(['errors' => ['Failed to read the CSV header.']], 422);
             }
 
             DB::disableQueryLog();
@@ -344,13 +428,15 @@ class ADialProviderFeedController extends Controller
                 $firstRecord = true;
 
                 while (($data = fgetcsv($handle)) !== false) {
-                    if ($data === false) continue;
+                    if ($data === false) {
+                        continue;
+                    }
 
-                    list($mobile, $name, $extension, $from, $to, $date) = $data;
+                    [$mobile, $name, $extension, $from, $to, $date] = $data;
 
                     // Cache provider lookup (avoid duplicate queries)
-                    $providerKey = $name . '-' . $extension;
-                    if (!isset($providerCache[$providerKey])) {
+                    $providerKey = $name.'-'.$extension;
+                    if (! isset($providerCache[$providerKey])) {
                         $providerCache[$providerKey] = ADialProvider::firstOrCreate(
                             ['name' => $name, 'extension' => $extension],
                             ['user_id' => auth()->id()]
@@ -358,14 +444,15 @@ class ADialProviderFeedController extends Controller
                     }
                     $provider = $providerCache[$providerKey];
 
-                    if (!$provider) {
+                    if (! $provider) {
                         $errors[] = "Failed to find or create provider for extension: $extension";
+
                         continue;
                     }
 
                     // Cache feed lookup (avoid duplicate queries)
-                    $feedKey = $provider->id . '-' . $from . '-' . $to . '-' . $date;
-                    if (!isset($feedCache[$feedKey])) {
+                    $feedKey = $provider->id.'-'.$from.'-'.$to.'-'.$date;
+                    if (! isset($feedCache[$feedKey])) {
                         $feedCache[$feedKey] = ADialFeed::firstOrCreate(
                             [
                                 'provider_id' => $provider->id,
@@ -376,7 +463,7 @@ class ADialProviderFeedController extends Controller
                             [
                                 'file_name' => $name,
                                 'slug' => Str::uuid(),
-                                'uploaded_by' => auth()->id()
+                                'uploaded_by' => auth()->id(),
                             ]
                         );
                     }
@@ -388,13 +475,15 @@ class ADialProviderFeedController extends Controller
                         'mobile' => $mobile,
                         'state' => 'new',
                         'created_at' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ];
 
                     $successCount++;
 
-                    if (!$firstRecord) echo ",";
-                    echo json_encode(["mobile" => $mobile, "status" => "imported"]);
+                    if (! $firstRecord) {
+                        echo ',';
+                    }
+                    echo json_encode(['mobile' => $mobile, 'status' => 'imported']);
                     flush();
                     $firstRecord = false;
 
@@ -408,7 +497,7 @@ class ADialProviderFeedController extends Controller
                 }
 
                 // Insert any remaining records
-                if (!empty($dataBatch)) {
+                if (! empty($dataBatch)) {
                     DB::transaction(function () use (&$dataBatch) {
                         ADialData::insert($dataBatch);
                     });
@@ -416,13 +505,13 @@ class ADialProviderFeedController extends Controller
 
                 fclose($handle);
 
-                echo '], "summary": {"success": ' . $successCount . ', "errors": ' . json_encode($errors) . '}}';
+                echo '], "summary": {"success": '.$successCount.', "errors": '.json_encode($errors).'}}';
                 flush();
 
                 Log::info('CSV Import Completed Successfully', ['file' => request()->file->getClientOriginalName()]);
             }, 200, ['Content-Type' => 'application/json']);
         }
 
-        return response()->json(['errors' => ["Failed to open CSV file."]], 422);
+        return response()->json(['errors' => ['Failed to open CSV file.']], 422);
     }
 }

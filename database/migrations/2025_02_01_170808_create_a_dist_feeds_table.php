@@ -20,7 +20,7 @@ return new class extends Migration
             $table->boolean('allow')->default(false);
             $table->boolean('is_done')->default(false);
             $table->string('slug')->unique();
-            $table->unsignedBigInteger('uploaded_by');
+            $table->unsignedBigInteger('uploaded_by')->nullable();
             $table->unsignedBigInteger('agent_id');
             $table->foreign('agent_id')->references('id')->on('a_dist_agents')->onDelete('cascade');
             $table->foreign('uploaded_by')->references('id')->on('users')->onDelete('cascade');

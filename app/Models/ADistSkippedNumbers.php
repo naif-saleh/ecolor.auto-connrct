@@ -4,9 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
-class AdistSkippedNumbers extends Model
+class ADistSkippedNumbers extends Model
 {
-    /**
+   /**
      * The attributes that are mass assignable.
      *
      * These fields can be safely filled using mass assignment methods
@@ -21,10 +21,11 @@ class AdistSkippedNumbers extends Model
         'uploaded_by',
         'agent_id',
         'feed_id',
+        'webhook_batch_id',
 
     ];
 
-
+    protected $table = 'a_dist_skipped_numbers';
 
      /**
      * Define a relationship with the ADistFeed model.
@@ -39,5 +40,4 @@ class AdistSkippedNumbers extends Model
     {
         return $this->belongsTo(ADistAgent::class, 'id');
     }
-
 }

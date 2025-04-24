@@ -11,11 +11,11 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('a_dial_providers', function (Blueprint $table) {
+        Schema::create('licenses', function (Blueprint $table) {
             $table->id();
-            $table->string('name');
-            $table->string('extension');
-            $table->foreignId('user_id')->nullable()->constrained()->onDelete('cascade');
+            $table->string('key')->unique();
+            $table->text('value');
+            $table->text('description')->nullable();
             $table->timestamps();
         });
     }
@@ -25,6 +25,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('a_dial_providers');
+        Schema::dropIfExists('licenses');
     }
 };

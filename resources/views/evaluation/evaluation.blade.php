@@ -294,6 +294,7 @@
                         </tr>
                     </thead>
                     <tbody>
+                        @if($enabled)
                         @forelse ($reports as $index => $report)
                         <tr>
                             <td>{{ $reports->firstItem() + $index }}</td>
@@ -310,9 +311,22 @@
                         </tr>
                         @empty
                         <tr>
-                            <td colspan="5">No reports found for the given filter.</td>
+                            <td colspan="6" class="text-center">
+                                <span class="badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill fs-5">
+                                    No reports found for the given filter.
+                                </span>
+                            </td>
                         </tr>
                         @endforelse
+                        @else
+                        <tr>
+                            <td colspan="6" class="text-center">
+                                <span class="badge bg-warning-subtle border border-warning-subtle text-warning-emphasis rounded-pill fs-4">
+                                    You Have to Upgrade.
+                                </span>
+                            </td>
+                        </tr>
+                        @endif
                     </tbody>
                 </table>
             </div>
@@ -321,7 +335,7 @@
 
     <div class="pagination">
         {!! $reports->appends(request()->except('page'))->links('pagination::bootstrap-5') !!}
-        
+
     </div>
 </div>
 @endsection

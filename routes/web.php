@@ -1,18 +1,18 @@
 <?php
 
-use Illuminate\Support\Facades\Auth;
-use App\Http\Controllers\ProfileController;
-use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\UserController;
-use App\Http\Controllers\ReportController;
 use App\Http\Controllers\AutoDailerByProvider\ADialProviderFeedController;
 use App\Http\Controllers\AutoDistributerByUser\ADistAgentFeedController;
 use App\Http\Controllers\AutoDistributerByUser\AdistFeedController;
-
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\HomeController;
 use App\Http\Controllers\ManagerReportController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ReportController;
 use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\UserController;
+use App\Http\Controllers\Webhook\AdialWebhookController;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Route;
 
 /**
  * Root Route Handling
@@ -27,9 +27,6 @@ use App\Http\Controllers\SettingsController;
  * - Regular User → Redirects to the evaluation page.
  * - Unauthenticated → Shows the login page.
  */
-
-
-
 Route::get('/', function () {
     if (Auth::check()) {
         $user = Auth::user();
@@ -51,8 +48,7 @@ Route::get('/', function () {
 
 // Ensure the index route is defined outside the condition
 
-
-Route::get('/error',  function () {
+Route::get('/error', function () {
     return view('404');
 });
 
@@ -75,7 +71,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
      * - GET /users/create → Show user creation form.
      * - POST /users → Store a new user.
      */
-
     Route::get('users', [UserController::class, 'index'])->name('users.system.index');
     Route::get('users/{user}/edit', [UserController::class, 'edit'])->name('users.edit');
     Route::put('users/{user}', [UserController::class, 'update'])->name('users.update');
@@ -84,11 +79,15 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('users/create', [UserController::class, 'create'])->name('users.create');
     Route::post('users', [UserController::class, 'store'])->name('users.store');
 
-    //Settings....
+    // Settings....
     Route::get('/settings/update-time-calls', [SettingsController::class, 'index'])->name('settings.index');
     Route::post('/settings', [SettingsController::class, 'updateBlockTime'])->name('settings.update');
 
     Route::get('/settings/update-count-calls', [SettingsController::class, 'indexCountCall'])->name('settings.indexCountNumbers');
+
+    // License
+    Route::get('license/manage', [SettingsController::class, 'licenseForm'])->name('licen.index');
+
     /**
      * Auto Dialer Provider Routese
      *
@@ -112,7 +111,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/provider/store', [ADialProviderFeedController::class, 'store'])->name('providers.store');
     Route::get('/provider/create', [ADialProviderFeedController::class, 'create'])->name('providers.create');
     Route::put('/providers/{id}/update', [ADialProviderFeedController::class, 'updateProvider'])->name('providers.update');
-    Route::delete('/provider/{id}/destroy', [ADialProviderFeedController::class, 'destroyProvider'])->name('providers.delete');
+    Route::delete('/providers/{provider}', [ADialProviderFeedController::class, 'destroyProvider'])->name('providers.delete');
     Route::get('/providers/{provider}/feed/create', [ADialProviderFeedController::class, 'createFile'])->name('provider.files.create');
     Route::post('/providers/{provider}/feed/store', [ADialProviderFeedController::class, 'storeFile'])->name('provider.files.store');
     Route::get('/providers/{provider}/feeds', [ADialProviderFeedController::class, 'files'])->name('provider.files.index');
@@ -120,9 +119,9 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::put('/auto-dailer/{slug}', [ADialProviderFeedController::class, 'update'])->name('autoDailer.update');
     Route::get('/providers/feeds/{slug}', [ADialProviderFeedController::class, 'showFileContent'])->name('provider.files.show');
     Route::post('/providers/feeds/{slug}/allow', [ADialProviderFeedController::class, 'updateAllowStatus'])->name('autodailers.files.allow');
-    //Import CSV File Using Drop Zone
+    // Import CSV File Using Drop Zone
     Route::post('/providers/feeds/upload-file', [ADialProviderFeedController::class, 'importCsvData'])->name('autodailers.file.csv.dropzone.upload');
-    //Download File Numbers
+    // Download File Numbers
     Route::get('provider/{provider}/files/{file}/download', [ADialProviderFeedController::class, 'downloadFileData'])->name('provider.files.download');
 
     /**
@@ -140,6 +139,13 @@ Route::middleware(['auth', 'admin'])->group(function () {
      * - POST /agents/{agent}/feed/store → Store a new feed for an agent.
      * - POST /agents/feeds/{slug}/allow → Update allow status for an agent's feed.
      */
+
+
+    Route::prefix('auto-distributor')->name('auto-distributor.')->group(function () {
+        Route::get('/', [ADistAgentFeedController::class, 'index'])->name('index');
+        Route::post('/toggle-agent', [ADistAgentFeedController::class, 'toggleAgentStatus'])->name('toggle-agent');
+        // Other existing routes...
+    });
     Route::get('/agents', [ADistAgentFeedController::class, 'index'])->name('users.index');
     Route::get('/agents/{agent}/feeds', [ADistAgentFeedController::class, 'files'])->name('users.files.index');
     Route::get('/agents/feeds/{slug}', [ADistAgentFeedController::class, 'showFileContent'])->name('users.files.show');
@@ -148,13 +154,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::post('/agents/feeds/{slug}/allow', [ADistAgentFeedController::class, 'updateAllowStatus'])->name('users.files.allow');
     Route::put('/agents/feed/{slug}', [ADistAgentFeedController::class, 'update'])->name('users.feed.update');
     Route::delete('/agent/feed/{slug}', [ADistAgentFeedController::class, 'destroy'])->name('users.feed.delete');
-    //Import CSV File Using Drop Zone
+    // Import CSV File Using Drop Zone
     Route::post('/agents/feeds/upload-file', [ADistAgentFeedController::class, 'importCsvData'])->name('users.file.csv.dropzone.upload');
     Route::get('agent/files/{slug}/download-skipped-numbers', [ADistAgentFeedController::class, 'downloadSkippedNumbers'])->name('users.files.downloadSkippedNumbers');
-    //Download File Numbers
+    // Download File Numbers
     Route::get('agent/{agent}/files/{file}/download', [ADistAgentFeedController::class, 'downloadFileData'])->name('agent.files.download');
-     
-
 
     Route::get('/today-feeds', [ADistFeedController::class, 'getTodayFeeds']);
     Route::post('/update-feed-status', [ADistFeedController::class, 'updateFeedStatus']);
@@ -170,10 +174,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('manager/auto-distributor/report-providers', [ManagerReportController::class, 'distributorReportsProviders'])->name('manager.autodistributor.report.providers');
     // Auto Distributer Compagin...............
     Route::get('manager/auto-distributor/report-compagin', [ManagerReportController::class, 'distributorReportsCompaign'])->name('manager.autodistributor.report.compaign');
-
-
-
-
 
     // // Dashboard Statistics....................................................................................................................
     Route::get('/dashboard-calls', [DashboardController::class, 'index'])->name('calls.dashboard');
@@ -191,7 +191,6 @@ Route::middleware(['auth', 'admin'])->group(function () {
     Route::get('dial/not-called/export-today-csv', [ReportController::class, 'dialexportTodayNotCalledCSV'])
         ->name('auto_dailer.report.notCalled.exportTodayCSV');
 
-
     // // Auto Distributer Reports....................................................................................................................
     Route::get('auto-distributer-report', [ReportController::class, 'AutoDistributerReports'])->name('auto_distributer.report');
     // // Export Auto Distributer...........................................................................................................
@@ -205,14 +204,11 @@ Route::middleware(['auth', 'admin'])->group(function () {
     //    Manager Dashboard........................................................................................................
     Route::get('manager/dashboard', [DashboardController::class, 'getCallManagerStatisticsAutoDailer'])->name('manager.dashboard');
 
-
     // Evaluation..............................................................................................................
     // Auto Dailer
     Route::get('reports/evaluation', [ReportController::class, 'Evaluation'])->name('evaluation');
     Route::get('reports/evaluation/export', [ReportController::class, 'exportEvaluation'])->name('evaluation.export');
 });
-
-
 
 // Dashboard...................................................................................................................................
 // Route::get('/dashboard', function () {
@@ -225,4 +221,4 @@ Route::middleware(['auth'])->group(function () {
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__ . '/auth.php';
+require __DIR__.'/auth.php';

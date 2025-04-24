@@ -11,13 +11,13 @@ return new class extends Migration
      */
     public function up(): void
     {
-        Schema::create('adist_skipped_numbers', function (Blueprint $table) {
+        Schema::create('a_dist_skipped_numbers', function (Blueprint $table) {
             $table->id();
             $table->string('mobile');
             $table->string('message');
             $table->string('agent_id');
             $table->string('feed_id');
-            $table->unsignedBigInteger('uploaded_by');
+            $table->unsignedBigInteger('uploaded_by')->nullable();
 
             $table->foreign('uploaded_by')->references('id')->on('users')->onDelete('cascade');
             $table->timestamps();
@@ -29,6 +29,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('adist_skipped_numbers');
+        Schema::dropIfExists('a_dist_skipped_numbers');
     }
 };

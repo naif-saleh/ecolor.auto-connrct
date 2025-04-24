@@ -30724,3 +30724,156 @@ dl li {
     font-weight: bold;
     margin: 0;
 }
+
+
+/* Providers Styles */
+     .provider-card {
+         border-radius: 8px;
+         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+         transition: all 0.3s ease;
+     }
+
+     .provider-card:hover {
+         transform: translateY(-5px);
+         box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+     }
+
+     .action-btn {
+         margin: 0 3px;
+         border-radius: 4px;
+         transition: all 0.2s;
+     }
+
+     .action-btn:hover {
+         transform: scale(1.05);
+     }
+
+     .header-section {
+         background-color: #f8f9fa;
+         border-radius: 8px;
+         padding: 20px;
+         margin-bottom: 20px;
+     }
+
+     .btn-action-group {
+         display: flex;
+         align-items: center;
+         gap: 10px;
+         flex-wrap: wrap;
+         margin-bottom: 15px;
+     }
+
+     .table-container {
+         background-color: white;
+         border-radius: 8px;
+         padding: 20px;
+         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+     }
+
+     .table th {
+         background-color: #f8f9fa;
+         border-bottom: 2px solid #dee2e6;
+     }
+
+     .pagination-wrapper .page-item.active .page-link {
+         background-color: #343a40;
+         border-color: #343a40;
+     }
+
+     .pagination-wrapper .page-link {
+         color: #343a40;
+     }
+
+     .license-alert {
+         border-radius: 8px;
+         border-left: 4px solid;
+     }
+
+     .license-alert.info {
+         border-left-color: #17a2b8;
+     }
+
+     .license-alert.warning {
+         border-left-color: #ffc107;
+     }
+
+     .license-alert.danger {
+         border-left-color: #dc3545;
+     }
+
+     .btn-icon {
+         display: inline-flex;
+         align-items: center;
+         justify-content: center;
+     }
+
+     .btn-icon i {
+         margin-right: 8px;
+     }
+
+     /* Custom upload progress bar */
+     #uploadProgress {
+         height: 10px;
+         background: #f3f3f3;
+         border-radius: 20px;
+         overflow: hidden;
+         margin-top: 15px;
+     }
+
+     #uploadProgressBar {
+         height: 100%;
+         background: linear-gradient(90deg, #4caf50, #8bc34a);
+         border-radius: 20px;
+         transition: width 0.3s ease;
+     }
+
+     /* Make the table responsive on mobile */
+     @media (max-width: 768px) {
+         .table-responsive {
+             overflow-x: auto;
+         }
+
+         .btn-action-group {
+             justify-content: center;
+         }
+     }
+
+     /* Action buttons styling */
+.action-btn {
+    width: 36px;
+    height: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    margin: 0 2px;
+    border: none;
+    border-radius: 0;
+}
+
+.btn-add {
+    background-color: #212529;
+    color: white;
+}
+
+.btn-view {
+    background-color: #17a2b8;
+    color: white;
+}
+
+.btn-edit {
+    background-color: #ffc107;
+    color: #212529;
+}
+
+.btn-delete {
+    background-color: #dc3545;
+    color: white;
+}
+
+/* Action buttons container for proper alignment */
+td .action-buttons {
+    display: flex;
+    justify-content: center;
+}
+

@@ -3,48 +3,141 @@
 namespace App\Http\Controllers\AutoDistributerByUser;
 
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
-use App\Models\ADistFeed;
+use App\Models\ActivityLog;
 use App\Models\ADistAgent;
 use App\Models\ADistData;
-use App\Models\AdistSkippedNumbers;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
+use App\Models\ADistFeed;
+use App\Models\ADistSkippedNumbers;
+use App\Services\LicenseService;
 use App\Services\TokenService;
-use Illuminate\Support\Facades\Storage;
-use App\Models\ActivityLog;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Response;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class ADistAgentFeedController extends Controller
 {
-
-    //Identify token to get token from tokenService
+    // Identify token to get token from tokenService
     protected $tokenService;
 
-    //class constructor
+    // class constructor
     public function __construct(TokenService $tokenService)
     {
         $this->tokenService = $tokenService;
     }
 
-    //Auto Distributor Index
-    public function index()
+    // Auto Distributor Index
+    // Auto Distributor Controller
+
+    // Show the agents with selection functionality
+    public function index(LicenseService $licenseService)
     {
-        $agents = ADistAgent::all();
-        return view('autoDistributerByUser.Agent.index', compact('agents'));
+        // Get all agents from database
+        $allAgents = ADistAgent::all();
+        $totalAgents = $allAgents->count();
+
+        // Get max agents allowed from license
+        $maxAgents = $licenseService->getMaxAutoDistributorAgents();
+        $licenseInfo = $licenseService->getLicenseInfo();
+        $isLicenseValid = $licenseService->isLicenseValid();
+
+        // Get currently active agents
+        $activeAgents = ADistAgent::where('is_active', true)->get();
+        $activeAgentsCount = $activeAgents->count();
+
+        // Initialize error variable
+        $error = null;
+
+        // Check license validity
+        if (! $isLicenseValid) {
+            $error = 'Your license is not active or has expired.';
+        } elseif ($maxAgents <= 0) {
+            $error = 'Auto Distributor module is not enabled or your license does not allow any agents.';
+        }
+
+        // Pass data to view
+        return view('autoDistributerByUser.Agent.index', compact(
+            'allAgents',
+            'activeAgents',
+            'activeAgentsCount',
+            'totalAgents',
+            'maxAgents',
+            'licenseInfo',
+            'isLicenseValid',
+            'error'
+        ));
     }
 
-    //Create File For an Agent
+    // Handle agent activation/deactivation via AJAX
+    public function toggleAgentStatus(Request $request, LicenseService $licenseService)
+    {
+        $agentId = $request->input('agent_id');
+        $activate = filter_var($request->input('activate', true), FILTER_VALIDATE_BOOLEAN);
+
+        // Get max agents allowed from license
+        $maxAgents = $licenseService->getMaxAutoDistributorAgents();
+
+        // Find the agent
+        $agent = ADistAgent::findOrFail($agentId);
+
+        // Get current status before changing it
+        $wasActive = $agent->is_active;
+
+        // Count current active agents
+        $activeAgentsCount = ADistAgent::where('is_active', true)->count();
+
+        // Only show error message when maxAgents = 0
+        if ($activate && ! $wasActive) {
+            if ($maxAgents == 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'License limit reached. Maximum 2 agents allowed. Please upgrade your license to activate more agents.',
+                    'activeCount' => $activeAgentsCount,
+                    'maxAllowed' => 2,
+                    'showError' => true,
+                ], 422);
+            }
+        }
+
+        // Set new status
+        $agent->is_active = $activate;
+
+        // Only modify the count if status is actually changing
+        if ($wasActive !== $activate) {
+            if ($activate) {
+                // Activating: decrease available count
+                $licenseService->decrementAgentCount();
+            } else {
+                // Deactivating: increase available count
+                $licenseService->incrementAgentCount();
+            }
+        }
+
+        $agent->save();
+
+        // Get updated count
+        $newActiveCount = ADistAgent::where('is_active', true)->count();
+
+        return response()->json([
+            'success' => true,
+            'message' => $activate ? 'Agent activated successfully.' : 'Agent deactivated successfully.',
+            'activeCount' => $newActiveCount,
+            'maxAllowed' => $maxAgents,
+            'showError' => false,
+        ]);
+    }
+
+    // Create File For an Agent
     public function createFile(ADistAgent $agent)
     {
         return view('autoDistributerByUser.AgentFeed.create', compact('agent'));
     }
 
-
-    //Store New File For an Agent
+    // Store New File For an Agent
     public function storeFile(Request $request, ADistAgent $agent)
     {
 
@@ -62,7 +155,7 @@ class ADistAgentFeedController extends Controller
         // Create a record for the file
         $file = ADistFeed::create([
             'file_name' => $request->file_name,
-            'slug' => Str::slug($request->file_name . '-' . time()),
+            'slug' => Str::slug($request->file_name.'-'.time()),
             'is_done' => false,
             'allow' => false,
             'from' => $request->from,
@@ -78,7 +171,7 @@ class ADistAgentFeedController extends Controller
         return redirect()->route('users.index', $file)->with('success', 'File added and data imported successfully!');
     }
 
-    //Proccessing CSV File Data
+    // Proccessing CSV File Data
     private function processCsvFile($filePath, $agent, $fileId)
     {
         $file = Storage::get($filePath);
@@ -99,7 +192,8 @@ class ADistAgentFeedController extends Controller
                 ];
             } else {
                 Log:
-                info('Mobile Number is Invalid: ' . $mobile);
+                info('Mobile Number is Invalid: '.$mobile);
+
                 continue;
             }
 
@@ -111,12 +205,12 @@ class ADistAgentFeedController extends Controller
         }
 
         // Insert remaining records
-        if (!empty($batchData)) {
+        if (! empty($batchData)) {
             ADistData::insert($batchData);
         }
     }
 
-    //Validate If Mobile Number is_KSA
+    // Validate If Mobile Number is_KSA
     private function isValidMobile($mobile)
     {
         return preg_match('/^9665[0-9]{8}$/', $mobile); // Validates Saudi mobile numbers
@@ -126,10 +220,11 @@ class ADistAgentFeedController extends Controller
     public function files(ADistAgent $agent)
     {
         $feeds = $agent->files()->orderBy('created_at', 'desc')->paginate(10);
+
         return view('autoDistributerByUser.AgentFeed.feed', compact('agent', 'feeds'));
     }
 
-    //Download File Data
+    // Download File Data
     // This method is used to download the mobile numbers from a specific file
     // It retrieves all mobile numbers associated with the file and creates a CSV response
     public function downloadFileData(Request $request, ADistAgent $agent, ADistFeed $file)
@@ -140,14 +235,14 @@ class ADistAgentFeedController extends Controller
         // Create CSV content
         $csvContent = "Mobile Number\n";
         foreach ($numbers as $number) {
-            $csvContent .= $number . "\n";
+            $csvContent .= $number."\n";
         }
 
         // Create a response with CSV headers
-        $filename = $file->file_name . '_export_' . date('Y-m-d') . '.csv';
+        $filename = $file->file_name.'_export_'.date('Y-m-d').'.csv';
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         return response($csvContent, 200, $headers);
@@ -155,22 +250,22 @@ class ADistAgentFeedController extends Controller
 
     public function downloadSkippedNumbers($slug)
     {
-         $file = ADistFeed::where('slug', $slug)->firstOrFail();
+        $file = ADistFeed::where('slug', $slug)->firstOrFail();
 
-         $skippedNumbers = AdistSkippedNumbers::where('feed_id', $file->id)->get();
+        $skippedNumbers = ADistSkippedNumbers::where('feed_id', $file->id)->get();
 
         if ($skippedNumbers->isEmpty()) {
             return redirect()->back()->with('error', 'No skipped numbers found for this file.');
         }
 
-         $csvHeader = ['Mobile', 'Extension'];  // Define the columns of the CSV
+        $csvHeader = ['Mobile', 'Extension'];  // Define the columns of the CSV
         $csvData = [];
 
         foreach ($skippedNumbers as $skippedNumber) {
             $csvData[] = [$skippedNumber->mobile, $skippedNumber->extension];
         }
 
-         $filename = "skipped_numbers_{$file->slug}.csv";
+        $filename = "skipped_numbers_{$file->slug}.csv";
         $handle = fopen('php://output', 'w');
         fputcsv($handle, $csvHeader);
 
@@ -180,7 +275,7 @@ class ADistAgentFeedController extends Controller
 
         fclose($handle);
 
-         return Response::stream(
+        return Response::stream(
             function () use ($csvData) {
                 $handle = fopen('php://output', 'w');
                 fputcsv($handle, $csvHeader);
@@ -191,20 +286,19 @@ class ADistAgentFeedController extends Controller
             },
             200,
             [
-                "Content-Type" => "text/csv",
-                "Content-Disposition" => "attachment; filename={$filename}",
+                'Content-Type' => 'text/csv',
+                'Content-Disposition' => "attachment; filename={$filename}",
             ]
         );
     }
 
-
-    //Show Data Inside File
+    // Show Data Inside File
     public function showFileContent($slug)
     {
         // Find the file by slug instead of using route model binding
         $file = ADistFeed::where('slug', $slug)->firstOrFail();
         $numbers = ADistData::where('feed_id', $file->id)->count();
-        $called = ADistData::where('feed_id', $file->id)->where('state', '!=' , 'new')->count();
+        $called = ADistData::where('feed_id', $file->id)->where('state', '!=', 'new')->count();
         $data = ADistData::where('feed_id', $file->id)->paginate(400);
 
         return view('autoDistributerByUser.AgentFeed.show', compact('file', 'data', 'numbers', 'called'));
@@ -222,7 +316,7 @@ class ADistAgentFeedController extends Controller
         // Active Log Report...............................
         ActivityLog::create([
             'user_id' => Auth::id(),
-            'operation' => $file->allow ? 'Active' : "Inactive",
+            'operation' => $file->allow ? 'Active' : 'Inactive',
             'file_id' => $file->id,
             'file_type' => 'Auto-Dist',
             'file_name' => $file->file_name,
@@ -232,10 +326,11 @@ class ADistAgentFeedController extends Controller
         if ($file->allow === false) {
             return back()->with('inactive', 'File is Disactivited ⚠️');
         }
+
         return back()->with('active', 'File is Activited ✅');
     }
 
-    //Update File : File_name, From, To, Date
+    // Update File : File_name, From, To, Date
     public function update(Request $request, $slug)
     {
         $request->validate([
@@ -257,8 +352,7 @@ class ADistAgentFeedController extends Controller
         return back()->with('success', 'File updated successfully');
     }
 
-
-    //Delete File with All Data
+    // Delete File with All Data
     public function destroy($slug)
     {
         try {
@@ -284,47 +378,53 @@ class ADistAgentFeedController extends Controller
         if (($handle = fopen($request->file, 'r')) !== false) {
             $header = fgetcsv($handle);
 
-            if (!$header) {
-                return response()->json(['errors' => ["Failed to read the CSV header."]], 422);
+            if (! $header) {
+                return response()->json(['errors' => ['Failed to read the CSV header.']], 422);
             }
 
             DB::disableQueryLog();
             Log::info('CSV Import Started', ['file' => $request->file->getClientOriginalName()]);
 
-            // Preload valid extensions
-            $existingExtensions = ADistAgent::pluck('extension')->flip()->toArray();
+            // Preload ONLY active agents
+            $activeAgents = ADistAgent::where('is_active', true)->pluck('extension', 'id')->toArray();
+            $activeExtensions = array_flip($activeAgents);
             $seenNumbers = [];
 
             while (($data = fgetcsv($handle)) !== false) {
-                if ($data === false) continue;
+                if ($data === false) {
+                    continue;
+                }
 
-                list($mobile, $name, $extension, $from, $to, $date) = $data;
+                [$mobile, $name, $extension, $from, $to, $date] = $data;
 
-                // Check if extension is valid
-                if (!isset($existingExtensions[$extension])) {
-                    $skippedNumbers[] = "$mobile - ⚠️ Agent Not Found (Ext: $extension)";
+                // Check if extension is valid AND agent is active
+                if (! isset($activeExtensions[$extension])) {
+                    $skippedNumbers[] = "$mobile - ⚠️ Agent Not Found or Inactive (Ext: $extension)";
+
                     continue;
                 }
 
                 // Validate mobile number (only numeric)
-                if (!preg_match('/^\d+$/', $mobile)) {
+                if (! preg_match('/^\d+$/', $mobile)) {
                     $skippedNumbers[] = "$mobile - ❌ Contains non-numeric characters";
+
                     continue;
                 }
 
                 // Check for duplicate mobile numbers
                 if (isset($seenNumbers[$mobile])) {
                     $skippedNumbers[] = "$mobile - 🔁 Duplicate Entry in CSV";
+
                     continue;
                 }
                 $seenNumbers[$mobile] = true;
 
+                // Get agent ID from our preloaded active agents
+                $agentId = array_search($extension, $activeAgents);
+
                 // Cache agent lookup (avoid repeated queries)
-                if (!isset($agentCache[$extension])) {
-                    $agentCache[$extension] = ADistAgent::firstOrCreate(
-                        ['extension' => $extension],
-                        ['user_id' => auth()->id()]
-                    );
+                if (! isset($agentCache[$extension])) {
+                    $agentCache[$extension] = ADistAgent::find($agentId);
                 }
                 $agent = $agentCache[$extension];
 
@@ -335,16 +435,15 @@ class ADistAgentFeedController extends Controller
 
                 // Cache feed lookup (avoid repeated queries)
                 $feedKey = "{$agent->id}-{$fromFormatted}-{$toFormatted}-{$dateFormatted}";
-                if (!isset($feedCache[$feedKey])) {
-                    $feedCache[$feedKey] = ADistFeed::firstOrCreate([
+                if (! isset($feedCache[$feedKey])) {
+                    $feedCache[$feedKey] = ADistFeed::create([
                         'agent_id' => $agent->id,
                         'from' => $fromFormatted,
                         'to' => $toFormatted,
                         'date' => $dateFormatted,
-                    ], [
                         'file_name' => $name,
                         'slug' => Str::uuid(),
-                        'uploaded_by' => auth()->id()
+                        'uploaded_by' => auth()->id(),
                     ]);
                 }
                 $feed = $feedCache[$feedKey];
@@ -355,7 +454,7 @@ class ADistAgentFeedController extends Controller
                     'mobile' => $mobile,
                     'state' => 'new',
                     'created_at' => now(),
-                    'updated_at' => now()
+                    'updated_at' => now(),
                 ];
                 $successCount++;
 
@@ -369,7 +468,7 @@ class ADistAgentFeedController extends Controller
             }
 
             // Insert remaining records
-            if (!empty($validRows)) {
+            if (! empty($validRows)) {
                 DB::transaction(function () use (&$validRows) {
                     ADistData::insert($validRows);
                 });
@@ -378,10 +477,10 @@ class ADistAgentFeedController extends Controller
             fclose($handle);
 
             // Bulk insert skipped numbers instead of looping
-            if (!empty($skippedNumbers)) {
+            if (! empty($skippedNumbers)) {
                 $skippedInsertData = [];
                 foreach ($skippedNumbers as $skipped) {
-                    list($mobile, $message) = explode(' - ', $skipped);
+                    [$mobile, $message] = explode(' - ', $skipped);
                     preg_match('/(Ext: \d+)/', $message, $matches);
                     $extension = $matches[0] ?? null;
 
@@ -392,13 +491,13 @@ class ADistAgentFeedController extends Controller
                         'agent_id' => $feed->agent_id ?? null,
                         'feed_id' => $feed->id ?? null,
                         'created_at' => now(),
-                        'updated_at' => now()
+                        'updated_at' => now(),
                     ];
                 }
 
-                if (!empty($skippedInsertData)) {
+                if (! empty($skippedInsertData)) {
                     DB::transaction(function () use ($skippedInsertData) {
-                        AdistSkippedNumbers::insert($skippedInsertData);
+                        ADistSkippedNumbers::insert($skippedInsertData);
                     });
                 }
             }
@@ -407,13 +506,10 @@ class ADistAgentFeedController extends Controller
 
             return response()->json([
                 'message' => "$successCount records imported successfully!",
-                'skippedNumbers' => $skippedNumbers
+                'skippedNumbers' => $skippedNumbers,
             ], 200);
         }
 
-        return response()->json(['errors' => ["Failed to open CSV file."]], 422);
+        return response()->json(['errors' => ['Failed to open CSV file.']], 422);
     }
-
-
-
 }
