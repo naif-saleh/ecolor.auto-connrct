@@ -62,19 +62,19 @@
                                 <td>
                                     <div>
                                         <span
-                                            class="{{ $file->is_done == false ? 'badge bg-secondary text-white rounded-pill' : ($file->is_done === 'calling' ? 'badge bg-primary text-white rounded-pill' : ($file->is_done === 'not_called' ? 'badge bg-danger text-white rounded-pill' : 'badge bg-success text-white rounded-pill')) }}">
-                                            <i
-                                                class="{{ $file->is_done == false ? 'fa-solid fa-circle' : ($file->is_done === 'calling' ? 'fa-solid fa-phone' : ($file->is_done === 'not_called' ? 'fa-solid fa-times-circle' : 'fa-solid fa-check-circle')) }}"></i>
-                                            @if ($file->is_done == false)
-                                                Not Started
-                                            @elseif ($file->is_done === 'calling')
-                                                Calling
-                                            @elseif ($file->is_done === 'not_called')
-                                                Not Completed
-                                            @elseif ($file->is_done === 'called')
-                                                Completed
-                                            @endif
-                                        </span>
+                                        class="{{ $file->is_done == false || $file->is_done == 0 || $file->is_done == 'false' ? 'badge bg-secondary text-white rounded-pill' : ($file->is_done === 'calling' ? 'badge bg-primary text-white rounded-pill' : ($file->is_done === 'not_called' ? 'badge bg-danger text-white rounded-pill' : 'badge bg-success text-white rounded-pill')) }}">
+                                        <i
+                                            class="{{ $file->is_done == false ? 'fa-solid fa-circle' : ($file->is_done === 'calling' ? 'fa-solid fa-phone' : ($file->is_done === 'not_called' ? 'fa-solid fa-times-circle' : 'fa-solid fa-check-circle')) }}"></i>
+                                        @if ($file->is_done == false || $file->is_done == 0 || $file->is_done == 'false')
+                                            Not Started
+                                        @elseif ($file->is_done === 'calling')
+                                            Calling ...
+                                        @elseif ($file->is_done === 'not_called')
+                                            Not Completed
+                                        @elseif ($file->is_done === 'called')
+                                            Completed
+                                        @endif
+                                    </span>
                                     </div>
                                 </td>
                                 </td>

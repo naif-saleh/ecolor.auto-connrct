@@ -59,11 +59,17 @@ class ApiController extends Controller
                 'required',
                 'string',
                 'regex:/^[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}-[A-Z0-9]{5}$/',
+
             ],
         ]);
 
         if ($validate->fails()) {
             return redirect()->back()->with('error', 'Invalid license key format.')->withInput();
+        }
+
+        $old_license_key = License::get('license_key');
+        if ($old_license_key === $request->license_key) {
+            return redirect()->back()->with('error', 'License key is already used');
         }
 
         try {

@@ -16,6 +16,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // Register your custom route middleware here
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'activAgent' => App\Http\Middleware\ActiveAgents::class,
             'api' => [
                 \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
                 'throttle:api',

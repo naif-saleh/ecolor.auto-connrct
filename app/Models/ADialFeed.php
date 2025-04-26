@@ -28,7 +28,8 @@ class ADialFeed extends Model
         'to',
         'date',
         'uploaded_by',
-        'provider_id'
+        'provider_id',
+        'webhook_batch_id'
     ];
 
 

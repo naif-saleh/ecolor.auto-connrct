@@ -48,6 +48,7 @@ class AdistWebhookController extends Controller
             'total_numbers' => count($data),
             'is_last_batch' => $isLastBatch,
             'status' => 'received',
+            'user_id' => auth()->id() ?? 1,
             'received_at' => now(),
         ]);
 
@@ -95,5 +96,5 @@ class AdistWebhookController extends Controller
         ]);
     }
 
-    
+
 }

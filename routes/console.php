@@ -39,6 +39,9 @@ Schedule::command('app:ADist-participants-command')->everySecond();
 // // Update User Status Commands
 Schedule::command('app:ADist-update-user-status-command')->everySecond();
 
+// Check Lisense If License is Expaired
+Schedule::command('app:check-is-license-valid')->everySecond();
+
 
 
 // BackUp Command

@@ -363,7 +363,7 @@ class LicenseService
 
                 if (is_array($dialer_data) && isset($dialer_data['max_providers'])) {
                     // Increment provider count
-                    $dialer_data['max_providers'] = (int) $dialer_data['max_providers'] + 1;
+                    (int) $dialer_data['max_providers'] ++;
 
                     // Update the license data while preserving all other properties
                     DB::table('licenses')

@@ -147,7 +147,7 @@ Route::middleware(['auth', 'admin'])->group(function () {
         // Other existing routes...
     });
     Route::get('/agents', [ADistAgentFeedController::class, 'index'])->name('users.index');
-    Route::get('/agents/{agent}/feeds', [ADistAgentFeedController::class, 'files'])->name('users.files.index');
+    Route::get('/agents/{agent}/feeds', [ADistAgentFeedController::class, 'files'])->middleware(['activAgent'])->name('users.files.index');
     Route::get('/agents/feeds/{slug}', [ADistAgentFeedController::class, 'showFileContent'])->name('users.files.show');
     Route::get('/agents/{agent}/feed/create', [ADistAgentFeedController::class, 'createFile'])->name('users.files.create');
     Route::post('/agents/{agent}/feed/store', [ADistAgentFeedController::class, 'storeFile'])->name('users.files.store');

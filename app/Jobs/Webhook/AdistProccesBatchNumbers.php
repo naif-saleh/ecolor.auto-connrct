@@ -68,8 +68,8 @@ class AdistProccesBatchNumbers implements ShouldQueue
             $activeExtensions = array_flip($activeAgents);
 
             foreach ($this->data as $item) {
-                $mobile = $item['mobile'];
-                $name = $item['name'] ?? '';
+                $mobile = htmlspecialchars($item['mobile']);
+                $name = htmlspecialchars($item['name'])  ?? '';
                 $extension = $item['extension'];
                 $from = $item['from'];
                 $to = $item['to'];
@@ -119,9 +119,9 @@ class AdistProccesBatchNumbers implements ShouldQueue
                         'from' => $fromFormatted,
                         'to' => $toFormatted,
                         'date' => $dateFormatted,
-                        'file_name' => $name,
+                        'file_name' => htmlspecialchars($name),
                         'slug' => Str::uuid(),
-                        'uploaded_by' => 1,
+                        'uploaded_by' => $this->webhookBatch->user_id,
                         'webhook_batch_id' => $this->webhookBatch->id,
                     ]);
                 }
@@ -130,7 +130,7 @@ class AdistProccesBatchNumbers implements ShouldQueue
                 // Prepare data for batch insert
                 $validRows[] = [
                     'feed_id' => $feed->id,
-                    'mobile' => $mobile,
+                    'mobile' => htmlspecialchars($mobile),
                     'state' => 'new',
                     'created_at' => now(),
                     'updated_at' => now(),
@@ -162,7 +162,7 @@ class AdistProccesBatchNumbers implements ShouldQueue
                     $extension = $matches[0] ?? null;
 
                     $skippedInsertData[] = [
-                        'mobile' => $mobile,
+                        'mobile' => htmlspecialchars($mobile),
                         'message' => $message,
                         'uploaded_by' => $this->webhookBatch->user_id ?? null,
                         'agent_id' => $feed->agent_id ?? null,
@@ -191,8 +191,10 @@ class AdistProccesBatchNumbers implements ShouldQueue
 
             Log::info('Webhook Batch Completed Successfully', [
                 'batch_id' => $this->webhookBatch->batch_id,
-                'processed' => $successCount,
-                'skipped' => count($skippedNumbers),
+                'status' => $this->webhookBatch->status,
+                'completed_at' => now(),
+                'processed_numbers' => $successCount,
+                'skipped_numbers' => count($skippedNumbers),
             ]);
 
         } catch (\Exception $e) {

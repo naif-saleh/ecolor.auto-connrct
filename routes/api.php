@@ -48,7 +48,7 @@ Route::post('/licens.ecolor/allow-license-key', [ApiController::class, 'PostLice
 
 // Webhook routes Auto Distributor
 Route::prefix('auto-distributor/webhooks')->group(function () {
-    Route::post('numbers', [AdistWebhookController::class, 'receive']);
+    Route::post('numbers', [AdistWebhookController::class, 'receive'])->middleware(['throttle:WebhookPostData']);
     Route::get('numbers/status/{batchId}', [AdistWebhookController::class, 'checkStatus']);
 });
 
@@ -56,6 +56,6 @@ Route::prefix('auto-distributor/webhooks')->group(function () {
 
 // Webhook routes Auto Distributor
 Route::prefix('auto-dialer/webhooks')->group(function () {
-    Route::post('numbers', [AdialWebhookController::class, 'receive']);
+    Route::post('numbers', [AdialWebhookController::class, 'receive'])->middleware(['throttle:WebhookPostData']);
     Route::get('numbers/status/{batchId}', [AdialWebhookController::class, 'checkStatus']);
 });
